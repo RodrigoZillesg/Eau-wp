@@ -4,7 +4,7 @@ Tags: csv, import, post-type, jetengine, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,11 @@ Sim! O Post Type criado pode ser gerenciado normalmente através do WordPress e 
 4. Post Type criado com sucesso
 
 == Changelog ==
+
+= 1.5.2 =
+* Corrigido erro "Cannot read properties of undefined (reading 'slice')" no upload de CSV para user meta boxes
+* Adicionada verificação de existência de preview antes de renderizar tabela
+* Melhor tratamento de dados ausentes na resposta do AJAX
 
 = 1.5.1 =
 * JavaScript completo para sistema de usuários implementado

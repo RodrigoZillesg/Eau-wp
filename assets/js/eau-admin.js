@@ -963,25 +963,28 @@
         `;
         $('#eau-user-csv-info').html(infoHtml);
 
-        // Preview das primeiras linhas
-        let previewHtml = '<h4>Preview dos Dados:</h4>';
-        previewHtml += '<div class="eau-table-wrapper"><table><thead><tr>';
+        // Preview das primeiras linhas (se disponível)
+        let previewHtml = '';
+        if (data.preview && data.preview.length > 0) {
+            previewHtml = '<h4>Preview dos Dados:</h4>';
+            previewHtml += '<div class="eau-table-wrapper"><table><thead><tr>';
 
-        data.columns.forEach(function(column) {
-            previewHtml += `<th>${escapeHtml(column)}</th>`;
-        });
-        previewHtml += '</tr></thead><tbody>';
-
-        const previewRows = data.preview.slice(0, 5);
-        previewRows.forEach(function(row) {
-            previewHtml += '<tr>';
             data.columns.forEach(function(column) {
-                previewHtml += `<td>${escapeHtml(row[column] || '')}</td>`;
+                previewHtml += `<th>${escapeHtml(column)}</th>`;
             });
-            previewHtml += '</tr>';
-        });
+            previewHtml += '</tr></thead><tbody>';
 
-        previewHtml += '</tbody></table></div>';
+            const previewRows = data.preview.slice(0, 5);
+            previewRows.forEach(function(row) {
+                previewHtml += '<tr>';
+                data.columns.forEach(function(column) {
+                    previewHtml += `<td>${escapeHtml(row[column] || '')}</td>`;
+                });
+                previewHtml += '</tr>';
+            });
+
+            previewHtml += '</tbody></table></div>';
+        }
         $('#eau-user-columns-preview').html(previewHtml);
 
         // Checkboxes de seleção de colunas
