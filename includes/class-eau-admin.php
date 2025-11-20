@@ -19,6 +19,12 @@ class Eau_Admin {
         add_action('wp_ajax_eau_delete_post_type', array($this, 'handle_delete_post_type'));
         add_action('wp_ajax_eau_import_analyze_csv', array($this, 'handle_import_analyze_csv'));
         add_action('wp_ajax_eau_import_batch', array($this, 'handle_import_batch'));
+
+        // Handlers AJAX para User Meta Boxes
+        add_action('wp_ajax_eau_create_user_meta_box', array($this, 'handle_create_user_meta_box'));
+        add_action('wp_ajax_eau_delete_user_meta_box', array($this, 'handle_delete_user_meta_box'));
+        add_action('wp_ajax_eau_import_users_analyze_csv', array($this, 'handle_import_users_analyze_csv'));
+        add_action('wp_ajax_eau_import_users_batch', array($this, 'handle_import_users_batch'));
     }
 
     /**
@@ -234,6 +240,133 @@ class Eau_Admin {
 
         $importer = new Eau_Importer();
         $result = $importer->import_batch($csv_filepath, $post_type_slug, $column_mapping, $offset, $batch_size, $conditions);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para criar meta box de usuário
+     */
+    public function handle_create_user_meta_box() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        $meta_box_name = sanitize_text_field($_POST['meta_box_name'] ?? '');
+        $selected_columns = isset($_POST['selected_columns']) ? array_map('sanitize_text_field', $_POST['selected_columns']) : array();
+        $meta_key_prefix = sanitize_text_field($_POST['meta_key_prefix'] ?? '');
+
+        if (empty($meta_box_name) || empty($selected_columns)) {
+            wp_send_json_error(array('message' => 'Dados incompletos.'));
+        }
+
+        $meta_creator = new Eau_User_Meta_Creator();
+        $result = $meta_creator->create_user_meta_box($meta_box_name, $selected_columns, $meta_key_prefix);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para deletar meta box de usuário
+     */
+    public function handle_delete_user_meta_box() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        $slug = sanitize_text_field($_POST['slug'] ?? '');
+
+        if (empty($slug)) {
+            wp_send_json_error(array('message' => 'Slug do meta box não fornecido.'));
+        }
+
+        $meta_creator = new Eau_User_Meta_Creator();
+        $result = $meta_creator->delete_meta_box($slug);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para analisar CSV para importação de usuários
+     */
+    public function handle_import_users_analyze_csv() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        if (!isset($_FILES['import_users_csv_file'])) {
+            wp_send_json_error(array('message' => 'Nenhum arquivo enviado.'));
+        }
+
+        $meta_box_slug = sanitize_text_field($_POST['meta_box_slug'] ?? '');
+
+        $csv_handler = new Eau_CSV_Handler();
+        $result = $csv_handler->process_upload($_FILES['import_users_csv_file']);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // Adiciona informações do meta box se fornecido
+        if (!empty($meta_box_slug)) {
+            $result['meta_box_slug'] = $meta_box_slug;
+            $result['meta_box_fields'] = Eau_User_Meta_Creator::get_meta_box_fields($meta_box_slug);
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para importação de usuários em lote
+     */
+    public function handle_import_users_batch() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? '');
+        $column_mapping = isset($_POST['column_mapping']) ? json_decode(stripslashes($_POST['column_mapping']), true) : array();
+        $conditions = isset($_POST['conditions']) ? json_decode(stripslashes($_POST['conditions']), true) : array();
+        $user_role = sanitize_text_field($_POST['user_role'] ?? 'subscriber');
+        $send_email = isset($_POST['send_email']) && $_POST['send_email'] === 'true';
+        $default_password = sanitize_text_field($_POST['default_password'] ?? '');
+        $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
+        $batch_size = isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25;
+
+        if (empty($csv_filename)) {
+            wp_send_json_error(array('message' => 'Dados incompletos.'));
+        }
+
+        // Monta caminho do arquivo
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $csv_filename;
+
+        if (!file_exists($csv_filepath)) {
+            wp_send_json_error(array('message' => 'Arquivo CSV não encontrado.'));
+        }
+
+        $importer = new Eau_User_Importer();
+        $result = $importer->import_batch($csv_filepath, $column_mapping, $offset, $batch_size, $conditions, $user_role, $send_email, $default_password);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

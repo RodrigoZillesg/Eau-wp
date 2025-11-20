@@ -16,9 +16,21 @@ if (!defined('WPINC')) {
     </h1>
 
     <p class="description">
-        Sistema para importação de CSV e criação dinâmica de Post Types compatível com JetEngine e WooCommerce
+        Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
     </p>
 
+    <!-- Tabs de Navegação -->
+    <h2 class="nav-tab-wrapper">
+        <a href="#" class="nav-tab nav-tab-active" data-tab="post-types">
+            <span class="dashicons dashicons-admin-post"></span> Post Types
+        </a>
+        <a href="#" class="nav-tab" data-tab="users">
+            <span class="dashicons dashicons-admin-users"></span> Usuários
+        </a>
+    </h2>
+
+    <!-- Tab: Post Types -->
+    <div class="eau-tab-content eau-tab-post-types" style="display: block;">
     <div class="eau-system-container">
         <!-- Etapa 1: Upload do CSV -->
         <div class="eau-card" id="eau-step-1">
@@ -321,4 +333,173 @@ if (!defined('WPINC')) {
             </div>
         </div>
     </div>
+    </div>
+    </div>
+    <!-- Fim Tab: Post Types -->
+
+    <!-- Tab: Usuários -->
+    <div class="eau-tab-content eau-tab-users" style="display: none;">
+    <div class="eau-system-container">
+
+        <!-- Etapa 1: Upload do CSV para User Meta Box -->
+        <div class="eau-card" id="eau-user-step-1">
+            <div class="eau-card-header">
+                <h2>
+                    <span class="step-number">1</span>
+                    Upload do CSV para Criar Meta Box de Usuários
+                </h2>
+            </div>
+            <div class="eau-card-body">
+                <div class="eau-info-box">
+                    <h3>Como funciona?</h3>
+                    <ul>
+                        <li>Faça upload de um CSV com as colunas que deseja como campos de usuário</li>
+                        <li>Selecione quais colunas serão campos do meta box</li>
+                        <li>O sistema criará o meta box de usuários automaticamente</li>
+                        <li>Depois você poderá importar usuários usando outro CSV</li>
+                    </ul>
+                </div>
+
+                <form id="eau-user-csv-upload-form" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="user_csv_file">Selecione o arquivo CSV:</label>
+                        <input type="file" name="user_csv_file" id="user_csv_file" accept=".csv" required>
+                        <p class="description">
+                            Tamanho máximo: 10MB | Formato aceito: CSV
+                        </p>
+                    </div>
+
+                    <button type="submit" class="button button-primary button-large">
+                        <span class="dashicons dashicons-upload"></span>
+                        Fazer Upload e Analisar
+                    </button>
+
+                    <div id="eau-user-upload-progress" style="display: none;">
+                        <div class="eau-spinner"></div>
+                        <p>Processando arquivo...</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Etapa 2: Criar Meta Box de Usuários -->
+        <div class="eau-card eau-hidden" id="eau-user-step-2">
+            <div class="eau-card-header">
+                <h2>
+                    <span class="step-number">2</span>
+                    Criar Meta Box de Usuários
+                </h2>
+            </div>
+            <div class="eau-card-body">
+                <div id="eau-user-csv-info"></div>
+                <div id="eau-user-columns-preview"></div>
+
+                <form id="eau-user-meta-box-form">
+                    <div class="form-group">
+                        <label for="user_meta_box_name">Nome do Meta Box:</label>
+                        <input type="text" id="user_meta_box_name" name="user_meta_box_name" class="regular-text" required>
+                        <p class="description">Ex: "Dados de Membros", "Informações da Instituição"</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="user_meta_key_prefix">Prefixo para Meta Keys (opcional):</label>
+                        <input type="text" id="user_meta_key_prefix" name="user_meta_key_prefix" class="regular-text" placeholder="meu_prefixo">
+                        <p class="description">Se informado, todos os meta keys terão este prefixo. Ex: "msp" resultará em "msp_first_name"</p>
+                        <div id="eau-user-prefix-preview" class="eau-prefix-preview" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Selecione as colunas que serão campos do meta box:</label>
+                        <div id="eau-user-columns-selection"></div>
+                    </div>
+
+                    <div class="eau-actions">
+                        <button type="button" id="eau-user-back" class="button button-secondary">
+                            <span class="dashicons dashicons-arrow-left-alt"></span>
+                            Voltar
+                        </button>
+                        <button type="submit" class="button button-primary button-large">
+                            <span class="dashicons dashicons-yes"></span>
+                            Criar Meta Box
+                        </button>
+                    </div>
+
+                    <div id="eau-user-create-progress" style="display: none;">
+                        <div class="eau-spinner spin"></div>
+                        <p>Criando meta box de usuários...</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Etapa 3: Meta Box Criado -->
+        <div class="eau-card eau-success-card eau-hidden" id="eau-user-step-3">
+            <div class="eau-card-header">
+                <h2>
+                    <span class="dashicons dashicons-yes-alt"></span>
+                    Meta Box de Usuários Criado!
+                </h2>
+            </div>
+            <div class="eau-card-body">
+                <div id="eau-user-success-info"></div>
+
+                <div class="eau-actions">
+                    <button type="button" id="eau-user-create-another" class="button button-primary">
+                        <span class="dashicons dashicons-plus-alt"></span>
+                        Criar Outro Meta Box
+                    </button>
+                    <a href="<?php echo admin_url('users.php'); ?>" class="button button-secondary" target="_blank">
+                        <span class="dashicons dashicons-admin-users"></span>
+                        Ver Usuários
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meta Boxes Existentes -->
+        <div class="eau-card" id="eau-existing-user-meta-boxes">
+            <div class="eau-card-header">
+                <h2>
+                    <span class="dashicons dashicons-list-view"></span>
+                    Meta Boxes de Usuários Criados
+                </h2>
+            </div>
+            <div class="eau-card-body">
+                <?php
+                $user_meta_boxes = \EauSystem\Eau_User_Meta_Creator::get_registered_meta_boxes();
+
+                if (empty($user_meta_boxes)) {
+                    echo '<p class="description">Nenhum meta box de usuários criado ainda.</p>';
+                } else {
+                    echo '<div class="eau-post-types-list">';
+                    foreach ($user_meta_boxes as $slug => $config) {
+                        echo '<div class="eau-post-type-item">';
+                        echo '<div class="eau-post-type-info">';
+                        echo '<h3>' . esc_html($config['name']) . '</h3>';
+                        echo '<p class="description">Slug: <code>' . esc_html($slug) . '</code></p>';
+                        echo '<p class="description">Campos: ' . count($config['meta_fields']) . '</p>';
+                        echo '<p class="description">Criado em: ' . esc_html($config['created_at']) . '</p>';
+                        echo '</div>';
+                        echo '<div class="eau-post-type-actions">';
+                        echo '<button type="button" class="button button-small button-primary eau-import-users" data-slug="' . esc_attr($slug) . '" data-name="' . esc_attr($config['name']) . '" data-fields="' . esc_attr(json_encode($config['meta_fields'])) . '">';
+                        echo '<span class="dashicons dashicons-upload"></span> Importar Usuários';
+                        echo '</button>';
+                        echo '<button type="button" class="button button-small eau-delete-user-meta-box" data-slug="' . esc_attr($slug) . '" data-name="' . esc_attr($config['name']) . '">';
+                        echo '<span class="dashicons dashicons-trash"></span> Excluir';
+                        echo '</button>';
+                        echo '</div>';
+                        echo '</div>';
+                    }
+                    echo '</div>';
+                }
+                ?>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- Fim Tab: Usuários -->
+
+    <!-- Modal de Importação de Usuários -->
+    <?php include EAU_SYSTEM_PLUGIN_DIR . 'includes/admin-page-users-import-modal.php'; ?>
+
 </div>

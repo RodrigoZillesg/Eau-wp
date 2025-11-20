@@ -4,7 +4,7 @@ Tags: csv, import, post-type, jetengine, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,23 @@ Sim! O Post Type criado pode ser gerenciado normalmente através do WordPress e 
 4. Post Type criado com sucesso
 
 == Changelog ==
+
+= 1.5.0 =
+* Sistema completo de importação de usuários do WordPress
+* Criação de Meta Boxes de usuários a partir de CSV (similar aos Post Types)
+* Classe Eau_User_Importer para importação em lote de usuários
+* Classe Eau_User_Meta_Creator para gerenciar meta boxes de usuários
+* Classe Eau_Roles com 4 perfis customizados: Super Admin, Admin Eau, Administrador de Instituição, Membro
+* Handlers AJAX para criação de meta boxes e importação de usuários
+* Interface com tabs separadas: Post Types e Usuários
+* Modal de importação de usuários com 6 etapas
+* Suporte a mapeamento de colunas para campos nativos do WP (user_email, user_login, first_name, etc.)
+* Suporte a user meta fields customizados
+* Opção de definir role durante importação
+* Opção de senha padrão ou geração automática
+* Opção de envio de email de boas-vindas
+* Sistema de condicionais também aplicado à importação de usuários
+* Backend completo implementado (JavaScript será adicionado em versão futura)
 
 = 1.4.0 =
 * Adicionado sistema de condicionais para filtrar importação
