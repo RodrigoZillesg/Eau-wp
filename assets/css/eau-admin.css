@@ -579,6 +579,82 @@
     color: #fff;
 }
 
+/* Condicionais */
+.eau-conditions-container {
+    margin: 20px 0;
+}
+
+.eau-conditions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.eau-condition-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.eau-condition-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 2fr auto;
+    gap: 15px;
+    align-items: end;
+}
+
+.eau-condition-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.eau-condition-field label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.eau-condition-column,
+.eau-condition-operator,
+.eau-condition-value {
+    padding: 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.eau-condition-actions {
+    display: flex;
+    align-items: end;
+}
+
+.eau-remove-condition {
+    background: #d63638;
+    border-color: #d63638;
+    color: #fff;
+    padding: 8px 12px;
+}
+
+.eau-remove-condition:hover:not(:disabled) {
+    background: #b32d2e;
+    border-color: #b32d2e;
+    color: #fff;
+}
+
+.eau-remove-condition .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+#eau-add-condition {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
 /* Responsive Modal */
 @media (max-width: 782px) {
     .eau-modal-content {
@@ -598,5 +674,13 @@
 
     .eau-mapping-select {
         width: 100%;
+    }
+
+    .eau-condition-row {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-condition-actions {
+        justify-content: flex-start;
     }
 }

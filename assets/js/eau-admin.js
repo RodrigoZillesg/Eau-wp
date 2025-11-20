@@ -489,7 +489,13 @@
             $('#eau-import-step-1').show();
         });
 
-        // Iniciar importação
+        // Voltar do step 3 para step 2
+        $(document).on('click', '#eau-conditions-back', function() {
+            $('#eau-import-step-3').hide();
+            $('#eau-import-step-2').show();
+        });
+
+        // Iniciar importação (vai para condicionais)
         $('#eau-start-import').on('click', function() {
             startImport();
         });
@@ -564,7 +570,7 @@
     }
 
     /**
-     * Inicia o processo de importação
+     * Coleta mapeamento e vai para condicionais
      */
     function startImport() {
         // Coleta mapeamento
@@ -586,9 +592,143 @@
 
         importData.columnMapping = mapping;
 
-        // Vai para step 3
+        // Vai para step de condicionais
+        showImportStep3();
+    }
+
+    /**
+     * Mostra etapa de condicionais
+     */
+    function showImportStep3() {
+        // Cria interface de condicionais
+        let conditionsHtml = '<div class="eau-conditions-container">';
+        conditionsHtml += '<p>Configure condições para filtrar quais linhas do CSV serão importadas. Todas as condições devem ser atendidas (operador E).</p>';
+        conditionsHtml += '<div class="eau-conditions-list" id="eau-conditions-list"></div>';
+        conditionsHtml += '<button type="button" class="button button-secondary" id="eau-add-condition">';
+        conditionsHtml += '<span class="dashicons dashicons-plus-alt"></span> Adicionar Condição';
+        conditionsHtml += '</button>';
+        conditionsHtml += '</div>';
+
+        $('#eau-conditions-container').html(conditionsHtml);
+
+        // Transição
         $('#eau-import-step-2').hide();
         $('#eau-import-step-3').show();
+
+        // Event listeners
+        $(document).on('click', '#eau-add-condition', addCondition);
+        $(document).on('click', '.eau-remove-condition', removeCondition);
+        $(document).on('click', '#eau-start-import-btn', confirmAndStartImport);
+    }
+
+    /**
+     * Adiciona uma nova condição
+     */
+    function addCondition() {
+        const conditionId = Date.now();
+
+        let conditionHtml = '<div class="eau-condition-item" data-condition-id="' + conditionId + '">';
+        conditionHtml += '<div class="eau-condition-row">';
+
+        // Seletor de coluna
+        conditionHtml += '<div class="eau-condition-field">';
+        conditionHtml += '<label>Coluna</label>';
+        conditionHtml += '<select class="eau-condition-column">';
+        conditionHtml += '<option value="">Selecione...</option>';
+        importData.csvColumns.forEach(function(column) {
+            conditionHtml += '<option value="' + escapeHtml(column) + '">' + escapeHtml(column) + '</option>';
+        });
+        conditionHtml += '</select>';
+        conditionHtml += '</div>';
+
+        // Seletor de operador
+        conditionHtml += '<div class="eau-condition-field">';
+        conditionHtml += '<label>Operador</label>';
+        conditionHtml += '<select class="eau-condition-operator">';
+        conditionHtml += '<option value="not_empty">Não está vazio</option>';
+        conditionHtml += '<option value="empty">Está vazio</option>';
+        conditionHtml += '<option value="equals">É igual a</option>';
+        conditionHtml += '<option value="not_equals">É diferente de</option>';
+        conditionHtml += '<option value="greater_than">Maior que</option>';
+        conditionHtml += '<option value="greater_than_or_equal">Maior ou igual a</option>';
+        conditionHtml += '<option value="less_than">Menor que</option>';
+        conditionHtml += '<option value="less_than_or_equal">Menor ou igual a</option>';
+        conditionHtml += '<option value="contains">Contém</option>';
+        conditionHtml += '<option value="not_contains">Não contém</option>';
+        conditionHtml += '<option value="starts_with">Começa com</option>';
+        conditionHtml += '<option value="ends_with">Termina com</option>';
+        conditionHtml += '</select>';
+        conditionHtml += '</div>';
+
+        // Campo de valor
+        conditionHtml += '<div class="eau-condition-field eau-condition-value-field">';
+        conditionHtml += '<label>Valor</label>';
+        conditionHtml += '<input type="text" class="eau-condition-value" placeholder="Digite o valor...">';
+        conditionHtml += '</div>';
+
+        // Botão remover
+        conditionHtml += '<div class="eau-condition-actions">';
+        conditionHtml += '<button type="button" class="button button-small eau-remove-condition">';
+        conditionHtml += '<span class="dashicons dashicons-trash"></span>';
+        conditionHtml += '</button>';
+        conditionHtml += '</div>';
+
+        conditionHtml += '</div>';
+        conditionHtml += '</div>';
+
+        $('#eau-conditions-list').append(conditionHtml);
+
+        // Listener para mostrar/esconder campo de valor
+        $('.eau-condition-operator').off('change').on('change', toggleConditionValueField);
+    }
+
+    /**
+     * Remove uma condição
+     */
+    function removeCondition() {
+        $(this).closest('.eau-condition-item').remove();
+    }
+
+    /**
+     * Mostra/esconde campo de valor baseado no operador
+     */
+    function toggleConditionValueField() {
+        const operator = $(this).val();
+        const valueField = $(this).closest('.eau-condition-row').find('.eau-condition-value-field');
+
+        if (operator === 'not_empty' || operator === 'empty') {
+            valueField.hide();
+        } else {
+            valueField.show();
+        }
+    }
+
+    /**
+     * Coleta condições e inicia importação
+     */
+    function confirmAndStartImport() {
+        // Coleta condições
+        const conditions = [];
+
+        $('.eau-condition-item').each(function() {
+            const column = $(this).find('.eau-condition-column').val();
+            const operator = $(this).find('.eau-condition-operator').val();
+            const value = $(this).find('.eau-condition-value').val();
+
+            if (column && operator) {
+                conditions.push({
+                    column: column,
+                    operator: operator,
+                    value: value || ''
+                });
+            }
+        });
+
+        importData.conditions = conditions;
+
+        // Vai para step 4 (progresso)
+        $('#eau-import-step-3').hide();
+        $('#eau-import-step-4').show();
 
         // Inicia importação em lotes
         processBatchImport(0);
@@ -606,6 +746,7 @@
             csv_filename: importData.csvFilename,
             post_type_slug: importData.postTypeSlug,
             column_mapping: JSON.stringify(importData.columnMapping),
+            conditions: JSON.stringify(importData.conditions || []),
             offset: offset,
             batch_size: batchSize
         };
@@ -666,8 +807,8 @@
         $('#eau-import-summary').html(summaryHtml);
         $('#eau-import-view-posts').attr('href', eauSystem.ajaxurl.replace('admin-ajax.php', 'edit.php?post_type=' + importData.postTypeSlug));
 
-        $('#eau-import-step-3').hide();
-        $('#eau-import-step-4').show();
+        $('#eau-import-step-4').hide();
+        $('#eau-import-step-5').show();
 
         showNotice('success', `${finalResult.imported} posts importados com sucesso!`);
     }

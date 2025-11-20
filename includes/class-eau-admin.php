@@ -216,6 +216,7 @@ class Eau_Admin {
         $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? '');
         $post_type_slug = sanitize_text_field($_POST['post_type_slug'] ?? '');
         $column_mapping = isset($_POST['column_mapping']) ? json_decode(stripslashes($_POST['column_mapping']), true) : array();
+        $conditions = isset($_POST['conditions']) ? json_decode(stripslashes($_POST['conditions']), true) : array();
         $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
         $batch_size = isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25;
 
@@ -232,7 +233,7 @@ class Eau_Admin {
         }
 
         $importer = new Eau_Importer();
-        $result = $importer->import_batch($csv_filepath, $post_type_slug, $column_mapping, $offset, $batch_size);
+        $result = $importer->import_batch($csv_filepath, $post_type_slug, $column_mapping, $offset, $batch_size, $conditions);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

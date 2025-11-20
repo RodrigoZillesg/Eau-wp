@@ -4,7 +4,7 @@ Tags: csv, import, post-type, jetengine, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,22 @@ Sim! O Post Type criado pode ser gerenciado normalmente através do WordPress e 
 4. Post Type criado com sucesso
 
 == Changelog ==
+
+= 1.4.0 =
+* Adicionado sistema de condicionais para filtrar importação
+* Nova etapa no modal de importação para configurar condições
+* Suporte a 12 operadores diferentes (não vazio, vazio, igual, diferente, maior que, menor que, contém, etc.)
+* Condições aplicadas com operador lógico E (todas devem ser atendidas)
+* Interface visual para adicionar/remover condições dinamicamente
+* Exemplos: importar apenas se coluna não estiver vazia, ou valor maior que X
+
+= 1.3.0 =
+* Adicionado sistema completo de importação de dados CSV
+* Modal com 4 etapas: upload, mapeamento, condicionais e progresso
+* Importação em lotes de 25 itens para melhor performance
+* Mapeamento automático e manual de colunas
+* Barra de progresso em tempo real
+* Log detalhado de importação com status
 
 = 1.2.0 =
 * Adicionada opção de prefixo customizado para meta keys

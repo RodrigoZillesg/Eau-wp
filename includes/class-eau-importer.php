@@ -9,6 +9,7 @@ class Eau_Importer {
     private $post_type_slug;
     private $meta_fields;
     private $column_mapping;
+    private $conditions;
 
     /**
      * Importa dados do CSV para posts
@@ -75,6 +76,14 @@ class Eau_Importer {
      * Importa uma única linha do CSV como post
      */
     private function import_single_row($row, $row_number) {
+        // Valida condicionais antes de importar
+        if (!empty($this->conditions)) {
+            $passes_conditions = $this->validate_conditions($row);
+            if (!$passes_conditions) {
+                return new \WP_Error('condition_not_met', 'Linha ' . $row_number . ': Não atende às condições');
+            }
+        }
+
         // Determina o título do post
         $post_title = $this->get_post_title($row);
 
@@ -205,11 +214,86 @@ class Eau_Importer {
     }
 
     /**
+     * Valida se a linha atende às condições definidas
+     */
+    private function validate_conditions($row) {
+        if (empty($this->conditions) || !is_array($this->conditions)) {
+            return true;
+        }
+
+        foreach ($this->conditions as $condition) {
+            $column = $condition['column'];
+            $operator = $condition['operator'];
+            $value = $condition['value'];
+
+            // Pega o valor da coluna na linha atual
+            $row_value = isset($row[$column]) ? $row[$column] : '';
+
+            // Valida baseado no operador
+            $condition_met = $this->check_condition($row_value, $operator, $value);
+
+            if (!$condition_met) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Verifica uma condição específica
+     */
+    private function check_condition($row_value, $operator, $expected_value) {
+        switch ($operator) {
+            case 'not_empty':
+                return !empty($row_value);
+
+            case 'empty':
+                return empty($row_value);
+
+            case 'equals':
+                return $row_value == $expected_value;
+
+            case 'not_equals':
+                return $row_value != $expected_value;
+
+            case 'greater_than':
+                return is_numeric($row_value) && floatval($row_value) > floatval($expected_value);
+
+            case 'greater_than_or_equal':
+                return is_numeric($row_value) && floatval($row_value) >= floatval($expected_value);
+
+            case 'less_than':
+                return is_numeric($row_value) && floatval($row_value) < floatval($expected_value);
+
+            case 'less_than_or_equal':
+                return is_numeric($row_value) && floatval($row_value) <= floatval($expected_value);
+
+            case 'contains':
+                return stripos($row_value, $expected_value) !== false;
+
+            case 'not_contains':
+                return stripos($row_value, $expected_value) === false;
+
+            case 'starts_with':
+                return stripos($row_value, $expected_value) === 0;
+
+            case 'ends_with':
+                $length = strlen($expected_value);
+                return substr($row_value, -$length) === $expected_value;
+
+            default:
+                return true;
+        }
+    }
+
+    /**
      * Importa em lote (batch) para performance
      */
-    public function import_batch($csv_filepath, $post_type_slug, $column_mapping, $offset = 0, $limit = 50) {
+    public function import_batch($csv_filepath, $post_type_slug, $column_mapping, $offset = 0, $limit = 50, $conditions = array()) {
         $this->post_type_slug = $post_type_slug;
         $this->column_mapping = $column_mapping;
+        $this->conditions = $conditions;
 
         // Busca os meta fields do post type
         $post_types = Eau_Post_Type_Creator::get_registered_post_types();

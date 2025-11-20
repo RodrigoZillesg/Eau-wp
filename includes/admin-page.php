@@ -259,14 +259,32 @@ if (!defined('WPINC')) {
                             Voltar
                         </button>
                         <button type="button" id="eau-start-import" class="button button-primary button-large">
+                            <span class="dashicons dashicons-arrow-right-alt"></span>
+                            Próximo: Condicionais
+                        </button>
+                    </div>
+                </div>
+
+                <div id="eau-import-step-3" class="eau-import-step" style="display: none;">
+                    <h3>Passo 3: Condições de Importação (Opcional)</h3>
+                    <div id="eau-conditions-container">
+                        <!-- Condições serão inseridas via JS -->
+                    </div>
+
+                    <div class="eau-actions">
+                        <button type="button" id="eau-conditions-back" class="button button-secondary">
+                            <span class="dashicons dashicons-arrow-left-alt"></span>
+                            Voltar
+                        </button>
+                        <button type="button" id="eau-start-import-btn" class="button button-primary button-large">
                             <span class="dashicons dashicons-database-import"></span>
                             Iniciar Importação
                         </button>
                     </div>
                 </div>
 
-                <div id="eau-import-step-3" class="eau-import-step" style="display: none;">
-                    <h3>Passo 3: Importando Dados</h3>
+                <div id="eau-import-step-4" class="eau-import-step" style="display: none;">
+                    <h3>Passo 4: Importando Dados</h3>
 
                     <div class="eau-import-progress-container">
                         <div class="eau-progress-bar">
@@ -280,7 +298,7 @@ if (!defined('WPINC')) {
                     </div>
                 </div>
 
-                <div id="eau-import-step-4" class="eau-import-step" style="display: none;">
+                <div id="eau-import-step-5" class="eau-import-step" style="display: none;">
                     <h3>
                         <span class="dashicons dashicons-yes-alt" style="color: #00a32a;"></span>
                         Importação Concluída!
