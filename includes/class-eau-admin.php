@@ -25,6 +25,9 @@ class Eau_Admin {
         add_action('wp_ajax_eau_delete_user_meta_box', array($this, 'handle_delete_user_meta_box'));
         add_action('wp_ajax_eau_import_users_analyze_csv', array($this, 'handle_import_users_analyze_csv'));
         add_action('wp_ajax_eau_import_users_batch', array($this, 'handle_import_users_batch'));
+
+        // Handler AJAX para Sincronização de User Types
+        add_action('wp_ajax_eau_sync_user_types', array($this, 'handle_sync_user_types'));
     }
 
     /**
@@ -367,6 +370,8 @@ class Eau_Admin {
         $user_role = sanitize_text_field($_POST['user_role'] ?? 'subscriber');
         $send_email = isset($_POST['send_email']) && $_POST['send_email'] === 'true';
         $default_password = sanitize_text_field($_POST['default_password'] ?? '');
+        $import_limit = sanitize_text_field($_POST['import_limit'] ?? 'all');
+        $total_imported = isset($_POST['total_imported']) ? intval($_POST['total_imported']) : 0;
         $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
         $batch_size = isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25;
 
@@ -383,7 +388,27 @@ class Eau_Admin {
         }
 
         $importer = new Eau_User_Importer();
-        $result = $importer->import_batch($csv_filepath, $column_mapping, $offset, $batch_size, $conditions, $user_role, $send_email, $default_password);
+        $result = $importer->import_batch($csv_filepath, $column_mapping, $offset, $batch_size, $conditions, $user_role, $send_email, $default_password, $import_limit, $total_imported);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para sincronização de user types
+     */
+    public function handle_sync_user_types() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        $syncer = new Eau_User_Type_Sync();
+        $result = $syncer->sync_all_user_types();
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

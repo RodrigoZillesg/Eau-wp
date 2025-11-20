@@ -84,6 +84,12 @@ class Eau_Importer {
             }
         }
 
+        // Verifica se há coluna distinct e se post já existe
+        $existing_post_id = null;
+        if (!empty($this->column_mapping['distinct_column'])) {
+            $existing_post_id = $this->find_existing_post_by_distinct($row);
+        }
+
         // Determina o título do post
         $post_title = $this->get_post_title($row);
 
@@ -91,7 +97,7 @@ class Eau_Importer {
             return new \WP_Error('empty_title', 'Linha ' . $row_number . ': Título vazio');
         }
 
-        // Cria o post
+        // Prepara dados do post
         $post_data = array(
             'post_title' => sanitize_text_field($post_title),
             'post_type' => $this->post_type_slug,
@@ -107,16 +113,82 @@ class Eau_Importer {
             }
         }
 
-        $post_id = wp_insert_post($post_data, true);
+        // Se post existe, faz UPDATE
+        if ($existing_post_id) {
+            $post_data['ID'] = $existing_post_id;
+            $post_id = wp_update_post($post_data, true);
 
-        if (is_wp_error($post_id)) {
-            return new \WP_Error('insert_failed', 'Linha ' . $row_number . ': ' . $post_id->get_error_message());
+            if (is_wp_error($post_id)) {
+                return new \WP_Error('update_failed', 'Linha ' . $row_number . ': ' . $post_id->get_error_message());
+            }
+        } else {
+            // Senão, cria novo post
+            $post_id = wp_insert_post($post_data, true);
+
+            if (is_wp_error($post_id)) {
+                return new \WP_Error('insert_failed', 'Linha ' . $row_number . ': ' . $post_id->get_error_message());
+            }
         }
 
-        // Adiciona os meta fields
+        // Adiciona/atualiza os meta fields
         $this->add_meta_fields($post_id, $row);
 
         return $post_id;
+    }
+
+    /**
+     * Busca post existente baseado na coluna distinct
+     */
+    private function find_existing_post_by_distinct($row) {
+        $distinct_column = $this->column_mapping['distinct_column'];
+
+        if (!isset($row[$distinct_column]) || empty($row[$distinct_column])) {
+            return null;
+        }
+
+        $distinct_value = $row[$distinct_column];
+
+        // Busca o meta field name correspondente à coluna distinct
+        $meta_field_name = $this->get_meta_field_name_for_column($distinct_column);
+
+        if (!$meta_field_name) {
+            return null;
+        }
+
+        // Busca posts com este valor no meta field
+        $args = array(
+            'post_type' => $this->post_type_slug,
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => $meta_field_name,
+                    'value' => $distinct_value,
+                    'compare' => '='
+                )
+            )
+        );
+
+        $posts = get_posts($args);
+
+        return !empty($posts) ? $posts[0] : null;
+    }
+
+    /**
+     * Retorna o nome do meta field correspondente a uma coluna CSV
+     */
+    private function get_meta_field_name_for_column($column) {
+        if (!isset($this->column_mapping['fields'])) {
+            return null;
+        }
+
+        foreach ($this->column_mapping['fields'] as $field_name => $mapped_column) {
+            if ($mapped_column === $column) {
+                return $field_name;
+            }
+        }
+
+        return null;
     }
 
     /**

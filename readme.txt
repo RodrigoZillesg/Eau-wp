@@ -4,7 +4,7 @@ Tags: csv, import, post-type, jetengine, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,54 @@ Sim! O Post Type criado pode ser gerenciado normalmente através do WordPress e 
 4. Post Type criado com sucesso
 
 == Changelog ==
+
+= 1.7.1 =
+* **NOVIDADE:** Coluna Distinct para evitar duplicatas em importações
+* Nova opção no mapeamento: "Coluna Distinct (Evitar Duplicatas)"
+* Posts com mesmo valor na coluna distinct são ATUALIZADOS ao invés de duplicados
+* Lógica inteligente: cria novo se não existe, atualiza se existe
+* Atualização incremental: novos dados do CSV complementam/sobrescrevem dados antigos
+* Campo destacado visualmente em amarelo para fácil identificação
+* Útil para importações recorrentes (ex: atualizar catálogo de produtos)
+* Funciona com qualquer campo customizado como referência
+
+= 1.7.0 =
+* **NOVIDADE MAJOR:** Sistema de sincronização de User Types (mem_type)
+* Nova aba "Sincronização" na interface administrativa
+* Sincroniza mem_type baseado em posts de membership:
+  - Usuários com email em primary_contacts_email → institutionAdmin
+  - Todos os outros usuários → Member
+* Dashboard de estatísticas mostrando distribuição atual de tipos
+* Classe Eau_User_Type_Sync para sincronização automática
+* Métodos: sync_all_user_types(), sync_single_user(), get_current_stats()
+* Interface com confirmação e feedback em tempo real
+* Toast notification ao completar sincronização
+* Recarregamento automático para atualizar estatísticas
+
+= 1.6.3 =
+* **NOVIDADE:** Limite de importação configurável (All, 10, 100, 1000 usuários)
+* Usuários com email já cadastrado são IGNORADOS e NÃO contam no limite
+* Interface atualizada com seletor de quantidade no Step 4
+* Backend processa limite corretamente, parando quando atingido
+* Progress bar mostra total processado + total importado separadamente
+* Log informa quando limite é atingido
+* Resumo final mostra se limite foi aplicado e quantos foram ignorados por email duplicado
+* Validação de email único JÁ EXISTENTE mantida e reforçada
+
+= 1.6.2 =
+* **SEGURANÇA:** Bloqueio TOTAL de envio de emails durante importação de usuários
+* Filtro `pre_wp_mail` bloqueia wp_mail() completamente quando send_email = false
+* Proteção específica contra emails do WooCommerce (customer_new_account)
+* Garantia 100% de que nenhum email será enviado acidentalmente durante importação em massa
+* Filtros são aplicados e removidos por usuário, mantendo segurança e controle
+
+= 1.6.1 =
+* **CORREÇÃO CRÍTICA:** Formato de meta boxes agora 100% compatível com JetEngine
+* Estrutura de campos corrigida com todas as propriedades: id, isNested, options_source
+* Meta boxes agora aparecem corretamente em JetEngine → Meta Boxes
+* Campos renderizam perfeitamente na tela de edição de usuários
+* Array keys corrigidos (slug como chave, não índice numérico)
+* Campos incluem: title, name, object_type, width, options, repeater-fields, type, id, isNested, options_source
 
 = 1.6.0 =
 * **NOVIDADE:** Sistema profissional de notificações toast (reutilizável em outros plugins)

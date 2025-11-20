@@ -73,33 +73,35 @@ class Eau_User_Meta_Creator {
         // JetEngine armazena user meta boxes em wp_options com a chave 'jet_engine_meta_boxes'
         $jet_meta_boxes = get_option('jet_engine_meta_boxes', array());
 
-        // Formato do JetEngine para meta boxes
+        // Formato EXATO do JetEngine para meta boxes (baseado na estrutura real)
         $jet_format = array(
             'id' => $data['slug'],
             'args' => array(
-                'name' => $data['slug'],
-                'title' => $data['name'],
-                'object_type' => 'user', // Importante: define como meta box de usuário
-                'context' => 'normal',
-                'priority' => 'high',
-                'hide_field_names' => false,
-                'show_edit_link' => true
+                'object_type' => 'user',
+                'allowed_tax' => array(),
+                'allowed_post_type' => array(),
+                'allowed_posts' => array(),
+                'excluded_posts' => array(),
+                'active_conditions' => array(),
+                'name' => $data['name'],
+                'allowed_user_screens' => 'edit' // edit ou edit-profile
             ),
             'meta_fields' => $this->convert_fields_to_jet_format($data['meta_fields'])
         );
 
         // Adiciona ou atualiza
         $found = false;
-        foreach ($jet_meta_boxes as $index => $box) {
+        foreach ($jet_meta_boxes as $key => $box) {
             if (isset($box['id']) && $box['id'] === $data['slug']) {
-                $jet_meta_boxes[$index] = $jet_format;
+                $jet_meta_boxes[$key] = $jet_format;
                 $found = true;
                 break;
             }
         }
 
         if (!$found) {
-            $jet_meta_boxes[] = $jet_format;
+            // Adiciona com key sendo o ID
+            $jet_meta_boxes[$data['slug']] = $jet_format;
         }
 
         update_option('jet_engine_meta_boxes', $jet_meta_boxes);
@@ -113,16 +115,18 @@ class Eau_User_Meta_Creator {
     private function convert_fields_to_jet_format($fields) {
         $jet_fields = array();
 
-        foreach ($fields as $field) {
+        foreach ($fields as $index => $field) {
             $jet_fields[] = array(
-                'name' => $field['name'],
                 'title' => $field['title'],
-                'type' => $this->map_field_type_to_jet($field['type']),
+                'name' => $field['name'],
                 'object_type' => 'field',
                 'width' => '100%',
-                'is_required' => false,
-                'is_array' => false,
-                'conditional_logic' => array()
+                'options' => array(),
+                'repeater-fields' => array(),
+                'type' => $this->map_field_type_to_jet($field['type']),
+                'id' => rand(1000, 9999), // Gera ID numérico único
+                'isNested' => false,
+                'options_source' => 'manual'
             );
         }
 

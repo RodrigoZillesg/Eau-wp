@@ -572,6 +572,18 @@
         mappingHtml += '</select>';
         mappingHtml += '</div>';
 
+        // Campo especial: Coluna Distinct (para evitar duplicatas)
+        mappingHtml += '<div class="eau-mapping-item eau-distinct-field">';
+        mappingHtml += '<label><strong>Coluna Distinct (Evitar Duplicatas):</strong></label>';
+        mappingHtml += '<select class="eau-mapping-select" data-field="distinct_column" id="eau-distinct-column">';
+        mappingHtml += '<option value="">Nenhuma (permitir duplicatas)</option>';
+        data.columns.forEach(function(column) {
+            mappingHtml += `<option value="${escapeHtml(column)}">${escapeHtml(column)}</option>`;
+        });
+        mappingHtml += '</select>';
+        mappingHtml += '<p class="description">Se selecionada, posts com o mesmo valor nesta coluna serão atualizados ao invés de duplicados.</p>';
+        mappingHtml += '</div>';
+
         mappingHtml += '<hr style="margin: 20px 0;">';
         mappingHtml += '<h4>Campos Customizados:</h4>';
 
@@ -608,6 +620,7 @@
         const mapping = {
             post_title: $('[data-field="post_title"]').val(),
             post_content: $('[data-field="post_content"]').val(),
+            distinct_column: $('[data-field="distinct_column"]').val(),
             fields: {},
             available_columns: importData.csvColumns
         };
@@ -616,7 +629,7 @@
             const field = $(this).data('field');
             const column = $(this).val();
 
-            if (field && field !== 'post_title' && field !== 'post_content' && column) {
+            if (field && field !== 'post_title' && field !== 'post_content' && field !== 'distinct_column' && column) {
                 mapping.fields[field] = column;
             }
         });
@@ -885,10 +898,14 @@
      * Inicializa sistema de tabs
      */
     function initTabs() {
-        $('.nav-tab').on('click', function(e) {
+        console.log('Iniciando tabs...');
+        console.log('Nav tabs encontradas:', $('.nav-tab').length);
+
+        $('.nav-tab').off('click').on('click', function(e) {
             e.preventDefault();
 
             const targetTab = $(this).data('tab');
+            console.log('Tab clicada:', targetTab);
 
             // Atualiza tabs
             $('.nav-tab').removeClass('nav-tab-active');
@@ -897,6 +914,8 @@
             // Mostra/esconde conteúdo
             $('.eau-tab-content').hide();
             $('.eau-tab-' + targetTab).show();
+
+            console.log('Exibindo conteúdo da tab:', targetTab);
         });
     }
 
@@ -1507,6 +1526,8 @@
         importUsersData.userRole = $('#eau-user-role').val();
         importUsersData.defaultPassword = $('#eau-default-password').val();
         importUsersData.sendEmail = $('#eau-send-email').is(':checked');
+        importUsersData.importLimit = $('#eau-import-limit').val(); // 'all', '10', '100', ou '1000'
+        importUsersData.totalImported = 0; // Contador total de importações bem-sucedidas
 
         // Vai para step 5 (progresso)
         $('#eau-import-users-step-4').hide();
@@ -1531,6 +1552,8 @@
             user_role: importUsersData.userRole,
             send_email: importUsersData.sendEmail ? 'true' : 'false',
             default_password: importUsersData.defaultPassword,
+            import_limit: importUsersData.importLimit,
+            total_imported: importUsersData.totalImported,
             offset: offset,
             batch_size: batchSize
         };
@@ -1543,10 +1566,13 @@
                 if (response.success) {
                     const result = response.data;
 
+                    // Atualiza contador de importados
+                    importUsersData.totalImported += result.imported;
+
                     // Atualiza progress bar
                     const percentage = (result.processed / result.total) * 100;
                     $('#eau-import-users-progress-fill').css('width', percentage + '%');
-                    $('#eau-import-users-progress-text').text(`${result.processed} de ${result.total} usuários processados`);
+                    $('#eau-import-users-progress-text').text(`${result.processed} de ${result.total} usuários processados (${importUsersData.totalImported} importados)`);
 
                     // Adiciona log
                     if (result.imported > 0) {
@@ -1558,6 +1584,13 @@
 
                     // Scroll do log
                     $('#eau-import-users-log').scrollTop($('#eau-import-users-log')[0].scrollHeight);
+
+                    // Verifica se atingiu o limite
+                    if (result.limit_reached) {
+                        $('#eau-import-users-log').append(`<p class="eau-log-info">ℹ Limite de ${importUsersData.importLimit} usuários atingido!</p>`);
+                        showImportUsersComplete(result);
+                        return;
+                    }
 
                     // Continua se tiver mais
                     if (result.has_more) {
@@ -1581,11 +1614,17 @@
      * Mostra resumo da importação completa
      */
     function showImportUsersComplete(finalResult) {
+        const limitMessage = finalResult.limit_reached
+            ? `<p><strong>Limite aplicado:</strong> ${importUsersData.importLimit} usuários</p>`
+            : '';
+
         const summaryHtml = `
             <h3>Importação Concluída!</h3>
-            <p><strong>Total de itens:</strong> ${finalResult.total}</p>
-            <p><strong>Importados com sucesso:</strong> ${finalResult.imported}</p>
-            <p><strong>Ignorados:</strong> ${finalResult.skipped}</p>
+            <p><strong>Total de linhas no CSV:</strong> ${finalResult.total}</p>
+            <p><strong>Linhas processadas:</strong> ${finalResult.processed}</p>
+            <p><strong>Importados com sucesso:</strong> ${importUsersData.totalImported}</p>
+            <p><strong>Ignorados (email duplicado ou erros):</strong> ${finalResult.total_skipped || finalResult.skipped}</p>
+            ${limitMessage}
         `;
 
         $('#eau-import-users-summary').html(summaryHtml);
@@ -1593,7 +1632,7 @@
         $('#eau-import-users-step-5').hide();
         $('#eau-import-users-step-6').show();
 
-        showNotice('success', `${finalResult.imported} usuários importados com sucesso!`);
+        showNotice('success', `${importUsersData.totalImported} usuários importados com sucesso!`);
     }
 
     /**
@@ -1621,5 +1660,91 @@
             defaultPassword: ''
         };
     }
+
+    // ===========================================
+    // SINCRONIZAÇÃO DE USER TYPES
+    // ===========================================
+
+    /**
+     * Handler para botão de sincronização
+     */
+    $(document).on('click', '#eau-sync-user-types', function() {
+        if (!confirm('Tem certeza que deseja sincronizar todos os user types?\n\nIsso irá:\n- Definir institutionAdmin para usuários com email em primary_contacts_email dos posts de membership\n- Definir Member para todos os outros usuários\n\nEsta ação não pode ser desfeita.')) {
+            return;
+        }
+
+        const $button = $(this);
+        const $progress = $('#eau-sync-progress');
+        const $result = $('#eau-sync-result');
+
+        // Desabilita botão e mostra progresso
+        $button.prop('disabled', true);
+        $progress.show();
+        $result.hide();
+
+        $.ajax({
+            url: eauSystem.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'eau_sync_user_types',
+                nonce: eauSystem.nonce
+            },
+            success: function(response) {
+                $progress.hide();
+                $button.prop('disabled', false);
+
+                if (response.success) {
+                    const data = response.data;
+                    const stats = data.stats;
+
+                    const resultHtml = `
+                        <div class="eau-notice success">
+                            <h3>✓ ${data.message}</h3>
+                            <p><strong>Posts de Membership processados:</strong> ${data.memberships_processed}</p>
+                            <p><strong>Emails de admins encontrados:</strong> ${data.admin_emails_found}</p>
+                            <hr>
+                            <h4>Estatísticas de Sincronização:</h4>
+                            <ul>
+                                <li><strong>Total de usuários:</strong> ${stats.total_users}</li>
+                                <li><strong>Institution Admins:</strong> ${stats.institution_admins}</li>
+                                <li><strong>Members:</strong> ${stats.members}</li>
+                            </ul>
+                        </div>
+                    `;
+
+                    $result.html(resultHtml).show();
+
+                    // Atualiza a tabela de estatísticas
+                    setTimeout(function() {
+                        location.reload();
+                    }, 3000);
+
+                    EauToast.success('Sincronização Concluída!', `${stats.institution_admins} Institution Admins e ${stats.members} Members definidos.`);
+                } else {
+                    const errorHtml = `
+                        <div class="eau-notice error">
+                            <h3>✗ Erro na Sincronização</h3>
+                            <p>${response.data.message || 'Ocorreu um erro inesperado.'}</p>
+                        </div>
+                    `;
+                    $result.html(errorHtml).show();
+                    EauToast.error('Erro na Sincronização', response.data.message);
+                }
+            },
+            error: function() {
+                $progress.hide();
+                $button.prop('disabled', false);
+
+                const errorHtml = `
+                    <div class="eau-notice error">
+                        <h3>✗ Erro de Conexão</h3>
+                        <p>Não foi possível conectar ao servidor.</p>
+                    </div>
+                `;
+                $result.html(errorHtml).show();
+                EauToast.error('Erro de Conexão', 'Não foi possível conectar ao servidor.');
+            }
+        });
+    });
 
 })(jQuery);

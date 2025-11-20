@@ -15,7 +15,7 @@ class Eau_User_Importer {
     /**
      * Importa usuários do CSV em lote
      */
-    public function import_batch($csv_filepath, $column_mapping, $offset = 0, $limit = 25, $conditions = array(), $user_role = 'subscriber', $send_email = false, $default_password = '') {
+    public function import_batch($csv_filepath, $column_mapping, $offset = 0, $limit = 25, $conditions = array(), $user_role = 'subscriber', $send_email = false, $default_password = '', $import_limit = 'all', $total_imported = 0) {
         $this->column_mapping = $column_mapping;
         $this->conditions = $conditions;
         $this->user_role = $user_role;
@@ -36,8 +36,18 @@ class Eau_User_Importer {
         $imported = 0;
         $skipped = 0;
         $errors = array();
+        $limit_reached = false;
+
+        // Verifica limite de importação
+        $max_imports = ($import_limit === 'all') ? PHP_INT_MAX : intval($import_limit);
 
         foreach ($batch_data as $row_index => $row) {
+            // Verifica se já atingiu o limite de importações bem-sucedidas
+            if ($total_imported + $imported >= $max_imports) {
+                $limit_reached = true;
+                break;
+            }
+
             $actual_row_number = $offset + $row_index + 1;
             $result = $this->import_single_user($row, $actual_row_number);
 
@@ -58,7 +68,8 @@ class Eau_User_Importer {
             'skipped' => $skipped,
             'total' => $total_rows,
             'processed' => $offset + count($batch_data),
-            'has_more' => ($offset + count($batch_data)) < $total_rows,
+            'has_more' => !$limit_reached && ($offset + count($batch_data)) < $total_rows,
+            'limit_reached' => $limit_reached,
             'errors' => $errors
         );
     }
@@ -144,10 +155,17 @@ class Eau_User_Importer {
             }
         }
 
-        // Desativa notificação padrão do WP se send_email for false
+        // Desativa TODOS os emails se send_email for false
         if (!$this->send_email) {
+            // Bloqueia notificações padrão do WP
             add_filter('wp_new_user_notification_email_admin', '__return_false');
             add_filter('wp_new_user_notification_email', '__return_false');
+
+            // BLOQUEIA TOTALMENTE o envio de emails (wp_mail)
+            add_filter('pre_wp_mail', '__return_false', 999);
+
+            // Bloqueia emails do WooCommerce especificamente
+            add_filter('woocommerce_email_enabled_customer_new_account', '__return_false', 999);
         }
 
         // Cria o usuário
@@ -157,6 +175,8 @@ class Eau_User_Importer {
         if (!$this->send_email) {
             remove_filter('wp_new_user_notification_email_admin', '__return_false');
             remove_filter('wp_new_user_notification_email', '__return_false');
+            remove_filter('pre_wp_mail', '__return_false', 999);
+            remove_filter('woocommerce_email_enabled_customer_new_account', '__return_false', 999);
         }
 
         if (is_wp_error($user_id)) {

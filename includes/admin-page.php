@@ -27,6 +27,9 @@ if (!defined('WPINC')) {
         <a href="#" class="nav-tab" data-tab="users">
             <span class="dashicons dashicons-admin-users"></span> Usuários
         </a>
+        <a href="#" class="nav-tab" data-tab="sync">
+            <span class="dashicons dashicons-update"></span> Sincronização
+        </a>
     </h2>
 
     <!-- Tab: Post Types -->
@@ -498,6 +501,12 @@ if (!defined('WPINC')) {
     </div>
     </div>
     <!-- Fim Tab: Usuários -->
+
+    <!-- Tab: Sincronização -->
+    <div class="eau-tab-content eau-tab-sync" style="display: none;">
+        <?php include EAU_SYSTEM_PLUGIN_DIR . 'includes/admin-page-sync.php'; ?>
+    </div>
+    <!-- Fim Tab: Sincronização -->
 
     <!-- Modal de Importação de Usuários -->
     <?php include EAU_SYSTEM_PLUGIN_DIR . 'includes/admin-page-users-import-modal.php'; ?>

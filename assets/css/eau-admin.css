@@ -684,3 +684,22 @@
         justify-content: flex-start;
     }
 }
+
+/* Campo Distinct especial */
+.eau-distinct-field {
+    background: #fff9e6;
+    border: 2px dashed #f0b849;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+.eau-distinct-field label {
+    color: #b97700;
+}
+
+.eau-distinct-field .description {
+    color: #b97700;
+    font-style: italic;
+    margin-top: 8px;
+}

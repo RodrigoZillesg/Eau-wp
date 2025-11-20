@@ -89,6 +89,17 @@ if (!defined('WPINC')) {
                 <h3>Passo 4: Configurações de Importação</h3>
 
                 <div class="form-group">
+                    <label for="eau-import-limit">Quantidade de Usuários a Importar:</label>
+                    <select id="eau-import-limit" class="regular-text">
+                        <option value="all">Todos os usuários do CSV</option>
+                        <option value="10">10 usuários</option>
+                        <option value="100">100 usuários</option>
+                        <option value="1000">1000 usuários</option>
+                    </select>
+                    <p class="description">Usuários com email já cadastrado são automaticamente ignorados e NÃO contam no limite</p>
+                </div>
+
+                <div class="form-group">
                     <label for="eau-user-role">Perfil (Role) dos Usuários:</label>
                     <select id="eau-user-role" class="regular-text">
                         <?php
