@@ -7,6 +7,16 @@
 
     let csvData = null;
 
+    let importData = {
+        postTypeSlug: '',
+        postTypeName: '',
+        fields: [],
+        csvFilename: '',
+        csvColumns: [],
+        rowCount: 0,
+        columnMapping: {}
+    };
+
     $(document).ready(function() {
         initUploadForm();
         initCreatePostTypeForm();
@@ -14,6 +24,8 @@
         initCreateAnotherButton();
         initDeleteButtons();
         initPrefixPreview();
+        initImportButtons();
+        initImportModal();
     });
 
     /**
@@ -392,6 +404,291 @@
                 previewDiv.fadeOut();
             }
         });
+    }
+
+    /**
+     * Inicializa botões de importação
+     */
+    function initImportButtons() {
+        $(document).on('click', '.eau-import-data', function() {
+            const button = $(this);
+            importData.postTypeSlug = button.data('slug');
+            importData.postTypeName = button.data('name');
+            importData.fields = button.data('fields');
+
+            // Abre modal
+            $('#eau-import-modal').fadeIn();
+            resetImportModal();
+        });
+    }
+
+    /**
+     * Inicializa modal de importação
+     */
+    function initImportModal() {
+        // Fechar modal
+        $('.eau-modal-close, #eau-import-close').on('click', function() {
+            $('#eau-import-modal').fadeOut();
+            resetImportModal();
+        });
+
+        // Fechar ao clicar no overlay
+        $('.eau-modal-overlay').on('click', function() {
+            $('#eau-import-modal').fadeOut();
+            resetImportModal();
+        });
+
+        // Upload do CSV para importação
+        $('#eau-import-upload-form').on('submit', function(e) {
+            e.preventDefault();
+
+            const fileInput = $('#import_csv_file')[0];
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotice('error', 'Selecione um arquivo CSV.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'eau_import_analyze_csv');
+            formData.append('nonce', eauSystem.nonce);
+            formData.append('import_csv_file', fileInput.files[0]);
+            formData.append('post_type_slug', importData.postTypeSlug);
+
+            showProgress('#eau-import-upload-progress');
+            disableForm('#eau-import-upload-form');
+
+            $.ajax({
+                url: eauSystem.ajaxurl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        importData.csvFilename = response.data.filename;
+                        importData.csvColumns = response.data.columns;
+                        importData.rowCount = response.data.row_count;
+                        showImportStep2(response.data);
+                    } else {
+                        showNotice('error', response.data.message || 'Erro ao analisar CSV.');
+                    }
+                },
+                error: function() {
+                    showNotice('error', 'Erro ao processar arquivo.');
+                },
+                complete: function() {
+                    hideProgress('#eau-import-upload-progress');
+                    enableForm('#eau-import-upload-form');
+                }
+            });
+        });
+
+        // Voltar para step 1
+        $('#eau-import-back').on('click', function() {
+            $('#eau-import-step-2').hide();
+            $('#eau-import-step-1').show();
+        });
+
+        // Iniciar importação
+        $('#eau-start-import').on('click', function() {
+            startImport();
+        });
+    }
+
+    /**
+     * Mostra step 2 do modal (mapeamento)
+     */
+    function showImportStep2(data) {
+        // Info do CSV
+        const infoHtml = `
+            <h3>CSV Analisado</h3>
+            <ul>
+                <li><strong>Arquivo:</strong> ${escapeHtml(data.filename)}</li>
+                <li><strong>Linhas:</strong> ${data.row_count}</li>
+                <li><strong>Colunas:</strong> ${data.columns.length}</li>
+            </ul>
+        `;
+        $('#eau-import-info').html(infoHtml);
+
+        // Mapeamento de colunas
+        let mappingHtml = '<div class="eau-mapping-list">';
+
+        // Campo especial: Título do Post
+        mappingHtml += '<div class="eau-mapping-item">';
+        mappingHtml += '<label><strong>Título do Post:</strong></label>';
+        mappingHtml += '<select class="eau-mapping-select" data-field="post_title">';
+        mappingHtml += '<option value="">Usar primeira coluna</option>';
+        data.columns.forEach(function(column) {
+            mappingHtml += `<option value="${escapeHtml(column)}">${escapeHtml(column)}</option>`;
+        });
+        mappingHtml += '</select>';
+        mappingHtml += '</div>';
+
+        // Campo especial: Conteúdo (opcional)
+        mappingHtml += '<div class="eau-mapping-item">';
+        mappingHtml += '<label>Conteúdo do Post (opcional):</label>';
+        mappingHtml += '<select class="eau-mapping-select" data-field="post_content">';
+        mappingHtml += '<option value="">Não mapear</option>';
+        data.columns.forEach(function(column) {
+            mappingHtml += `<option value="${escapeHtml(column)}">${escapeHtml(column)}</option>`;
+        });
+        mappingHtml += '</select>';
+        mappingHtml += '</div>';
+
+        mappingHtml += '<hr style="margin: 20px 0;">';
+        mappingHtml += '<h4>Campos Customizados:</h4>';
+
+        // Campos customizados
+        importData.fields.forEach(function(field) {
+            mappingHtml += '<div class="eau-mapping-item">';
+            mappingHtml += `<label>${escapeHtml(field.title)}:</label>`;
+            mappingHtml += `<select class="eau-mapping-select" data-field="${escapeHtml(field.name)}">`;
+            mappingHtml += '<option value="">Não mapear</option>';
+
+            data.columns.forEach(function(column) {
+                // Auto-seleciona se os nomes coincidirem
+                const selected = (normalizeForComparison(column) === normalizeForComparison(field.title)) ? 'selected' : '';
+                mappingHtml += `<option value="${escapeHtml(column)}" ${selected}>${escapeHtml(column)}</option>`;
+            });
+
+            mappingHtml += '</select>';
+            mappingHtml += '</div>';
+        });
+
+        mappingHtml += '</div>';
+        $('#eau-column-mapping').html(mappingHtml);
+
+        // Transição
+        $('#eau-import-step-1').hide();
+        $('#eau-import-step-2').show();
+    }
+
+    /**
+     * Inicia o processo de importação
+     */
+    function startImport() {
+        // Coleta mapeamento
+        const mapping = {
+            post_title: $('[data-field="post_title"]').val(),
+            post_content: $('[data-field="post_content"]').val(),
+            fields: {},
+            available_columns: importData.csvColumns
+        };
+
+        $('.eau-mapping-select').each(function() {
+            const field = $(this).data('field');
+            const column = $(this).val();
+
+            if (field && field !== 'post_title' && field !== 'post_content' && column) {
+                mapping.fields[field] = column;
+            }
+        });
+
+        importData.columnMapping = mapping;
+
+        // Vai para step 3
+        $('#eau-import-step-2').hide();
+        $('#eau-import-step-3').show();
+
+        // Inicia importação em lotes
+        processBatchImport(0);
+    }
+
+    /**
+     * Processa importação em lotes
+     */
+    function processBatchImport(offset) {
+        const batchSize = 25;
+
+        const data = {
+            action: 'eau_import_batch',
+            nonce: eauSystem.nonce,
+            csv_filename: importData.csvFilename,
+            post_type_slug: importData.postTypeSlug,
+            column_mapping: JSON.stringify(importData.columnMapping),
+            offset: offset,
+            batch_size: batchSize
+        };
+
+        $.ajax({
+            url: eauSystem.ajaxurl,
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.success) {
+                    const result = response.data;
+
+                    // Atualiza progress bar
+                    const percentage = (result.processed / result.total) * 100;
+                    $('#eau-import-progress-fill').css('width', percentage + '%');
+                    $('#eau-import-progress-text').text(`${result.processed} de ${result.total} itens processados`);
+
+                    // Adiciona log
+                    if (result.imported > 0) {
+                        $('#eau-import-log').append(`<p class="eau-log-success">✓ Lote importado: ${result.imported} itens</p>`);
+                    }
+                    if (result.skipped > 0) {
+                        $('#eau-import-log').append(`<p class="eau-log-warning">⚠ Ignorados: ${result.skipped} itens</p>`);
+                    }
+
+                    // Scroll do log
+                    $('#eau-import-log').scrollTop($('#eau-import-log')[0].scrollHeight);
+
+                    // Continua se tiver mais
+                    if (result.has_more) {
+                        processBatchImport(result.processed);
+                    } else {
+                        showImportComplete(result);
+                    }
+                } else {
+                    showNotice('error', response.data.message || 'Erro na importação.');
+                    $('#eau-import-log').append(`<p class="eau-log-error">✗ Erro: ${response.data.message}</p>`);
+                }
+            },
+            error: function() {
+                showNotice('error', 'Erro ao processar importação.');
+                $('#eau-import-log').append('<p class="eau-log-error">✗ Erro de conexão</p>');
+            }
+        });
+    }
+
+    /**
+     * Mostra resumo da importação completa
+     */
+    function showImportComplete(finalResult) {
+        const summaryHtml = `
+            <h3>Importação Concluída!</h3>
+            <p><strong>Total de itens:</strong> ${finalResult.total}</p>
+            <p><strong>Importados com sucesso:</strong> ${finalResult.imported}</p>
+            <p><strong>Ignorados:</strong> ${finalResult.skipped}</p>
+        `;
+
+        $('#eau-import-summary').html(summaryHtml);
+        $('#eau-import-view-posts').attr('href', eauSystem.ajaxurl.replace('admin-ajax.php', 'edit.php?post_type=' + importData.postTypeSlug));
+
+        $('#eau-import-step-3').hide();
+        $('#eau-import-step-4').show();
+
+        showNotice('success', `${finalResult.imported} posts importados com sucesso!`);
+    }
+
+    /**
+     * Reseta modal de importação
+     */
+    function resetImportModal() {
+        $('#eau-import-step-1').show();
+        $('#eau-import-step-2, #eau-import-step-3, #eau-import-step-4').hide();
+        $('#eau-import-upload-form')[0].reset();
+        $('#eau-import-progress-fill').css('width', '0%');
+        $('#eau-import-log').empty();
+        importData.columnMapping = {};
+    }
+
+    /**
+     * Normaliza string para comparação
+     */
+    function normalizeForComparison(str) {
+        return str.toLowerCase().replace(/[_\s-]/g, '');
     }
 
     /**

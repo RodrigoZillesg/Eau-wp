@@ -17,6 +17,8 @@ class Eau_Admin {
         add_action('wp_ajax_eau_upload_csv', array($this, 'handle_csv_upload'));
         add_action('wp_ajax_eau_create_post_type', array($this, 'handle_create_post_type'));
         add_action('wp_ajax_eau_delete_post_type', array($this, 'handle_delete_post_type'));
+        add_action('wp_ajax_eau_import_analyze_csv', array($this, 'handle_import_analyze_csv'));
+        add_action('wp_ajax_eau_import_batch', array($this, 'handle_import_batch'));
     }
 
     /**
@@ -160,6 +162,77 @@ class Eau_Admin {
 
         $post_type_creator = new Eau_Post_Type_Creator();
         $result = $post_type_creator->delete_post_type($slug);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para analisar CSV para importação
+     */
+    public function handle_import_analyze_csv() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        if (!isset($_FILES['import_csv_file'])) {
+            wp_send_json_error(array('message' => 'Nenhum arquivo enviado.'));
+        }
+
+        $post_type_slug = sanitize_text_field($_POST['post_type_slug'] ?? '');
+
+        if (empty($post_type_slug)) {
+            wp_send_json_error(array('message' => 'Post Type não especificado.'));
+        }
+
+        $csv_handler = new Eau_CSV_Handler();
+        $result = $csv_handler->process_upload($_FILES['import_csv_file']);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // Adiciona informações do post type
+        $result['post_type_slug'] = $post_type_slug;
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para importação em lote (batch)
+     */
+    public function handle_import_batch() {
+        check_ajax_referer('eau_system_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'));
+        }
+
+        $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? '');
+        $post_type_slug = sanitize_text_field($_POST['post_type_slug'] ?? '');
+        $column_mapping = isset($_POST['column_mapping']) ? json_decode(stripslashes($_POST['column_mapping']), true) : array();
+        $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
+        $batch_size = isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25;
+
+        if (empty($csv_filename) || empty($post_type_slug)) {
+            wp_send_json_error(array('message' => 'Dados incompletos.'));
+        }
+
+        // Monta caminho do arquivo
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $csv_filename;
+
+        if (!file_exists($csv_filepath)) {
+            wp_send_json_error(array('message' => 'Arquivo CSV não encontrado.'));
+        }
+
+        $importer = new Eau_Importer();
+        $result = $importer->import_batch($csv_filepath, $post_type_slug, $column_mapping, $offset, $batch_size);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

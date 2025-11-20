@@ -188,6 +188,9 @@ if (!defined('WPINC')) {
                         echo '<a href="' . admin_url('edit.php?post_type=' . $slug) . '" class="button button-small">';
                         echo '<span class="dashicons dashicons-list-view"></span> Ver Posts';
                         echo '</a>';
+                        echo '<button type="button" class="button button-small button-primary eau-import-data" data-slug="' . esc_attr($slug) . '" data-name="' . esc_attr($config['name']) . '" data-fields="' . esc_attr(json_encode($config['meta_fields'])) . '">';
+                        echo '<span class="dashicons dashicons-upload"></span> Importar Dados';
+                        echo '</button>';
                         echo '<button type="button" class="button button-small eau-delete-post-type" data-slug="' . esc_attr($slug) . '" data-name="' . esc_attr($config['name']) . '">';
                         echo '<span class="dashicons dashicons-trash"></span> Excluir';
                         echo '</button>';
@@ -197,6 +200,106 @@ if (!defined('WPINC')) {
                     echo '</div>';
                 }
                 ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Importação -->
+    <div id="eau-import-modal" class="eau-modal" style="display: none;">
+        <div class="eau-modal-overlay"></div>
+        <div class="eau-modal-content">
+            <div class="eau-modal-header">
+                <h2>
+                    <span class="dashicons dashicons-upload"></span>
+                    Importar Dados do CSV
+                </h2>
+                <button type="button" class="eau-modal-close">
+                    <span class="dashicons dashicons-no"></span>
+                </button>
+            </div>
+
+            <div class="eau-modal-body">
+                <div id="eau-import-step-1" class="eau-import-step">
+                    <h3>Passo 1: Upload do CSV</h3>
+                    <p class="description">Faça upload do arquivo CSV com os dados a serem importados.</p>
+
+                    <form id="eau-import-upload-form" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <input type="file" name="import_csv_file" id="import_csv_file" accept=".csv" required>
+                        </div>
+                        <input type="hidden" id="import_post_type_slug" name="post_type_slug">
+
+                        <button type="submit" class="button button-primary">
+                            <span class="dashicons dashicons-upload"></span>
+                            Analisar CSV
+                        </button>
+                    </form>
+
+                    <div id="eau-import-upload-progress" style="display: none;">
+                        <div class="eau-spinner"></div>
+                        <p>Analisando arquivo...</p>
+                    </div>
+                </div>
+
+                <div id="eau-import-step-2" class="eau-import-step" style="display: none;">
+                    <h3>Passo 2: Mapeamento de Colunas</h3>
+                    <p class="description">Associe as colunas do CSV aos campos do Post Type.</p>
+
+                    <div id="eau-import-info" class="eau-info-box">
+                        <!-- Info será inserida via JS -->
+                    </div>
+
+                    <div id="eau-column-mapping" class="eau-mapping-container">
+                        <!-- Mapeamento será inserido via JS -->
+                    </div>
+
+                    <div class="eau-actions">
+                        <button type="button" id="eau-import-back" class="button button-secondary">
+                            <span class="dashicons dashicons-arrow-left-alt"></span>
+                            Voltar
+                        </button>
+                        <button type="button" id="eau-start-import" class="button button-primary button-large">
+                            <span class="dashicons dashicons-database-import"></span>
+                            Iniciar Importação
+                        </button>
+                    </div>
+                </div>
+
+                <div id="eau-import-step-3" class="eau-import-step" style="display: none;">
+                    <h3>Passo 3: Importando Dados</h3>
+
+                    <div class="eau-import-progress-container">
+                        <div class="eau-progress-bar">
+                            <div class="eau-progress-fill" id="eau-import-progress-fill"></div>
+                        </div>
+                        <p class="eau-progress-text" id="eau-import-progress-text">0 de 0 itens importados</p>
+                    </div>
+
+                    <div id="eau-import-log" class="eau-import-log">
+                        <!-- Log de importação -->
+                    </div>
+                </div>
+
+                <div id="eau-import-step-4" class="eau-import-step" style="display: none;">
+                    <h3>
+                        <span class="dashicons dashicons-yes-alt" style="color: #00a32a;"></span>
+                        Importação Concluída!
+                    </h3>
+
+                    <div id="eau-import-summary" class="eau-notice success">
+                        <!-- Resumo será inserido via JS -->
+                    </div>
+
+                    <div class="eau-actions">
+                        <button type="button" id="eau-import-close" class="button button-primary">
+                            Fechar
+                        </button>
+                        <a href="#" id="eau-import-view-posts" class="button button-secondary" target="_blank">
+                            <span class="dashicons dashicons-list-view"></span>
+                            Ver Posts Importados
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

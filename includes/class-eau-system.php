@@ -22,6 +22,7 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-admin.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-csv-handler.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-post-type-creator.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-importer.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-woocommerce-compat.php';
     }
 

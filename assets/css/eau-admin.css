@@ -385,3 +385,218 @@
 .eau-mb-20 {
     margin-bottom: 20px;
 }
+
+/* Modal */
+.eau-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eau-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.eau-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+}
+
+.eau-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.eau-modal-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+}
+
+.eau-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #646970;
+    transition: color 0.2s;
+}
+
+.eau-modal-close:hover {
+    color: #d63638;
+}
+
+.eau-modal-close .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.eau-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.eau-import-step h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* Mapeamento */
+.eau-mapping-container {
+    margin: 20px 0;
+}
+
+.eau-mapping-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.eau-mapping-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.eau-mapping-item label {
+    flex: 0 0 200px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.eau-mapping-select {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+}
+
+/* Progress Bar */
+.eau-import-progress-container {
+    margin: 20px 0;
+}
+
+.eau-progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.eau-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1 0%, #135e96 100%);
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+}
+
+.eau-progress-text {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+/* Import Log */
+.eau-import-log {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.eau-import-log p {
+    margin: 5px 0;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.eau-log-success {
+    color: #00a32a;
+    background: #d7f8e0;
+}
+
+.eau-log-warning {
+    color: #dba617;
+    background: #f8f6e0;
+}
+
+.eau-log-error {
+    color: #d63638;
+    background: #f8d7da;
+}
+
+/* Import Button */
+.eau-import-data {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+.eau-import-data:hover:not(:disabled) {
+    background: #135e96;
+    border-color: #135e96;
+    color: #fff;
+}
+
+/* Responsive Modal */
+@media (max-width: 782px) {
+    .eau-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .eau-mapping-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .eau-mapping-item label {
+        flex: none;
+        width: 100%;
+    }
+
+    .eau-mapping-select {
+        width: 100%;
+    }
+}
