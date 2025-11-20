@@ -57,6 +57,14 @@ class Eau_Admin {
             $this->version,
             'all'
         );
+
+        wp_enqueue_style(
+            $this->plugin_name . '-toast',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/css/eau-toast.css',
+            array(),
+            $this->version,
+            'all'
+        );
     }
 
     /**
@@ -67,10 +75,19 @@ class Eau_Admin {
             return;
         }
 
+        // Toast system (carrega primeiro)
+        wp_enqueue_script(
+            $this->plugin_name . '-toast',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-toast.js',
+            array(),
+            $this->version,
+            true
+        );
+
         wp_enqueue_script(
             $this->plugin_name,
             EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-admin.js',
-            array('jquery'),
+            array('jquery', $this->plugin_name . '-toast'),
             $this->version,
             true
         );

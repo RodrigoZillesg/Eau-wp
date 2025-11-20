@@ -4,7 +4,7 @@ Tags: csv, import, post-type, jetengine, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.2
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,18 @@ Sim! O Post Type criado pode ser gerenciado normalmente através do WordPress e 
 4. Post Type criado com sucesso
 
 == Changelog ==
+
+= 1.6.0 =
+* **NOVIDADE:** Sistema profissional de notificações toast (reutilizável em outros plugins)
+* Toast notifications que persistem entre page reloads usando sessionStorage
+* Integração completa de user meta boxes com JetEngine
+* Meta boxes de usuários agora aparecem na tela de edição de usuários
+* Salvamento duplo: formato Eau System + formato JetEngine (wp_options: jet_engine_meta_boxes)
+* Mapeamento automático de tipos de campo para JetEngine
+* Remoção sincronizada de meta boxes em ambos os sistemas
+* Melhor feedback visual ao criar/excluir meta boxes
+* Arquivos criados: eau-toast.css, eau-toast.js (sistema reutilizável)
+* Location.reload() mantido apenas onde necessário com toast persistente
 
 = 1.5.2 =
 * Corrigido erro "Cannot read properties of undefined (reading 'slice')" no upload de CSV para user meta boxes

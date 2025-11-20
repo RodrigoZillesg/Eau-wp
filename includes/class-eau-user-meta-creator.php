@@ -55,16 +55,96 @@ class Eau_User_Meta_Creator {
      * Salva meta box no banco de dados
      */
     private function save_to_database($data) {
+        // Salva no formato Eau System (para listagem)
         $meta_boxes = get_option('eau_user_meta_boxes', array());
         $meta_boxes[$data['slug']] = $data;
+        update_option('eau_user_meta_boxes', $meta_boxes);
 
-        $updated = update_option('eau_user_meta_boxes', $meta_boxes);
-
-        if (!$updated && !isset($meta_boxes[$data['slug']])) {
-            return new \WP_Error('save_failed', 'Erro ao salvar meta box no banco de dados.');
-        }
+        // Salva também no formato JetEngine para compatibilidade
+        $this->save_to_jet_engine($data);
 
         return true;
+    }
+
+    /**
+     * Salva no formato do JetEngine
+     */
+    private function save_to_jet_engine($data) {
+        // JetEngine armazena user meta boxes em wp_options com a chave 'jet_engine_meta_boxes'
+        $jet_meta_boxes = get_option('jet_engine_meta_boxes', array());
+
+        // Formato do JetEngine para meta boxes
+        $jet_format = array(
+            'id' => $data['slug'],
+            'args' => array(
+                'name' => $data['slug'],
+                'title' => $data['name'],
+                'object_type' => 'user', // Importante: define como meta box de usuário
+                'context' => 'normal',
+                'priority' => 'high',
+                'hide_field_names' => false,
+                'show_edit_link' => true
+            ),
+            'meta_fields' => $this->convert_fields_to_jet_format($data['meta_fields'])
+        );
+
+        // Adiciona ou atualiza
+        $found = false;
+        foreach ($jet_meta_boxes as $index => $box) {
+            if (isset($box['id']) && $box['id'] === $data['slug']) {
+                $jet_meta_boxes[$index] = $jet_format;
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            $jet_meta_boxes[] = $jet_format;
+        }
+
+        update_option('jet_engine_meta_boxes', $jet_meta_boxes);
+
+        return true;
+    }
+
+    /**
+     * Converte campos para formato JetEngine
+     */
+    private function convert_fields_to_jet_format($fields) {
+        $jet_fields = array();
+
+        foreach ($fields as $field) {
+            $jet_fields[] = array(
+                'name' => $field['name'],
+                'title' => $field['title'],
+                'type' => $this->map_field_type_to_jet($field['type']),
+                'object_type' => 'field',
+                'width' => '100%',
+                'is_required' => false,
+                'is_array' => false,
+                'conditional_logic' => array()
+            );
+        }
+
+        return $jet_fields;
+    }
+
+    /**
+     * Mapeia tipos de campo para formato JetEngine
+     */
+    private function map_field_type_to_jet($type) {
+        $type_map = array(
+            'text' => 'text',
+            'email' => 'text',
+            'url' => 'text',
+            'number' => 'number',
+            'textarea' => 'textarea',
+            'date' => 'date',
+            'media' => 'media',
+            'checkbox' => 'checkbox'
+        );
+
+        return isset($type_map[$type]) ? $type_map[$type] : 'text';
     }
 
     /**
@@ -160,6 +240,7 @@ class Eau_User_Meta_Creator {
             return new \WP_Error('invalid_slug', 'Slug do meta box não fornecido.');
         }
 
+        // Remove do Eau System
         $meta_boxes = get_option('eau_user_meta_boxes', array());
 
         if (!isset($meta_boxes[$slug])) {
@@ -169,10 +250,32 @@ class Eau_User_Meta_Creator {
         unset($meta_boxes[$slug]);
         update_option('eau_user_meta_boxes', $meta_boxes);
 
+        // Remove do JetEngine também
+        $this->delete_from_jet_engine($slug);
+
         return array(
             'success' => true,
             'message' => 'Meta box deletado com sucesso.'
         );
+    }
+
+    /**
+     * Remove meta box do JetEngine
+     */
+    private function delete_from_jet_engine($slug) {
+        $jet_meta_boxes = get_option('jet_engine_meta_boxes', array());
+
+        foreach ($jet_meta_boxes as $index => $box) {
+            if (isset($box['id']) && $box['id'] === $slug) {
+                unset($jet_meta_boxes[$index]);
+                break;
+            }
+        }
+
+        // Reindexar array
+        $jet_meta_boxes = array_values($jet_meta_boxes);
+
+        update_option('jet_engine_meta_boxes', $jet_meta_boxes);
     }
 
     /**

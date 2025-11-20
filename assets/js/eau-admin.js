@@ -1048,16 +1048,19 @@
                     enableForm('#eau-user-meta-box-form');
 
                     if (response.success) {
-                        showUserStep3(response.data);
-                        location.reload(); // Recarrega para atualizar lista
+                        // Salva toast para exibir após reload
+                        EauToast.saveForReload('success', 'Meta Box Criado!', `O meta box "${response.data.name}" foi criado com ${response.data.fields_count} campos.`);
+
+                        // Recarrega página para atualizar lista
+                        location.reload();
                     } else {
-                        showNotice('error', response.data.message || 'Erro ao criar meta box.');
+                        EauToast.error('Erro ao Criar Meta Box', response.data.message || 'Ocorreu um erro inesperado.');
                     }
                 },
                 error: function() {
                     hideProgress('#eau-user-create-progress');
                     enableForm('#eau-user-meta-box-form');
-                    showNotice('error', 'Erro ao criar meta box.');
+                    EauToast.error('Erro de Conexão', 'Não foi possível criar o meta box. Tente novamente.');
                 }
             });
         });
