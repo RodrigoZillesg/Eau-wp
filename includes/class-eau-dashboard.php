@@ -1,6 +1,8 @@
 <?php
 namespace EauSystem;
 
+use EauSystem\Components\Eau_Access_Denied;
+
 /**
  * Classe para gerenciar dashboards customizados
  */
@@ -19,7 +21,7 @@ class Eau_Dashboard {
     public static function render_admin_dashboard($atts) {
         // Verifica se usuário está logado
         if (!is_user_logged_in()) {
-            return '<p>Você precisa estar logado para ver o dashboard.</p>';
+            return Eau_Access_Denied::not_logged_in();
         }
 
         // Por enquanto, qualquer usuário logado pode ver

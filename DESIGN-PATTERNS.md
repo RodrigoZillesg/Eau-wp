@@ -368,6 +368,133 @@ EauNotifications.warning('Title', 'Message');
 
 ---
 
+## 🔒 Mensagens de Acesso Negado
+
+### Componente Access Denied
+
+Use o componente `Eau_Access_Denied` para exibir mensagens profissionais quando usuários não autorizados tentam acessar páginas protegidas.
+
+#### Uso Básico
+
+```php
+use EauSystem\Components\Eau_Access_Denied;
+
+// Para usuários não logados
+if (!is_user_logged_in()) {
+    return Eau_Access_Denied::not_logged_in();
+}
+
+// Para usuários sem permissão
+if (!current_user_can('manage_options')) {
+    return Eau_Access_Denied::no_permission();
+}
+```
+
+#### Uso Customizado
+
+```php
+return Eau_Access_Denied::render(
+    'Custom Title',
+    'Custom message explaining why access is denied.',
+    'not_logged_in' // ou 'no_permission'
+);
+```
+
+#### Especificações Visuais
+
+**Container:**
+- Max-width: `600px`
+- Margin: `4rem auto` (desktop), `2rem auto` (mobile)
+- Text-align: `center`
+
+**Card:**
+- Background: `#ffffff`
+- Border: `1px solid #e5e7eb`
+- Border-radius: `16px`
+- Padding: `3rem 2rem` (desktop), `2rem 1.5rem` (mobile)
+- Box-shadow: `0 4px 12px rgba(0, 0, 0, 0.1)`
+
+**Ícone:**
+- Tamanho: `64px x 64px`
+- Cor: `#dc2626` (Red 600)
+- Ícones:
+  - `log-in` - Para usuários não logados
+  - `shield-alert` - Para usuários sem permissão
+
+**Título:**
+- Font-size: `1.5rem` (desktop), `1.25rem` (mobile)
+- Font-weight: `600`
+- Color: `#111827`
+- Margin-bottom: `1rem`
+
+**Mensagem:**
+- Font-size: `1rem` (desktop), `0.9375rem` (mobile)
+- Color: `#6b7280`
+- Line-height: `1.6`
+- Margin-bottom: `2rem`
+
+**Botão:**
+- Background: `#2563eb`
+- Hover: `#1d4ed8`
+- Color: `#ffffff`
+- Padding: `0.875rem 2rem`
+- Border-radius: `8px`
+- Sempre redireciona para: `/login/`
+
+#### Cenários de Uso
+
+**1. Não Logado:**
+```php
+// Título: "Authentication Required"
+// Mensagem: "You need to be logged in to access this page."
+// Ícone: log-in
+return Eau_Access_Denied::not_logged_in();
+```
+
+**2. Sem Permissão:**
+```php
+// Título: "Access Denied"
+// Mensagem: "You do not have sufficient permissions..."
+// Ícone: shield-alert
+return Eau_Access_Denied::no_permission();
+```
+
+**3. Customizado com Role Específica:**
+```php
+return Eau_Access_Denied::no_permission('Institution Administrators');
+// Mensagem: "...Only Institution Administrators can access this feature."
+```
+
+#### Páginas que Usam este Componente
+
+- **Duplicate Manager** (`/dashboard/merge-members/`)
+- **Members Management** (`/members/`)
+- **Dashboard** (`/dashboard/`)
+
+#### Segurança
+
+O componente deve sempre ser usado em conjunto com verificações de permissão:
+
+```php
+// ✅ CORRETO
+if (!is_user_logged_in()) {
+    return Eau_Access_Denied::not_logged_in();
+}
+
+if (!current_user_can('manage_options')) {
+    return Eau_Access_Denied::no_permission();
+}
+
+// ❌ INCORRETO - Nunca confie apenas na UI
+// Sempre valide permissões no backend (AJAX endpoints)
+```
+
+#### Arquivo do Componente
+
+**Localização:** `includes/components/class-eau-access-denied.php`
+
+---
+
 ## 🚀 Boas Práticas
 
 1. **Sempre use !important nos estilos CSS** para garantir que os estilos do plugin sobrescrevam os do tema

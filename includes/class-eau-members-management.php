@@ -6,6 +6,7 @@ use EauSystem\Components\Eau_Data_Table;
 use EauSystem\Components\Eau_Pagination;
 use EauSystem\Components\Eau_Filters;
 use EauSystem\Components\Eau_Modal;
+use EauSystem\Components\Eau_Access_Denied;
 
 /**
  * Members Management Page
@@ -28,6 +29,16 @@ class Eau_Members_Management {
      * @return string HTML da página
      */
     public static function render_members_management($atts) {
+        // Verifica se usuário está logado
+        if (!is_user_logged_in()) {
+            return Eau_Access_Denied::not_logged_in();
+        }
+
+        // Verifica se usuário é Admin ou Super Admin
+        if (!current_user_can('manage_options')) {
+            return Eau_Access_Denied::no_permission();
+        }
+
         // Carrega assets
         self::enqueue_assets();
 
