@@ -34,8 +34,9 @@ class Eau_Members_Management {
             return Eau_Access_Denied::not_logged_in();
         }
 
-        // Verifica se usuário é Admin ou Super Admin
-        if (!current_user_can('manage_options')) {
+        // Verifica se usuário é Admin, Super Admin ou Institution Admin
+        if (!current_user_can('manage_options') &&
+            !Eau_User_Institution_Helper::is_institution_admin()) {
             return Eau_Access_Denied::no_permission();
         }
 

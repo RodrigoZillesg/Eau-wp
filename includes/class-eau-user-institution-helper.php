@@ -116,6 +116,24 @@ class Eau_User_Institution_Helper {
 
         $args = wp_parse_args($args, $defaults);
 
+        // Filtro automático para Institution Admin
+        $current_user_id = get_current_user_id();
+        $is_institution_admin = self::is_institution_admin($current_user_id);
+
+        if ($is_institution_admin && empty($args['institution_id'])) {
+            // Força filtro pela instituição do usuário logado
+            $user_institution = self::get_user_institution($current_user_id);
+            if ($user_institution) {
+                $args['institution_id'] = $user_institution->ID;
+            } else {
+                // Sem instituição: retorna vazio
+                return array(
+                    'users' => array(),
+                    'total' => 0
+                );
+            }
+        }
+
         // Monta a query base
         $where = array("1=1");
         $join = array();
@@ -228,6 +246,61 @@ class Eau_User_Institution_Helper {
     }
 
     /**
+     * Verifica se usuário é Institution Admin
+     *
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se for institution admin
+     */
+    public static function is_institution_admin($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        return ($mem_type === 'institutionAdmin');
+    }
+
+    /**
+     * Pega o company_id (ins_company_id) da instituição do usuário
+     *
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return string|null Company ID ou null
+     */
+    public static function get_user_company_id($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        return get_user_meta($user_id, 'mem_membercompanyname', true);
+    }
+
+    /**
+     * Verifica se usuário tem acesso a outro usuário
+     *
+     * @param int $accessor_id ID do usuário que está tentando acessar
+     * @param int $target_user_id ID do usuário alvo
+     * @return bool True se tiver acesso
+     */
+    public static function can_user_access_user($accessor_id, $target_user_id) {
+        // Super Admin ou Admin: acesso total
+        $accessor = get_userdata($accessor_id);
+        if ($accessor && (in_array('administrator', $accessor->roles) || current_user_can('manage_options'))) {
+            return true;
+        }
+
+        // Não é institution admin: sem acesso
+        if (!self::is_institution_admin($accessor_id)) {
+            return false;
+        }
+
+        // Institution Admin: verifica se é da mesma instituição
+        $accessor_company = self::get_user_company_id($accessor_id);
+        $target_company = self::get_user_company_id($target_user_id);
+
+        return ($accessor_company === $target_company && !empty($accessor_company));
+    }
+
+    /**
      * Pega estatísticas dos usuários
      *
      * @return array Array com total, active, inactive, new_this_month
@@ -235,16 +308,48 @@ class Eau_User_Institution_Helper {
     public static function get_users_stats() {
         global $wpdb;
 
+        $current_user_id = get_current_user_id();
+        $is_institution_admin = self::is_institution_admin($current_user_id);
+
+        // Filtro por company_id para Institution Admins
+        $company_filter = '';
+        $company_id = '';
+
+        if ($is_institution_admin) {
+            $company_id = self::get_user_company_id($current_user_id);
+            if (!empty($company_id)) {
+                $company_filter = $wpdb->prepare(
+                    " AND user_id IN (
+                        SELECT user_id FROM {$wpdb->usermeta}
+                        WHERE meta_key = 'mem_membercompanyname'
+                        AND meta_value = %s
+                    )",
+                    $company_id
+                );
+            }
+        }
+
         // Total de usuários
-        $total = count_users();
-        $total_users = $total['total_users'];
+        if ($is_institution_admin && !empty($company_id)) {
+            $total_users = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(DISTINCT user_id)
+                FROM {$wpdb->usermeta}
+                WHERE meta_key = 'mem_membercompanyname'
+                AND meta_value = %s",
+                $company_id
+            ));
+        } else {
+            $total = count_users();
+            $total_users = $total['total_users'];
+        }
 
         // Active members (mem_status = 'active')
         $active = $wpdb->get_var(
             "SELECT COUNT(DISTINCT user_id)
             FROM {$wpdb->usermeta}
             WHERE meta_key = 'mem_status'
-            AND meta_value = 'active'"
+            AND meta_value = 'active'
+            {$company_filter}"
         );
 
         // Inactive members (mem_status = 'inactive')
@@ -252,17 +357,32 @@ class Eau_User_Institution_Helper {
             "SELECT COUNT(DISTINCT user_id)
             FROM {$wpdb->usermeta}
             WHERE meta_key = 'mem_status'
-            AND meta_value = 'inactive'"
+            AND meta_value = 'inactive'
+            {$company_filter}"
         );
 
         // New this month
         $start_of_month = date('Y-m-01 00:00:00');
-        $new_this_month = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*)
-            FROM {$wpdb->users}
-            WHERE user_registered >= %s",
-            $start_of_month
-        ));
+
+        if ($is_institution_admin && !empty($company_id)) {
+            $new_this_month = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(DISTINCT u.ID)
+                FROM {$wpdb->users} u
+                INNER JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
+                WHERE u.user_registered >= %s
+                AND um.meta_key = 'mem_membercompanyname'
+                AND um.meta_value = %s",
+                $start_of_month,
+                $company_id
+            ));
+        } else {
+            $new_this_month = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*)
+                FROM {$wpdb->users}
+                WHERE user_registered >= %s",
+                $start_of_month
+            ));
+        }
 
         return array(
             'total' => (int) $total_users,

@@ -191,6 +191,33 @@ class Eau_Dashboard {
      * Total de CPD Activities publicadas
      */
     private static function get_cpd_activities() {
+        global $wpdb;
+
+        $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
+
+        if ($is_institution_admin) {
+            $company_id = Eau_User_Institution_Helper::get_user_company_id();
+
+            if (empty($company_id)) {
+                return 0;
+            }
+
+            // Busca activities de usuários da mesma instituição
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(DISTINCT p.ID)
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->usermeta} um ON p.post_author = um.user_id
+                WHERE p.post_type = 'activitie'
+                AND p.post_status = 'publish'
+                AND um.meta_key = 'mem_membercompanyname'
+                AND um.meta_value = %s",
+                $company_id
+            ));
+
+            return intval($count);
+        }
+
+        // Admin/Super Admin: vê tudo
         $count = wp_count_posts('activitie');
         return isset($count->publish) ? $count->publish : 0;
     }
@@ -201,6 +228,33 @@ class Eau_Dashboard {
     private static function get_pending_approval() {
         global $wpdb;
 
+        $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
+
+        if ($is_institution_admin) {
+            $company_id = Eau_User_Institution_Helper::get_user_company_id();
+
+            if (empty($company_id)) {
+                return 0;
+            }
+
+            // Activities pendentes da mesma instituição
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(DISTINCT p.ID)
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->usermeta} um ON p.post_author = um.user_id
+                LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = 'act_verified'
+                WHERE p.post_type = 'activitie'
+                AND p.post_status = 'publish'
+                AND um.meta_key = 'mem_membercompanyname'
+                AND um.meta_value = %s
+                AND (pm.meta_value IS NULL OR pm.meta_value != '1')",
+                $company_id
+            ));
+
+            return intval($count);
+        }
+
+        // Admin/Super Admin: vê tudo
         $count = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(DISTINCT p.ID)
@@ -251,6 +305,33 @@ class Eau_Dashboard {
     private static function get_points_awarded() {
         global $wpdb;
 
+        $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
+
+        if ($is_institution_admin) {
+            $company_id = Eau_User_Institution_Helper::get_user_company_id();
+
+            if (empty($company_id)) {
+                return 0;
+            }
+
+            // Soma pontos de activities da mesma instituição
+            $total = $wpdb->get_var($wpdb->prepare(
+                "SELECT SUM(CAST(pm.meta_value AS DECIMAL(10,2)))
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->usermeta} um ON p.post_author = um.user_id
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = 'activitie'
+                AND p.post_status = 'publish'
+                AND um.meta_key = 'mem_membercompanyname'
+                AND um.meta_value = %s
+                AND pm.meta_key = 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5'",
+                $company_id
+            ));
+
+            return floatval($total);
+        }
+
+        // Admin/Super Admin: vê tudo
         $total = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT SUM(CAST(pm.meta_value AS DECIMAL(10,2)))

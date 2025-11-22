@@ -295,6 +295,22 @@ class Eau_Filters {
      * @return array Array de opções [ID => Nome]
      */
     public static function get_institution_options() {
+        $is_institution_admin = \EauSystem\Eau_User_Institution_Helper::is_institution_admin();
+
+        // Institution Admin: retorna apenas sua instituição
+        if ($is_institution_admin) {
+            $user_institution = \EauSystem\Eau_User_Institution_Helper::get_user_institution(get_current_user_id());
+
+            if ($user_institution) {
+                return array(
+                    $user_institution->ID => $user_institution->post_title
+                );
+            }
+
+            return array();
+        }
+
+        // Admin/Super Admin: retorna todas
         $args = array(
             'post_type' => 'institutions',
             'post_status' => 'publish',

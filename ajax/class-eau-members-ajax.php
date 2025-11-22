@@ -246,6 +246,12 @@ class Eau_Members_Ajax {
             wp_send_json_error(array('message' => 'You cannot delete yourself.'));
         }
 
+        // Institution Admin: verifica se pode acessar este usuário
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::can_user_access_user($current_user_id, $user_id)) {
+            wp_send_json_error(array('message' => 'You do not have permission to delete this user.'));
+        }
+
         // Deleta usuário
         require_once(ABSPATH . 'wp-admin/includes/user.php');
         $deleted = wp_delete_user($user_id);
@@ -267,6 +273,12 @@ class Eau_Members_Ajax {
 
         if (!$user_id) {
             wp_send_json_error(array('message' => 'Invalid user ID.'));
+        }
+
+        // Institution Admin: verifica se pode acessar este usuário
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::can_user_access_user($current_user_id, $user_id)) {
+            wp_send_json_error(array('message' => 'Access denied.'));
         }
 
         $user = get_userdata($user_id);
@@ -322,6 +334,12 @@ class Eau_Members_Ajax {
 
         if (!$user_id) {
             wp_send_json_error(array('message' => 'Invalid user ID.'));
+        }
+
+        // Institution Admin: verifica se pode acessar este usuário
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::can_user_access_user($current_user_id, $user_id)) {
+            wp_send_json_error(array('message' => 'You do not have permission to edit this user.'));
         }
 
         // Atualiza campos do usuário
@@ -495,6 +513,15 @@ class Eau_Members_Ajax {
                 if (isset($_POST[$meta_key])) {
                     update_user_meta($user_id, $meta_key, sanitize_text_field($_POST[$meta_key]));
                 }
+            }
+        }
+
+        // Institution Admin: seta automaticamente o company_id da instituição dele
+        $current_user_id = get_current_user_id();
+        if (Eau_User_Institution_Helper::is_institution_admin($current_user_id)) {
+            $company_id = Eau_User_Institution_Helper::get_user_company_id($current_user_id);
+            if (!empty($company_id)) {
+                update_user_meta($user_id, 'mem_membercompanyname', $company_id);
             }
         }
 
