@@ -1,0 +1,403 @@
+/**
+ * EAU Dashboard - Design Profissional e Responsivo
+ * Layout: conteúdo à esquerda, ícone à direita (sem círculo)
+ * Versão: 1.8.7
+ * IMPORTANTE: Usa !important para sobrescrever tema/Elementor
+ * Mobile First: 1 coluna → 2 colunas → 4 colunas
+ */
+
+.eau-dashboard-container {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 1.5rem 1rem !important;
+}
+
+/* Welcome Section - Responsivo */
+.eau-welcome-section {
+    margin-bottom: 1.5rem !important;
+    padding: 0 !important;
+}
+
+.eau-welcome-title {
+    font-size: 1.5rem !important; /* 24px mobile */
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+    padding: 0 !important;
+    line-height: 1.2 !important;
+}
+
+.eau-welcome-description {
+    font-size: 0.875rem !important; /* 14px mobile */
+    font-weight: 400 !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+}
+
+/* Welcome - Tablet e Desktop */
+@media (min-width: 768px) {
+    .eau-welcome-section {
+        margin-bottom: 2rem !important;
+    }
+
+    .eau-welcome-title {
+        font-size: 1.75rem !important; /* 28px tablet */
+    }
+
+    .eau-welcome-description {
+        font-size: 0.9375rem !important; /* 15px tablet */
+    }
+}
+
+@media (min-width: 1024px) {
+    .eau-welcome-section {
+        margin-bottom: 2.5rem !important;
+    }
+
+    .eau-welcome-title {
+        font-size: 2rem !important; /* 32px desktop */
+    }
+
+    .eau-welcome-description {
+        font-size: 1rem !important; /* 16px desktop */
+    }
+}
+
+@media (min-width: 640px) {
+    .eau-dashboard-container {
+        padding: 2rem 1.5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .eau-dashboard-container {
+        padding: 2.5rem 2rem !important;
+    }
+}
+
+.eau-dashboard-cards {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important; /* 4 colunas fixas */
+    gap: 1.5rem !important; /* Espaçamento maior */
+    margin-bottom: 2rem !important;
+    margin-top: 0 !important;
+}
+
+/* Card Link - Wrapper para tornar card clicável */
+.eau-dashboard-card-link {
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block !important;
+    cursor: pointer !important;
+}
+
+.eau-dashboard-card-link:hover,
+.eau-dashboard-card-link:focus,
+.eau-dashboard-card-link:active {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+/* Card Base - Layout Horizontal */
+.eau-dashboard-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 1.75rem 1.5rem !important; /* Padding generoso */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    display: flex !important;
+    flex-direction: row !important; /* HORIZONTAL: conteúdo à esquerda, ícone à direita */
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1.25rem !important;
+    transition: all 0.2s ease !important;
+    min-width: 280px !important;
+    margin: 0 !important;
+}
+
+.eau-dashboard-card:hover,
+.eau-dashboard-card-link:hover .eau-dashboard-card {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border-color: #d1d5db !important;
+}
+
+/* Ícone do Card - Sem Fundo (apenas ícone) */
+.eau-card-icon {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.eau-card-icon i,
+.eau-card-icon svg {
+    width: 2.5rem !important; /* 40px - ícone grande sem círculo */
+    height: 2.5rem !important; /* 40px */
+    stroke-width: 1.5 !important;
+    margin: 0 !important;
+}
+
+/* Conteúdo do Card - Alinhado à Esquerda */
+.eau-card-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.eau-card-stats {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Número - Grande e Bold */
+.eau-card-number {
+    display: block !important;
+    font-size: 2.25rem !important; /* 36px - grande */
+    font-weight: 700 !important; /* font-bold */
+    line-height: 1 !important;
+    color: #111827 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.25rem !important;
+    margin-top: 0 !important;
+}
+
+/* Subtítulo (Active, Pending) */
+.eau-card-active,
+.eau-card-pending {
+    display: block !important;
+    font-size: 0.8125rem !important; /* 13px */
+    font-weight: 500 !important;
+    margin-top: 0.25rem !important;
+    margin-bottom: 0 !important;
+    letter-spacing: 0 !important;
+}
+
+/* Título do Card */
+.eau-card-title {
+    font-size: 0.875rem !important; /* 14px - legível */
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Cores dos Cards - Saturadas e Vibrantes */
+
+/* Blue - Total Members */
+.eau-card-blue .eau-card-icon i,
+.eau-card-blue .eau-card-icon svg {
+    color: #2563eb !important; /* text-blue-600 */
+    stroke: #2563eb !important;
+}
+
+.eau-card-blue .eau-card-number {
+    color: #111827 !important;
+}
+
+.eau-card-blue .eau-card-active {
+    color: #2563eb !important;
+}
+
+/* Green - CPD Activities */
+.eau-card-green .eau-card-icon i,
+.eau-card-green .eau-card-icon svg {
+    color: #059669 !important; /* text-green-600 */
+    stroke: #059669 !important;
+}
+
+.eau-card-green .eau-card-number {
+    color: #111827 !important;
+}
+
+.eau-card-green .eau-card-pending {
+    color: #059669 !important;
+}
+
+/* Purple - Active Events */
+.eau-card-purple .eau-card-icon i,
+.eau-card-purple .eau-card-icon svg {
+    color: #9333ea !important; /* text-purple-600 */
+    stroke: #9333ea !important;
+}
+
+.eau-card-purple .eau-card-number {
+    color: #111827 !important;
+}
+
+/* Orange - Points Awarded */
+.eau-card-orange .eau-card-icon i,
+.eau-card-orange .eau-card-icon svg {
+    color: #ea580c !important; /* text-orange-600 */
+    stroke: #ea580c !important;
+}
+
+.eau-card-orange .eau-card-number {
+    color: #111827 !important;
+}
+
+/* Red - Pending Payments */
+.eau-card-red .eau-card-icon i,
+.eau-card-red .eau-card-icon svg {
+    color: #dc2626 !important; /* text-red-600 */
+    stroke: #dc2626 !important;
+}
+
+.eau-card-red .eau-card-number {
+    color: #111827 !important;
+}
+
+/* Responsivo Cards - Mobile First */
+
+/* Mobile (padrão) - 1 coluna */
+@media (max-width: 767px) {
+    .eau-dashboard-cards {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .eau-dashboard-card {
+        padding: 1.25rem 1rem !important;
+        min-width: auto !important;
+    }
+
+    .eau-card-icon i,
+    .eau-card-icon svg {
+        width: 2rem !important; /* 32px mobile */
+        height: 2rem !important;
+    }
+
+    .eau-card-number {
+        font-size: 1.875rem !important; /* 30px mobile */
+    }
+
+    .eau-card-title {
+        font-size: 0.75rem !important; /* 12px mobile */
+    }
+
+    .eau-card-active,
+    .eau-card-pending {
+        font-size: 0.75rem !important; /* 12px mobile */
+    }
+}
+
+/* Tablet - 2 colunas */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .eau-dashboard-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.25rem !important;
+    }
+
+    .eau-dashboard-card {
+        padding: 1.5rem 1.25rem !important;
+    }
+
+    .eau-card-icon i,
+    .eau-card-icon svg {
+        width: 2.25rem !important; /* 36px tablet */
+        height: 2.25rem !important;
+    }
+
+    .eau-card-number {
+        font-size: 2rem !important; /* 32px tablet */
+    }
+
+    .eau-card-title {
+        font-size: 0.8125rem !important; /* 13px tablet */
+    }
+
+    .eau-card-active,
+    .eau-card-pending {
+        font-size: 0.75rem !important; /* 12px tablet */
+    }
+}
+
+/* Desktop Small - 4 colunas */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .eau-dashboard-cards {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 1.25rem !important;
+    }
+
+    .eau-dashboard-card {
+        padding: 1.5rem 1.25rem !important;
+    }
+
+    .eau-card-icon i,
+    .eau-card-icon svg {
+        width: 2.25rem !important; /* 36px desktop small */
+        height: 2.25rem !important;
+    }
+
+    .eau-card-number {
+        font-size: 2rem !important; /* 32px */
+    }
+
+    .eau-card-title {
+        font-size: 0.8125rem !important; /* 13px */
+    }
+}
+
+/* Desktop Large - 4 colunas (padrão mantido) */
+@media (min-width: 1280px) {
+    .eau-dashboard-cards {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 1.5rem !important;
+    }
+
+    .eau-dashboard-card {
+        padding: 1.75rem 1.5rem !important;
+    }
+
+    .eau-card-icon i,
+    .eau-card-icon svg {
+        width: 2.5rem !important; /* 40px desktop large */
+        height: 2.5rem !important;
+    }
+
+    .eau-card-number {
+        font-size: 2.25rem !important; /* 36px */
+    }
+
+    .eau-card-title {
+        font-size: 0.875rem !important; /* 14px */
+    }
+
+    .eau-card-active,
+    .eau-card-pending {
+        font-size: 0.8125rem !important; /* 13px */
+    }
+}
+
+/* Acessibilidade */
+.eau-dashboard-card:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Print */
+@media print {
+    .eau-dashboard-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #d1d5db;
+    }
+
+    .eau-dashboard-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}

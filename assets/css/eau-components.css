@@ -1,0 +1,1596 @@
+/**
+ * EAU System - Componentes Reutilizáveis
+ * Versão: 1.9.0
+ * Componentes compartilhados entre Dashboard e Members Management
+ */
+
+/* ==========================================================================
+   STATS CARDS COMPONENT
+   ========================================================================== */
+
+.eau-stats-cards {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-stat-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.eau-stat-card-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    border-radius: 8px !important;
+}
+
+.eau-stat-card-icon i,
+.eau-stat-card-icon svg {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    stroke-width: 2 !important;
+}
+
+.eau-stat-card-content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.eau-stat-card-title {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin: 0 !important;
+}
+
+.eau-stat-card-stats {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}
+
+.eau-stat-card-number {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    line-height: 1 !important;
+}
+
+.eau-stat-card-subtitle {
+    font-size: 0.875rem !important;
+    font-weight: 400 !important;
+    color: #6b7280 !important;
+}
+
+/* Cores dos Stats Cards */
+.eau-stat-card-blue .eau-stat-card-icon {
+    background: #dbeafe !important;
+}
+
+.eau-stat-card-blue .eau-stat-card-icon i,
+.eau-stat-card-blue .eau-stat-card-icon svg {
+    color: #2563eb !important;
+    stroke: #2563eb !important;
+}
+
+.eau-stat-card-green .eau-stat-card-icon {
+    background: #dcfce7 !important;
+}
+
+.eau-stat-card-green .eau-stat-card-icon i,
+.eau-stat-card-green .eau-stat-card-icon svg {
+    color: #059669 !important;
+    stroke: #059669 !important;
+}
+
+.eau-stat-card-purple .eau-stat-card-icon {
+    background: #f3e8ff !important;
+}
+
+.eau-stat-card-purple .eau-stat-card-icon i,
+.eau-stat-card-purple .eau-stat-card-icon svg {
+    color: #9333ea !important;
+    stroke: #9333ea !important;
+}
+
+.eau-stat-card-orange .eau-stat-card-icon {
+    background: #fed7aa !important;
+}
+
+.eau-stat-card-orange .eau-stat-card-icon i,
+.eau-stat-card-orange .eau-stat-card-icon svg {
+    color: #ea580c !important;
+    stroke: #ea580c !important;
+}
+
+.eau-stat-card-red .eau-stat-card-icon {
+    background: #fecaca !important;
+}
+
+.eau-stat-card-red .eau-stat-card-icon i,
+.eau-stat-card-red .eau-stat-card-icon svg {
+    color: #dc2626 !important;
+    stroke: #dc2626 !important;
+}
+
+/* Responsivo - Stats Cards */
+@media (max-width: 767px) {
+    .eau-stats-cards {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .eau-stat-card {
+        padding: 1.25rem !important;
+    }
+
+    .eau-stat-card-number {
+        font-size: 1.5rem !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .eau-stats-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .eau-stats-cards {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 1.25rem !important;
+    }
+
+    .eau-stat-card-number {
+        font-size: 1.75rem !important;
+    }
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+.eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.eau-btn i,
+.eau-btn svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    stroke-width: 2 !important;
+}
+
+.eau-btn-primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.eau-btn-primary:hover {
+    background: #1d4ed8 !important;
+}
+
+.eau-btn-secondary {
+    background: #ffffff !important;
+    color: #374151 !important;
+    border-color: #d1d5db !important;
+}
+
+.eau-btn-secondary:hover {
+    background: #f9fafb !important;
+}
+
+.eau-btn-danger {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+.eau-btn-danger:hover {
+    background: #b91c1c !important;
+}
+
+/* ==========================================================================
+   SEARCH BAR
+   ========================================================================== */
+
+.eau-search-wrapper {
+    position: relative !important;
+    flex: 1 !important;
+}
+
+.eau-search-wrapper i,
+.eau-search-wrapper svg {
+    position: absolute !important;
+    left: 1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    color: #9ca3af !important;
+    stroke: #9ca3af !important;
+    pointer-events: none !important;
+}
+
+.eau-search-input {
+    width: 100% !important;
+    padding: 0.75rem 1rem 0.75rem 3rem !important;
+    font-size: 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-search-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-search-input::placeholder {
+    color: #9ca3af !important;
+}
+
+/* ==========================================================================
+   DATA TABLE COMPONENT
+   ========================================================================== */
+
+.eau-data-table-wrapper {
+    position: relative !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+/* Table Header */
+.eau-table-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1rem 1.5rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+}
+
+.eau-checkbox-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+}
+
+.eau-checkbox-wrapper input[type="checkbox"] {
+    cursor: pointer !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 3px !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+}
+
+.eau-table input[type="checkbox"] {
+    cursor: pointer !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 3px !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+}
+
+.eau-table-count {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+}
+
+.eau-count-number {
+    font-weight: 600 !important;
+    color: #111827 !important;
+}
+
+/* Table Container */
+.eau-table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.eau-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    table-layout: auto !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+}
+
+.eau-table * {
+    box-sizing: border-box !important;
+}
+
+.eau-table thead {
+    background: #f9fafb !important;
+    border-bottom: 2px solid #e5e7eb !important;
+}
+
+.eau-table thead tr {
+    background: #f9fafb !important;
+}
+
+.eau-table-th {
+    padding: 0.75rem 1.5rem !important;
+    text-align: left !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    white-space: nowrap !important;
+    background: #f9fafb !important;
+    border: none !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    vertical-align: middle !important;
+    line-height: 1.5 !important;
+}
+
+.eau-table-th-checkbox {
+    width: 50px !important;
+    padding-left: 1.5rem !important;
+    padding-right: 0.5rem !important;
+    border: none !important;
+}
+
+.eau-table-th-actions {
+    text-align: center !important;
+    width: 120px !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+.eau-sortable {
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+.eau-sortable:hover {
+    color: #111827 !important;
+}
+
+.eau-sort-icon {
+    display: inline-block !important;
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+    margin-left: 0.25rem !important;
+    vertical-align: middle !important;
+    opacity: 0.5 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.eau-sortable:hover .eau-sort-icon {
+    opacity: 1 !important;
+}
+
+.eau-sorted-asc,
+.eau-sorted-desc {
+    color: #2563eb !important;
+    font-weight: 600 !important;
+}
+
+.eau-sorted-asc .eau-sort-icon,
+.eau-sorted-desc .eau-sort-icon {
+    opacity: 1 !important;
+    color: #2563eb !important;
+}
+
+/* Table Body */
+.eau-table tbody {
+    background: #ffffff !important;
+}
+
+.eau-table-row {
+    border-bottom: 1px solid #e5e7eb !important;
+    transition: background-color 0.15s ease !important;
+    background: #ffffff !important;
+}
+
+.eau-table-row:hover {
+    background: #f9fafb !important;
+}
+
+.eau-table-td {
+    padding: 1rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    color: #111827 !important;
+    line-height: 1.5 !important;
+    vertical-align: middle !important;
+    border: none !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.eau-table-td-checkbox {
+    width: 50px !important;
+    padding-left: 1.5rem !important;
+    vertical-align: middle !important;
+    border: none !important;
+}
+
+.eau-table-td-actions {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Actions */
+.eau-table-actions {
+    display: flex !important;
+    gap: 0.5rem !important;
+    justify-content: center !important;
+}
+
+.eau-action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-action-btn:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+}
+
+.eau-action-btn i,
+.eau-action-btn svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    min-width: 1rem !important;
+    max-width: 1rem !important;
+    stroke: currentColor !important;
+    color: inherit !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-action-view:hover {
+    color: #2563eb !important;
+}
+
+.eau-action-view:hover i,
+.eau-action-view:hover svg {
+    stroke: #2563eb !important;
+}
+
+.eau-action-edit:hover {
+    color: #059669 !important;
+}
+
+.eau-action-edit:hover i,
+.eau-action-edit:hover svg {
+    stroke: #059669 !important;
+}
+
+.eau-action-delete:hover {
+    color: #dc2626 !important;
+}
+
+.eau-action-delete:hover i,
+.eau-action-delete:hover svg {
+    stroke: #dc2626 !important;
+}
+
+/* Status Badges */
+.eau-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 9999px !important;
+    white-space: nowrap !important;
+}
+
+.eau-status-badge-active {
+    background: #dcfce7 !important;
+    color: #059669 !important;
+}
+
+.eau-status-badge-inactive {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+}
+
+/* User Type Badges */
+.eau-user-type-badge {
+    display: inline-block !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+}
+
+.eau-user-type-admin {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.eau-user-type-member {
+    background: #e0e7ff !important;
+    color: #3730a3 !important;
+}
+
+/* Member Cell */
+.eau-member-cell {
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.eau-member-cell strong {
+    font-weight: 600 !important;
+    color: #111827 !important;
+}
+
+/* Membership Cell */
+.eau-membership-cell {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}
+
+.eau-membership-subtitle {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    font-weight: 400 !important;
+}
+
+/* Contact Links */
+.eau-table-td a {
+    color: #111827 !important;
+    text-decoration: none !important;
+    transition: color 0.15s ease !important;
+    font-size: 0.75rem !important;
+}
+
+.eau-table-td a:hover {
+    color: #374151 !important;
+    text-decoration: underline !important;
+}
+
+/* Loading Overlay */
+.eau-table-loading-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+}
+
+/* Loading Overlay Hidden (default state) */
+.eau-table-loading-overlay[style*="display: none"] {
+    display: none !important;
+}
+
+/* Loading Overlay Visible (when loading) */
+.eau-table-loading-overlay[style*="display: flex"],
+.eau-table-loading-overlay[style*="display: block"] {
+    display: flex !important;
+}
+
+.eau-spinner {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border: 3px solid #e5e7eb !important;
+    border-top-color: #2563eb !important;
+    border-radius: 50% !important;
+    animation: eau-spin 0.8s linear infinite !important;
+}
+
+@keyframes eau-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsivo - Data Table */
+@media (max-width: 767px) {
+    .eau-table-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    .eau-table {
+        display: block !important;
+    }
+
+    .eau-table thead {
+        display: none !important;
+    }
+
+    .eau-table tbody {
+        display: block !important;
+    }
+
+    .eau-table-row {
+        display: block !important;
+        margin-bottom: 1rem !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 8px !important;
+    }
+
+    .eau-table-td {
+        display: flex !important;
+        justify-content: space-between !important;
+        padding: 0.75rem 1rem !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+    }
+
+    .eau-table-td:last-child {
+        border-bottom: none !important;
+    }
+
+    .eau-table-td::before {
+        content: attr(data-label) !important;
+        font-weight: 600 !important;
+        color: #6b7280 !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    .eau-table-td-checkbox {
+        padding: 1rem !important;
+    }
+
+    .eau-table-td-checkbox::before {
+        content: none !important;
+    }
+
+    .eau-table-td-actions {
+        text-align: left !important;
+    }
+
+    .eau-table-actions {
+        justify-content: flex-start !important;
+    }
+}
+
+/* ==========================================================================
+   PAGINATION COMPONENT
+   ========================================================================== */
+
+.eau-pagination-wrapper {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+}
+
+.eau-pagination-info {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+}
+
+.eau-pagination-nav {
+    display: flex !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+}
+
+.eau-pagination-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 2.25rem !important;
+    height: 2.25rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-pagination-btn:hover:not(:disabled) {
+    background: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+}
+
+.eau-pagination-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+.eau-pagination-btn i,
+.eau-pagination-btn svg {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+.eau-pagination-active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+.eau-pagination-active:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+.eau-pagination-ellipsis {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 2.25rem !important;
+    height: 2.25rem !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+
+/* Responsivo - Pagination */
+@media (max-width: 767px) {
+    .eau-pagination-wrapper {
+        flex-direction: column !important;
+        gap: 1rem !important;
+        align-items: stretch !important;
+    }
+
+    .eau-pagination-info {
+        text-align: center !important;
+    }
+
+    .eau-pagination-nav {
+        justify-content: center !important;
+    }
+
+    .eau-pagination-btn {
+        min-width: 2rem !important;
+        height: 2rem !important;
+        font-size: 0.8125rem !important;
+    }
+}
+
+/* ==========================================================================
+   FILTERS COMPONENT
+   ========================================================================== */
+
+.eau-filters-panel {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-filters-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-filter-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.eau-filter-label {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+.eau-filter-select,
+.eau-filter-date,
+.eau-filter-text {
+    width: 100% !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.875rem !important;
+    color: #1f2937 !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-filter-select:focus,
+.eau-filter-date:focus,
+.eau-filter-text:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-filter-select:hover,
+.eau-filter-date:hover,
+.eau-filter-text:hover {
+    border-color: #9ca3af !important;
+}
+
+/* Date Range Specific Styles */
+.eau-filter-date-range {
+    grid-column: span 2 !important;
+}
+
+.eau-filter-date-range-inputs {
+    display: flex !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
+}
+
+.eau-filter-date-range-inputs .eau-filter-date {
+    flex: 1 !important;
+}
+
+.eau-filter-date-separator {
+    color: #9ca3af !important;
+    font-weight: 500 !important;
+}
+
+/* Filter Actions */
+.eau-filters-actions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.75rem !important;
+    padding-top: 1rem !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.eau-filters-clear {
+    margin-right: auto !important;
+}
+
+/* Responsivo - Filters */
+@media (max-width: 767px) {
+    .eau-filters-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .eau-filter-date-range {
+        grid-column: span 1 !important;
+    }
+
+    .eau-filter-date-range-inputs {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .eau-filter-date-separator {
+        display: none !important;
+    }
+
+    .eau-filters-actions {
+        flex-direction: column-reverse !important;
+    }
+
+    .eau-filters-clear {
+        margin-right: 0 !important;
+    }
+}
+
+/* Filters Badge (número de filtros ativos) */
+.eau-filters-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 1.25rem !important;
+    height: 1.25rem !important;
+    padding: 0 0.375rem !important;
+    margin-left: 0.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    background: #ef4444 !important;
+    border-radius: 9999px !important;
+}
+
+/* ==========================================================================
+   MODAL COMPONENT
+   ========================================================================== */
+
+/* Modal Overlay */
+.eau-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999 !important;
+    padding: 1rem !important;
+    animation: eauFadeIn 0.2s ease !important;
+}
+
+/* Modal Overlay Hidden (default state) */
+.eau-modal-overlay[style*="display: none"] {
+    display: none !important;
+}
+
+/* Modal Overlay Visible (when opened) */
+.eau-modal-overlay[style*="display: flex"],
+.eau-modal-overlay[style*="display: block"] {
+    display: flex !important;
+}
+
+@keyframes eauFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Container */
+.eau-modal {
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    width: 100% !important;
+    max-width: 600px !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: eauSlideUp 0.2s ease !important;
+}
+
+@keyframes eauSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal Sizes */
+.eau-modal-small {
+    width: 100% !important;
+    max-width: 400px !important;
+}
+
+.eau-modal-medium {
+    width: 100% !important;
+    max-width: 600px !important;
+}
+
+.eau-modal-large {
+    width: 100% !important;
+    max-width: 900px !important;
+}
+
+.eau-modal-full {
+    width: 100% !important;
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+}
+
+/* Modal Header */
+.eau-modal-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 1.5rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.eau-modal-title {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+}
+
+.eau-modal-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-modal-close:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+}
+
+.eau-modal-close i,
+.eau-modal-close svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+/* Modal Body */
+.eau-modal-body {
+    flex: 1 !important;
+    padding: 1.5rem !important;
+    overflow-y: auto !important;
+}
+
+/* Modal Loading */
+.eau-modal-loading {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 3rem !important;
+    gap: 1rem !important;
+}
+
+.eau-modal-loading p {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+    margin: 0 !important;
+}
+
+/* Modal Footer */
+.eau-modal-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.75rem !important;
+    padding: 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+}
+
+/* ==========================================================================
+   MODAL FORM STYLES
+   ========================================================================== */
+
+.eau-modal-form {
+    width: 100% !important;
+}
+
+.eau-form-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.25rem !important;
+}
+
+.eau-form-field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.eau-form-field-span-1 {
+    grid-column: span 1 !important;
+}
+
+.eau-form-field-span-2 {
+    grid-column: span 2 !important;
+}
+
+.eau-form-label {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+}
+
+.eau-form-required {
+    color: #ef4444 !important;
+    margin-left: 0.25rem !important;
+}
+
+.eau-form-input,
+.eau-form-select,
+.eau-form-textarea {
+    width: 100% !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.875rem !important;
+    color: #1f2937 !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-form-input:focus,
+.eau-form-select:focus,
+.eau-form-textarea:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-form-input:disabled,
+.eau-form-input:read-only,
+.eau-form-select:disabled,
+.eau-form-textarea:disabled,
+.eau-form-textarea:read-only {
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+    cursor: not-allowed !important;
+}
+
+.eau-form-textarea {
+    resize: vertical !important;
+    min-height: 100px !important;
+}
+
+/* Checkbox Wrapper */
+.eau-form-checkbox-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    cursor: pointer !important;
+}
+
+.eau-form-checkbox {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+}
+
+.eau-form-checkbox-label {
+    font-size: 0.875rem !important;
+    color: #374151 !important;
+}
+
+/* Static Field */
+.eau-form-static {
+    padding: 0.625rem 0 !important;
+    font-size: 0.875rem !important;
+    color: #1f2937 !important;
+    font-weight: 500 !important;
+}
+
+/* Responsivo - Modal */
+@media (max-width: 767px) {
+    .eau-modal-overlay {
+        padding: 0 !important;
+    }
+
+    .eau-modal {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+
+    .eau-modal-header {
+        padding: 1rem !important;
+    }
+
+    .eau-modal-title {
+        font-size: 1.125rem !important;
+    }
+
+    .eau-modal-body {
+        padding: 1rem !important;
+    }
+
+    .eau-modal-footer {
+        padding: 1rem !important;
+        flex-direction: column-reverse !important;
+    }
+
+    .eau-modal-footer .eau-btn {
+        width: 100% !important;
+    }
+
+    .eau-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .eau-form-field-span-1,
+    .eau-form-field-span-2 {
+        grid-column: span 1 !important;
+    }
+}
+
+/* ==========================================================================
+   SKELETON LOADING
+   ========================================================================== */
+
+/* Skeleton Base */
+.eau-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
+    background-size: 200% 100% !important;
+    animation: eauSkeletonLoading 1.5s ease-in-out infinite !important;
+    border-radius: 4px !important;
+}
+
+@keyframes eauSkeletonLoading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Skeleton Variants */
+.eau-skeleton-text {
+    height: 1rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.eau-skeleton-title {
+    height: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+    width: 60% !important;
+}
+
+.eau-skeleton-card {
+    height: 120px !important;
+    border-radius: 8px !important;
+}
+
+.eau-skeleton-circle {
+    border-radius: 50% !important;
+    width: 48px !important;
+    height: 48px !important;
+}
+
+.eau-skeleton-row {
+    height: 60px !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Skeleton Table */
+.eau-skeleton-table {
+    width: 100% !important;
+}
+
+.eau-skeleton-table-header {
+    display: grid !important;
+    grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr 100px !important;
+    gap: 1rem !important;
+    padding: 1rem 1.5rem !important;
+    background: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.eau-skeleton-table-header .eau-skeleton {
+    height: 1rem !important;
+}
+
+.eau-skeleton-table-body {
+    padding: 0 !important;
+}
+
+.eau-skeleton-table-row {
+    display: grid !important;
+    grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr 100px !important;
+    gap: 1rem !important;
+    padding: 1rem 1.5rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    align-items: center !important;
+}
+
+.eau-skeleton-table-row .eau-skeleton {
+    height: 1rem !important;
+}
+
+.eau-skeleton-table-row .eau-skeleton-circle {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Skeleton Stats Cards */
+.eau-skeleton-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 1rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-skeleton-stat-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+}
+
+.eau-skeleton-stat-card .eau-skeleton-circle {
+    width: 48px !important;
+    height: 48px !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-skeleton-stat-content {
+    flex: 1 !important;
+}
+
+.eau-skeleton-stat-content .eau-skeleton-title {
+    height: 2rem !important;
+    width: 80px !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.eau-skeleton-stat-content .eau-skeleton-text {
+    height: 0.875rem !important;
+    width: 120px !important;
+}
+
+/* ==========================================================================
+   TOAST NOTIFICATIONS
+   ========================================================================== */
+
+/* Toast Container */
+.eau-toast-container {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    pointer-events: none !important;
+}
+
+/* Toast Base */
+.eau-toast {
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    padding: 1rem 1.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    min-width: 300px !important;
+    max-width: 500px !important;
+    pointer-events: auto !important;
+    animation: eauToastSlideIn 0.3s ease !important;
+    border-left: 4px solid #6b7280 !important;
+}
+
+.eau-toast.eau-toast-hiding {
+    animation: eauToastSlideOut 0.3s ease !important;
+}
+
+@keyframes eauToastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes eauToastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Toast Icon */
+.eau-toast-icon {
+    flex-shrink: 0 !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.eau-toast-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* Toast Content */
+.eau-toast-content {
+    flex: 1 !important;
+}
+
+.eau-toast-title {
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    margin: 0 0 0.25rem 0 !important;
+    color: #111827 !important;
+}
+
+.eau-toast-message {
+    font-size: 0.875rem !important;
+    margin: 0 !important;
+    color: #6b7280 !important;
+}
+
+/* Toast Close Button */
+.eau-toast-close {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    color: #9ca3af !important;
+    transition: color 0.15s ease !important;
+}
+
+.eau-toast-close:hover {
+    color: #6b7280 !important;
+}
+
+.eau-toast-close svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Toast Variants */
+.eau-toast-success {
+    border-left-color: #10b981 !important;
+}
+
+.eau-toast-success .eau-toast-icon {
+    color: #10b981 !important;
+}
+
+.eau-toast-error {
+    border-left-color: #ef4444 !important;
+}
+
+.eau-toast-error .eau-toast-icon {
+    color: #ef4444 !important;
+}
+
+.eau-toast-warning {
+    border-left-color: #f59e0b !important;
+}
+
+.eau-toast-warning .eau-toast-icon {
+    color: #f59e0b !important;
+}
+
+.eau-toast-info {
+    border-left-color: #3b82f6 !important;
+}
+
+.eau-toast-info .eau-toast-icon {
+    color: #3b82f6 !important;
+}
+
+/* ==========================================================================
+   CONFIRM MODAL
+   ========================================================================== */
+
+/* Confirm Modal */
+.eau-confirm-modal {
+    max-width: 400px !important;
+}
+
+.eau-confirm-modal .eau-modal-body {
+    text-align: center !important;
+    padding: 2rem !important;
+}
+
+.eau-confirm-icon {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 auto 1rem auto !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.eau-confirm-icon-danger {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+}
+
+.eau-confirm-icon-warning {
+    background: #fef3c7 !important;
+    color: #f59e0b !important;
+}
+
+.eau-confirm-icon-info {
+    background: #dbeafe !important;
+    color: #3b82f6 !important;
+}
+
+.eau-confirm-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+.eau-confirm-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    margin: 0 0 0.5rem 0 !important;
+    color: #111827 !important;
+}
+
+.eau-confirm-message {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 0 1.5rem 0 !important;
+    line-height: 1.5 !important;
+}
+
+.eau-confirm-actions {
+    display: flex !important;
+    gap: 0.75rem !important;
+    justify-content: center !important;
+}
+
+.eau-confirm-actions .eau-btn {
+    min-width: 100px !important;
+    justify-content: center !important;
+}

@@ -3,7 +3,7 @@
  * Plugin Name: Eau System
  * Plugin URI: https://platty.com.br
  * Description: Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
- * Version: 1.7.1
+ * Version: 1.23.1
  * Author: Platty / Rodrigo Zillesg
  * Author URI: https://platty.com.br
  * Text Domain: eau-system
@@ -14,13 +14,13 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
-// Se este arquivo for chamado diretamente, aborta.
+// Se este arquivo foi chamado diretamente, aborta.
 if (!defined('WPINC')) {
     die;
 }
 
 // Define constantes do plugin
-define('EAU_SYSTEM_VERSION', '1.7.1');
+define('EAU_SYSTEM_VERSION', '1.23.1');
 define('EAU_SYSTEM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EAU_SYSTEM_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EAU_SYSTEM_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -37,9 +37,17 @@ spl_autoload_register(function ($class) {
 
     $relative_class = substr($class, $len);
 
+    // Suporta namespaces com subpastas (e.g., EauSystem\Components\Eau_Skeleton)
+    // Converte namespace separators para directory separators
+    $relative_class = str_replace('\\', DIRECTORY_SEPARATOR, $relative_class);
+
     // Converte CamelCase/Snake_Case para kebab-case (class-eau-*)
-    $file_name = 'class-' . strtolower(str_replace('_', '-', $relative_class)) . '.php';
-    $file = $base_dir . $file_name;
+    $parts = explode(DIRECTORY_SEPARATOR, $relative_class);
+    $class_name = array_pop($parts);
+    $subdirs = !empty($parts) ? implode(DIRECTORY_SEPARATOR, array_map('strtolower', $parts)) . DIRECTORY_SEPARATOR : '';
+
+    $file_name = 'class-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
+    $file = $base_dir . $subdirs . $file_name;
 
     if (file_exists($file)) {
         require $file;
@@ -61,6 +69,9 @@ function run_eau_system() {
 register_activation_hook(__FILE__, function() {
     // Registra roles customizados
     \EauSystem\Eau_Roles::register_custom_roles();
+
+    // Cria tabelas de duplicatas
+    \EauSystem\Eau_Duplicate_Database::create_tables();
 
     // Cria tabelas necessárias se precisar
     flush_rewrite_rules();

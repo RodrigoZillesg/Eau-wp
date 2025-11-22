@@ -1,0 +1,419 @@
+/**
+ * Eau Documentation - Admin Pages
+ * Estilos para páginas de documentação
+ * Version: 1.0.0
+ */
+
+/* Container Principal */
+.eau-docs-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.eau-docs-header {
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.eau-docs-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 10px 0;
+}
+
+.eau-docs-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Content Area */
+.eau-docs-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Doc Cards */
+.eau-doc-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.eau-doc-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header */
+.eau-doc-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-doc-card-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+/* Badges */
+.eau-doc-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eau-badge-admin {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.eau-badge-member {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.eau-badge-public {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.eau-badge-v1 {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.eau-badge-info {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Card Body */
+.eau-doc-card-body {
+    padding: 24px;
+}
+
+.eau-doc-card-body h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 24px 0 12px 0;
+}
+
+.eau-doc-card-body h3:first-child {
+    margin-top: 0;
+}
+
+.eau-doc-card-body h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 16px 0 8px 0;
+}
+
+.eau-doc-card-body p {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #4b5563;
+    margin: 0 0 12px 0;
+}
+
+.eau-doc-card-body ul,
+.eau-doc-card-body ol {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #4b5563;
+    margin: 0 0 12px 0;
+    padding-left: 24px;
+}
+
+.eau-doc-card-body li {
+    margin-bottom: 6px;
+}
+
+/* Code Block */
+.eau-code-block {
+    margin: 20px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #1e293b;
+}
+
+.eau-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+}
+
+.eau-code-header span {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eau-copy-btn {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #ffffff;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.eau-copy-btn:hover {
+    background: #2563eb;
+}
+
+.eau-copy-btn.copied {
+    background: #10b981;
+}
+
+.eau-code-block pre {
+    margin: 0;
+    padding: 16px;
+    background: #1e293b;
+    overflow-x: auto;
+}
+
+.eau-code-block code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875rem;
+    color: #e2e8f0;
+}
+
+/* Features List */
+.eau-doc-features {
+    margin: 20px 0;
+    padding: 16px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+}
+
+.eau-doc-features h4 {
+    margin-top: 0;
+    color: #166534;
+}
+
+.eau-doc-features ul {
+    margin-bottom: 0;
+    color: #166534;
+}
+
+/* Algorithm Info */
+.eau-doc-algorithm {
+    margin: 20px 0;
+    padding: 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+}
+
+.eau-doc-algorithm h4 {
+    margin-top: 0;
+    color: #1e40af;
+}
+
+.eau-doc-algorithm ul,
+.eau-doc-algorithm p {
+    color: #1e40af;
+    margin-bottom: 8px;
+}
+
+.eau-doc-algorithm ul:last-child {
+    margin-bottom: 0;
+}
+
+/* Example */
+.eau-doc-example {
+    margin: 20px 0;
+    padding: 16px;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+}
+
+.eau-doc-example h4 {
+    margin-top: 0;
+    color: #92400e;
+}
+
+.eau-doc-example p {
+    color: #92400e;
+    margin-bottom: 0;
+}
+
+/* Note */
+.eau-doc-note {
+    margin: 20px 0;
+    padding: 16px;
+    background: #dbeafe;
+    border-left: 4px solid #3b82f6;
+    border-radius: 4px;
+}
+
+.eau-doc-note strong {
+    color: #1e40af;
+}
+
+.eau-doc-note code {
+    padding: 2px 6px;
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #1e40af;
+}
+
+/* Warning */
+.eau-doc-warning {
+    margin: 20px 0;
+    padding: 16px;
+    background: #fee2e2;
+    border-left: 4px solid #dc2626;
+    border-radius: 4px;
+}
+
+.eau-doc-warning strong {
+    color: #991b1b;
+}
+
+/* Grid for Stats */
+.eau-doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.eau-doc-stat {
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.eau-doc-stat h4 {
+    margin-top: 0;
+    color: #111827;
+}
+
+.eau-doc-stat p {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+/* Table */
+.eau-doc-table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.eau-doc-table thead {
+    background: #f9fafb;
+}
+
+.eau-doc-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.eau-doc-table td {
+    padding: 12px;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-doc-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* Inline Code */
+.eau-doc-card-body code {
+    padding: 2px 6px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875rem;
+    color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .eau-docs-container {
+        padding: 0 10px;
+    }
+
+    .eau-docs-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .eau-doc-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .eau-doc-card-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .eau-doc-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-code-block pre {
+        font-size: 0.75rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .eau-docs-container {
+        max-width: 100%;
+    }
+
+    .eau-doc-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #d1d5db;
+    }
+
+    .eau-copy-btn {
+        display: none;
+    }
+}

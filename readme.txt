@@ -4,7 +4,7 @@ Tags: csv, import, post-type, jetengine, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.1
+Stable tag: 1.12.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,216 @@ Sim! O Post Type criado pode ser gerenciado normalmente através do WordPress e 
 4. Post Type criado com sucesso
 
 == Changelog ==
+
+= 1.12.3 =
+* **AJUSTES UX:** Melhorias na apresentação da tabela de membros
+* Diminuída fonte do email de 14px para 12px (0.75rem) para melhor legibilidade
+* Removida coluna "Institution" (redundante - já aparece em Membership)
+* Tabela agora tem 5 colunas: MEMBER | CONTACT | MEMBERSHIP | USER TYPE | STATUS
+* Coluna Membership mostra: Nome da Instituição (grande) + Tipo de Membership (pequeno/subtitle)
+* Visual mais limpo e informações melhor organizadas
+* Menos poluição visual na tabela
+
+= 1.12.2 =
+* **REFORÇO CSS:** Adicionados !important em TODOS os estilos da tabela para garantir compatibilidade
+* Corrigido: Interferência de CSS do tema/Elementor na tabela de membros
+* Adicionados estilos mais específicos: `.eau-table tbody`, `.eau-table thead tr`
+* Propriedades adicionadas: `line-height`, `vertical-align`, `border`, `border-spacing`, `table-layout`
+* Estilos para elementos internos: `.eau-member-cell`, `.eau-membership-cell`, `.eau-membership-subtitle`
+* Links da tabela: cor azul (#2563eb) com hover underline
+* Checkboxes: estilos completos com `appearance`, `border`, `border-radius`
+* Reset universal: `.eau-table * { box-sizing: border-box !important; }`
+* Background branco forçado em tbody, tr e td
+* Borders consistentes em todas as células
+* Garantia de visual limpo e profissional independente do tema
+
+= 1.12.1 =
+* **CORREÇÃO CRÍTICA:** Resolvido problema de CSS que causava modal visível por padrão
+* Corrigido: `.eau-modal-overlay` tinha `display: flex !important` sobrescrevendo `display: none` inline
+* Corrigido: `.eau-table-loading-overlay` com o mesmo problema
+* Solução: Adicionados seletores CSS com especificidade usando `[style*="display: none"]`
+* Agora modais ficam ocultos por padrão e só aparecem quando explicitamente abertos
+* Agora loading overlay da tabela fica oculto por padrão e só aparece durante carregamento
+* CSS mais inteligente: respeita inline styles para controle dinâmico via JavaScript
+
+= 1.12.0 =
+* **PÁGINA DE CONFIGURAÇÃO:** Members Settings - Configure campos editáveis nos modais
+* Nova página no WordPress Admin: "Eau System → Members Settings"
+* Interface visual para configurar quais campos aparecem nos modais View/Edit/Add
+* Tabela com todos os campos disponíveis (WordPress Core + Custom Meta Fields)
+* Checkboxes para: Enabled (exibir campo), Required (obrigatório), Read Only (somente leitura)
+* Drag & Drop (jQuery UI Sortable) para reordenar campos
+* Separação visual: Core Fields (WordPress) vs Custom Meta Fields (JetEngine/Custom)
+* Meta fields incluídos: mem_status, mem_membercompanyname, mem_phone, mem_address, mem_city, mem_state, mem_postcode, mem_country
+* Salvamento via WordPress Options API (option name: eau_members_editable_fields)
+* JavaScript: sortable drag & drop, auto-disable checkboxes, unsaved changes warning
+* CSS dedicado: tabela moderna, drag handle visual, hover states, responsive
+* AJAX handler eau_get_editable_fields: retorna configuração para o modal
+* Integração automática: modal agora busca campos configurados antes de renderizar
+* Fallback inteligente: se não houver configuração, usa campos padrão
+* Campos personalizáveis por tipo: text, email, tel, textarea, select
+* Sistema preparado para futuras integrações: JetEngine auto-detection (TODO)
+
+= 1.11.0 =
+* **NOVO COMPONENTE:** Modal reutilizável para View/Edit/Add Members
+* Componente Eau_Modal altamente configurável (small, medium, large, full sizes)
+* 3 modais implementados: View Member, Edit Member, Add New Member
+* Modal com Header (título + botão X), Body (conteúdo dinâmico), Footer (botões de ação)
+* Sistema de formulários dentro do modal com grid responsivo (2 colunas)
+* Suporte a múltiplos tipos de campo: text, email, tel, number, date, textarea, select, checkbox, static
+* Campos com span configurável (span-1, span-2) para layout flexível
+* Validação de campos required, readonly, disabled
+* JavaScript completo: openModal, closeModal, loadMemberDetails, renderMemberForm
+* AJAX handlers: eau_get_member_details (busca dados), eau_update_member (salva), eau_create_member (cria)
+* View Modal: exibe todos os dados em modo read-only
+* Edit Modal: formulário editável com validação e save via AJAX
+* Add Modal: formulário vazio para criar novos membros com geração automática de senha
+* Animações suaves: fadeIn overlay + slideUp modal
+* CSS completo: overlay, modal sizes, form grid, inputs, estados focus/hover/disabled
+* Mobile: full-screen modal, form em 1 coluna, botões full-width
+* Integração perfeita: após save/create, recarrega tabela automaticamente
+* Close modal: botão X, click no overlay, botão Cancel
+
+= 1.10.0 =
+* **NOVO COMPONENTE:** Filters Panel para Members Management
+* Componente reutilizável Eau_Filters com suporte a múltiplos tipos de filtro
+* Filtros implementados: Status, User Type, Membership Type, Institution, Registration Date Range
+* Interface com grid responsivo e botões "Apply Filters" e "Clear Filters"
+* Badge de contagem de filtros ativos no botão "Filters"
+* Filtros colapsáveis (slide toggle) para economizar espaço
+* JavaScript: métodos handleApplyFilters e handleClearFilters
+* Backend: suporte completo a todos os filtros no AJAX handler eau_get_members
+* Filtro por Membership Type com JOINs complexos (usermeta → postmeta → ins_type)
+* Filtro por Date Range com FROM e TO para user_registered
+* Estilos CSS completos: inputs, selects, date pickers, responsive design
+* Mobile: layout vertical automático, filtros em 1 coluna
+* Integração perfeita com sistema de paginação e busca existente
+
+= 1.9.0 =
+* **NOVA FUNCIONALIDADE MAJOR:** Members Management Page
+* Novo shortcode [eau_members_management] para gerenciamento completo de membros
+* Helper class para relacionamento User ↔ Institution (mem_membercompanyname = ins_company_id)
+* Componente Stats Cards reutilizável (adaptado do dashboard)
+* Stats: Total Members, Active Members, New This Month, Inactive Members
+* Interface com Page Header, botões Export CSV e Add Member
+* Search Bar com busca por nome, email ou phone
+* Filtros (em desenvolvimento): Status, User Type, Membership, Institution, Data
+* Arquitetura componentizada: componentes isolados e reutilizáveis
+* CSS modular: eau-components.css (compartilhado) + eau-members-management.css
+* Totalmente responsivo desde o início (Mobile First)
+* Status baseado no metadado mem_status (não user_status)
+* Base sólida para próximas features: Data Table, Pagination, Modal, etc.
+
+= 1.8.7 =
+* **RESPONSIVIDADE COMPLETA:** Dashboard agora é 100% responsivo em todos os dispositivos
+* Mobile (<768px): 1 coluna, fontes reduzidas, ícones 32px
+* Tablet (768px-1023px): 2 colunas, layout otimizado
+* Desktop Small (1024px-1279px): 4 colunas, espaçamento ajustado
+* Desktop Large (≥1280px): 4 colunas, layout completo
+* Welcome Section responsivo: fontes adaptativas (24px→28px→32px)
+* Cards responsivos: padding, fontes e ícones ajustados por breakpoint
+* Mobile-first approach com !important em todos os breakpoints
+* Garantia de visualização perfeita em smartphones, tablets e desktops
+
+= 1.8.6 =
+* **NOVA FUNCIONALIDADE:** Seção de Welcome antes dos cards estatísticos
+* Exibe "Welcome, [Nome do Usuário]" usando display_name do usuário logado
+* Mensagem descritiva: "Here's what's happening with your membership today."
+* Design limpo e profissional alinhado à esquerda
+* Tipografia: título 32px (semi-bold), descrição 16px (regular, cinza)
+* Espaçamento generoso (2.5rem) antes dos cards
+* Totalmente responsivo e com !important para sobrescrever tema
+
+= 1.8.5 =
+* **AJUSTES DE LAYOUT:** Melhorias na organização visual dos cards
+* Ordem reorganizada: TÍTULO primeiro, depois NÚMERO e subtítulo
+* Posição invertida: conteúdo à ESQUERDA, ícone à DIREITA
+* Círculo de fundo dos ícones REMOVIDO - agora são apenas ícones puros
+* Ícones redimensionados para 40px (sem círculo)
+* Textos alinhados à esquerda dentro dos cards
+* Layout mais limpo e minimalista
+
+= 1.8.4 =
+* **CORREÇÃO CRÍTICA:** Adicionado !important em TODOS os estilos CSS do dashboard
+* CSS agora sobrescreve corretamente os estilos do tema e do Elementor
+* Garantia de que o layout horizontal será aplicado
+* Garantia de que os ícones serão grandes (68px) e circulares
+* Garantia de que as fontes serão bold (700) e no tamanho correto
+* Garantia de que o grid terá 4 colunas no desktop
+* Garantia de que as cores serão saturadas e vibrantes
+* Especificidade CSS aumentada para evitar conflitos com outros plugins/temas
+
+= 1.8.3 =
+* **CORREÇÃO COMPLETA DO DESIGN:** Dashboard agora segue 100% a imagem de referência
+* Layout HORIZONTAL correto: ícone à ESQUERDA + conteúdo à DIREITA
+* Grid de 4 COLUNAS (não mais 5) no desktop
+* Ícones GRANDES (68px) em CÍRCULOS PERFEITOS (border-radius: 50%)
+* Números em BOLD (font-weight: 700) ao invés de light
+* Fontes aumentadas: números 36px, títulos 14px, subtítulos 13px
+* Cores SATURADAS: backgrounds -100/-200 ao invés de -50
+* Padding GENEROSO: 28×24px ao invés de 20×16px
+* Espaçamento maior entre cards: 24px (gap)
+* Cards mais largos: min-width 280px
+* Sombras mais pronunciadas no hover
+* Design profissional e limpo como solicitado
+
+= 1.8.2 =
+* **REDESIGN COMPLETO:** Dashboard agora é FINO e MINIMALISTA
+* Layout vertical: Número grande no topo → Título no meio → Ícone pequeno embaixo
+* Números com font-weight 300 (light) - muito mais elegante e fino
+* Fontes reduzidas: números 32px, títulos 11px, subtítulos 11px
+* Ícones menores (18px) em quadrados levemente arredondados (6px) ao invés de círculos grandes
+* Cores mais suaves: backgrounds -50 ao invés de -100 (eff6ff, f0fdf4, faf5ff, fff7ed, fef2f2)
+* Todos os números sempre #111827 (escuro) - independente da cor do card
+* Padding reduzido: 1.25rem (cards mais compactos)
+* Espaçamento menor entre cards: 1rem (gap)
+* Cards mais estreitos: min-width 200px ao invés de 250px
+* Sombras ultra sutis: 0 1px 2px rgba(0,0,0,0.05)
+* Hover minimalista: translateY(-1px) e shadow leve
+* Border-radius suave: 8px ao invés de 12px
+* Design 100% minimalista e profissional como solicitado
+
+= 1.8.1 =
+* **CORREÇÃO:** Dashboard agora segue 100% o Design System (DESIGN_SYSTEM_GUIDE_FOR_AI.md)
+* CSS completamente refeito com classes do Tailwind/Design System
+* Ícones Lucide agora aparecem automaticamente nos círculos coloridos
+* Círculos agora são totalmente redondos (rounded-full) ao invés de quadrados arredondados
+* Tamanhos ajustados: ícones 24px (w-6 h-6), círculos 48px (h-12 w-12)
+* Cores dos cards ajustadas para Design System (blue-100, green-100, purple-100, orange-100, red-100)
+* Tipografia ajustada: números text-3xl, títulos text-sm font-semibold, subtítulos text-xs
+* Borders ajustadas para border-gray-200 e shadows para shadow-sm (hover: shadow-lg)
+* Container ajustado para max-w-7xl com padding responsivo (px-4 sm:px-6 lg:px-8)
+* Script de inicialização do Lucide melhorado com retry e verificação de carregamento
+* Todas as queries SQL agora usam prepared statements para segurança
+* Todas as queries otimizadas com wpdb direto ao invés de WP_Query/WP_User_Query
+* Versão atualizada para 1.8.1
+
+= 1.8.0 =
+* **NOVIDADE MAJOR:** Dashboard Administrativo com shortcode [eau_admin_dashboard]
+* Sistema de cards estatísticos com 5 métricas principais:
+  - Total Members (com contagem de membros ativos)
+  - CPD Activities (com atividades pendentes de aprovação)
+  - Active Events (eventos com data presente/futura)
+  - Points Awarded (soma de horas de todas as atividades)
+  - Pending Payments (dados simulados por enquanto)
+* Design moderno e responsivo com Lucide Icons
+* Grid layout adaptativo: 1 coluna (mobile), 2 colunas (tablet), 5 colunas (desktop)
+* Cards com efeitos hover e cores temáticas (azul, verde, roxo, laranja, vermelho)
+* Queries otimizadas: WP_User_Query, WP_Query e wpdb direto para agregações
+* CSS dedicado (eau-dashboard.css) enfileirado no frontend
+* Lucide Icons carregado apenas em páginas com o shortcode
+* Classe Eau_Dashboard com 7 métodos de estatísticas
+* Sistema preparado para diferentes visualizações por mem_type (futuro)
+
+= 1.7.2 =
+* **NOVIDADE:** Suporte completo para Lucide Icons
+* Biblioteca de ícones SVG moderna carregada via CDN
+* Inicialização automática em todas as páginas do plugin
+* Documentação completa em LUCIDE-ICONS.md
+* Uso simples: `<i data-lucide="heart"></i>`
+* Mais de 1000 ícones disponíveis
+* Performance otimizada (apenas ~50KB)
+* SVG inline escalável sem perda de qualidade
 
 = 1.7.1 =
 * **NOVIDADE:** Coluna Distinct para evitar duplicatas em importações

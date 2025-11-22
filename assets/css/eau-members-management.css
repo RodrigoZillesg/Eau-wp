@@ -1,0 +1,101 @@
+/**
+ * EAU System - Members Management Page
+ * Versão: 1.9.0
+ */
+
+.eau-members-management-container {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 2rem 1rem !important;
+}
+
+/* Page Header */
+.eau-page-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-page-header-title h1 {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.eau-page-header-subtitle {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+.eau-page-header-actions {
+    display: flex !important;
+    gap: 0.75rem !important;
+}
+
+/* Search and Filters Bar */
+.eau-search-filters-bar {
+    display: flex !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Filters Panel */
+.eau-filters-panel {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Members Table Wrapper */
+.eau-members-table-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    min-height: 400px !important;
+}
+
+/* Responsivo */
+@media (max-width: 767px) {
+    .eau-members-management-container {
+        padding: 1rem !important;
+    }
+
+    .eau-page-header {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    .eau-page-header-title h1 {
+        font-size: 1.5rem !important;
+    }
+
+    .eau-page-header-actions {
+        width: 100% !important;
+        flex-direction: column !important;
+    }
+
+    .eau-page-header-actions .eau-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .eau-search-filters-bar {
+        flex-direction: column !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .eau-members-management-container {
+        padding: 1.5rem !important;
+    }
+
+    .eau-page-header-title h1 {
+        font-size: 1.75rem !important;
+    }
+}

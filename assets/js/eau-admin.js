@@ -35,6 +35,11 @@
     };
 
     $(document).ready(function() {
+        // Inicializa Lucide Icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
         // Post Types
         initUploadForm();
         initCreatePostTypeForm();
@@ -898,14 +903,11 @@
      * Inicializa sistema de tabs
      */
     function initTabs() {
-        console.log('Iniciando tabs...');
-        console.log('Nav tabs encontradas:', $('.nav-tab').length);
 
         $('.nav-tab').off('click').on('click', function(e) {
             e.preventDefault();
 
             const targetTab = $(this).data('tab');
-            console.log('Tab clicada:', targetTab);
 
             // Atualiza tabs
             $('.nav-tab').removeClass('nav-tab-active');
@@ -915,7 +917,6 @@
             $('.eau-tab-content').hide();
             $('.eau-tab-' + targetTab).show();
 
-            console.log('Exibindo conteúdo da tab:', targetTab);
         });
     }
 

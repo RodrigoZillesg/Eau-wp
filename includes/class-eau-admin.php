@@ -78,6 +78,15 @@ class Eau_Admin {
             return;
         }
 
+        // Lucide Icons
+        wp_enqueue_script(
+            'lucide-icons',
+            'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
+            array(),
+            null,
+            true
+        );
+
         // Toast system (carrega primeiro)
         wp_enqueue_script(
             $this->plugin_name . '-toast',
@@ -90,7 +99,7 @@ class Eau_Admin {
         wp_enqueue_script(
             $this->plugin_name,
             EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-admin.js',
-            array('jquery', $this->plugin_name . '-toast'),
+            array('jquery', 'lucide-icons', $this->plugin_name . '-toast'),
             $this->version,
             true
         );
