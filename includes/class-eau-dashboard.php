@@ -34,6 +34,9 @@ class Eau_Dashboard {
         $current_user = wp_get_current_user();
         $display_name = $current_user->display_name;
 
+        // Identifica tipo de usuário
+        $user_role_info = self::get_user_role_info($current_user->ID);
+
         // Renderiza HTML
         ob_start();
         ?>
@@ -42,7 +45,12 @@ class Eau_Dashboard {
             <!-- Welcome Section -->
             <div class="eau-welcome-section">
                 <h1 class="eau-welcome-title">Welcome, <?php echo esc_html($display_name); ?></h1>
-                <p class="eau-welcome-description">Here's what's happening with your membership today.</p>
+                <p class="eau-welcome-description">
+                    <?php echo esc_html($user_role_info['description']); ?>
+                    <?php if (!empty($user_role_info['institution'])): ?>
+                        <span class="eau-institution-badge"><?php echo esc_html($user_role_info['institution']); ?></span>
+                    <?php endif; ?>
+                </p>
             </div>
 
             <div class="eau-dashboard-cards">
@@ -148,43 +156,18 @@ class Eau_Dashboard {
      * Coleta todas as estatísticas do dashboard
      */
     private static function get_dashboard_stats() {
+        // Usa o método filtrado do helper que já respeita institutionAdmin
+        $user_stats = Eau_User_Institution_Helper::get_users_stats();
+
         return array(
-            'total_members' => self::get_total_members(),
-            'active_members' => self::get_active_members(),
+            'total_members' => $user_stats['total'],
+            'active_members' => $user_stats['active'],
             'cpd_activities' => self::get_cpd_activities(),
             'pending_approval' => self::get_pending_approval(),
             'active_events' => self::get_active_events(),
             'points_awarded' => self::get_points_awarded(),
             'pending_payments' => self::get_pending_payments(),
         );
-    }
-
-    /**
-     * Total de membros (todos os usuários)
-     */
-    private static function get_total_members() {
-        $users = count_users();
-        return $users['total_users'];
-    }
-
-    /**
-     * Membros ativos (mem_status = Active)
-     */
-    private static function get_active_members() {
-        global $wpdb;
-
-        $count = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(DISTINCT user_id)
-                FROM {$wpdb->usermeta}
-                WHERE meta_key = %s
-                AND meta_value = %s",
-                'mem_status',
-                'Active'
-            )
-        );
-
-        return intval($count);
     }
 
     /**
@@ -355,5 +338,40 @@ class Eau_Dashboard {
     private static function get_pending_payments() {
         // TODO: Implementar quando o post type de payments for criado
         return 12; // Fake data
+    }
+
+    /**
+     * Retorna informações sobre a role do usuário para exibição
+     *
+     * @param int $user_id ID do usuário
+     * @return array Array com 'description' e 'institution'
+     */
+    private static function get_user_role_info($user_id) {
+        $user = get_userdata($user_id);
+
+        // Verifica se é Super Admin ou Admin (manage_options)
+        if (in_array('administrator', $user->roles) || current_user_can('manage_options')) {
+            return array(
+                'description' => 'System Administrator - Full access to all institutions and data',
+                'institution' => '',
+            );
+        }
+
+        // Verifica se é Institution Admin
+        if (Eau_User_Institution_Helper::is_institution_admin($user_id)) {
+            $institution = Eau_User_Institution_Helper::get_user_institution($user_id);
+            $institution_name = $institution ? $institution->post_title : 'Unknown Institution';
+
+            return array(
+                'description' => 'Institution Administrator for',
+                'institution' => $institution_name,
+            );
+        }
+
+        // Membro comum
+        return array(
+            'description' => 'Here\'s what\'s happening with your membership today.',
+            'institution' => '',
+        );
     }
 }
