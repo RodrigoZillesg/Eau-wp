@@ -327,7 +327,7 @@ class Eau_Activities_Management {
             ),
             array(
                 'title' => 'Total Points',
-                'number' => number_format_i18n($stats['total_hours'], 2),
+                'number' => $stats['total_hours'],
                 'icon' => 'award',
                 'color' => 'purple',
             ),

@@ -57,10 +57,12 @@
                 self.handleSort(columnKey);
             });
 
-            // Select all
-            $(document).on('change', '#eau-select-all-activities', function() {
+            // Select all (ambos os checkboxes: no header da tabela e acima da tabela)
+            $(document).on('change', '#activities-table-select-all, .eau-table-select-all-header', function() {
                 const checked = $(this).is(':checked');
                 $('.eau-row-checkbox').prop('checked', checked);
+                // Sincroniza ambos os checkboxes select-all
+                $('#activities-table-select-all, .eau-table-select-all-header').prop('checked', checked);
                 self.updateSelectedIds();
             });
 
@@ -93,6 +95,7 @@
             // Bulk Delete (apenas para super admin)
             if (eauActivitiesData.isSuperAdmin) {
                 $('#eau-bulk-delete-activities').on('click', this.handleBulkDelete.bind(this));
+                $('#eau-delete-all-filtered-activities').on('click', this.handleDeleteAllFiltered.bind(this));
             }
 
             // Add activity
@@ -878,6 +881,7 @@
                                 EauNotifications.success('Deleted!', response.data.message);
                                 self.selectedIds = [];
                                 self.loadActivities();
+                                self.loadStats();
                                 $('#eau-bulk-delete-activities').hide();
                             } else {
                                 EauNotifications.error('Error', response.data.message || 'Failed to delete activities');
@@ -889,6 +893,115 @@
                     });
                 }
             });
+        },
+
+        /**
+         * Handle delete all filtered activities
+         */
+        handleDeleteAllFiltered: function() {
+            const self = this;
+
+            // Busca todos os IDs que correspondem aos filtros atuais
+            $.ajax({
+                url: eauActivitiesData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_filtered_activity_ids',
+                    nonce: eauActivitiesData.nonce,
+                    search: this.search,
+                    ...this.filters
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const totalIds = response.data.ids;
+                        const totalCount = response.data.total;
+
+                        if (totalCount === 0) {
+                            EauNotifications.warning('No Activities', 'No activities found to delete.');
+                            return;
+                        }
+
+                        // Confirma com o usuário
+                        EauNotifications.confirm({
+                            title: 'Delete All Filtered Activities?',
+                            message: `Are you sure you want to delete ${totalCount} activity(ies)? This action cannot be undone.`,
+                            type: 'danger',
+                            confirmText: 'Delete All',
+                            cancelText: 'Cancel',
+                            onConfirm: function() {
+                                self.processBatchDeletion(totalIds, 'activities');
+                            }
+                        });
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to fetch activities');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Please try again');
+                }
+            });
+        },
+
+        /**
+         * Process batch deletion with progress
+         */
+        processBatchDeletion: function(allIds, type) {
+            const self = this;
+            const batchSize = 50;
+            const totalCount = allIds.length;
+            let processedCount = 0;
+            let deletedCount = 0;
+
+            // Mostra loading overlay na tabela
+            self.showLoading();
+
+            function processNextBatch() {
+                // Verifica se terminou
+                if (processedCount >= totalCount) {
+                    self.hideLoading();
+                    EauNotifications.success(
+                        'Completed!',
+                        `Successfully deleted ${deletedCount} ${type}.`
+                    );
+                    self.loadActivities();
+                    self.loadStats();
+                    return;
+                }
+
+                // Pega próximo lote
+                const batch = allIds.slice(processedCount, processedCount + batchSize);
+
+                // Deleta lote
+                $.ajax({
+                    url: eauActivitiesData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'eau_bulk_delete_activities_batch',
+                        nonce: eauActivitiesData.nonce,
+                        ids: batch
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            deletedCount += response.data.deleted_count;
+                        }
+
+                        processedCount += batch.length;
+
+                        // Atualiza contador visual (opcional)
+                        console.log(`Processing ${processedCount} of ${totalCount} ${type}... (${Math.round((processedCount / totalCount) * 100)}%)`);
+
+                        // Processa próximo lote
+                        processNextBatch();
+                    },
+                    error: function() {
+                        self.hideLoading();
+                        EauNotifications.error('Error', 'Failed to delete batch. Please try again.');
+                    }
+                });
+            }
+
+            // Inicia processamento
+            processNextBatch();
         },
 
         /**

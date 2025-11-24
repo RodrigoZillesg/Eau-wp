@@ -21,6 +21,12 @@ class Eau_Activities_Ajax {
         // Bulk delete activities (apenas super admin)
         add_action('wp_ajax_eau_bulk_delete_activities', array(__CLASS__, 'bulk_delete_activities'));
 
+        // Get filtered activity IDs (para delete all filtered)
+        add_action('wp_ajax_eau_get_filtered_activity_ids', array(__CLASS__, 'get_filtered_activity_ids'));
+
+        // Bulk delete activities batch (processamento em lotes)
+        add_action('wp_ajax_eau_bulk_delete_activities_batch', array(__CLASS__, 'bulk_delete_activities_batch'));
+
         // Update activity
         add_action('wp_ajax_eau_update_activity', array(__CLASS__, 'update_activity'));
 
@@ -1046,6 +1052,98 @@ class Eau_Activities_Ajax {
             'message' => $message,
             'deleted_count' => $deleted_count,
             'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Get Filtered Activity IDs (para Delete All Filtered)
+     */
+    public static function get_filtered_activity_ids() {
+        // Verifica nonce
+        check_ajax_referer('eau_activities_nonce', 'nonce');
+
+        // Verifica se é super admin
+        if (!Eau_User_Institution_Helper::is_super_admin()) {
+            wp_send_json_error(array(
+                'message' => 'Permission denied. Only super admins can perform this action.'
+            ));
+        }
+
+        // Pega parâmetros de filtro
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $member_id = isset($_POST['member']) ? absint($_POST['member']) : '';
+        $institution_id = isset($_POST['institution']) ? absint($_POST['institution']) : '';
+        $verified = isset($_POST['verified']) ? sanitize_text_field($_POST['verified']) : '';
+        $date_from = isset($_POST['date_from']) ? sanitize_text_field($_POST['date_from']) : '';
+        $date_to = isset($_POST['date_to']) ? sanitize_text_field($_POST['date_to']) : '';
+
+        // Busca TODOS os IDs (sem paginação)
+        $result = self::query_activities(array(
+            'posts_per_page' => -1, // Todos os resultados
+            'paged' => 1,
+            'search' => $search,
+            'member_id' => $member_id,
+            'institution_id' => $institution_id,
+            'verified' => $verified,
+            'date_from' => $date_from,
+            'date_to' => $date_to,
+        ));
+
+        // Extrai apenas os IDs
+        $activity_ids = array();
+        foreach ($result['activities'] as $activity) {
+            $activity_ids[] = $activity->ID;
+        }
+
+        wp_send_json_success(array(
+            'ids' => $activity_ids,
+            'total' => count($activity_ids),
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Delete Activities Batch (processa em lotes de 50)
+     */
+    public static function bulk_delete_activities_batch() {
+        // Verifica nonce
+        check_ajax_referer('eau_activities_nonce', 'nonce');
+
+        // Verifica se é super admin
+        if (!Eau_User_Institution_Helper::is_super_admin()) {
+            wp_send_json_error(array(
+                'message' => 'Permission denied. Only super admins can perform bulk deletions.'
+            ));
+        }
+
+        // Pega IDs das atividades (máximo 50 por vez)
+        $activity_ids = isset($_POST['ids']) ? array_map('absint', $_POST['ids']) : array();
+        $activity_ids = array_slice($activity_ids, 0, 50); // Limita a 50
+
+        if (empty($activity_ids)) {
+            wp_send_json_error(array(
+                'message' => 'No activities provided for deletion.'
+            ));
+        }
+
+        $deleted_count = 0;
+
+        foreach ($activity_ids as $post_id) {
+            // Verifica se é uma atividade válida
+            $post = get_post($post_id);
+            if (!$post || $post->post_type !== 'activitie') {
+                continue;
+            }
+
+            // Deleta a atividade
+            $deleted = wp_delete_post($post_id, true);
+
+            if ($deleted) {
+                $deleted_count++;
+            }
+        }
+
+        wp_send_json_success(array(
+            'deleted_count' => $deleted_count,
         ));
     }
 }

@@ -79,7 +79,14 @@ class Eau_Stats_Cards {
             <div class="eau-stat-card-content">
                 <h3 class="eau-stat-card-title"><?php echo esc_html($card['title']); ?></h3>
                 <div class="eau-stat-card-stats">
-                    <span class="eau-stat-card-number"><?php echo esc_html(number_format($card['number'])); ?></span>
+                    <span class="eau-stat-card-number"><?php
+                        // Se já é string formatada, usa direto; caso contrário, formata como número
+                        if (is_numeric($card['number'])) {
+                            echo esc_html(number_format((float)$card['number']));
+                        } else {
+                            echo esc_html($card['number']);
+                        }
+                    ?></span>
                     <?php if (!empty($card['subtitle'])): ?>
                         <span class="eau-stat-card-subtitle"><?php echo esc_html($card['subtitle']); ?></span>
                     <?php endif; ?>
