@@ -66,63 +66,119 @@
 }
 
 /* ==========================================================================
-   Buttons
+   Buttons - Reset Theme Styles
    ========================================================================== */
 
-.eau-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: var(--eau-border-radius);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    white-space: nowrap;
+.eau-events-archive .eau-btn,
+.eau-event-single .eau-btn,
+.eau-events-archive button.eau-btn,
+.eau-event-single button.eau-btn,
+.eau-events-archive a.eau-btn,
+.eau-event-single a.eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: var(--eau-font-family) !important;
+    line-height: 1.5 !important;
+    border-radius: var(--eau-border-radius) !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
 }
 
-.eau-btn svg {
-    flex-shrink: 0;
+.eau-events-archive .eau-btn svg,
+.eau-event-single .eau-btn svg {
+    flex-shrink: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
 }
 
-.eau-btn-primary {
-    background: var(--eau-primary);
-    color: var(--eau-white);
-    border-color: var(--eau-primary);
+/* Primary Button */
+.eau-events-archive .eau-btn-primary,
+.eau-event-single .eau-btn-primary,
+.eau-events-archive button.eau-btn-primary,
+.eau-event-single button.eau-btn-primary,
+.eau-events-archive a.eau-btn-primary,
+.eau-event-single a.eau-btn-primary {
+    background: var(--eau-primary) !important;
+    color: var(--eau-white) !important;
+    border-color: var(--eau-primary) !important;
 }
 
-.eau-btn-primary:hover {
-    background: var(--eau-primary-hover);
-    border-color: var(--eau-primary-hover);
+.eau-events-archive .eau-btn-primary:hover,
+.eau-event-single .eau-btn-primary:hover,
+.eau-events-archive .eau-btn-primary:focus,
+.eau-event-single .eau-btn-primary:focus,
+.eau-events-archive .eau-btn-primary:active,
+.eau-event-single .eau-btn-primary:active,
+.eau-events-archive .eau-btn-primary:visited,
+.eau-event-single .eau-btn-primary:visited {
+    background: var(--eau-primary-hover) !important;
+    color: var(--eau-white) !important;
+    border-color: var(--eau-primary-hover) !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
-.eau-btn-secondary {
-    background: var(--eau-gray-100);
-    color: var(--eau-gray-700);
-    border-color: var(--eau-gray-200);
+/* Outline Button */
+.eau-events-archive .eau-btn-outline,
+.eau-event-single .eau-btn-outline,
+.eau-events-archive button.eau-btn-outline,
+.eau-event-single button.eau-btn-outline {
+    background: var(--eau-white) !important;
+    color: var(--eau-gray-700) !important;
+    border-color: var(--eau-gray-300) !important;
 }
 
-.eau-btn-secondary:hover {
-    background: var(--eau-gray-200);
+.eau-events-archive .eau-btn-outline:hover,
+.eau-event-single .eau-btn-outline:hover,
+.eau-events-archive .eau-btn-outline:focus,
+.eau-event-single .eau-btn-outline:focus,
+.eau-events-archive .eau-btn-outline:active,
+.eau-event-single .eau-btn-outline:active,
+.eau-events-archive .eau-btn-outline:visited,
+.eau-event-single .eau-btn-outline:visited {
+    background: var(--eau-gray-50) !important;
+    color: var(--eau-gray-900) !important;
+    border-color: var(--eau-gray-400) !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
-.eau-btn-outline {
-    background: var(--eau-white);
-    color: var(--eau-gray-700);
-    border-color: var(--eau-gray-300);
+/* Full Width Button */
+.eau-events-archive .eau-btn-full,
+.eau-event-single .eau-btn-full {
+    width: 100% !important;
 }
 
-.eau-btn-outline:hover {
-    background: var(--eau-gray-50);
-    border-color: var(--eau-gray-400);
+/* Secondary Button */
+.eau-events-archive .eau-btn-secondary,
+.eau-event-single .eau-btn-secondary {
+    background: var(--eau-gray-100) !important;
+    color: var(--eau-gray-700) !important;
+    border-color: var(--eau-gray-200) !important;
 }
 
-.eau-btn-full {
-    width: 100%;
+.eau-events-archive .eau-btn-secondary:hover,
+.eau-event-single .eau-btn-secondary:hover,
+.eau-events-archive .eau-btn-secondary:focus,
+.eau-event-single .eau-btn-secondary:focus {
+    background: var(--eau-gray-200) !important;
+    color: var(--eau-gray-900) !important;
+    border-color: var(--eau-gray-300) !important;
 }
 
 /* ==========================================================================
@@ -794,6 +850,7 @@
     padding: 20px;
     text-align: center;
     margin-bottom: 16px;
+    margin-top: 16px;
 }
 
 .eau-countdown-header {
