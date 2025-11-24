@@ -41,6 +41,19 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-members-settings.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-members-ajax.php';
 
+        // Institutions Management (v1.28.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institutions-management.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-institutions-ajax.php';
+
+        // Activities Management (v1.29.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-activities-management.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-activities-ajax.php';
+
+        // Categories Management (v1.31.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-categories-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-categories-management.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-categories-ajax.php';
+
         // Duplicate Manager (v1.18.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-duplicate-database.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-duplicate-scanner.php';
@@ -92,10 +105,16 @@ class Eau_System {
         // Registra shortcodes
         Eau_Dashboard::register_shortcode();
         Eau_Members_Management::register_shortcode();
+        Eau_Institutions_Management::register_shortcode();
+        Eau_Activities_Management::register_shortcode();
+        Eau_Categories_Management::register_shortcode();
         Eau_Duplicate_Manager::register_shortcode();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_Institutions_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_Activities_Ajax::register_handlers();
+        Eau_Categories_Ajax::register_ajax_handlers();
         Eau_Duplicate_Ajax::register_endpoints();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
@@ -108,6 +127,9 @@ class Eau_System {
         if (!Eau_Duplicate_Database::tables_exist()) {
             Eau_Duplicate_Database::create_tables();
         }
+
+        // Garante que tabela de categorias existe
+        Eau_Categories_Database::create_table();
     }
 
     public function get_plugin_name() {

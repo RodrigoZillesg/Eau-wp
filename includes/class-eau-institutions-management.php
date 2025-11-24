@@ -9,34 +9,33 @@ use EauSystem\Components\Eau_Modal;
 use EauSystem\Components\Eau_Access_Denied;
 
 /**
- * Members Management Page
+ * Institutions Management Page
  *
- * Shortcode: [eau_members_management]
+ * Shortcode: [eau_institutions_management]
  */
-class Eau_Members_Management {
+class Eau_Institutions_Management {
 
     /**
      * Registra o shortcode
      */
     public static function register_shortcode() {
-        add_shortcode('eau_members_management', array(__CLASS__, 'render_members_management'));
+        add_shortcode('eau_institutions_management', array(__CLASS__, 'render_institutions_management'));
     }
 
     /**
-     * Renderiza a página de Members Management
+     * Renderiza a página de Institutions Management
      *
      * @param array $atts Atributos do shortcode
      * @return string HTML da página
      */
-    public static function render_members_management($atts) {
+    public static function render_institutions_management($atts) {
         // Verifica se usuário está logado
         if (!is_user_logged_in()) {
             return Eau_Access_Denied::not_logged_in();
         }
 
-        // Verifica se usuário tem permissão (superAdmin, Admin ou institutionAdmin)
-        if (!Eau_User_Institution_Helper::has_admin_access() &&
-            !Eau_User_Institution_Helper::is_institution_admin()) {
+        // Verifica se usuário tem permissão (superAdmin ou Admin)
+        if (!Eau_User_Institution_Helper::has_admin_access()) {
             return Eau_Access_Denied::no_permission();
         }
 
@@ -44,11 +43,11 @@ class Eau_Members_Management {
         self::enqueue_assets();
 
         // Pega estatísticas
-        $stats = Eau_User_Institution_Helper::get_users_stats();
+        $stats = self::get_institutions_stats();
 
         ob_start();
         ?>
-        <div class="eau-members-management-container">
+        <div class="eau-institutions-management-container">
 
             <!-- Stats Cards -->
             <?php echo self::render_stats_cards($stats); ?>
@@ -56,31 +55,27 @@ class Eau_Members_Management {
             <!-- Page Header -->
             <div class="eau-page-header">
                 <div class="eau-page-header-title">
-                    <h1>Members Management</h1>
-                    <p class="eau-page-header-subtitle">Managing all members across all institutions</p>
+                    <h1>Institutions Management</h1>
+                    <p class="eau-page-header-subtitle">Managing all institutions and their settings</p>
                 </div>
                 <div class="eau-page-header-actions">
                     <?php if (Eau_User_Institution_Helper::is_super_admin()): ?>
-                        <button class="eau-btn eau-btn-danger" id="eau-bulk-delete-members" style="display: none;">
+                        <button class="eau-btn eau-btn-danger" id="eau-bulk-delete-institutions" style="display: none;">
                             <i data-lucide="trash-2"></i>
                             Delete Selected
                         </button>
-                        <button class="eau-btn eau-btn-danger" id="eau-delete-all-filtered-members">
+                        <button class="eau-btn eau-btn-danger" id="eau-delete-all-filtered-institutions">
                             <i data-lucide="trash-2"></i>
                             Delete All Filtered
                         </button>
                     <?php endif; ?>
-                    <button class="eau-btn eau-btn-secondary" id="eau-export-csv">
+                    <button class="eau-btn eau-btn-secondary" id="eau-export-institutions-csv">
                         <i data-lucide="download"></i>
                         Export CSV
                     </button>
-                    <a href="/dashboard/merge-members/" class="eau-btn eau-btn-secondary">
-                        <i data-lucide="users-2"></i>
-                        Merge Duplicates
-                    </a>
-                    <button class="eau-btn eau-btn-primary" id="eau-add-member">
-                        <i data-lucide="user-plus"></i>
-                        Add Member
+                    <button class="eau-btn eau-btn-primary" id="eau-add-institution">
+                        <i data-lucide="building-2"></i>
+                        Add Institution
                     </button>
                 </div>
             </div>
@@ -92,8 +87,8 @@ class Eau_Members_Management {
                     <input
                         type="text"
                         class="eau-search-input"
-                        placeholder="Search by name, email, or phone..."
-                        id="eau-members-search"
+                        placeholder="Search by institution name or code..."
+                        id="eau-institutions-search"
                     >
                 </div>
                 <button class="eau-btn eau-btn-secondary" id="eau-filters-toggle">
@@ -105,8 +100,8 @@ class Eau_Members_Management {
             <!-- Filters Panel (hidden by default) -->
             <?php echo self::render_filters(); ?>
 
-            <!-- Members Table -->
-            <?php echo self::render_members_table(); ?>
+            <!-- Institutions Table -->
+            <?php echo self::render_institutions_table(); ?>
 
             <!-- Pagination -->
             <div id="eau-pagination-container">
@@ -122,35 +117,108 @@ class Eau_Members_Management {
     }
 
     /**
+     * Pega estatísticas das instituições
+     *
+     * @return array Estatísticas
+     */
+    private static function get_institutions_stats() {
+        // Total de instituições (usando wp_count_posts)
+        $counts = wp_count_posts('institutions');
+        $total = isset($counts->publish) ? (int) $counts->publish : 0;
+
+        // Para active/inactive, precisamos contar via meta_query
+        // Active institutions (sem status definido ou status = 'active')
+        $active_query = new \WP_Query(array(
+            'post_type' => 'institutions',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                'relation' => 'OR',
+                array(
+                    'key' => 'ins_status',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key' => 'ins_status',
+                    'value' => 'active',
+                    'compare' => '=',
+                ),
+            ),
+        ));
+        $active = $active_query->found_posts;
+
+        // Inactive institutions
+        $inactive_query = new \WP_Query(array(
+            'post_type' => 'institutions',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => 'ins_status',
+                    'value' => 'inactive',
+                    'compare' => '=',
+                ),
+            ),
+        ));
+        $inactive = $inactive_query->found_posts;
+
+        // Novas este mês
+        $current_month = date('m');
+        $current_year = date('Y');
+        $new_this_month_query = new \WP_Query(array(
+            'post_type' => 'institutions',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'date_query' => array(
+                array(
+                    'year' => $current_year,
+                    'month' => $current_month,
+                ),
+            ),
+        ));
+        $new_this_month = $new_this_month_query->found_posts;
+
+        return array(
+            'total' => $total,
+            'active' => $active,
+            'inactive' => $inactive,
+            'new_this_month' => $new_this_month,
+        );
+    }
+
+    /**
      * Renderiza os cards de estatísticas
      *
-     * @param array $stats Estatísticas dos usuários
+     * @param array $stats Estatísticas das instituições
      * @return string HTML dos cards
      */
     private static function render_stats_cards($stats) {
         $cards_data = array(
             array(
-                'title' => 'Total Members',
+                'title' => 'Total Institutions',
                 'number' => $stats['total'],
-                'icon' => 'users',
+                'icon' => 'building-2',
                 'color' => 'blue',
             ),
             array(
-                'title' => 'Active Members',
+                'title' => 'Active Institutions',
                 'number' => $stats['active'],
-                'icon' => 'user-check',
+                'icon' => 'check-circle',
                 'color' => 'green',
             ),
             array(
                 'title' => 'New This Month',
                 'number' => $stats['new_this_month'],
-                'icon' => 'user-plus',
+                'icon' => 'plus-circle',
                 'color' => 'purple',
             ),
             array(
-                'title' => 'Inactive Members',
+                'title' => 'Inactive Institutions',
                 'number' => $stats['inactive'],
-                'icon' => 'user-x',
+                'icon' => 'x-circle',
                 'color' => 'red',
             ),
         );
@@ -173,8 +241,8 @@ class Eau_Members_Management {
 
         // CSS específico da página
         wp_enqueue_style(
-            'eau-members-management',
-            EAU_SYSTEM_PLUGIN_URL . 'assets/css/eau-members-management.css',
+            'eau-institutions-management',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/css/eau-institutions-management.css',
             array('eau-components'),
             EAU_SYSTEM_VERSION . '-' . time()
         );
@@ -208,33 +276,38 @@ class Eau_Members_Management {
 
         // JS específico da página
         wp_enqueue_script(
-            'eau-members-management',
-            EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-members-management.js',
+            'eau-institutions-management',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-institutions-management.js',
             array('jquery', 'eau-components', 'eau-notifications', 'lucide-icons'),
             EAU_SYSTEM_VERSION,
             true
         );
 
         // Localiza script com dados do AJAX
-        wp_localize_script('eau-members-management', 'eauMembersData', array(
+        wp_localize_script('eau-institutions-management', 'eauInstitutionsData', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('eau_members_nonce'),
+            'nonce' => wp_create_nonce('eau_institutions_nonce'),
             'isSuperAdmin' => Eau_User_Institution_Helper::is_super_admin(),
         ));
     }
 
     /**
-     * Renderiza a tabela de membros
+     * Renderiza a tabela de instituições
      *
      * @return string HTML da tabela
      */
-    private static function render_members_table() {
+    private static function render_institutions_table() {
         $table_config = array(
-            'id' => 'members-table',
+            'id' => 'institutions-table',
             'columns' => array(
                 array(
-                    'key' => 'member',
-                    'label' => 'MEMBER',
+                    'key' => 'institution',
+                    'label' => 'INSTITUTION',
+                    'sortable' => true,
+                ),
+                array(
+                    'key' => 'code',
+                    'label' => 'CODE',
                     'sortable' => true,
                 ),
                 array(
@@ -243,23 +316,21 @@ class Eau_Members_Management {
                     'sortable' => true,
                 ),
                 array(
-                    'key' => 'membership',
-                    'label' => 'MEMBERSHIP',
-                ),
-                array(
-                    'key' => 'user_type',
-                    'label' => 'USER TYPE',
+                    'key' => 'members',
+                    'label' => 'MEMBERS',
+                    'sortable' => true,
                 ),
                 array(
                     'key' => 'status',
                     'label' => 'STATUS',
+                    'sortable' => true,
                 ),
             ),
             'actions' => array('view', 'edit', 'delete'),
             'selectable' => true,
-            'ajax_endpoint' => 'eau_get_members',
-            'empty_message' => 'No members found',
-            'loading_message' => 'Loading members...',
+            'ajax_endpoint' => 'eau_get_institutions',
+            'empty_message' => 'No institutions found',
+            'loading_message' => 'Loading institutions...',
         );
 
         $table = new Eau_Data_Table($table_config);
@@ -274,7 +345,7 @@ class Eau_Members_Management {
     private static function render_pagination() {
         // Paginação inicial vazia - será preenchida via AJAX
         $pagination_config = array(
-            'id' => 'members-pagination',
+            'id' => 'institutions-pagination',
             'total_items' => 0,
             'per_page' => 20,
             'current_page' => 1,
@@ -304,22 +375,8 @@ class Eau_Members_Management {
                     'placeholder' => 'All Status',
                 ),
                 array(
-                    'key' => 'role',
-                    'label' => 'User Type',
-                    'type' => 'select',
-                    'options' => Eau_Filters::get_user_type_options(),
-                    'placeholder' => 'All User Types',
-                ),
-                array(
-                    'key' => 'institution',
-                    'label' => 'Institution',
-                    'type' => 'select',
-                    'options' => Eau_Filters::get_institution_options(),
-                    'placeholder' => 'All Institutions',
-                ),
-                array(
-                    'key' => 'registered_date',
-                    'label' => 'Registration Date',
+                    'key' => 'created_date',
+                    'label' => 'Creation Date',
                     'type' => 'date_range',
                 ),
             ),
@@ -337,10 +394,10 @@ class Eau_Members_Management {
     private static function render_modals() {
         $html = '';
 
-        // Modal: View Member
+        // Modal: View Institution
         $view_modal_config = array(
             'id' => 'eau-modal-view',
-            'title' => 'View Member',
+            'title' => 'View Institution',
             'size' => 'large',
             'show_footer' => true,
             'footer_buttons' => array(
@@ -354,10 +411,10 @@ class Eau_Members_Management {
         $view_modal = new Eau_Modal($view_modal_config);
         $html .= $view_modal->render();
 
-        // Modal: Edit Member
+        // Modal: Edit Institution
         $edit_modal_config = array(
             'id' => 'eau-modal-edit',
-            'title' => 'Edit Member',
+            'title' => 'Edit Institution',
             'size' => 'large',
             'show_footer' => true,
             'footer_buttons' => array(
@@ -376,10 +433,10 @@ class Eau_Members_Management {
         $edit_modal = new Eau_Modal($edit_modal_config);
         $html .= $edit_modal->render();
 
-        // Modal: Add Member
+        // Modal: Add Institution
         $add_modal_config = array(
             'id' => 'eau-modal-add',
-            'title' => 'Add New Member',
+            'title' => 'Add New Institution',
             'size' => 'large',
             'show_footer' => true,
             'footer_buttons' => array(
@@ -389,7 +446,7 @@ class Eau_Members_Management {
                     'action' => 'close',
                 ),
                 array(
-                    'label' => 'Create Member',
+                    'label' => 'Create Institution',
                     'class' => 'eau-btn-primary',
                     'action' => 'create',
                 ),

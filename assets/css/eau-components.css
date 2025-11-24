@@ -1,6 +1,6 @@
 /**
  * EAU System - Componentes Reutilizáveis
- * Versão: 1.9.0
+ * Versão: 2.0.4
  * Componentes compartilhados entre Dashboard e Members Management
  */
 
@@ -257,6 +257,13 @@
 
 .eau-search-input::placeholder {
     color: #9ca3af !important;
+}
+
+.eau-search-filters-bar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
 }
 
 /* ==========================================================================
@@ -603,18 +610,20 @@
     text-decoration: underline !important;
 }
 
-/* Loading Overlay */
+/* Loading Overlay - Skeleton */
 .eau-table-loading-overlay {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
+    min-height: 100% !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     z-index: 10 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 /* Loading Overlay Hidden (default state) */
@@ -623,22 +632,18 @@
 }
 
 /* Loading Overlay Visible (when loading) */
-.eau-table-loading-overlay[style*="display: flex"],
 .eau-table-loading-overlay[style*="display: block"] {
-    display: flex !important;
+    display: block !important;
 }
 
-.eau-spinner {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-    border: 3px solid #e5e7eb !important;
-    border-top-color: #2563eb !important;
-    border-radius: 50% !important;
-    animation: eau-spin 0.8s linear infinite !important;
+/* Skeleton dentro do overlay */
+.eau-table-loading-overlay .eau-table {
+    width: 100% !important;
 }
 
-@keyframes eau-spin {
-    to { transform: rotate(360deg); }
+.eau-table-loading-overlay .eau-table thead th {
+    background: transparent !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 /* Responsivo - Data Table */
@@ -1256,20 +1261,38 @@
    SKELETON LOADING
    ========================================================================== */
 
-/* Skeleton Base */
-.eau-skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
-    background-size: 200% 100% !important;
-    animation: eauSkeletonLoading 1.5s ease-in-out infinite !important;
+/* Skeleton Base - MÁXIMA ESPECIFICIDADE para sobrescrever WordPress */
+.eau-data-table-wrapper .eau-skeleton,
+.eau-skeleton-table .eau-skeleton,
+div.eau-skeleton {
+    background-color: #e5e7eb !important;
     border-radius: 4px !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-@keyframes eauSkeletonLoading {
+.eau-data-table-wrapper .eau-skeleton-shimmer,
+.eau-skeleton-table .eau-skeleton-shimmer,
+div.eau-skeleton > .eau-skeleton-shimmer {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -150% !important;
+    width: 150% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%) !important;
+    animation: eauSkeletonShimmer 1.5s ease-in-out infinite !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+@keyframes eauSkeletonShimmer {
     0% {
-        background-position: 200% 0;
+        transform: translateX(0);
     }
     100% {
-        background-position: -200% 0;
+        transform: translateX(300%);
     }
 }
 
@@ -1301,44 +1324,51 @@
     margin-bottom: 0.5rem !important;
 }
 
-/* Skeleton Table */
+/* Skeleton Table - Nova Estrutura */
 .eau-skeleton-table {
     width: 100% !important;
-}
-
-.eau-skeleton-table-header {
-    display: grid !important;
-    grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr 100px !important;
-    gap: 1rem !important;
-    padding: 1rem 1.5rem !important;
-    background: #f9fafb !important;
-    border-bottom: 1px solid #e5e7eb !important;
-}
-
-.eau-skeleton-table-header .eau-skeleton {
-    height: 1rem !important;
-}
-
-.eau-skeleton-table-body {
     padding: 0 !important;
+    min-height: 100% !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .eau-skeleton-table-row {
-    display: grid !important;
-    grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr 100px !important;
-    gap: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
     padding: 1rem 1.5rem !important;
     border-bottom: 1px solid #e5e7eb !important;
-    align-items: center !important;
+    gap: 1.5rem !important;
+    min-height: 60px !important;
 }
 
-.eau-skeleton-table-row .eau-skeleton {
-    height: 1rem !important;
+.eau-skeleton-table-cell {
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
-.eau-skeleton-table-row .eau-skeleton-circle {
-    width: 20px !important;
-    height: 20px !important;
+.eau-skeleton-table-cell-checkbox {
+    flex: 0 0 50px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.eau-skeleton-table-cell-actions {
+    flex: 0 0 120px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.eau-skeleton-checkbox {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 3px !important;
+}
+
+.eau-skeleton-table-row .eau-skeleton-text {
+    width: 100% !important;
+    max-width: 150px !important;
 }
 
 /* Skeleton Stats Cards */

@@ -60,11 +60,11 @@ class Eau_Filters {
                 <div class="eau-filters-actions">
                     <button class="eau-btn eau-btn-secondary eau-filters-clear" type="button">
                         <i data-lucide="x"></i>
-                        Limpar Filtros
+                        Clear Filters
                     </button>
                     <button class="eau-btn eau-btn-primary eau-filters-apply" type="button">
                         <i data-lucide="check"></i>
-                        Aplicar Filtros
+                        Apply Filters
                     </button>
                 </div>
             <?php endif; ?>
@@ -249,14 +249,50 @@ class Eau_Filters {
     /**
      * Obtém as opções para o filtro de User Type (mem_type do JetEngine)
      *
+     * Filtra opções baseado no tipo de usuário logado:
+     * - superAdmin: vê todas as opções
+     * - Admin: vê Admin, institutionAdmin e member
+     * - institutionAdmin: vê institutionAdmin e member
+     *
      * @return array Array de opções [value => label]
      */
     public static function get_user_type_options() {
-        // Opções do glossário "User types" do JetEngine
-        return array(
+        $current_user_id = get_current_user_id();
+        $current_user = get_userdata($current_user_id);
+        $current_mem_type = get_user_meta($current_user_id, 'mem_type', true);
+
+        // Todas as opções disponíveis
+        $all_options = array(
             'superAdmin' => 'Super Admin',
             'Admin' => 'Admin',
             'institutionAdmin' => 'Institution Admin',
+            'Member' => 'Member',
+        );
+
+        // Super Admin ou WP Administrator: vê TODAS as opções
+        if (in_array('administrator', $current_user->roles) || $current_mem_type === 'superAdmin') {
+            return $all_options;
+        }
+
+        // Admin: vê Admin, institutionAdmin e member
+        if ($current_mem_type === 'Admin') {
+            return array(
+                'Admin' => 'Admin',
+                'institutionAdmin' => 'Institution Admin',
+                'Member' => 'Member',
+            );
+        }
+
+        // Institution Admin: vê institutionAdmin e member
+        if ($current_mem_type === 'institutionAdmin') {
+            return array(
+                'institutionAdmin' => 'Institution Admin',
+                'Member' => 'Member',
+            );
+        }
+
+        // Fallback: apenas Member (caso seja um member comum acessando)
+        return array(
             'Member' => 'Member',
         );
     }
@@ -292,22 +328,23 @@ class Eau_Filters {
     /**
      * Obtém as opções para o filtro de Institution
      *
+     * CORRETO: Institution Admin vê TODAS as suas instituições
+     *
      * @return array Array de opções [ID => Nome]
      */
     public static function get_institution_options() {
         $is_institution_admin = \EauSystem\Eau_User_Institution_Helper::is_institution_admin();
 
-        // Institution Admin: retorna apenas sua instituição
+        // Institution Admin: retorna TODAS as instituições que gerencia
         if ($is_institution_admin) {
-            $user_institution = \EauSystem\Eau_User_Institution_Helper::get_user_institution(get_current_user_id());
+            $user_institutions = \EauSystem\Eau_User_Institution_Helper::get_user_managed_institutions(get_current_user_id());
 
-            if ($user_institution) {
-                return array(
-                    $user_institution->ID => $user_institution->post_title
-                );
+            $options = array();
+            foreach ($user_institutions as $institution) {
+                $options[$institution->ID] = $institution->post_title;
             }
 
-            return array();
+            return $options;
         }
 
         // Admin/Super Admin: retorna todas

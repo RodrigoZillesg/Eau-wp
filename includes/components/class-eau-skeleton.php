@@ -21,38 +21,57 @@ class Eau_Skeleton {
     /**
      * Renderiza skeleton para uma tabela completa (Members)
      *
-     * @param int $rows Número de linhas skeleton (padrão: 5)
+     * @param int $rows Número de linhas skeleton (padrão: 30)
      * @return string HTML do skeleton table
      */
-    public static function table($rows = 5) {
+    public static function table($rows = 30) {
         ob_start();
         ?>
         <div class="eau-skeleton-table">
-            <!-- Header -->
-            <div class="eau-skeleton-table-header">
-                <div class="eau-skeleton eau-skeleton-circle"></div>
-                <div class="eau-skeleton"></div>
-                <div class="eau-skeleton"></div>
-                <div class="eau-skeleton"></div>
-                <div class="eau-skeleton"></div>
-                <div class="eau-skeleton"></div>
-                <div class="eau-skeleton"></div>
-            </div>
-
-            <!-- Body -->
-            <div class="eau-skeleton-table-body">
-                <?php for ($i = 0; $i < $rows; $i++) : ?>
-                    <div class="eau-skeleton-table-row">
-                        <div class="eau-skeleton eau-skeleton-circle"></div>
-                        <div class="eau-skeleton"></div>
-                        <div class="eau-skeleton"></div>
-                        <div class="eau-skeleton"></div>
-                        <div class="eau-skeleton"></div>
-                        <div class="eau-skeleton"></div>
-                        <div class="eau-skeleton"></div>
+            <?php for ($i = 0; $i < $rows; $i++) : ?>
+                <div class="eau-skeleton-table-row">
+                    <div class="eau-skeleton-table-cell eau-skeleton-table-cell-checkbox">
+                        <div class="eau-skeleton eau-skeleton-checkbox">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
                     </div>
-                <?php endfor; ?>
-            </div>
+                    <div class="eau-skeleton-table-cell">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="eau-skeleton-table-cell">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="eau-skeleton-table-cell">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="eau-skeleton-table-cell">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="eau-skeleton-table-cell">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="eau-skeleton-table-cell">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="eau-skeleton-table-cell eau-skeleton-table-cell-actions">
+                        <div class="eau-skeleton eau-skeleton-text">
+                            <div class="eau-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                </div>
+            <?php endfor; ?>
         </div>
         <?php
         return ob_get_clean();
@@ -122,6 +141,27 @@ class Eau_Skeleton {
         ob_start();
         ?>
         <div class="eau-skeleton eau-skeleton-row"></div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza skeleton para formulário (modais)
+     *
+     * @param int $fields Número de campos (padrão: 3)
+     * @return string HTML do skeleton form
+     */
+    public static function form($fields = 3) {
+        ob_start();
+        ?>
+        <div class="eau-skeleton-form">
+            <?php for ($i = 0; $i < $fields; $i++) : ?>
+                <div class="eau-skeleton-form-field">
+                    <div class="eau-skeleton eau-skeleton-text" style="width: 30%; height: 14px; margin-bottom: 8px;"></div>
+                    <div class="eau-skeleton eau-skeleton-text" style="width: 100%; height: 44px;"></div>
+                </div>
+            <?php endfor; ?>
+        </div>
         <?php
         return ob_get_clean();
     }
