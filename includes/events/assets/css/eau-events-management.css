@@ -1,0 +1,530 @@
+/**
+ * Eau Events Management - Frontend Styles
+ *
+ * @package EauSystem
+ * @since 1.28.1
+ */
+
+/* ==========================================================================
+   Container
+   ========================================================================== */
+
+.eau-events-management-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+/* ==========================================================================
+   Table Specific Styles
+   ========================================================================== */
+
+.eau-event-title-cell {
+    max-width: 300px;
+}
+
+.eau-event-title {
+    font-weight: 500;
+    color: var(--eau-gray-900);
+}
+
+.eau-event-date-cell {
+    white-space: nowrap;
+}
+
+.eau-date-main {
+    display: block;
+    font-weight: 500;
+    color: var(--eau-gray-900);
+}
+
+.eau-date-time {
+    display: block;
+    font-size: 12px;
+    color: var(--eau-gray-500);
+}
+
+/* ==========================================================================
+   Actions
+   ========================================================================== */
+
+.eau-table-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.eau-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--eau-gray-500);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.eau-action-btn:hover {
+    background: var(--eau-gray-100);
+    color: var(--eau-gray-700);
+}
+
+.eau-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Dropdown Menu
+   ========================================================================== */
+
+.eau-dropdown {
+    position: relative;
+}
+
+.eau-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 100;
+    min-width: 180px;
+    padding: 4px 0;
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.15s ease;
+}
+
+.eau-dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.eau-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--eau-gray-700);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-align: left;
+}
+
+.eau-dropdown-item:hover {
+    background: var(--eau-gray-50);
+}
+
+.eau-dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--eau-gray-400);
+}
+
+.eau-dropdown-item-danger {
+    color: var(--eau-error);
+}
+
+.eau-dropdown-item-danger svg {
+    color: var(--eau-error);
+}
+
+.eau-dropdown-item-danger:hover {
+    background: #fef2f2;
+}
+
+/* ==========================================================================
+   Badge
+   ========================================================================== */
+
+.eau-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+.eau-badge-success {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.eau-badge-warning {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.eau-badge-error {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
+
+.eau-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.eau-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.eau-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.eau-modal-container {
+    position: relative;
+    width: 95%;
+    max-width: 600px;
+    max-height: 90vh;
+    background: var(--eau-white);
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+}
+
+.eau-modal.active .eau-modal-container {
+    transform: translateY(0);
+}
+
+.eau-modal-large {
+    max-width: 800px;
+}
+
+.eau-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--eau-gray-200);
+}
+
+.eau-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+    margin: 0;
+}
+
+.eau-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--eau-gray-500);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.eau-modal-close:hover {
+    background: var(--eau-gray-100);
+    color: var(--eau-gray-700);
+}
+
+.eau-modal-body {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.eau-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--eau-gray-200);
+}
+
+/* ==========================================================================
+   Modal Tabs
+   ========================================================================== */
+
+.eau-modal-tabs-nav {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--eau-gray-100);
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.eau-modal-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-600);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.eau-modal-tab-btn:hover {
+    color: var(--eau-gray-900);
+}
+
+.eau-modal-tab-btn.active {
+    background: var(--eau-white);
+    color: var(--eau-gray-900);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.eau-modal-tab-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-modal-tab-content {
+    display: none;
+}
+
+.eau-modal-tab-content.active {
+    display: block;
+}
+
+/* ==========================================================================
+   Form Grid
+   ========================================================================== */
+
+.eau-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.eau-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.eau-form-field-span-2 {
+    grid-column: span 2;
+}
+
+.eau-form-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+}
+
+.eau-form-label .required {
+    color: var(--eau-error);
+}
+
+.eau-form-input,
+.eau-form-select,
+.eau-form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--eau-gray-900);
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-300);
+    border-radius: 8px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eau-form-input:focus,
+.eau-form-select:focus,
+.eau-form-textarea:focus {
+    outline: none;
+    border-color: var(--eau-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.eau-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ==========================================================================
+   Radio & Checkbox
+   ========================================================================== */
+
+.eau-radio-group {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.eau-radio-label,
+.eau-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--eau-gray-700);
+    cursor: pointer;
+}
+
+.eau-radio-label input,
+.eau-checkbox-label input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--eau-primary);
+}
+
+/* ==========================================================================
+   Loading & Empty States
+   ========================================================================== */
+
+.eau-loading-cell,
+.eau-empty-cell {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--eau-gray-500);
+}
+
+.eau-skeleton-row {
+    height: 20px;
+    background: linear-gradient(90deg, var(--eau-gray-200) 25%, var(--eau-gray-100) 50%, var(--eau-gray-200) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.eau-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 24px;
+}
+
+.eau-pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-300);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.eau-pagination-btn:hover:not(.disabled):not(.active) {
+    background: var(--eau-gray-50);
+    border-color: var(--eau-gray-400);
+}
+
+.eau-pagination-btn.active {
+    background: var(--eau-primary);
+    color: var(--eau-white);
+    border-color: var(--eau-primary);
+}
+
+.eau-pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.eau-pagination-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-pagination-ellipsis {
+    padding: 0 8px;
+    color: var(--eau-gray-400);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .eau-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-form-field-span-2 {
+        grid-column: span 1;
+    }
+
+    .eau-modal-tabs-nav {
+        flex-wrap: wrap;
+    }
+
+    .eau-modal-tab-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .eau-modal-tab-btn svg {
+        display: none;
+    }
+}

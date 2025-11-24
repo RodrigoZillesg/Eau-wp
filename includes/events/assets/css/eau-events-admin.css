@@ -1,0 +1,444 @@
+/**
+ * Eau Events CPT - Admin Styles
+ *
+ * @package EauSystem
+ * @since 1.26.0
+ */
+
+/* ==========================================================================
+   Tabs Navigation
+   ========================================================================== */
+
+.eau-tabs-nav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0 !important;
+    background: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 0 !important;
+}
+
+.eau-tab-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 14px 20px !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    color: #6b7280 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    margin-bottom: -1px !important;
+}
+
+.eau-tab-btn:hover {
+    color: #2563eb !important;
+    background: #f3f4f6 !important;
+}
+
+.eau-tab-btn.active {
+    color: #2563eb !important;
+    border-bottom-color: #2563eb !important;
+    background: #ffffff !important;
+}
+
+.eau-tab-btn .dashicons {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* ==========================================================================
+   Tabs Content
+   ========================================================================== */
+
+.eau-tabs-content {
+    padding: 24px !important;
+    background: #ffffff !important;
+}
+
+.eau-tab-panel {
+    display: none !important;
+}
+
+.eau-tab-panel.active {
+    display: block !important;
+}
+
+/* ==========================================================================
+   Form Grid
+   ========================================================================== */
+
+.eau-form-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+}
+
+.eau-form-field {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.eau-form-field-span-2 {
+    grid-column: span 2 !important;
+}
+
+/* ==========================================================================
+   Form Labels
+   ========================================================================== */
+
+.eau-form-label {
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin-bottom: 6px !important;
+}
+
+.eau-form-required {
+    color: #dc2626 !important;
+    margin-left: 2px !important;
+}
+
+.eau-form-hint {
+    font-size: 12px !important;
+    color: #9ca3af !important;
+    margin: 6px 0 0 0 !important;
+    font-style: italic !important;
+}
+
+.eau-form-section-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 10px 0 0 0 !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* ==========================================================================
+   Form Inputs
+   ========================================================================== */
+
+.eau-form-input {
+    width: 100% !important;
+    height: 42px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.eau-form-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-form-input::placeholder {
+    color: #9ca3af !important;
+}
+
+.eau-form-input[type="number"] {
+    -moz-appearance: textfield !important;
+}
+
+.eau-form-input[type="number"]::-webkit-outer-spin-button,
+.eau-form-input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+/* ==========================================================================
+   Form Select
+   ========================================================================== */
+
+.eau-form-select {
+    width: 100% !important;
+    height: 42px !important;
+    padding: 8px 36px 8px 12px !important;
+    font-size: 14px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    background: #ffffff url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"%3E%3Cpath stroke="%236b7280" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4"/%3E%3C/svg%3E') right 10px center no-repeat !important;
+    background-size: 16px !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+.eau-form-select:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* ==========================================================================
+   Radio Buttons
+   ========================================================================== */
+
+.eau-radio-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+}
+
+.eau-radio-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 16px !important;
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    font-size: 14px !important;
+    color: #374151 !important;
+}
+
+.eau-radio-label:hover {
+    background: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+}
+
+.eau-radio-label input[type="radio"] {
+    margin: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+    accent-color: #2563eb !important;
+}
+
+.eau-radio-label input[type="radio"]:checked + .dashicons {
+    color: #2563eb !important;
+}
+
+.eau-radio-label .dashicons {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: #9ca3af !important;
+}
+
+.eau-radio-label:has(input[type="radio"]:checked) {
+    background: #eff6ff !important;
+    border-color: #2563eb !important;
+    color: #2563eb !important;
+}
+
+/* ==========================================================================
+   Checkboxes
+   ========================================================================== */
+
+.eau-checkbox-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 14px !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+}
+
+.eau-checkbox-label input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    accent-color: #2563eb !important;
+    cursor: pointer !important;
+}
+
+/* ==========================================================================
+   Image Upload
+   ========================================================================== */
+
+.eau-image-upload-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+.eau-image-preview {
+    width: 100% !important;
+    max-width: 400px !important;
+    min-height: 200px !important;
+    border: 2px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    background: #f9fafb !important;
+}
+
+.eau-image-preview:hover {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+}
+
+.eau-image-preview img {
+    max-width: 100% !important;
+    max-height: 300px !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+}
+
+.eau-image-placeholder {
+    text-align: center !important;
+    padding: 40px !important;
+    color: #9ca3af !important;
+}
+
+.eau-image-placeholder .dashicons {
+    font-size: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    margin-bottom: 12px !important;
+    color: #d1d5db !important;
+}
+
+.eau-image-placeholder p {
+    margin: 0 0 4px 0 !important;
+    font-size: 14px !important;
+    color: #6b7280 !important;
+}
+
+.eau-image-placeholder small {
+    font-size: 12px !important;
+    color: #9ca3af !important;
+}
+
+.eau-image-actions {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.eau-image-actions .button {
+    padding: 6px 14px !important;
+}
+
+.eau-upload-image-btn {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.eau-upload-image-btn:hover,
+.eau-upload-image-btn:focus {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+
+.eau-remove-image-btn {
+    background: #ffffff !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+.eau-remove-image-btn:hover,
+.eau-remove-image-btn:focus {
+    background: #fef2f2 !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+/* ==========================================================================
+   WYSIWYG Editor
+   ========================================================================== */
+
+.eau-form-field .wp-editor-wrap {
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+}
+
+.eau-form-field .wp-editor-wrap:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-form-field .wp-editor-tabs {
+    background: #f9fafb !important;
+}
+
+.eau-form-field .wp-editor-container textarea {
+    border: none !important;
+}
+
+/* ==========================================================================
+   Conditional Fields
+   ========================================================================== */
+
+.eau-location-field,
+.eau-virtual-field,
+.eau-guests-field {
+    transition: opacity 0.3s ease !important;
+}
+
+.eau-location-field.hidden,
+.eau-virtual-field.hidden,
+.eau-guests-field.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .eau-tabs-nav {
+        flex-direction: column !important;
+    }
+
+    .eau-tab-btn {
+        border-bottom: none !important;
+        border-left: 3px solid transparent !important;
+    }
+
+    .eau-tab-btn.active {
+        border-left-color: #2563eb !important;
+        border-bottom-color: transparent !important;
+    }
+
+    .eau-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .eau-form-field-span-2 {
+        grid-column: span 1 !important;
+    }
+
+    .eau-radio-group {
+        flex-direction: column !important;
+    }
+
+    .eau-image-preview {
+        max-width: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   WordPress Overrides
+   ========================================================================== */
+
+#eau_event_details .inside {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#eau_event_details .postbox-header {
+    border-bottom: none !important;
+}
