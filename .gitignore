@@ -10,6 +10,7 @@
 .DS_Store
 Thumbs.db
 
+# Test
 # Node
 node_modules/
 npm-debug.log
