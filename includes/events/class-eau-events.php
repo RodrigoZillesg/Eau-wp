@@ -96,9 +96,6 @@ class Eau_Events {
         // Events Management (Dashboard)
         require_once $base . 'admin/class-eau-events-management.php';
         require_once $base . 'admin/class-eau-events-management-ajax.php';
-
-        // Event Registrations CPT Module (in separate folder)
-        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/event-registrations/class-eau-event-registrations.php';
     }
 
     /**
@@ -120,9 +117,6 @@ class Eau_Events {
         // Events Management (shortcode e AJAX)
         Admin\Eau_Events_Management::register_shortcode();
         Admin\Eau_Events_Management_Ajax::register_handlers();
-
-        // Event Registrations CPT Module (separate folder)
-        \EauSystem\EventRegistrations\Eau_Event_Registrations::get_instance();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();
@@ -166,6 +160,5 @@ class Eau_Events {
      */
     public static function uninstall() {
         Eau_Events_Meta::remove_from_jet_engine();
-        \EauSystem\EventRegistrations\Eau_Event_Registrations::uninstall();
     }
 }
