@@ -8,6 +8,12 @@
 (function($) {
     'use strict';
 
+    // Fallback for localized data
+    var eauEventsAdminData = window.eauEventsAdmin || {
+        mediaTitle: 'Select Event Image',
+        mediaButton: 'Use this image'
+    };
+
     /**
      * Events Admin Controller
      */
@@ -58,7 +64,7 @@
             // Restore active tab from session storage
             if (typeof sessionStorage !== 'undefined') {
                 const savedTab = sessionStorage.getItem('eau_event_active_tab');
-                if (savedTab) {
+                if (savedTab && $('.eau-tab-btn[data-tab="' + savedTab + '"]').length) {
                     $('.eau-tab-btn[data-tab="' + savedTab + '"]').trigger('click');
                 }
             }
@@ -73,12 +79,14 @@
             // Click on preview or upload button
             $(document).on('click', '.eau-image-preview, .eau-upload-image-btn', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 self.openMediaFrame();
             });
 
             // Remove image
             $(document).on('click', '.eau-remove-image-btn', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 self.removeImage();
             });
         },
@@ -89,6 +97,12 @@
         openMediaFrame: function() {
             const self = this;
 
+            // Check if wp.media is available
+            if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+                alert('Media library not available. Please refresh the page.');
+                return;
+            }
+
             // If frame exists, open it
             if (this.mediaFrame) {
                 this.mediaFrame.open();
@@ -97,9 +111,9 @@
 
             // Create new frame
             this.mediaFrame = wp.media({
-                title: eauEventsAdmin.mediaTitle || 'Select Event Image',
+                title: eauEventsAdminData.mediaTitle,
                 button: {
-                    text: eauEventsAdmin.mediaButton || 'Use this image'
+                    text: eauEventsAdminData.mediaButton
                 },
                 multiple: false,
                 library: {
@@ -281,15 +295,18 @@
      * Initialize on document ready
      */
     $(document).ready(function() {
-        EauEventsAdmin.init();
+        // Only initialize if we're on an event edit page
+        if ($('.eau-event-metabox').length > 0) {
+            EauEventsAdmin.init();
 
-        // Bind form validation
-        $('form#post').on('submit', function(e) {
-            if (!EauEventsAdmin.validateForm()) {
-                e.preventDefault();
-                return false;
-            }
-        });
+            // Bind form validation
+            $('form#post').on('submit', function(e) {
+                if (!EauEventsAdmin.validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
     });
 
 })(jQuery);
