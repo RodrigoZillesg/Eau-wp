@@ -77,7 +77,6 @@ class Eau_Event_Registrations {
 
         // Core
         require_once $base . 'class-eau-event-registrations-cpt.php';
-        require_once $base . 'class-eau-event-registrations-meta.php';
 
         // Admin
         require_once $base . 'admin/class-eau-event-registrations-metabox.php';
@@ -90,14 +89,67 @@ class Eau_Event_Registrations {
      * @return void
      */
     private function init() {
+        // Remove do JetEngine se existir (evita conflito)
+        $this->remove_from_jet_engine();
+
         Eau_Event_Registrations_CPT::get_instance();
-        Eau_Event_Registrations_Meta::get_instance();
+
+        // Apenas registra meta fields para REST API, não sincroniza com JetEngine
+        add_action('init', array($this, 'register_meta_fields'), 10);
 
         // Admin
         Admin\Eau_Event_Registrations_Metabox::get_instance();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();
+    }
+
+    /**
+     * Remove CPT do JetEngine para evitar conflito
+     *
+     * @since  1.29.3
+     * @return void
+     */
+    private function remove_from_jet_engine() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'jet_post_types';
+
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return;
+        }
+
+        // Verifica se existe e deleta
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table WHERE slug = %s",
+            Config\POST_TYPE
+        ));
+
+        if ($exists) {
+            $wpdb->delete($table, array('slug' => Config\POST_TYPE), array('%s'));
+        }
+    }
+
+    /**
+     * Registra meta fields para REST API
+     *
+     * @since  1.29.3
+     * @return void
+     */
+    public function register_meta_fields() {
+        $prefix = Config\META_PREFIX;
+        $fields = Config\get_meta_fields();
+
+        foreach ($fields as $field => $type) {
+            register_post_meta(Config\POST_TYPE, $prefix . $field, array(
+                'type'              => $type,
+                'single'            => true,
+                'show_in_rest'      => true,
+                'sanitize_callback' => Config\get_sanitize_callback($type),
+                'auth_callback'     => function() {
+                    return current_user_can('edit_posts');
+                },
+            ));
+        }
     }
 
     /**
@@ -125,6 +177,11 @@ class Eau_Event_Registrations {
      * @return void
      */
     public static function uninstall() {
-        Eau_Event_Registrations_Meta::remove_from_jet_engine();
+        // Limpa dados se necessário
+        global $wpdb;
+        $table = $wpdb->prefix . 'jet_post_types';
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") == $table) {
+            $wpdb->delete($table, array('slug' => Config\POST_TYPE), array('%s'));
+        }
     }
 }
