@@ -21,9 +21,6 @@ const POST_TYPE = 'eau_event';
 /** @var string Prefixo dos meta fields */
 const META_PREFIX = 'evt_';
 
-/** @var string Taxonomy slug */
-const TAXONOMY = 'cpd_category';
-
 /** @var string Timezone padrão */
 const DEFAULT_TIMEZONE = 'Australia/Sydney';
 

@@ -30,7 +30,7 @@ class Eau_Events {
      *
      * @var string
      */
-    const VERSION = '1.28.3';
+    const VERSION = '1.29.1';
 
     /**
      * Instância singleton
@@ -80,15 +80,13 @@ class Eau_Events {
         require_once $base . 'class-eau-events-cpt.php';
         require_once $base . 'class-eau-events-meta.php';
 
-        // Admin (se não tiver JetEngine)
-        if (!defined('JET_ENGINE_VERSION')) {
-            require_once $base . 'admin/class-eau-events-admin.php';
-            require_once $base . 'admin/class-eau-events-metabox.php';
-            require_once $base . 'admin/tabs/tab-basic-info.php';
-            require_once $base . 'admin/tabs/tab-location.php';
-            require_once $base . 'admin/tabs/tab-pricing.php';
-            require_once $base . 'admin/tabs/tab-settings.php';
-        }
+        // Admin metaboxes - always load (JetEngine meta fields may not work for built-in CPTs)
+        require_once $base . 'admin/class-eau-events-admin.php';
+        require_once $base . 'admin/class-eau-events-metabox.php';
+        require_once $base . 'admin/tabs/tab-basic-info.php';
+        require_once $base . 'admin/tabs/tab-location.php';
+        require_once $base . 'admin/tabs/tab-pricing.php';
+        require_once $base . 'admin/tabs/tab-settings.php';
 
         // Frontend
         require_once $base . 'frontend/class-eau-events-helper.php';
@@ -98,6 +96,9 @@ class Eau_Events {
         // Events Management (Dashboard)
         require_once $base . 'admin/class-eau-events-management.php';
         require_once $base . 'admin/class-eau-events-management-ajax.php';
+
+        // Event Registrations CPT Module (in separate folder)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/event-registrations/class-eau-event-registrations.php';
     }
 
     /**
@@ -110,9 +111,8 @@ class Eau_Events {
         Eau_Events_CPT::get_instance();
         Eau_Events_Meta::get_instance();
 
-        if (!defined('JET_ENGINE_VERSION')) {
-            Admin\Eau_Events_Admin::get_instance();
-        }
+        // Always init admin metaboxes
+        Admin\Eau_Events_Admin::get_instance();
 
         Frontend\Eau_Events_Templates::get_instance();
         Frontend\Eau_Events_Assets::get_instance();
@@ -120,6 +120,9 @@ class Eau_Events {
         // Events Management (shortcode e AJAX)
         Admin\Eau_Events_Management::register_shortcode();
         Admin\Eau_Events_Management_Ajax::register_handlers();
+
+        // Event Registrations CPT Module (separate folder)
+        \EauSystem\EventRegistrations\Eau_Event_Registrations::get_instance();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();
@@ -163,5 +166,6 @@ class Eau_Events {
      */
     public static function uninstall() {
         Eau_Events_Meta::remove_from_jet_engine();
+        \EauSystem\EventRegistrations\Eau_Event_Registrations::uninstall();
     }
 }
