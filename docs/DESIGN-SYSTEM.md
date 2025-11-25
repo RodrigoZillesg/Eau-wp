@@ -384,6 +384,253 @@ EauMembersManagement.closeModal('eau-modal-edit');
 
 ---
 
+### 9. Media Upload
+
+**Uso**: Upload de arquivos com drag & drop, URL externa ou seleção de arquivos já enviados
+
+**Estrutura**:
+```php
+use EauSystem\Components\Eau_Media_Upload;
+
+// Método estático (recomendado)
+echo Eau_Media_Upload::field(
+    'proof-upload',           // ID do componente
+    'proof',                  // Nome do campo
+    '',                       // Valor inicial (URL ou attachment ID)
+    array(
+        'type' => 'both',     // url, media, both
+        'placeholder' => 'Upload file or enter URL',
+        'url_placeholder' => 'https://example.com/file.pdf',
+        'allowed_types' => 'image/*,.pdf,application/pdf',
+        'allowed_extensions' => 'jpg,jpeg,png,gif,pdf',
+        'max_file_size' => 10 * 1024 * 1024, // 10MB
+    )
+);
+
+// Ou via instância
+$upload = new Eau_Media_Upload(array(
+    'id' => 'my-upload',
+    'name' => 'attachment',
+    'value' => '',
+    'type' => 'both',
+    'allowed_types' => 'image/*,.pdf',
+    'allowed_extensions' => 'jpg,jpeg,png,pdf',
+));
+echo $upload->render();
+```
+
+**Configurações**:
+| Parâmetro | Tipo | Default | Descrição |
+|-----------|------|---------|-----------|
+| `id` | string | 'eau-media-upload' | ID único do componente |
+| `name` | string | 'attachment' | Nome do campo no formulário |
+| `value` | string | '' | Valor inicial (URL ou attachment ID) |
+| `type` | string | 'both' | Tipo de upload: `url`, `media`, `both` |
+| `allowed_types` | string | '' | MIME types aceitos (ex: `image/*,.pdf`) |
+| `allowed_extensions` | string | '' | Extensões permitidas (ex: `jpg,png,pdf`) |
+| `max_file_size` | int | 10485760 | Tamanho máximo em bytes (10MB) |
+| `placeholder` | string | 'Enter URL or upload file' | Placeholder |
+| `url_placeholder` | string | 'https://example.com/file.pdf' | Placeholder do campo URL |
+
+**Features**:
+- ✅ Três abas: URL, Upload, My Files
+- ✅ Drag & drop com área clicável
+- ✅ Upload com barra de progresso
+- ✅ Lista de arquivos já enviados pelo usuário
+- ✅ Busca nos arquivos existentes
+- ✅ Preview de imagem (thumbnail 48x48)
+- ✅ Preview de arquivo (ícone + nome)
+- ✅ Validação de tipo e tamanho
+- ✅ Botão para remover arquivo selecionado
+- ✅ Link para abrir arquivo em nova aba
+
+**Classes CSS**:
+- `.eau-media-upload-wrapper` - Container principal
+- `.eau-media-upload-tabs` - Abas de navegação
+- `.eau-media-upload-tab` - Aba individual
+- `.eau-media-upload-tab-active` - Aba ativa
+- `.eau-media-upload-panel` - Painel de conteúdo
+- `.eau-media-upload-dropzone` - Área de drag & drop
+- `.eau-media-upload-preview` - Container do preview
+- `.eau-media-upload-preview-thumbnail` - Thumbnail do arquivo
+- `.eau-media-upload-preview-thumbnail.has-image` - Quando tem imagem
+
+**JavaScript API**:
+```javascript
+// Os métodos estão no controlador da página (ex: MyCpdsController)
+
+// Definir valor programaticamente
+self.setMediaValue(wrapper, value, type, filename, url);
+// wrapper: jQuery object do .eau-media-upload-wrapper
+// value: ID do attachment ou URL
+// type: 'url' ou 'media'
+// filename: nome do arquivo para exibir
+// url: URL completa do arquivo
+
+// Limpar valor
+self.clearMediaUpload(wrapper);
+
+// Verificar se é imagem
+self.isImageFile(filename); // Retorna boolean
+self.isImageUrl(url);       // Retorna boolean
+```
+
+**Campos Hidden Gerados**:
+```html
+<!-- Valor principal (ID ou URL) -->
+<input type="hidden" name="proof" value="123">
+
+<!-- Tipo do valor (url ou media) -->
+<input type="hidden" name="proof_type" value="media">
+```
+
+**AJAX Handler para Upload**:
+O componente usa o endpoint `eau_upload_file` que deve estar registrado:
+```php
+add_action('wp_ajax_eau_upload_file', array(__CLASS__, 'upload_file'));
+```
+
+---
+
+### 10. WYSIWYG Editor (Quill.js)
+
+**Uso**: Editor de texto rico para campos que precisam de formatação
+
+**Estrutura**:
+```php
+use EauSystem\Components\Eau_Wysiwyg;
+
+// Primeiro, enfileire os assets do Quill (no enqueue_scripts)
+Eau_Wysiwyg::enqueue_assets();
+
+// Método estático (recomendado)
+echo Eau_Wysiwyg::field(
+    'description-editor',     // ID do editor
+    'description',            // Nome do campo
+    '<p>Initial content</p>', // Valor inicial (HTML)
+    array(
+        'placeholder' => 'Enter description...',
+        'height' => 200,      // Altura em pixels
+        'toolbar' => 'standard', // basic, standard, full
+    )
+);
+
+// Ou via instância
+$wysiwyg = new Eau_Wysiwyg(array(
+    'id' => 'my-editor',
+    'name' => 'content',
+    'value' => '',
+    'placeholder' => 'Enter text...',
+    'height' => 250,
+    'toolbar' => 'full',
+));
+echo $wysiwyg->render();
+```
+
+**Configurações**:
+| Parâmetro | Tipo | Default | Descrição |
+|-----------|------|---------|-----------|
+| `id` | string | 'eau-wysiwyg' | ID único do editor |
+| `name` | string | 'content' | Nome do campo no formulário |
+| `value` | string | '' | Conteúdo inicial (HTML) |
+| `placeholder` | string | 'Enter text here...' | Placeholder |
+| `height` | int | 200 | Altura do editor em pixels |
+| `toolbar` | string | 'standard' | Tipo da toolbar |
+
+**Tipos de Toolbar**:
+
+| Tipo | Botões Disponíveis |
+|------|-------------------|
+| `basic` | Bold, Italic, Underline, Lists, Clean |
+| `standard` | Headers, Bold, Italic, Underline, Lists, Link, Clean |
+| `full` | Headers, Bold, Italic, Underline, Strike, Colors, Lists, Indent, Link, Image, Clean |
+
+**Features**:
+- ✅ Formatação de texto (bold, italic, underline, strike)
+- ✅ Cabeçalhos (H1, H2, H3)
+- ✅ Listas ordenadas e não-ordenadas
+- ✅ Links
+- ✅ Cores de texto e fundo (toolbar full)
+- ✅ Imagens (toolbar full)
+- ✅ Indentação
+- ✅ Botão limpar formatação
+- ✅ Placeholder customizável
+- ✅ Sincronização automática com campo hidden
+- ✅ Acesso global aos editores via `window.eauWysiwygEditors`
+
+**Classes CSS**:
+- `.eau-wysiwyg-wrapper` - Container principal
+- `.eau-wysiwyg-editor` - Container do editor Quill
+- `.ql-toolbar.ql-snow` - Toolbar do Quill (customizada)
+- `.ql-container.ql-snow` - Container do conteúdo
+- `.ql-editor` - Área de edição
+
+**Inicialização JavaScript**:
+```javascript
+// Após renderizar o HTML, inicialize o editor
+// Use o método estático para gerar o script
+<?php echo Eau_Wysiwyg::get_init_script('description-editor', 'standard'); ?>
+
+// Ou inicialize manualmente
+var quill = new Quill('#my-editor-editor', {
+    theme: 'snow',
+    placeholder: 'Enter text...',
+    modules: {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['link'],
+            ['clean']
+        ]
+    }
+});
+
+// Sincronizar com campo hidden
+quill.on('text-change', function() {
+    document.getElementById('my-editor').value = quill.root.innerHTML;
+});
+```
+
+**Acessando Editores Existentes**:
+```javascript
+// Todos os editores ficam disponíveis em window.eauWysiwygEditors
+var editor = window.eauWysiwygEditors['description-editor'];
+
+// Obter conteúdo HTML
+var html = editor.root.innerHTML;
+
+// Obter conteúdo texto puro
+var text = editor.getText();
+
+// Definir conteúdo
+editor.root.innerHTML = '<p>New content</p>';
+
+// Limpar conteúdo
+editor.setText('');
+```
+
+**Integração com Formulário**:
+```html
+<!-- O componente gera automaticamente um campo hidden -->
+<input type="hidden" id="description-editor" name="description" value="">
+
+<!-- Este campo é atualizado automaticamente quando o conteúdo muda -->
+```
+
+**Enfileiramento de Assets**:
+```php
+// No método enqueue_assets() da sua página
+public static function enqueue_assets() {
+    // ... outros assets ...
+
+    // Assets do Quill
+    Eau_Wysiwyg::enqueue_assets();
+}
+```
+
+---
+
 ## 📐 Layout Patterns
 
 ### Estrutura de Página Padrão
@@ -1256,6 +1503,6 @@ Ao criar uma nova página no estilo Members Management:
 
 ---
 
-**Versão**: 1.0.0
-**Última Atualização**: 2025-01-21
+**Versão**: 1.1.0
+**Última Atualização**: 2025-01-25
 **Autor**: Platty / Rodrigo Zillesg

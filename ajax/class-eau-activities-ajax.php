@@ -41,6 +41,9 @@ class Eau_Activities_Ajax {
 
         // Get stats
         add_action('wp_ajax_eau_get_activities_stats', array(__CLASS__, 'get_activities_stats'));
+
+        // Get orphan activity IDs (para cleanup)
+        add_action('wp_ajax_eau_get_orphan_activity_ids', array(__CLASS__, 'get_orphan_activity_ids'));
     }
 
     /**
@@ -543,6 +546,9 @@ class Eau_Activities_Ajax {
         $deleted = wp_trash_post($activity_id);
 
         if ($deleted) {
+            // Invalida cache de stats
+            \EauSystem\Eau_Activities_Stats_Cache::invalidate_cache(get_current_user_id());
+
             wp_send_json_success(array('message' => 'Activity deleted successfully.'));
         } else {
             wp_send_json_error(array('message' => 'Failed to delete activity.'));
@@ -659,6 +665,9 @@ class Eau_Activities_Ajax {
             }
         }
 
+        // Invalida cache de stats
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_cache(get_current_user_id());
+
         wp_send_json_success(array('message' => 'Activity updated successfully.'));
     }
 
@@ -714,6 +723,9 @@ class Eau_Activities_Ajax {
         if (!empty($hours)) {
             update_post_meta($post_id, 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5', $hours);
         }
+
+        // Invalida cache de stats
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_cache(get_current_user_id());
 
         wp_send_json_success(array(
             'message' => 'Activity created successfully.',
@@ -804,186 +816,19 @@ class Eau_Activities_Ajax {
     }
 
     /**
-     * AJAX: Get Activities Stats
+     * AJAX: Get Activities Stats (com cache)
      */
     public static function get_activities_stats() {
         check_ajax_referer('eau_activities_nonce', 'nonce');
 
-        global $wpdb;
-
-        $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
-
-        if ($is_institution_admin) {
-            // Institution Admin: filtra por suas instituições
-            $company_ids = Eau_User_Institution_Helper::get_user_managed_company_ids(get_current_user_id());
-
-            if (empty($company_ids)) {
-                wp_send_json_success(array(
-                    'total' => 0,
-                    'verified' => 0,
-                    'pending' => 0,
-                    'total_points' => 0,
-                ));
-            }
-
-            // Busca act_user_id dos membros dessas instituições
-            $user_ids = get_users(array(
-                'fields' => 'ID',
-                'meta_query' => array(
-                    array(
-                        'key' => 'mem_membercompanyname',
-                        'value' => $company_ids,
-                        'compare' => 'IN',
-                    ),
-                ),
-            ));
-
-            if (empty($user_ids)) {
-                wp_send_json_success(array(
-                    'total' => 0,
-                    'verified' => 0,
-                    'pending' => 0,
-                    'total_points' => 0,
-                ));
-            }
-
-            // Pega os mem_userid desses usuários
-            $act_user_ids = array();
-            foreach ($user_ids as $user_id) {
-                $mem_userid = get_user_meta($user_id, 'mem_userid', true);
-                if (!empty($mem_userid)) {
-                    $act_user_ids[] = $mem_userid;
-                }
-            }
-
-            if (empty($act_user_ids)) {
-                wp_send_json_success(array(
-                    'total' => 0,
-                    'verified' => 0,
-                    'pending' => 0,
-                    'total_points' => 0,
-                ));
-            }
-
-            $placeholders = implode(',', array_fill(0, count($act_user_ids), '%s'));
-
-            // Total
-            $total = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm_user ON p.ID = pm_user.post_id
-                WHERE p.post_type = 'activitie'
-                AND p.post_status = 'publish'
-                AND pm_user.meta_key = 'act_user_id'
-                AND pm_user.meta_value IN ($placeholders)",
-                ...$act_user_ids
-            ));
-
-            // Verified
-            $verified = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm_user ON p.ID = pm_user.post_id
-                INNER JOIN {$wpdb->postmeta} pm_verified ON p.ID = pm_verified.post_id
-                WHERE p.post_type = 'activitie'
-                AND p.post_status = 'publish'
-                AND pm_user.meta_key = 'act_user_id'
-                AND pm_user.meta_value IN ($placeholders)
-                AND pm_verified.meta_key = 'act_verified'
-                AND pm_verified.meta_value = '1'",
-                ...$act_user_ids
-            ));
-
-            // Pending
-            $pending = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm_user ON p.ID = pm_user.post_id
-                LEFT JOIN {$wpdb->postmeta} pm_verified ON p.ID = pm_verified.post_id AND pm_verified.meta_key = 'act_verified'
-                WHERE p.post_type = 'activitie'
-                AND p.post_status = 'publish'
-                AND pm_user.meta_key = 'act_user_id'
-                AND pm_user.meta_value IN ($placeholders)
-                AND (pm_verified.meta_value IS NULL OR pm_verified.meta_value != '1')",
-                ...$act_user_ids
-            ));
-
-            // Total points (horas × pontos_per_hour da categoria)
-            $table_categories = $wpdb->prefix . 'eau_activity_categories';
-            $total_points = $wpdb->get_var($wpdb->prepare(
-                "SELECT SUM(
-                    CAST(pm_hours.meta_value AS DECIMAL(10,2)) *
-                    COALESCE(cat.points_per_hour, 0)
-                )
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm_user ON p.ID = pm_user.post_id
-                INNER JOIN {$wpdb->postmeta} pm_hours ON p.ID = pm_hours.post_id
-                LEFT JOIN {$wpdb->postmeta} pm_cat ON p.ID = pm_cat.post_id AND pm_cat.meta_key = 'act_category_serial'
-                LEFT JOIN {$table_categories} cat ON cat.category_serial = pm_cat.meta_value
-                WHERE p.post_type = 'activitie'
-                AND p.post_status = 'publish'
-                AND pm_user.meta_key = 'act_user_id'
-                AND pm_user.meta_value IN ($placeholders)
-                AND pm_hours.meta_key = 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5'",
-                ...$act_user_ids
-            ));
-        } else {
-            // Admin/Super Admin: vê tudo
-            $counts = wp_count_posts('activitie');
-            $total = isset($counts->publish) ? (int) $counts->publish : 0;
-
-            // Verified
-            $verified = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-                WHERE p.post_type = %s
-                AND p.post_status = %s
-                AND pm.meta_key = %s
-                AND pm.meta_value = %s",
-                'activitie',
-                'publish',
-                'act_verified',
-                '1'
-            ));
-
-            // Pending
-            $pending = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
-                WHERE p.post_type = %s
-                AND p.post_status = %s
-                AND (pm.meta_value IS NULL OR pm.meta_value != %s)",
-                'act_verified',
-                'activitie',
-                'publish',
-                '1'
-            ));
-
-            // Total points (horas × pontos_per_hour da categoria)
-            $table_categories = $wpdb->prefix . 'eau_activity_categories';
-            $total_points = $wpdb->get_var(
-                "SELECT SUM(
-                    CAST(pm_hours.meta_value AS DECIMAL(10,2)) *
-                    COALESCE(cat.points_per_hour, 0)
-                )
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->postmeta} pm_hours ON p.ID = pm_hours.post_id
-                    AND pm_hours.meta_key = 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5'
-                LEFT JOIN {$wpdb->postmeta} pm_cat ON p.ID = pm_cat.post_id
-                    AND pm_cat.meta_key = 'act_category_serial'
-                LEFT JOIN {$table_categories} cat ON cat.category_serial = pm_cat.meta_value
-                WHERE p.post_type = 'activitie'
-                AND p.post_status = 'publish'"
-            );
-        }
+        // Usa sistema de cache para melhor performance
+        $stats = \EauSystem\Eau_Activities_Stats_Cache::get_stats(get_current_user_id());
 
         wp_send_json_success(array(
-            'total' => (int) $total,
-            'verified' => (int) $verified,
-            'pending' => (int) $pending,
-            'total_points' => number_format_i18n((float) $total_points, 2),
+            'total' => (int) $stats['total'],
+            'verified' => (int) $stats['verified'],
+            'pending' => (int) $stats['pending'],
+            'total_points' => number_format_i18n((float) $stats['total_hours'], 2),
         ));
     }
 
@@ -1047,6 +892,9 @@ class Eau_Activities_Ajax {
                 implode(', ', $failed_activities)
             );
         }
+
+        // Invalida TODOS os caches (bulk operation afeta múltiplos usuários)
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
 
         wp_send_json_success(array(
             'message' => $message,
@@ -1142,8 +990,60 @@ class Eau_Activities_Ajax {
             }
         }
 
+        // Invalida TODOS os caches (batch delete afeta múltiplos usuários)
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
+
         wp_send_json_success(array(
             'deleted_count' => $deleted_count,
+        ));
+    }
+
+    /**
+     * AJAX: Get Orphan Activity IDs
+     * Retorna IDs de atividades cujo act_user_id não corresponde a nenhum membro existente
+     */
+    public static function get_orphan_activity_ids() {
+        check_ajax_referer('eau_activities_nonce', 'nonce');
+
+        // Verifica se é super admin ou admin
+        if (!Eau_User_Institution_Helper::is_super_admin() && !Eau_User_Institution_Helper::has_admin_access()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        global $wpdb;
+
+        // Busca todas as atividades com act_user_id
+        $activities = $wpdb->get_results("
+            SELECT p.ID, pm.meta_value as act_user_id
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+            WHERE p.post_type = 'activitie'
+            AND p.post_status = 'publish'
+            AND pm.meta_key = 'act_user_id'
+            AND pm.meta_value != ''
+            AND pm.meta_value IS NOT NULL
+        ");
+
+        // Busca todos os mem_userid válidos (de usuários existentes)
+        $valid_user_ids = $wpdb->get_col("
+            SELECT DISTINCT meta_value
+            FROM {$wpdb->usermeta}
+            WHERE meta_key = 'mem_userid'
+            AND meta_value != ''
+            AND meta_value IS NOT NULL
+        ");
+
+        // Encontra atividades órfãs
+        $orphan_ids = array();
+        foreach ($activities as $activity) {
+            if (!in_array($activity->act_user_id, $valid_user_ids)) {
+                $orphan_ids[] = (int) $activity->ID;
+            }
+        }
+
+        wp_send_json_success(array(
+            'ids' => $orphan_ids,
+            'total' => count($orphan_ids),
         ));
     }
 }

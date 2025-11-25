@@ -96,6 +96,7 @@
             if (eauActivitiesData.isSuperAdmin) {
                 $('#eau-bulk-delete-activities').on('click', this.handleBulkDelete.bind(this));
                 $('#eau-delete-all-filtered-activities').on('click', this.handleDeleteAllFiltered.bind(this));
+                $('#eau-clean-orphan-activities').on('click', this.handleCleanOrphanActivities.bind(this));
             }
 
             // Add activity
@@ -1002,6 +1003,65 @@
 
             // Inicia processamento
             processNextBatch();
+        },
+
+        /**
+         * Handle clean orphan activities
+         */
+        handleCleanOrphanActivities: function() {
+            const self = this;
+
+            // Mostra toast de loading imediatamente
+            EauNotifications.info(
+                'Searching for Orphan Activities',
+                'Scanning database for activities without valid members...',
+                0 // Toast permanente (duration = 0)
+            );
+
+            // Busca todos os IDs de atividades órfãs
+            $.ajax({
+                url: eauActivitiesData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_orphan_activity_ids',
+                    nonce: eauActivitiesData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const orphanIds = response.data.ids;
+                        const totalCount = response.data.total;
+
+                        // Fecha todos os toasts antes de mostrar o modal
+                        $('.eau-toast').remove();
+
+                        if (totalCount === 0) {
+                            EauNotifications.success('No Orphan Activities', 'All activities have valid members. No cleanup needed.');
+                            return;
+                        }
+
+                        // Confirma com o usuário
+                        EauNotifications.confirm({
+                            title: 'Clean Orphan Activities?',
+                            message: `Found ${totalCount} orphan activity(ies) without valid members. Do you want to delete them? This action cannot be undone.`,
+                            type: 'warning',
+                            confirmText: 'Clean Now',
+                            cancelText: 'Cancel',
+                            onConfirm: function() {
+                                self.processBatchDeletion(orphanIds, 'orphan activities');
+                            }
+                        });
+                    } else {
+                        // Fecha todos os toasts antes de mostrar erro
+                        $('.eau-toast').remove();
+                        EauNotifications.error('Error', response.data.message || 'Failed to fetch orphan activities');
+                    }
+                },
+                error: function() {
+                    // Fecha todos os toasts antes de mostrar erro
+                    $('.eau-toast').remove();
+                    EauNotifications.error('Network Error', 'Please try again');
+                }
+            });
         },
 
         /**

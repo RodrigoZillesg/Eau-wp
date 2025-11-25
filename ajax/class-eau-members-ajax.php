@@ -261,6 +261,34 @@ class Eau_Members_Ajax {
             wp_send_json_error(array('message' => 'You do not have permission to delete this user.'));
         }
 
+        // CASCADING DELETE: Deleta todas as atividades deste membro primeiro
+        global $wpdb;
+
+        // Pega o mem_userid do membro
+        $mem_userid = get_user_meta($user_id, 'mem_userid', true);
+
+        if (!empty($mem_userid)) {
+            // Busca todas as atividades com esse act_user_id
+            $activity_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT p.ID
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = 'activitie'
+                AND p.post_status = 'publish'
+                AND pm.meta_key = 'act_user_id'
+                AND pm.meta_value = %s",
+                $mem_userid
+            ));
+
+            // Deleta cada atividade (force delete, não vai para trash)
+            foreach ($activity_ids as $activity_id) {
+                wp_delete_post($activity_id, true);
+            }
+
+            // Invalida cache de estatísticas
+            \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
+        }
+
         // Deleta usuário
         require_once(ABSPATH . 'wp-admin/includes/user.php');
         $deleted = wp_delete_user($user_id);
@@ -745,6 +773,8 @@ class Eau_Members_Ajax {
         $failed_members = array();
         $current_user_id = get_current_user_id();
 
+        global $wpdb;
+
         foreach ($member_ids as $user_id) {
             // Não permite deletar o próprio usuário
             if ($user_id === $current_user_id) {
@@ -752,6 +782,28 @@ class Eau_Members_Ajax {
                 $user = get_userdata($user_id);
                 $failed_members[] = $user ? $user->display_name : "ID: $user_id";
                 continue;
+            }
+
+            // CASCADING DELETE: Deleta todas as atividades deste membro primeiro
+            $mem_userid = get_user_meta($user_id, 'mem_userid', true);
+
+            if (!empty($mem_userid)) {
+                // Busca todas as atividades com esse act_user_id
+                $activity_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT p.ID
+                    FROM {$wpdb->posts} p
+                    INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                    WHERE p.post_type = 'activitie'
+                    AND p.post_status = 'publish'
+                    AND pm.meta_key = 'act_user_id'
+                    AND pm.meta_value = %s",
+                    $mem_userid
+                ));
+
+                // Deleta cada atividade (force delete, não vai para trash)
+                foreach ($activity_ids as $activity_id) {
+                    wp_delete_post($activity_id, true);
+                }
             }
 
             // Tenta deletar o usuário
@@ -765,6 +817,9 @@ class Eau_Members_Ajax {
                 $failed_members[] = $user ? $user->display_name : "ID: $user_id";
             }
         }
+
+        // Invalida cache de estatísticas (bulk delete afeta múltiplos usuários)
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
 
         wp_send_json_success(array(
             'deleted_count' => $deleted_count,
