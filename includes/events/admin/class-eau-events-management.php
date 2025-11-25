@@ -219,6 +219,27 @@ class Eau_Events_Management {
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Event Image</label>
+                                    <div class="eau-image-upload-wrapper">
+                                        <input type="hidden" name="image_id" id="eau-edit-image_id" value="">
+                                        <div class="eau-image-preview" id="eau-image-preview">
+                                            <img src="" alt="" id="eau-image-preview-img" style="display: none;">
+                                            <div class="eau-image-placeholder" id="eau-image-placeholder">
+                                                <i data-lucide="image"></i>
+                                                <span>No image selected</span>
+                                            </div>
+                                        </div>
+                                        <div class="eau-image-actions">
+                                            <button type="button" class="eau-btn eau-btn-secondary eau-btn-sm" id="eau-select-image">
+                                                <i data-lucide="upload"></i> Select Image
+                                            </button>
+                                            <button type="button" class="eau-btn eau-btn-secondary eau-btn-sm eau-btn-danger" id="eau-remove-image" style="display: none;">
+                                                <i data-lucide="trash-2"></i> Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -488,6 +509,9 @@ class Eau_Events_Management {
      * @return void
      */
     private static function enqueue_assets() {
+        // WordPress Media Library
+        wp_enqueue_media();
+
         // Garante que eau-components está registrado
         if (!wp_style_is('eau-components', 'registered')) {
             wp_register_style(

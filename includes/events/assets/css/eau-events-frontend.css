@@ -736,6 +736,13 @@
     color: var(--eau-gray-700);
 }
 
+.eau-event-cpd-category {
+    display: block;
+    font-size: 13px;
+    color: var(--eau-gray-600);
+    margin-top: 4px;
+}
+
 /* ==========================================================================
    Single Page - Sidebar
    ========================================================================== */

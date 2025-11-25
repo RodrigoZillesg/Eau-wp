@@ -34,7 +34,7 @@ class Eau_Events_Metabox {
      * @return void
      */
     public static function init() {
-        add_action('add_meta_boxes', array(__CLASS__, 'add_metabox'));
+        add_action('add_meta_boxes', array(__CLASS__, 'add_metabox'), 5);
         add_action('save_post_' . Config\POST_TYPE, array(__CLASS__, 'save'), 10, 2);
     }
 

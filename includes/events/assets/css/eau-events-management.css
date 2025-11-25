@@ -1176,6 +1176,73 @@ button.eau-btn-secondary {
 }
 
 /* ==========================================================================
+   Image Upload
+   ========================================================================== */
+
+#eau-event-edit-modal .eau-image-upload-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+#eau-event-edit-modal .eau-image-preview {
+    width: 100% !important;
+    max-width: 300px !important;
+    height: 180px !important;
+    border: 2px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: #f9fafb !important;
+}
+
+#eau-event-edit-modal .eau-image-preview img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+#eau-event-edit-modal .eau-image-placeholder {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #9ca3af !important;
+}
+
+#eau-event-edit-modal .eau-image-placeholder svg {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+#eau-event-edit-modal .eau-image-placeholder span {
+    font-size: 14px !important;
+}
+
+#eau-event-edit-modal .eau-image-actions {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+#eau-event-edit-modal .eau-btn-sm {
+    height: 36px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+}
+
+#eau-event-edit-modal .eau-btn-danger {
+    color: #dc2626 !important;
+    border-color: #fecaca !important;
+}
+
+#eau-event-edit-modal .eau-btn-danger:hover {
+    background: #fef2f2 !important;
+    border-color: #dc2626 !important;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 

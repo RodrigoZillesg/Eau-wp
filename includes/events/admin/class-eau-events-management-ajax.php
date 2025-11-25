@@ -135,6 +135,12 @@ class Eau_Events_Management_Ajax {
         $meta['title'] = $post->post_title;
         $meta['status'] = $post->post_status;
 
+        // Get image URL if image_id exists
+        if (!empty($meta['image_id'])) {
+            $image_url = wp_get_attachment_image_url($meta['image_id'], 'medium');
+            $meta['image_url'] = $image_url ? $image_url : '';
+        }
+
         wp_send_json_success(array('event' => $meta));
     }
 
@@ -189,11 +195,15 @@ class Eau_Events_Management_Ajax {
             }
         }
 
-        // Numbers
+        // Numbers (allow empty values to delete meta)
         $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'early_bird_price', 'max_guests', 'cpd_points', 'cpd_category');
         foreach ($numbers as $f) {
-            if (isset($_POST[$f]) && $_POST[$f] !== '') {
-                update_post_meta($event_id, $prefix . $f, floatval($_POST[$f]));
+            if (isset($_POST[$f])) {
+                if ($_POST[$f] !== '' && $_POST[$f] !== null) {
+                    update_post_meta($event_id, $prefix . $f, floatval($_POST[$f]));
+                } else {
+                    delete_post_meta($event_id, $prefix . $f);
+                }
             }
         }
 

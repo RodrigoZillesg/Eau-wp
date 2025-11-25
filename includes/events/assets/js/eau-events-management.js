@@ -149,6 +149,15 @@
                 this.toggleLocationFields(e.target.value);
             });
 
+            // Image upload
+            $('#eau-select-image').on('click', () => {
+                this.openMediaLibrary();
+            });
+
+            $('#eau-remove-image').on('click', () => {
+                this.removeImage();
+            });
+
             // Pagination
             $(document).on('click', '.eau-pagination-btn:not(.disabled)', (e) => {
                 const page = $(e.currentTarget).data('page');
@@ -323,6 +332,9 @@
             $('#eau-edit-country').val('Australia');
             $('#eau-edit-visibility').val('public');
 
+            // Clear image
+            this.removeImage();
+
             // Show correct location fields for default type
             this.toggleLocationFields('in-person');
 
@@ -433,6 +445,13 @@
             $('#eau-edit-allow_guests').prop('checked', event.allow_guests === '1');
             $('#eau-edit-require_approval').prop('checked', event.require_approval === '1');
             $('#eau-edit-members_only').prop('checked', event.members_only === '1');
+
+            // Image
+            if (event.image_id && event.image_url) {
+                this.setImage(event.image_id, event.image_url);
+            } else {
+                this.removeImage();
+            }
         },
 
         /**
@@ -466,6 +485,53 @@
                     $virtualFields.hide();
                     $inPersonFields.show();
             }
+        },
+
+        /**
+         * Open WordPress Media Library
+         */
+        openMediaLibrary: function() {
+            // Create media frame if not exists
+            if (!this.mediaFrame) {
+                this.mediaFrame = wp.media({
+                    title: 'Select Event Image',
+                    button: {
+                        text: 'Use this image'
+                    },
+                    multiple: false
+                });
+
+                // When image is selected
+                this.mediaFrame.on('select', () => {
+                    const attachment = this.mediaFrame.state().get('selection').first().toJSON();
+                    this.setImage(attachment.id, attachment.url);
+                });
+            }
+
+            this.mediaFrame.open();
+        },
+
+        /**
+         * Set image preview
+         */
+        setImage: function(imageId, imageUrl) {
+            $('#eau-edit-image_id').val(imageId);
+            $('#eau-image-preview-img').attr('src', imageUrl).show();
+            $('#eau-image-placeholder').hide();
+            $('#eau-remove-image').show();
+            $('#eau-image-preview').css('border-style', 'solid');
+        },
+
+        /**
+         * Remove image
+         */
+        removeImage: function() {
+            $('#eau-edit-image_id').val('');
+            $('#eau-image-preview-img').attr('src', '').hide();
+            $('#eau-image-placeholder').show();
+            $('#eau-remove-image').hide();
+            $('#eau-image-preview').css('border-style', 'dashed');
+            lucide.createIcons();
         },
 
         /**

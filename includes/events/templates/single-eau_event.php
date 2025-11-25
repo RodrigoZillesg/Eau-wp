@@ -80,7 +80,18 @@ while (have_posts()) : the_post();
                 </div>
 
                 <!-- CPD Points Section -->
-                <?php if ($meta['cpd_points'] && floatval($meta['cpd_points']) > 0) : ?>
+                <?php if ($meta['cpd_points'] && floatval($meta['cpd_points']) > 0) :
+                    // Get CPD category name from eau_activity_categories table
+                    $cpd_category_name = '';
+                    if (!empty($meta['cpd_category'])) {
+                        global $wpdb;
+                        $table_name = $wpdb->prefix . 'eau_activity_categories';
+                        $cpd_category_name = $wpdb->get_var($wpdb->prepare(
+                            "SELECT category_name FROM $table_name WHERE id = %d",
+                            intval($meta['cpd_category'])
+                        ));
+                    }
+                ?>
                     <div class="eau-event-section eau-event-cpd-section">
                         <div class="eau-event-cpd-box">
                             <div class="eau-event-cpd-icon"><?php echo Helper::icon('graduation', 24); ?></div>
@@ -89,6 +100,11 @@ while (have_posts()) : the_post();
                                 <span class="eau-event-cpd-text">
                                     <?php printf(__('Earn %s CPD points by attending this event.', 'eau-system'), '<strong>' . esc_html($meta['cpd_points']) . '</strong>'); ?>
                                 </span>
+                                <?php if ($cpd_category_name) : ?>
+                                    <span class="eau-event-cpd-category">
+                                        <?php printf(__('Category: %s', 'eau-system'), '<strong>' . esc_html($cpd_category_name) . '</strong>'); ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
