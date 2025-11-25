@@ -29,7 +29,7 @@ class Eau_Event_Registrations {
      *
      * @var string
      */
-    const VERSION = '1.29.0';
+    const VERSION = '1.29.2';
 
     /**
      * Instância singleton
@@ -80,8 +80,7 @@ class Eau_Event_Registrations {
         require_once $base . 'class-eau-event-registrations-meta.php';
 
         // Admin
-        require_once $base . 'admin/class-eau-event-registrations-admin.php';
-        require_once $base . 'admin/class-eau-event-registrations-ajax.php';
+        require_once $base . 'admin/class-eau-event-registrations-metabox.php';
     }
 
     /**
@@ -95,8 +94,7 @@ class Eau_Event_Registrations {
         Eau_Event_Registrations_Meta::get_instance();
 
         // Admin
-        Admin\Eau_Event_Registrations_Admin::get_instance();
-        Admin\Eau_Event_Registrations_Ajax::register_handlers();
+        Admin\Eau_Event_Registrations_Metabox::get_instance();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();

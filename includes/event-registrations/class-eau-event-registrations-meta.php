@@ -312,14 +312,15 @@ class Eau_Event_Registrations_Meta {
      */
     private function get_args() {
         return array(
-            'public'       => false,
-            'has_archive'  => false,
-            'show_in_rest' => true,
-            'show_in_menu' => 'edit.php?post_type=eau_event',
-            'menu_icon'    => 'dashicons-tickets',
-            'supports'     => array('title'),
-            'rewrite'      => false,
-            'rewrite_slug' => '',
+            'public'        => false,
+            'has_archive'   => false,
+            'show_in_rest'  => true,
+            'show_in_menu'  => true,
+            'menu_position' => 26,
+            'menu_icon'     => 'dashicons-tickets-alt',
+            'supports'      => array('title'),
+            'rewrite'       => false,
+            'rewrite_slug'  => '',
         );
     }
 
