@@ -80,6 +80,9 @@ class Eau_Event_Registrations {
 
         // Admin
         require_once $base . 'admin/class-eau-event-registrations-metabox.php';
+
+        // Frontend
+        require_once $base . 'frontend/class-eau-event-registrations-ajax.php';
     }
 
     /**
@@ -99,6 +102,9 @@ class Eau_Event_Registrations {
 
         // Admin
         Admin\Eau_Event_Registrations_Metabox::get_instance();
+
+        // Frontend AJAX
+        Frontend\Eau_Event_Registrations_Ajax::register_handlers();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();
