@@ -83,6 +83,18 @@ class Eau_Event_Registrations_Meta {
                 echo '<div class="notice ' . $class . ' is-dismissible"><p><strong>Event Registrations JetEngine Sync:</strong> ' . esc_html($result) . '</p></div>';
             });
         }
+
+        // Delete from JetEngine: /wp-admin/?eau_reg_delete=1
+        if (isset($_GET['eau_reg_delete'])) {
+            global $wpdb;
+            $table = $wpdb->prefix . 'jet_post_types';
+            $deleted = $wpdb->delete($table, array('slug' => Config\POST_TYPE), array('%s'));
+            delete_option('eau_event_reg_jet_version');
+            add_action('admin_notices', function() use ($deleted) {
+                $msg = $deleted ? 'Deleted from JetEngine. Refresh the page.' : 'Nothing to delete.';
+                echo '<div class="notice notice-warning is-dismissible"><p><strong>Event Registrations:</strong> ' . esc_html($msg) . '</p></div>';
+            });
+        }
     }
 
     /**
@@ -240,7 +252,7 @@ class Eau_Event_Registrations_Meta {
 
         $data = array(
             'slug'        => Config\POST_TYPE,
-            'status'      => 'built-in',
+            'status'      => 'publish',
             'labels'      => maybe_serialize($this->get_labels()),
             'args'        => maybe_serialize($this->get_args()),
             'meta_fields' => maybe_serialize($this->get_jet_meta_fields()),
