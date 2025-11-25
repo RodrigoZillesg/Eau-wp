@@ -240,7 +240,7 @@ class Eau_Event_Registrations_Meta {
 
         $data = array(
             'slug'        => Config\POST_TYPE,
-            'status'      => 'publish',
+            'status'      => 'built-in',
             'labels'      => maybe_serialize($this->get_labels()),
             'args'        => maybe_serialize($this->get_args()),
             'meta_fields' => maybe_serialize($this->get_jet_meta_fields()),

@@ -52,7 +52,8 @@ class Eau_Event_Registrations_CPT {
      * @since 1.29.0
      */
     private function __construct() {
-        add_action('init', array($this, 'register_post_type'), 10);
+        // Prioridade 5 para registrar antes do JetEngine (que usa 10)
+        add_action('init', array($this, 'register_post_type'), 5);
     }
 
     /**
@@ -71,6 +72,16 @@ class Eau_Event_Registrations_CPT {
             'query_var'          => true,
             'rewrite'            => false,
             'capability_type'    => 'post',
+            'capabilities'       => array(
+                'edit_post'          => 'edit_posts',
+                'read_post'          => 'read',
+                'delete_post'        => 'delete_posts',
+                'edit_posts'         => 'edit_posts',
+                'edit_others_posts'  => 'edit_others_posts',
+                'publish_posts'      => 'publish_posts',
+                'read_private_posts' => 'read_private_posts',
+            ),
+            'map_meta_cap'       => true,
             'has_archive'        => false,
             'hierarchical'       => false,
             'menu_position'      => 26,
