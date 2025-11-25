@@ -49,6 +49,9 @@ class Eau_System {
 
         // Documentation (v1.18.1)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-documentation.php';
+
+        // Events Module (v1.28.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/events/class-eau-events.php';
     }
 
     private function define_admin_hooks() {
@@ -108,6 +111,9 @@ class Eau_System {
         if (!Eau_Duplicate_Database::tables_exist()) {
             Eau_Duplicate_Database::create_tables();
         }
+
+        // Initialize Events Module
+        \EauSystem\Events\Eau_Events::get_instance();
     }
 
     public function get_plugin_name() {

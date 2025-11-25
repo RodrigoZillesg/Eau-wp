@@ -1,0 +1,1033 @@
+/**
+ * Eau Events CPT - Frontend Styles
+ *
+ * @package EauSystem
+ * @since 1.28.1
+ */
+
+/* ==========================================================================
+   Variables
+   ========================================================================== */
+
+:root {
+    --eau-primary: #005EB8;
+    --eau-primary-hover: #004a91;
+    --eau-primary-light: #e6f1ff;
+    --eau-success: #10b981;
+    --eau-success-bg: #ecfdf5;
+    --eau-error: #ef4444;
+    --eau-warning: #f59e0b;
+    --eau-gray-50: #f9fafb;
+    --eau-gray-100: #f3f4f6;
+    --eau-gray-200: #e5e7eb;
+    --eau-gray-300: #d1d5db;
+    --eau-gray-400: #9ca3af;
+    --eau-gray-500: #6b7280;
+    --eau-gray-600: #4b5563;
+    --eau-gray-700: #374151;
+    --eau-gray-800: #1f2937;
+    --eau-gray-900: #111827;
+    --eau-white: #ffffff;
+    --eau-border-radius: 8px;
+    --eau-border-radius-lg: 12px;
+    --eau-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --eau-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --eau-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --eau-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --eau-font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+.eau-events-archive,
+.eau-event-single {
+    font-family: var(--eau-font-family);
+    background: var(--eau-gray-50);
+    min-height: 100vh;
+    padding: 32px 0;
+    line-height: 1.5;
+    color: var(--eau-gray-900);
+}
+
+.eau-events-container,
+.eau-event-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+    .eau-events-container,
+    .eau-event-container {
+        padding: 0 24px;
+    }
+}
+
+/* ==========================================================================
+   Buttons - Reset Theme Styles
+   ========================================================================== */
+
+.eau-events-archive .eau-btn,
+.eau-event-single .eau-btn,
+.eau-events-archive button.eau-btn,
+.eau-event-single button.eau-btn,
+.eau-events-archive a.eau-btn,
+.eau-event-single a.eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: var(--eau-font-family) !important;
+    line-height: 1.5 !important;
+    border-radius: var(--eau-border-radius) !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+.eau-events-archive .eau-btn svg,
+.eau-event-single .eau-btn svg {
+    flex-shrink: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Primary Button */
+.eau-events-archive .eau-btn-primary,
+.eau-event-single .eau-btn-primary,
+.eau-events-archive button.eau-btn-primary,
+.eau-event-single button.eau-btn-primary,
+.eau-events-archive a.eau-btn-primary,
+.eau-event-single a.eau-btn-primary {
+    background: var(--eau-primary) !important;
+    color: var(--eau-white) !important;
+    border-color: var(--eau-primary) !important;
+}
+
+.eau-events-archive .eau-btn-primary:hover,
+.eau-event-single .eau-btn-primary:hover,
+.eau-events-archive .eau-btn-primary:focus,
+.eau-event-single .eau-btn-primary:focus,
+.eau-events-archive .eau-btn-primary:active,
+.eau-event-single .eau-btn-primary:active,
+.eau-events-archive .eau-btn-primary:visited,
+.eau-event-single .eau-btn-primary:visited {
+    background: var(--eau-primary-hover) !important;
+    color: var(--eau-white) !important;
+    border-color: var(--eau-primary-hover) !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Outline Button */
+.eau-events-archive .eau-btn-outline,
+.eau-event-single .eau-btn-outline,
+.eau-events-archive button.eau-btn-outline,
+.eau-event-single button.eau-btn-outline {
+    background: var(--eau-white) !important;
+    color: var(--eau-gray-700) !important;
+    border-color: var(--eau-gray-300) !important;
+}
+
+.eau-events-archive .eau-btn-outline:hover,
+.eau-event-single .eau-btn-outline:hover,
+.eau-events-archive .eau-btn-outline:focus,
+.eau-event-single .eau-btn-outline:focus,
+.eau-events-archive .eau-btn-outline:active,
+.eau-event-single .eau-btn-outline:active,
+.eau-events-archive .eau-btn-outline:visited,
+.eau-event-single .eau-btn-outline:visited {
+    background: var(--eau-gray-50) !important;
+    color: var(--eau-gray-900) !important;
+    border-color: var(--eau-gray-400) !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Full Width Button */
+.eau-events-archive .eau-btn-full,
+.eau-event-single .eau-btn-full {
+    width: 100% !important;
+}
+
+/* Secondary Button */
+.eau-events-archive .eau-btn-secondary,
+.eau-event-single .eau-btn-secondary {
+    background: var(--eau-gray-100) !important;
+    color: var(--eau-gray-700) !important;
+    border-color: var(--eau-gray-200) !important;
+}
+
+.eau-events-archive .eau-btn-secondary:hover,
+.eau-event-single .eau-btn-secondary:hover,
+.eau-events-archive .eau-btn-secondary:focus,
+.eau-event-single .eau-btn-secondary:focus {
+    background: var(--eau-gray-200) !important;
+    color: var(--eau-gray-900) !important;
+    border-color: var(--eau-gray-300) !important;
+}
+
+/* ==========================================================================
+   Archive Page - Header
+   ========================================================================== */
+
+.eau-events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.eau-events-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--eau-gray-900);
+    margin: 0 0 4px 0;
+}
+
+.eau-events-subtitle {
+    font-size: 14px;
+    color: var(--eau-gray-500);
+    margin: 0;
+}
+
+/* ==========================================================================
+   Archive Page - Filters
+   ========================================================================== */
+
+.eau-events-filters {
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+    padding: 20px;
+    margin-bottom: 32px;
+    box-shadow: var(--eau-shadow-sm);
+}
+
+.eau-events-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.eau-filter-search {
+    flex: 1;
+    min-width: 200px;
+}
+
+.eau-events-archive .eau-filter-input,
+.eau-events-archive input.eau-filter-input,
+.eau-events-archive input[type="text"].eau-filter-input {
+    width: 100% !important;
+    height: 42px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    border: 1px solid var(--eau-gray-300) !important;
+    border-radius: var(--eau-border-radius) !important;
+    background: var(--eau-white) !important;
+    color: var(--eau-gray-900) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+}
+
+.eau-events-archive .eau-filter-input:focus,
+.eau-events-archive input.eau-filter-input:focus,
+.eau-events-archive input[type="text"].eau-filter-input:focus {
+    outline: none !important;
+    border-color: var(--eau-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1) !important;
+}
+
+.eau-events-archive .eau-filter-input::placeholder {
+    color: var(--eau-gray-400) !important;
+}
+
+.eau-filter-select-wrapper {
+    min-width: 160px;
+}
+
+.eau-events-archive .eau-filter-select,
+.eau-events-archive select.eau-filter-select {
+    width: 100% !important;
+    height: 42px !important;
+    padding: 8px 36px 8px 12px !important;
+    font-size: 14px !important;
+    border: 1px solid var(--eau-gray-300) !important;
+    border-radius: var(--eau-border-radius) !important;
+    background: var(--eau-white) url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"%3E%3Cpath stroke="%236b7280" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4"/%3E%3C/svg%3E') right 10px center no-repeat !important;
+    background-size: 16px !important;
+    color: var(--eau-gray-900) !important;
+    cursor: pointer !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+}
+
+.eau-events-archive .eau-filter-select:focus,
+.eau-events-archive select.eau-filter-select:focus {
+    outline: none !important;
+    border-color: var(--eau-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+    .eau-events-filter-form {
+        flex-direction: column;
+    }
+
+    .eau-filter-search,
+    .eau-filter-select-wrapper {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Archive Page - Sections
+   ========================================================================== */
+
+.eau-events-section {
+    margin-bottom: 40px;
+}
+
+.eau-events-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+    margin: 0 0 20px 0;
+}
+
+/* ==========================================================================
+   Archive Page - Event Grid
+   ========================================================================== */
+
+.eau-events-grid {
+    display: grid;
+    gap: 24px;
+}
+
+.eau-events-grid-upcoming {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.eau-events-grid-past {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+@media (max-width: 640px) {
+    .eau-events-grid-upcoming,
+    .eau-events-grid-past {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Archive Page - Event Card
+   ========================================================================== */
+
+.eau-event-card {
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.eau-event-card:hover {
+    box-shadow: var(--eau-shadow-md);
+    border-color: var(--eau-gray-300);
+}
+
+.eau-event-card-image {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    overflow: hidden;
+}
+
+.eau-event-card-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.eau-event-card:hover .eau-event-card-image img {
+    transform: scale(1.05);
+}
+
+.eau-event-card-content {
+    padding: 20px;
+}
+
+.eau-event-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.eau-event-card-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.eau-event-card-title a:hover {
+    color: var(--eau-primary);
+}
+
+.eau-event-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.eau-event-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--eau-gray-600);
+}
+
+.eau-event-card-meta-item svg {
+    color: var(--eau-gray-400);
+    flex-shrink: 0;
+}
+
+.eau-event-card-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--eau-gray-500);
+    margin-bottom: 16px;
+}
+
+.eau-event-card-location svg {
+    color: var(--eau-gray-400);
+    flex-shrink: 0;
+}
+
+.eau-event-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--eau-gray-100);
+}
+
+.eau-event-card-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.eau-event-card-price,
+.eau-event-card-cpd {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+}
+
+.eau-event-card-price svg,
+.eau-event-card-cpd svg {
+    color: var(--eau-gray-400);
+}
+
+.eau-event-card-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.eau-event-card-link:hover {
+    color: var(--eau-primary-hover);
+}
+
+/* Past Event Card */
+.eau-event-card-past {
+    border-left: 3px solid var(--eau-gray-300);
+}
+
+.eau-event-card-past .eau-event-card-title {
+    font-size: 15px;
+}
+
+.eau-event-card-status {
+    font-size: 12px;
+    color: var(--eau-gray-400);
+    font-style: italic;
+    margin-top: 8px;
+}
+
+/* ==========================================================================
+   Archive Page - Empty State
+   ========================================================================== */
+
+.eau-events-empty {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+}
+
+.eau-events-empty svg {
+    color: var(--eau-gray-300);
+    margin-bottom: 16px;
+}
+
+.eau-events-empty h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+    margin: 0 0 8px 0;
+}
+
+.eau-events-empty p {
+    font-size: 14px;
+    color: var(--eau-gray-500);
+    margin: 0;
+}
+
+/* ==========================================================================
+   Single Page - Back Link
+   ========================================================================== */
+
+.eau-event-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-primary);
+    text-decoration: none;
+    margin-bottom: 24px;
+    transition: color 0.2s ease;
+}
+
+.eau-event-back-link:hover {
+    color: var(--eau-primary-hover);
+}
+
+/* ==========================================================================
+   Single Page - Layout
+   ========================================================================== */
+
+.eau-event-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+}
+
+@media (min-width: 1024px) {
+    .eau-event-layout {
+        grid-template-columns: 1fr 360px;
+    }
+}
+
+/* ==========================================================================
+   Single Page - Main Content
+   ========================================================================== */
+
+.eau-event-main {
+    min-width: 0;
+}
+
+.eau-event-image {
+    border-radius: var(--eau-border-radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.eau-event-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.eau-event-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--eau-gray-900);
+    margin: 0 0 24px 0;
+    line-height: 1.3;
+}
+
+@media (max-width: 640px) {
+    .eau-event-title {
+        font-size: 24px;
+    }
+}
+
+/* ==========================================================================
+   Single Page - Info Grid
+   ========================================================================== */
+
+.eau-event-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+    margin-bottom: 24px;
+}
+
+@media (min-width: 640px) {
+    .eau-event-info-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.eau-event-info-item {
+    display: flex;
+    gap: 12px;
+}
+
+.eau-event-info-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--eau-primary-light);
+    border-radius: var(--eau-border-radius);
+    color: var(--eau-primary);
+}
+
+.eau-event-info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.eau-event-info-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--eau-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eau-event-info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-primary);
+}
+
+.eau-event-info-subvalue {
+    font-size: 13px;
+    color: var(--eau-gray-600);
+}
+
+/* ==========================================================================
+   Single Page - Sections
+   ========================================================================== */
+
+.eau-event-section {
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.eau-event-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+    margin: 0 0 16px 0;
+}
+
+.eau-event-description {
+    font-size: 14px;
+    color: var(--eau-gray-700);
+    line-height: 1.7;
+}
+
+.eau-event-description p {
+    margin: 0 0 16px 0;
+}
+
+.eau-event-description p:last-child {
+    margin-bottom: 0;
+}
+
+.eau-event-no-description {
+    color: var(--eau-gray-400);
+    font-style: italic;
+}
+
+/* ==========================================================================
+   Single Page - CPD Section
+   ========================================================================== */
+
+.eau-event-cpd-section {
+    background: var(--eau-primary-light);
+    border-color: transparent;
+}
+
+.eau-event-cpd-box {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.eau-event-cpd-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--eau-white);
+    border-radius: var(--eau-border-radius);
+    color: var(--eau-primary);
+}
+
+.eau-event-cpd-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.eau-event-cpd-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+}
+
+.eau-event-cpd-text {
+    font-size: 14px;
+    color: var(--eau-gray-700);
+}
+
+/* ==========================================================================
+   Single Page - Sidebar
+   ========================================================================== */
+
+.eau-event-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+@media (min-width: 1024px) {
+    .eau-event-sidebar {
+        position: sticky;
+        top: 32px;
+        align-self: start;
+    }
+}
+
+/* ==========================================================================
+   Single Page - Price Card
+   ========================================================================== */
+
+.eau-event-price-card {
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--eau-shadow);
+}
+
+.eau-event-price-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--eau-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.eau-event-price-value {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--eau-gray-900);
+    margin-bottom: 16px;
+}
+
+.eau-event-price-free {
+    color: var(--eau-success);
+}
+
+.eau-event-capacity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--eau-gray-600);
+    padding: 12px 0;
+    border-top: 1px solid var(--eau-gray-100);
+    border-bottom: 1px solid var(--eau-gray-100);
+    margin-bottom: 16px;
+}
+
+.eau-event-capacity svg {
+    color: var(--eau-gray-400);
+}
+
+.eau-event-capacity-value {
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+}
+
+.eau-event-registered-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--eau-success-bg);
+    color: var(--eau-success);
+    border-radius: var(--eau-border-radius);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.eau-event-register-btn {
+    margin-bottom: 16px;
+}
+
+.eau-event-past-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: var(--eau-gray-100);
+    color: var(--eau-gray-500);
+    border-radius: var(--eau-border-radius);
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Single Page - Countdown
+   ========================================================================== */
+
+.eau-event-countdown {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    border-radius: var(--eau-border-radius);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    margin-top: 16px;
+}
+
+.eau-countdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.eau-countdown-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--eau-white);
+    margin-bottom: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eau-countdown-timer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.eau-countdown-item {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    padding: 12px 8px;
+}
+
+.eau-countdown-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--eau-white);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.eau-countdown-label {
+    display: block;
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eau-countdown-date {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ==========================================================================
+   Single Page - CPD Link
+   ========================================================================== */
+
+.eau-event-cpd-link {
+    display: block;
+    text-align: center;
+    font-size: 14px;
+    color: var(--eau-gray-600);
+    text-decoration: none;
+    padding: 12px;
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius);
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.eau-event-cpd-link:hover {
+    background: var(--eau-gray-50);
+    border-color: var(--eau-gray-300);
+}
+
+/* ==========================================================================
+   Single Page - Saved Button State
+   ========================================================================== */
+
+.eau-event-save-btn.eau-saved {
+    background: var(--eau-error);
+    color: var(--eau-white);
+    border-color: var(--eau-error);
+}
+
+.eau-event-save-btn.eau-saved:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+/* ==========================================================================
+   Single Page - Actions
+   ========================================================================== */
+
+.eau-event-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.eau-event-share-btn,
+.eau-event-save-btn {
+    font-size: 13px;
+    padding: 10px 12px;
+}
+
+/* ==========================================================================
+   Single Page - Organizer Card
+   ========================================================================== */
+
+.eau-event-organizer-card {
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius-lg);
+    padding: 20px;
+}
+
+.eau-event-organizer-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--eau-gray-500);
+    margin-bottom: 12px;
+}
+
+.eau-event-organizer-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.eau-event-organizer-logo {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--eau-primary-light);
+    border-radius: var(--eau-border-radius);
+    color: var(--eau-primary);
+}
+
+.eau-event-organizer-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.eau-event-organizer-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
+}
+
+.eau-event-organizer-role {
+    font-size: 12px;
+    color: var(--eau-gray-500);
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+    .eau-event-sidebar {
+        order: -1;
+    }
+
+    .eau-event-countdown {
+        display: none;
+    }
+}
