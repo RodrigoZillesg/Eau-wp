@@ -33,6 +33,7 @@ class Eau_Events_Management_Ajax {
     public static function register_handlers() {
         add_action('wp_ajax_eau_get_events', array(__CLASS__, 'get_events'));
         add_action('wp_ajax_eau_get_event', array(__CLASS__, 'get_event'));
+        add_action('wp_ajax_eau_create_event', array(__CLASS__, 'create_event'));
         add_action('wp_ajax_eau_update_event', array(__CLASS__, 'update_event'));
         add_action('wp_ajax_eau_delete_event', array(__CLASS__, 'delete_event'));
         add_action('wp_ajax_eau_duplicate_event', array(__CLASS__, 'duplicate_event'));
@@ -135,6 +136,87 @@ class Eau_Events_Management_Ajax {
         $meta['status'] = $post->post_status;
 
         wp_send_json_success(array('event' => $meta));
+    }
+
+    /**
+     * AJAX: Create new event
+     *
+     * @since  1.28.1
+     * @return void
+     */
+    public static function create_event() {
+        check_ajax_referer('eau_events_management_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        // Validate required fields
+        $title = isset($_POST['title']) ? sanitize_text_field($_POST['title']) : '';
+        $start_datetime = isset($_POST['start_datetime']) ? sanitize_text_field($_POST['start_datetime']) : '';
+        $end_datetime = isset($_POST['end_datetime']) ? sanitize_text_field($_POST['end_datetime']) : '';
+
+        if (empty($title)) {
+            wp_send_json_error(array('message' => 'Event title is required'));
+        }
+
+        if (empty($start_datetime)) {
+            wp_send_json_error(array('message' => 'Start date and time is required'));
+        }
+
+        if (empty($end_datetime)) {
+            wp_send_json_error(array('message' => 'End date and time is required'));
+        }
+
+        // Create the post
+        $event_id = wp_insert_post(array(
+            'post_title' => $title,
+            'post_type' => Config\POST_TYPE,
+            'post_status' => 'draft',
+        ));
+
+        if (is_wp_error($event_id)) {
+            wp_send_json_error(array('message' => 'Failed to create event'));
+        }
+
+        $prefix = Config\META_PREFIX;
+
+        // Text fields
+        $text_fields = array('short_description', 'start_datetime', 'end_datetime', 'timezone', 'event_type', 'venue_name', 'address', 'city', 'state', 'postal_code', 'country', 'early_bird_end_date', 'visibility');
+        foreach ($text_fields as $f) {
+            if (isset($_POST[$f]) && $_POST[$f] !== '') {
+                update_post_meta($event_id, $prefix . $f, sanitize_text_field($_POST[$f]));
+            }
+        }
+
+        // Numbers
+        $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'early_bird_price', 'max_guests', 'cpd_points', 'cpd_category');
+        foreach ($numbers as $f) {
+            if (isset($_POST[$f]) && $_POST[$f] !== '') {
+                update_post_meta($event_id, $prefix . $f, floatval($_POST[$f]));
+            }
+        }
+
+        // Checkboxes
+        $checks = array('allow_guests', 'require_approval', 'members_only');
+        foreach ($checks as $f) {
+            update_post_meta($event_id, $prefix . $f, isset($_POST[$f]) && $_POST[$f] ? '1' : '');
+        }
+
+        // URL
+        if (isset($_POST['virtual_url']) && $_POST['virtual_url'] !== '') {
+            update_post_meta($event_id, $prefix . 'virtual_url', esc_url_raw($_POST['virtual_url']));
+        }
+
+        // WYSIWYG
+        if (isset($_POST['full_description']) && $_POST['full_description'] !== '') {
+            update_post_meta($event_id, $prefix . 'full_description', wp_kses_post($_POST['full_description']));
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Event created successfully',
+            'event_id' => $event_id,
+        ));
     }
 
     /**

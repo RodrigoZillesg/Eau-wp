@@ -11,7 +11,6 @@
 
 namespace EauSystem\Events\Admin;
 
-use EauSystem\Components\Eau_Stats_Cards;
 use EauSystem\Components\Eau_Access_Denied;
 use EauSystem\Events\Config;
 
@@ -76,10 +75,10 @@ class Eau_Events_Management {
                     <p class="eau-page-header-subtitle">Create and manage events</p>
                 </div>
                 <div class="eau-page-header-actions">
-                    <a href="<?php echo esc_url(admin_url('post-new.php?post_type=eau_event')); ?>" class="eau-btn eau-btn-primary">
+                    <button type="button" class="eau-btn eau-btn-primary" id="eau-create-event-btn">
                         <i data-lucide="plus"></i>
                         Create Event
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -158,11 +157,8 @@ class Eau_Events_Management {
         $event_types = Config\get_event_types();
         $visibility_options = Config\get_visibility_options();
 
-        // Get CPD categories
-        $cpd_categories = get_terms(array(
-            'taxonomy' => 'cpd_category',
-            'hide_empty' => false,
-        ));
+        // Get CPD categories from eau_activity_categories table
+        $cpd_categories = self::get_cpd_categories();
 
         ob_start();
         ?>
@@ -170,7 +166,7 @@ class Eau_Events_Management {
             <div class="eau-modal-overlay"></div>
             <div class="eau-modal-container eau-modal-large">
                 <div class="eau-modal-header">
-                    <h2 class="eau-modal-title">Edit Event</h2>
+                    <h2 class="eau-modal-title" id="eau-modal-title">Edit Event</h2>
                     <button type="button" class="eau-modal-close" id="eau-modal-close">
                         <i data-lucide="x"></i>
                     </button>
@@ -178,20 +174,21 @@ class Eau_Events_Management {
                 <div class="eau-modal-body">
                     <form id="eau-event-edit-form">
                         <input type="hidden" name="event_id" id="eau-edit-event-id">
+                        <input type="hidden" name="mode" id="eau-edit-mode" value="edit">
 
                         <!-- Tabs Navigation -->
                         <div class="eau-modal-tabs-nav">
                             <button type="button" class="eau-modal-tab-btn active" data-tab="basic-info">
-                                <i data-lucide="edit-3"></i> Basic Info
+                                <i data-lucide="file-text"></i> Basic Info
                             </button>
                             <button type="button" class="eau-modal-tab-btn" data-tab="location">
                                 <i data-lucide="map-pin"></i> Location
                             </button>
                             <button type="button" class="eau-modal-tab-btn" data-tab="pricing">
-                                <i data-lucide="ticket"></i> Pricing
+                                <i data-lucide="ticket"></i> Capacity & Pricing
                             </button>
                             <button type="button" class="eau-modal-tab-btn" data-tab="settings">
-                                <i data-lucide="settings"></i> Settings
+                                <i data-lucide="settings"></i> CPD & Settings
                             </button>
                         </div>
 
@@ -200,11 +197,11 @@ class Eau_Events_Management {
                             <div class="eau-form-grid">
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-form-label">Event Title <span class="required">*</span></label>
-                                    <input type="text" name="title" id="eau-edit-title" class="eau-form-input" required>
+                                    <input type="text" name="title" id="eau-edit-title" class="eau-form-input" placeholder="Enter event title" required>
                                 </div>
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-form-label">Short Description</label>
-                                    <textarea name="short_description" id="eau-edit-short_description" class="eau-form-textarea" rows="2" maxlength="500"></textarea>
+                                    <textarea name="short_description" id="eau-edit-short_description" class="eau-form-textarea" rows="2" maxlength="500" placeholder="Brief description for event cards (max 500 characters)"></textarea>
                                 </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">Start Date & Time <span class="required">*</span></label>
@@ -214,7 +211,7 @@ class Eau_Events_Management {
                                     <label class="eau-form-label">End Date & Time <span class="required">*</span></label>
                                     <input type="datetime-local" name="end_datetime" id="eau-edit-end_datetime" class="eau-form-input" required>
                                 </div>
-                                <div class="eau-form-field">
+                                <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-form-label">Timezone</label>
                                     <select name="timezone" id="eau-edit-timezone" class="eau-form-select">
                                         <?php foreach ($timezones as $key => $label) : ?>
@@ -233,61 +230,77 @@ class Eau_Events_Management {
                                     <div class="eau-radio-group">
                                         <?php foreach ($event_types as $key => $label) : ?>
                                             <label class="eau-radio-label">
-                                                <input type="radio" name="event_type" value="<?php echo esc_attr($key); ?>">
+                                                <input type="radio" name="event_type" value="<?php echo esc_attr($key); ?>" id="eau-event-type-<?php echo esc_attr($key); ?>">
                                                 <?php echo esc_html($label); ?>
                                             </label>
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Venue Name</label>
-                                    <input type="text" name="venue_name" id="eau-edit-venue_name" class="eau-form-input">
+
+                                <!-- Virtual Event Fields -->
+                                <div class="eau-location-fields eau-location-virtual" style="display: none;">
+                                    <div class="eau-form-grid">
+                                        <div class="eau-form-field eau-form-field-span-2">
+                                            <label class="eau-form-label">Virtual Meeting URL <span class="required">*</span></label>
+                                            <input type="url" name="virtual_url" id="eau-edit-virtual_url" class="eau-form-input" placeholder="https://zoom.us/j/...">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Address</label>
-                                    <input type="text" name="address" id="eau-edit-address" class="eau-form-input">
-                                </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">City</label>
-                                    <input type="text" name="city" id="eau-edit-city" class="eau-form-input">
-                                </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">State</label>
-                                    <input type="text" name="state" id="eau-edit-state" class="eau-form-input">
-                                </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Postal Code</label>
-                                    <input type="text" name="postal_code" id="eau-edit-postal_code" class="eau-form-input">
-                                </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Country</label>
-                                    <select name="country" id="eau-edit-country" class="eau-form-select">
-                                        <?php foreach ($countries as $key => $label) : ?>
-                                            <option value="<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="eau-form-field eau-form-field-span-2">
-                                    <label class="eau-form-label">Virtual URL (for virtual/hybrid events)</label>
-                                    <input type="url" name="virtual_url" id="eau-edit-virtual_url" class="eau-form-input" placeholder="https://">
+
+                                <!-- In-Person Event Fields -->
+                                <div class="eau-location-fields eau-location-in-person">
+                                    <div class="eau-form-grid">
+                                        <div class="eau-form-field eau-form-field-span-2">
+                                            <label class="eau-form-label">Venue Name</label>
+                                            <input type="text" name="venue_name" id="eau-edit-venue_name" class="eau-form-input" placeholder="e.g., Sydney Convention Centre">
+                                        </div>
+                                        <div class="eau-form-field eau-form-field-span-2">
+                                            <label class="eau-form-label">Address</label>
+                                            <input type="text" name="address" id="eau-edit-address" class="eau-form-input" placeholder="Street address">
+                                        </div>
+                                        <div class="eau-form-field">
+                                            <label class="eau-form-label">City</label>
+                                            <input type="text" name="city" id="eau-edit-city" class="eau-form-input">
+                                        </div>
+                                        <div class="eau-form-field">
+                                            <label class="eau-form-label">State</label>
+                                            <input type="text" name="state" id="eau-edit-state" class="eau-form-input">
+                                        </div>
+                                        <div class="eau-form-field">
+                                            <label class="eau-form-label">Postal Code</label>
+                                            <input type="text" name="postal_code" id="eau-edit-postal_code" class="eau-form-input">
+                                        </div>
+                                        <div class="eau-form-field">
+                                            <label class="eau-form-label">Country</label>
+                                            <select name="country" id="eau-edit-country" class="eau-form-select">
+                                                <?php foreach ($countries as $key => $label) : ?>
+                                                    <option value="<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tab: Pricing -->
+                        <!-- Tab: Capacity & Pricing -->
                         <div class="eau-modal-tab-content" data-tab="pricing">
                             <div class="eau-form-grid">
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Capacity</label>
-                                    <input type="number" name="capacity" id="eau-edit-capacity" class="eau-form-input" min="0" placeholder="0 = unlimited">
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Event Capacity</label>
+                                    <input type="number" name="capacity" id="eau-edit-capacity" class="eau-form-input" min="0" placeholder="50">
                                 </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">Member Price ($)</label>
-                                    <input type="number" name="member_price" id="eau-edit-member_price" class="eau-form-input" min="0" step="0.01">
+                                    <input type="number" name="member_price" id="eau-edit-member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
                                 </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">Non-Member Price ($)</label>
-                                    <input type="number" name="non_member_price" id="eau-edit-non_member_price" class="eau-form-input" min="0" step="0.01">
+                                    <input type="number" name="non_member_price" id="eau-edit-non_member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
+                                </div>
+
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <p class="eau-form-section-title">Early Bird Pricing (Optional)</p>
                                 </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">Early Bird Price ($)</label>
@@ -297,39 +310,46 @@ class Eau_Events_Management {
                                     <label class="eau-form-label">Early Bird End Date</label>
                                     <input type="datetime-local" name="early_bird_end_date" id="eau-edit-early_bird_end_date" class="eau-form-input">
                                 </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Max Guests</label>
-                                    <input type="number" name="max_guests" id="eau-edit-max_guests" class="eau-form-input" min="0" max="10">
+
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <p class="eau-form-section-title">Guest Settings</p>
                                 </div>
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-checkbox-label">
                                         <input type="checkbox" name="allow_guests" id="eau-edit-allow_guests" value="1">
-                                        Allow attendees to bring guests
+                                        Allow guests
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tab: Settings -->
+                        <!-- Tab: CPD & Settings -->
                         <div class="eau-modal-tab-content" data-tab="settings">
                             <div class="eau-form-grid">
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <p class="eau-form-section-title">CPD Settings</p>
+                                </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">CPD Points</label>
-                                    <input type="number" name="cpd_points" id="eau-edit-cpd_points" class="eau-form-input" min="0" step="0.5">
+                                    <input type="number" name="cpd_points" id="eau-edit-cpd_points" class="eau-form-input" min="0" step="0.5" placeholder="1">
                                 </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">CPD Category</label>
                                     <select name="cpd_category" id="eau-edit-cpd_category" class="eau-form-select">
-                                        <option value="">Select Category</option>
-                                        <?php if (!is_wp_error($cpd_categories)) : ?>
-                                            <?php foreach ($cpd_categories as $cat) : ?>
-                                                <option value="<?php echo esc_attr($cat->term_id); ?>"><?php echo esc_html($cat->name); ?></option>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
+                                        <option value="">Select CPD category</option>
+                                        <?php foreach ($cpd_categories as $cat) : ?>
+                                            <option value="<?php echo esc_attr($cat['id']); ?>" data-points="<?php echo esc_attr($cat['points_per_hour']); ?>">
+                                                <?php echo esc_html($cat['category_name']); ?> (<?php echo esc_html($cat['points_per_hour']); ?> pts/hr)
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Visibility</label>
+
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <p class="eau-form-section-title">Visibility Settings</p>
+                                </div>
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Event Visibility</label>
                                     <select name="visibility" id="eau-edit-visibility" class="eau-form-select">
                                         <?php foreach ($visibility_options as $key => $label) : ?>
                                             <option value="<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></option>
@@ -345,7 +365,7 @@ class Eau_Events_Management {
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-checkbox-label">
                                         <input type="checkbox" name="members_only" id="eau-edit-members_only" value="1">
-                                        Members only event
+                                        Members Only (only authenticated members can register)
                                     </label>
                                 </div>
                             </div>
@@ -372,35 +392,56 @@ class Eau_Events_Management {
      * @return string HTML dos cards
      */
     private static function render_stats_cards($stats) {
-        $cards_data = array(
-            array(
-                'title' => 'Total Events',
-                'number' => $stats['total'],
-                'icon' => 'calendar',
-                'color' => 'blue',
-            ),
-            array(
-                'title' => 'Published',
-                'number' => $stats['published'],
-                'icon' => 'eye',
-                'color' => 'green',
-            ),
-            array(
-                'title' => 'Draft',
-                'number' => $stats['draft'],
-                'icon' => 'file-edit',
-                'color' => 'gray',
-            ),
-            array(
-                'title' => 'Upcoming',
-                'number' => $stats['upcoming'],
-                'icon' => 'calendar-check',
-                'color' => 'purple',
-            ),
-        );
-
-        $stats_cards = new Eau_Stats_Cards($cards_data);
-        return $stats_cards->render();
+        ob_start();
+        ?>
+        <div class="eau-stats-cards">
+            <div class="eau-stats-card">
+                <div class="eau-stats-card-inner">
+                    <div class="eau-stats-card-content">
+                        <p class="eau-stats-card-label">Total Events</p>
+                        <p class="eau-stats-card-value"><?php echo esc_html($stats['total']); ?></p>
+                    </div>
+                    <div class="eau-stats-card-icon">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="eau-stats-card">
+                <div class="eau-stats-card-inner">
+                    <div class="eau-stats-card-content">
+                        <p class="eau-stats-card-label">Published</p>
+                        <p class="eau-stats-card-value"><?php echo esc_html($stats['published']); ?></p>
+                    </div>
+                    <div class="eau-stats-card-icon">
+                        <i data-lucide="eye"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="eau-stats-card">
+                <div class="eau-stats-card-inner">
+                    <div class="eau-stats-card-content">
+                        <p class="eau-stats-card-label">Draft</p>
+                        <p class="eau-stats-card-value"><?php echo esc_html($stats['draft']); ?></p>
+                    </div>
+                    <div class="eau-stats-card-icon">
+                        <i data-lucide="square-pen"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="eau-stats-card">
+                <div class="eau-stats-card-inner">
+                    <div class="eau-stats-card-content">
+                        <p class="eau-stats-card-label">Upcoming</p>
+                        <p class="eau-stats-card-value"><?php echo esc_html($stats['upcoming']); ?></p>
+                    </div>
+                    <div class="eau-stats-card-icon">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 
     /**
@@ -447,6 +488,17 @@ class Eau_Events_Management {
      * @return void
      */
     private static function enqueue_assets() {
+        // Garante que eau-components está registrado
+        if (!wp_style_is('eau-components', 'registered')) {
+            wp_register_style(
+                'eau-components',
+                EAU_SYSTEM_PLUGIN_URL . 'assets/css/eau-components.css',
+                array(),
+                EAU_SYSTEM_VERSION
+            );
+        }
+        wp_enqueue_style('eau-components');
+
         // CSS
         wp_enqueue_style(
             'eau-events-management',
@@ -455,11 +507,35 @@ class Eau_Events_Management {
             EAU_SYSTEM_VERSION
         );
 
+        // Lucide Icons
+        wp_enqueue_script(
+            'lucide',
+            'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
+            array(),
+            null,
+            true
+        );
+
+        // SweetAlert2
+        wp_enqueue_style(
+            'sweetalert2',
+            'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css',
+            array(),
+            '11'
+        );
+        wp_enqueue_script(
+            'sweetalert2',
+            'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js',
+            array(),
+            '11',
+            true
+        );
+
         // JavaScript
         wp_enqueue_script(
             'eau-events-management',
             EAU_SYSTEM_PLUGIN_URL . 'includes/events/assets/js/eau-events-management.js',
-            array('jquery'),
+            array('jquery', 'lucide'),
             EAU_SYSTEM_VERSION,
             true
         );
@@ -471,5 +547,35 @@ class Eau_Events_Management {
             'editUrl' => admin_url('post.php?post={id}&action=edit'),
             'viewUrl' => home_url('/events/{slug}/'),
         ));
+
+        // Inicializa Lucide icons
+        wp_add_inline_script('lucide', 'document.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });');
+    }
+
+    /**
+     * Obtém categorias CPD da tabela eau_activity_categories
+     *
+     * @since  1.28.1
+     * @return array Lista de categorias
+     */
+    private static function get_cpd_categories() {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'eau_activity_categories';
+
+        // Verifica se a tabela existe
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        if (!$table_exists) {
+            return array();
+        }
+
+        $results = $wpdb->get_results(
+            "SELECT id, category_serial, category_name, points_per_hour
+             FROM $table_name
+             ORDER BY category_name ASC",
+            ARRAY_A
+        );
+
+        return $results ? $results : array();
     }
 }

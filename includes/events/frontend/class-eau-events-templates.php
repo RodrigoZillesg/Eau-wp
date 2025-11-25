@@ -55,6 +55,53 @@ class Eau_Events_Templates {
      */
     private function __construct() {
         add_filter('template_include', array($this, 'load_template'));
+
+        // Page templates from plugin
+        add_filter('theme_page_templates', array($this, 'register_page_templates'), 10, 3);
+        add_filter('template_include', array($this, 'load_page_template'), 99);
+
+        // Prevent redirect when archive is empty
+        self::prevent_empty_archive_redirect();
+    }
+
+    /**
+     * Registra templates de página customizados
+     *
+     * @since  1.28.3
+     * @param  array    $templates Templates existentes
+     * @param  WP_Theme $theme     Tema atual
+     * @param  WP_Post  $post      Post atual
+     * @return array Templates com os novos adicionados
+     */
+    public function register_page_templates($templates, $theme = null, $post = null) {
+        $templates['page-events-management.php'] = __('Events Management', 'eau-system');
+        return $templates;
+    }
+
+    /**
+     * Carrega template de página customizado
+     *
+     * @since  1.28.3
+     * @param  string $template Caminho do template
+     * @return string Caminho do template customizado ou original
+     */
+    public function load_page_template($template) {
+        global $post;
+
+        if (!$post || !is_page()) {
+            return $template;
+        }
+
+        $page_template = get_post_meta($post->ID, '_wp_page_template', true);
+
+        if ($page_template === 'page-events-management.php') {
+            $custom = EAU_SYSTEM_PLUGIN_DIR . 'includes/events/templates/page-events-management.php';
+            if (file_exists($custom)) {
+                return $custom;
+            }
+        }
+
+        return $template;
     }
 
     /**
@@ -85,5 +132,21 @@ class Eau_Events_Templates {
         }
 
         return $template;
+    }
+
+    /**
+     * Previne redirect para home quando archive está vazio
+     *
+     * @since  1.28.3
+     * @return void
+     */
+    public static function prevent_empty_archive_redirect() {
+        add_action('template_redirect', function() {
+            if (is_post_type_archive(Config\POST_TYPE) && !have_posts()) {
+                global $wp_query;
+                $wp_query->is_404 = false;
+                status_header(200);
+            }
+        }, 1);
     }
 }

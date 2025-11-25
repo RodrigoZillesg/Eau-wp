@@ -112,6 +112,11 @@
                 }
             });
 
+            // Create Event button
+            $('#eau-create-event-btn').on('click', () => {
+                this.openCreateModal();
+            });
+
             // Modal
             $('#eau-modal-close, #eau-modal-cancel, .eau-modal-overlay').on('click', () => {
                 this.closeModal();
@@ -128,6 +133,20 @@
                 $(e.currentTarget).addClass('active');
                 $('.eau-modal-tab-content').removeClass('active');
                 $(`.eau-modal-tab-content[data-tab="${tab}"]`).addClass('active');
+            });
+
+            // Auto-fill CPD points when category is selected
+            $('#eau-edit-cpd_category').on('change', (e) => {
+                const $selected = $(e.target).find('option:selected');
+                const points = $selected.data('points');
+                if (points) {
+                    $('#eau-edit-cpd_points').val(points);
+                }
+            });
+
+            // Event type radio - show/hide location fields
+            $('input[name="event_type"]').on('change', (e) => {
+                this.toggleLocationFields(e.target.value);
             });
 
             // Pagination
@@ -280,37 +299,100 @@
         },
 
         /**
-         * Open edit modal
+         * Open create modal
          */
-        openEditModal: function(eventId) {
+        openCreateModal: function() {
             const $modal = $('#eau-event-edit-modal');
+            const $modalBody = $modal.find('.eau-modal-body');
+            const $modalFooter = $modal.find('.eau-modal-footer');
 
             // Reset form and show first tab
             $('#eau-event-edit-form')[0].reset();
             $('.eau-modal-tab-btn').removeClass('active').first().addClass('active');
             $('.eau-modal-tab-content').removeClass('active').first().addClass('active');
 
+            // Set mode to create
+            $('#eau-edit-mode').val('create');
+            $('#eau-edit-event-id').val('');
+            $('#eau-modal-title').text('Create Event');
+            $('#eau-modal-save').html('<i data-lucide="save"></i> Create Event');
+
+            // Set default values
+            $('#eau-edit-timezone').val('Australia/Sydney');
+            $('input[name="event_type"][value="in-person"]').prop('checked', true);
+            $('#eau-edit-country').val('Australia');
+            $('#eau-edit-visibility').val('public');
+
+            // Show correct location fields for default type
+            this.toggleLocationFields('in-person');
+
+            // Show modal with loading state
+            $modalBody.addClass('eau-modal-loading');
+            $modalFooter.addClass('eau-modal-loading');
             $modal.addClass('active');
 
-            // Load event data
-            $.ajax({
-                url: eauEventsManagement.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'eau_get_event',
-                    nonce: eauEventsManagement.nonce,
-                    event_id: eventId
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.populateModal(response.data.event, eventId);
-                    } else {
+            // Remove loading after 1 second
+            setTimeout(() => {
+                $modalBody.removeClass('eau-modal-loading');
+                $modalFooter.removeClass('eau-modal-loading');
+                lucide.createIcons();
+            }, 1000);
+        },
+
+        /**
+         * Open edit modal
+         */
+        openEditModal: function(eventId) {
+            const $modal = $('#eau-event-edit-modal');
+            const $modalBody = $modal.find('.eau-modal-body');
+            const $modalFooter = $modal.find('.eau-modal-footer');
+
+            // Reset form and show first tab
+            $('#eau-event-edit-form')[0].reset();
+            $('.eau-modal-tab-btn').removeClass('active').first().addClass('active');
+            $('.eau-modal-tab-content').removeClass('active').first().addClass('active');
+
+            // Set mode to edit
+            $('#eau-edit-mode').val('edit');
+            $('#eau-modal-title').text('Edit Event');
+            $('#eau-modal-save').html('<i data-lucide="save"></i> Save Changes');
+
+            // Show modal with loading state
+            $modalBody.addClass('eau-modal-loading');
+            $modalFooter.addClass('eau-modal-loading');
+            $modal.addClass('active');
+
+            // Load event data after 1 second delay
+            setTimeout(() => {
+                $.ajax({
+                    url: eauEventsManagement.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'eau_get_event',
+                        nonce: eauEventsManagement.nonce,
+                        event_id: eventId
+                    },
+                    success: (response) => {
+                        // Remove loading state
+                        $modalBody.removeClass('eau-modal-loading');
+                        $modalFooter.removeClass('eau-modal-loading');
+
+                        if (response.success) {
+                            this.populateModal(response.data.event, eventId);
+                        } else {
+                            this.showToast('Error loading event', 'error');
+                            this.closeModal();
+                        }
+                        lucide.createIcons();
+                    },
+                    error: () => {
+                        $modalBody.removeClass('eau-modal-loading');
+                        $modalFooter.removeClass('eau-modal-loading');
                         this.showToast('Error loading event', 'error');
                         this.closeModal();
                     }
-                    lucide.createIcons();
-                }
-            });
+                });
+            }, 1000);
         },
 
         /**
@@ -341,7 +423,11 @@
             $('#eau-edit-visibility').val(event.visibility || 'public');
 
             // Radio buttons
-            $(`input[name="event_type"][value="${event.event_type || 'in-person'}"]`).prop('checked', true);
+            const eventType = event.event_type || 'in-person';
+            $(`input[name="event_type"][value="${eventType}"]`).prop('checked', true);
+
+            // Toggle location fields based on event type
+            this.toggleLocationFields(eventType);
 
             // Checkboxes
             $('#eau-edit-allow_guests').prop('checked', event.allow_guests === '1');
@@ -357,14 +443,48 @@
         },
 
         /**
-         * Save event
+         * Toggle location fields based on event type
+         */
+        toggleLocationFields: function(eventType) {
+            const $virtualFields = $('.eau-location-virtual');
+            const $inPersonFields = $('.eau-location-in-person');
+
+            switch (eventType) {
+                case 'virtual':
+                    $virtualFields.show();
+                    $inPersonFields.hide();
+                    break;
+                case 'in-person':
+                    $virtualFields.hide();
+                    $inPersonFields.show();
+                    break;
+                case 'hybrid':
+                    $virtualFields.show();
+                    $inPersonFields.show();
+                    break;
+                default:
+                    $virtualFields.hide();
+                    $inPersonFields.show();
+            }
+        },
+
+        /**
+         * Save event (create or update)
          */
         saveEvent: function() {
             const $form = $('#eau-event-edit-form');
             const formData = new FormData($form[0]);
+            const mode = $('#eau-edit-mode').val();
+            const isCreate = mode === 'create';
 
-            formData.append('action', 'eau_update_event');
+            formData.append('action', isCreate ? 'eau_create_event' : 'eau_update_event');
             formData.append('nonce', eauEventsManagement.nonce);
+
+            // Disable save button
+            const $saveBtn = $('#eau-modal-save');
+            const originalText = $saveBtn.html();
+            $saveBtn.prop('disabled', true).html('<i data-lucide="loader-2" class="eau-spin"></i> Saving...');
+            lucide.createIcons();
 
             $.ajax({
                 url: eauEventsManagement.ajaxUrl,
@@ -372,15 +492,19 @@
                 data: Object.fromEntries(formData),
                 success: (response) => {
                     if (response.success) {
-                        this.showToast('Event updated successfully', 'success');
+                        this.showToast(isCreate ? 'Event created successfully' : 'Event updated successfully', 'success');
                         this.closeModal();
                         this.loadEvents();
                     } else {
-                        this.showToast(response.data.message || 'Error updating event', 'error');
+                        this.showToast(response.data.message || 'Error saving event', 'error');
+                        $saveBtn.prop('disabled', false).html(originalText);
+                        lucide.createIcons();
                     }
                 },
                 error: () => {
-                    this.showToast('Error updating event', 'error');
+                    this.showToast('Error saving event', 'error');
+                    $saveBtn.prop('disabled', false).html(originalText);
+                    lucide.createIcons();
                 }
             });
         },
@@ -435,25 +559,34 @@
          * Delete event
          */
         deleteEvent: function(eventId) {
-            if (!confirm('Are you sure you want to delete this event?')) {
-                return;
-            }
-
-            $.ajax({
-                url: eauEventsManagement.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'eau_delete_event',
-                    nonce: eauEventsManagement.nonce,
-                    event_id: eventId
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.showToast(response.data.message, 'success');
-                        this.loadEvents();
-                    } else {
-                        this.showToast(response.data.message || 'Error', 'error');
-                    }
+            Swal.fire({
+                title: 'Delete Event?',
+                text: 'Are you sure you want to delete this event? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: eauEventsManagement.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_delete_event',
+                            nonce: eauEventsManagement.nonce,
+                            event_id: eventId
+                        },
+                        success: (response) => {
+                            if (response.success) {
+                                this.showToast(response.data.message, 'success');
+                                this.loadEvents();
+                            } else {
+                                this.showToast(response.data.message || 'Error', 'error');
+                            }
+                        }
+                    });
                 }
             });
         },
@@ -462,11 +595,22 @@
          * Show toast notification
          */
         showToast: function(message, type) {
-            if (typeof EauNotifications !== 'undefined') {
-                EauNotifications.show(message, type);
-            } else {
-                alert(message);
-            }
+            const iconMap = {
+                success: 'success',
+                error: 'error',
+                warning: 'warning',
+                info: 'info'
+            };
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: iconMap[type] || 'info',
+                title: message,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
         },
 
         /**
