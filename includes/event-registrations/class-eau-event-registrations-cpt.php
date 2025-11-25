@@ -62,11 +62,6 @@ class Eau_Event_Registrations_CPT {
      * @return void
      */
     public function register_post_type() {
-        // Don't register if JetEngine is managing this CPT (status='publish')
-        if ($this->is_managed_by_jet_engine()) {
-            return;
-        }
-
         register_post_type(Config\POST_TYPE, array(
             'labels'             => $this->get_labels(),
             'public'             => false,
@@ -104,27 +99,8 @@ class Eau_Event_Registrations_CPT {
             'search_items'       => __('Search Registrations', 'eau-system'),
             'not_found'          => __('No registrations found.', 'eau-system'),
             'not_found_in_trash' => __('No registrations found in Trash.', 'eau-system'),
-            'menu_name'          => __('Registrations', 'eau-system'),
+            'menu_name'          => __('Event Registrations', 'eau-system'),
         );
     }
 
-    /**
-     * Verifica se o CPT é gerenciado pelo JetEngine (status='publish')
-     *
-     * @since  1.29.0
-     * @return bool
-     */
-    private function is_managed_by_jet_engine() {
-        global $wpdb;
-        $table = $wpdb->prefix . 'jet_post_types';
-
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
-            return false;
-        }
-
-        return (bool) $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table WHERE slug = %s AND status = 'publish'",
-            Config\POST_TYPE
-        ));
-    }
 }

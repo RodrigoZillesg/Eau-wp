@@ -67,28 +67,6 @@ class Eau_System {
         // Documentation pages
         add_action('admin_menu', array('EauSystem\Eau_Documentation', 'register_admin_pages'));
         add_action('admin_enqueue_scripts', array('EauSystem\Eau_Documentation', 'enqueue_admin_assets'));
-
-        // Admin menu separator before CPTs
-        add_action('admin_menu', array($this, 'add_admin_menu_separator'), 9);
-    }
-
-    /**
-     * Adiciona separador no menu admin antes dos CPTs
-     *
-     * @since  1.29.2
-     * @return void
-     */
-    public function add_admin_menu_separator() {
-        global $menu;
-
-        // Separator before Events (position 25)
-        $menu[24] = array(
-            '',
-            'read',
-            'separator-eau-events',
-            '',
-            'wp-menu-separator separator-croco separator-croco--post-type-before'
-        );
     }
 
     private function define_frontend_hooks() {
