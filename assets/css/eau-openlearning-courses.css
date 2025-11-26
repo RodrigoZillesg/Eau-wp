@@ -1,0 +1,461 @@
+/**
+ * OpenLearning Courses Section - Dashboard
+ *
+ * @since 1.41.0
+ */
+
+/* ============================================
+   Section Container
+   ============================================ */
+.eau-openlearning-section {
+    margin-top: 2rem !important;
+    padding: 1.5rem !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ============================================
+   Section Header
+   ============================================ */
+.eau-openlearning-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    padding-bottom: 1rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.eau-openlearning-title-group {
+    flex: 1 !important;
+}
+
+.eau-openlearning-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 0.25rem 0 !important;
+}
+
+.eau-openlearning-title i,
+.eau-openlearning-title svg {
+    width: 24px !important;
+    height: 24px !important;
+    color: #2563eb !important;
+    stroke: #2563eb !important;
+}
+
+.eau-openlearning-subtitle {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+/* ============================================
+   Courses Grid
+   ============================================ */
+.eau-openlearning-courses-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1.25rem !important;
+}
+
+/* Responsive Grid */
+@media (max-width: 1279px) {
+    .eau-openlearning-courses-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    .eau-openlearning-courses-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 639px) {
+    .eau-openlearning-courses-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ============================================
+   Course Card
+   ============================================ */
+.eau-course-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.eau-course-card:hover {
+    border-color: #d1d5db !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Course Image */
+.eau-course-image {
+    position: relative !important;
+    width: 100% !important;
+    height: 140px !important;
+    overflow: hidden !important;
+    background-color: #f3f4f6 !important;
+}
+
+.eau-course-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
+}
+
+.eau-course-card:hover .eau-course-image img {
+    transform: scale(1.05) !important;
+}
+
+/* Course Image Placeholder */
+.eau-course-image-placeholder {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%) !important;
+}
+
+.eau-course-image-placeholder i,
+.eau-course-image-placeholder svg {
+    width: 48px !important;
+    height: 48px !important;
+    color: #6366f1 !important;
+    stroke: #6366f1 !important;
+    opacity: 0.5 !important;
+}
+
+/* Price Badge */
+.eau-course-price-badge {
+    position: absolute !important;
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+    padding: 0.25rem 0.625rem !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    color: #ffffff !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+}
+
+.eau-course-price-badge.eau-course-free {
+    background: #059669 !important;
+}
+
+/* Course Content */
+.eau-course-content {
+    padding: 1rem !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.eau-course-title {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+    line-height: 1.4 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+.eau-course-description {
+    font-size: 0.8125rem !important;
+    color: #6b7280 !important;
+    margin: 0 0 1rem 0 !important;
+    line-height: 1.5 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    flex: 1 !important;
+}
+
+/* Course Footer */
+.eau-course-footer {
+    margin-top: auto !important;
+}
+
+.eau-course-access-btn {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.375rem !important;
+    padding: 0.625rem 1rem !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-course-access-btn:hover {
+    background: #1d4ed8 !important;
+}
+
+.eau-course-access-btn:disabled {
+    background: #9ca3af !important;
+    cursor: not-allowed !important;
+}
+
+.eau-course-access-btn i,
+.eau-course-access-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Loading State for Button */
+.eau-course-access-btn.eau-loading {
+    position: relative !important;
+    color: transparent !important;
+}
+
+.eau-course-access-btn.eau-loading::after {
+    content: '' !important;
+    position: absolute !important;
+    width: 16px !important;
+    height: 16px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-top-color: #ffffff !important;
+    border-radius: 50% !important;
+    animation: eau-spin 0.8s linear infinite !important;
+}
+
+@keyframes eau-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   Skeleton Loading
+   ============================================ */
+.eau-course-card.eau-skeleton {
+    pointer-events: none !important;
+}
+
+.eau-skeleton-image {
+    height: 140px !important;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%) !important;
+    background-size: 200% 100% !important;
+    animation: eau-skeleton-shimmer 1.5s infinite !important;
+}
+
+.eau-skeleton-line {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%) !important;
+    background-size: 200% 100% !important;
+    animation: eau-skeleton-shimmer 1.5s infinite !important;
+    border-radius: 4px !important;
+}
+
+.eau-skeleton-title {
+    height: 20px !important;
+    width: 80% !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.eau-skeleton-text {
+    height: 14px !important;
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.eau-skeleton-text-short {
+    height: 14px !important;
+    width: 60% !important;
+    margin-bottom: 1rem !important;
+}
+
+.eau-skeleton .eau-course-content {
+    padding: 1rem !important;
+}
+
+@keyframes eau-skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+.eau-openlearning-empty {
+    text-align: center !important;
+    padding: 3rem 1rem !important;
+    color: #6b7280 !important;
+}
+
+.eau-openlearning-empty i,
+.eau-openlearning-empty svg {
+    width: 48px !important;
+    height: 48px !important;
+    color: #9ca3af !important;
+    stroke: #9ca3af !important;
+    margin-bottom: 1rem !important;
+}
+
+.eau-openlearning-empty p {
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 1rem !important;
+    color: #374151 !important;
+}
+
+.eau-openlearning-empty-hint {
+    font-size: 0.875rem !important;
+    color: #9ca3af !important;
+}
+
+/* ============================================
+   Error State
+   ============================================ */
+.eau-openlearning-error {
+    text-align: center !important;
+    padding: 3rem 1rem !important;
+    color: #dc2626 !important;
+}
+
+.eau-openlearning-error i,
+.eau-openlearning-error svg {
+    width: 48px !important;
+    height: 48px !important;
+    color: #dc2626 !important;
+    stroke: #dc2626 !important;
+    margin-bottom: 1rem !important;
+}
+
+.eau-openlearning-error p {
+    margin: 0 0 1rem 0 !important;
+    font-size: 1rem !important;
+    color: #374151 !important;
+}
+
+/* ============================================
+   Buttons (Shared)
+   ============================================ */
+.eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.375rem !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    border: none !important;
+}
+
+.eau-btn-sm {
+    padding: 0.5rem 0.875rem !important;
+    font-size: 0.8125rem !important;
+}
+
+.eau-btn-secondary {
+    background: #ffffff !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.eau-btn-secondary:hover {
+    background: #f9fafb !important;
+    border-color: #9ca3af !important;
+}
+
+.eau-btn i,
+.eau-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* ============================================
+   Responsive - Mobile
+   ============================================ */
+@media (max-width: 767px) {
+    .eau-openlearning-section {
+        margin-top: 1.5rem !important;
+        padding: 1rem !important;
+    }
+
+    .eau-openlearning-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem !important;
+    }
+
+    .eau-openlearning-title {
+        font-size: 1.125rem !important;
+    }
+
+    .eau-openlearning-title i,
+    .eau-openlearning-title svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    #eau-openlearning-view-all {
+        width: 100% !important;
+    }
+
+    .eau-course-image {
+        height: 120px !important;
+    }
+
+    .eau-course-title {
+        font-size: 0.875rem !important;
+    }
+
+    .eau-course-description {
+        font-size: 0.75rem !important;
+        -webkit-line-clamp: 3 !important;
+    }
+}
+
+/* ============================================
+   SSO Form (Hidden)
+   ============================================ */
+#eau-openlearning-sso-form {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* ============================================
+   Load More Button
+   ============================================ */
+.eau-openlearning-load-more {
+    text-align: center !important;
+    margin-top: 1.5rem !important;
+}
+
+.eau-openlearning-load-more .eau-btn {
+    min-width: 160px !important;
+}
