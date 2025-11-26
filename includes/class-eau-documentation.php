@@ -356,6 +356,97 @@ class Eau_Documentation {
                     </div>
                 </div>
 
+                <!-- My CPDs -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>My CPDs</h2>
+                        <span class="eau-doc-badge eau-badge-member">All Members</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Personal CPD tracking page where members can view their activities, track progress towards annual goals, and submit new activities for approval.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_my_cpds]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_my_cpds]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Annual progress ring (20 points goal)</li>
+                                <li>✅ Statistics cards (Total Points, Activities, Verified, Pending)</li>
+                                <li>✅ Searchable activities table</li>
+                                <li>✅ Filter by status and category</li>
+                                <li>✅ Sort by any column</li>
+                                <li>✅ View activity details modal</li>
+                                <li>✅ Add new activity with file upload</li>
+                                <li>✅ Edit pending activities</li>
+                                <li>✅ Delete pending activities</li>
+                                <li>✅ Proof upload (file or URL)</li>
+                                <li>✅ WYSIWYG description editor</li>
+                                <li>✅ Skeleton loading states</li>
+                                <li>✅ Toast notifications</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "My CPDs" in the member dashboard area. Each member sees only their own CPD activities and progress.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Members can only edit or delete activities with "Pending" status. Verified activities are read-only.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Profile -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>My Profile</h2>
+                        <span class="eau-doc-badge eau-badge-member">All Members</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Personal profile page where members can view and update their personal information, address, and account settings.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_my_profile]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_my_profile]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Profile photo with upload functionality</li>
+                                <li>✅ Personal information section (name, email, phone, bio)</li>
+                                <li>✅ Address section (street, city, postcode)</li>
+                                <li>✅ Account information (username, member ID, type, status)</li>
+                                <li>✅ Change password functionality</li>
+                                <li>✅ International phone input with country selector</li>
+                                <li>✅ Modal-based editing</li>
+                                <li>✅ Real-time validation</li>
+                                <li>✅ Toast notifications</li>
+                                <li>✅ Responsive design</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "Profile" in the member dashboard area. Each member can view and edit their own profile information.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Some fields like Username, Member ID, and User Type are read-only and cannot be changed by the member.
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -943,10 +1034,340 @@ class Eau_Documentation {
                     </div>
                 </div>
 
+                <!-- My CPDs Feature -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>6. My CPDs (Member Area)</h2>
+                        <span class="eau-doc-badge eau-badge-v1">v1.37.0+</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <h3>Overview</h3>
+                        <p>Personal CPD tracking page where members can view their professional development activities, track progress towards annual goals (20 points), and submit new activities for approval.</p>
+
+                        <h3>Key Features</h3>
+
+                        <h4>📊 Progress Tracking</h4>
+                        <ul>
+                            <li><strong>Annual Progress Ring:</strong> Visual circular progress indicator showing points earned vs. 20-point annual goal</li>
+                            <li><strong>Points Display:</strong> Current points and remaining points needed</li>
+                            <li><strong>Year Context:</strong> Shows current calendar year for tracking</li>
+                        </ul>
+
+                        <h4>📈 Statistics Cards</h4>
+                        <div class="eau-doc-grid">
+                            <div class="eau-doc-stat">
+                                <h4>Total Points</h4>
+                                <p>Sum of all verified activity points for current year.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Total Activities</h4>
+                                <p>Count of all submitted activities.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Verified</h4>
+                                <p>Activities approved by administrators.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Pending</h4>
+                                <p>Activities awaiting approval.</p>
+                            </div>
+                        </div>
+
+                        <h4>🔍 Search & Filter</h4>
+                        <ul>
+                            <li><strong>Search:</strong> By activity name or description</li>
+                            <li><strong>Status Filter:</strong> All, Verified, Pending</li>
+                            <li><strong>Category Filter:</strong> Dynamic list from user's activities</li>
+                        </ul>
+
+                        <h4>📋 Activities Table</h4>
+                        <ul>
+                            <li>Activity name with category badge</li>
+                            <li>Date completed</li>
+                            <li>Hours/Points earned</li>
+                            <li>Verification status (badge)</li>
+                            <li>Actions: View, Edit (pending only), Delete (pending only)</li>
+                        </ul>
+
+                        <h4>➕ Add New Activity</h4>
+                        <p>Modal form with fields:</p>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Activity Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Category</td>
+                                    <td>Select (with search)</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Date Completed</td>
+                                    <td>Date Picker</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Hours</td>
+                                    <td>Number (0.5 step)</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Description</td>
+                                    <td>WYSIWYG Editor</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td>Proof/Evidence</td>
+                                    <td>File Upload or URL</td>
+                                    <td>No</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>📎 Proof Upload Component</h4>
+                        <p>Uses the <code>Eau_Media_Upload</code> component with three options:</p>
+                        <ul>
+                            <li><strong>URL Tab:</strong> Enter external link to evidence</li>
+                            <li><strong>Upload Tab:</strong> Drag & drop or browse for files (JPG, PNG, PDF)</li>
+                            <li><strong>My Files Tab:</strong> Select from previously uploaded files</li>
+                        </ul>
+
+                        <h3>Workflow</h3>
+                        <ol>
+                            <li>Member submits activity → Status: <strong>Pending</strong></li>
+                            <li>Admin reviews in Activities Management</li>
+                            <li>Admin verifies → Status: <strong>Verified</strong>, points counted</li>
+                            <li>Member sees updated progress</li>
+                        </ol>
+
+                        <h3>Permissions</h3>
+                        <ul>
+                            <li>All logged-in members can access their own CPDs</li>
+                            <li>Members can only see their own activities</li>
+                            <li>Edit/Delete only available for Pending activities</li>
+                        </ul>
+
+                        <h3>Technical Details</h3>
+                        <ul>
+                            <li><strong>Shortcode:</strong> <code>[eau_my_cpds]</code></li>
+                            <li><strong>PHP Class:</strong> <code>class-eau-my-cpds.php</code></li>
+                            <li><strong>JavaScript:</strong> <code>eau-my-cpds.js</code></li>
+                            <li><strong>CSS:</strong> <code>eau-my-cpds.css</code></li>
+                            <li><strong>AJAX Handler:</strong> <code>class-eau-my-cpds-ajax.php</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- My Profile Feature -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>7. My Profile (Member Area)</h2>
+                        <span class="eau-doc-badge eau-badge-v1">v1.40.0+</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <h3>Overview</h3>
+                        <p>Personal profile page where members can view and update their personal information, address, profile photo, and security settings.</p>
+
+                        <h3>Page Layout</h3>
+
+                        <h4>👤 Profile Header</h4>
+                        <ul>
+                            <li>Profile photo (clickable to change)</li>
+                            <li>Full name (h1)</li>
+                            <li>Email address</li>
+                            <li>Member since date</li>
+                            <li>User type badge (Super Admin, Admin, Institution Admin, Member)</li>
+                            <li>Status badge (Active, Inactive, Pending)</li>
+                        </ul>
+
+                        <h4>📋 Information Sections</h4>
+
+                        <h5>Personal Information</h5>
+                        <ul>
+                            <li>First Name</li>
+                            <li>Last Name</li>
+                            <li>Email</li>
+                            <li>Phone (with international format)</li>
+                            <li>Bio</li>
+                        </ul>
+
+                        <h5>Address</h5>
+                        <ul>
+                            <li>Street Address</li>
+                            <li>City</li>
+                            <li>Postcode</li>
+                        </ul>
+
+                        <h5>Account Information (Read-only)</h5>
+                        <ul>
+                            <li>Username</li>
+                            <li>Member ID</li>
+                            <li>User Type</li>
+                            <li>Status</li>
+                            <li>Institution (if applicable)</li>
+                        </ul>
+
+                        <h5>Security</h5>
+                        <ul>
+                            <li>Change Password button</li>
+                        </ul>
+
+                        <h3>Edit Modals</h3>
+
+                        <h4>Edit Personal Information</h4>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Editable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>First Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Last Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Email</td>
+                                    <td>Email</td>
+                                    <td>Yes (validated)</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone</td>
+                                    <td>International Phone Input</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Bio</td>
+                                    <td>Textarea</td>
+                                    <td>Yes</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Edit Address</h4>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Street Address</td>
+                                    <td>Text</td>
+                                </tr>
+                                <tr>
+                                    <td>City</td>
+                                    <td>Text</td>
+                                </tr>
+                                <tr>
+                                    <td>Postcode</td>
+                                    <td>Text</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Change Password</h4>
+                        <ul>
+                            <li>Current Password (required)</li>
+                            <li>New Password (min 8 characters)</li>
+                            <li>Confirm New Password</li>
+                            <li>Password visibility toggle (eye icon)</li>
+                        </ul>
+
+                        <h4>Update Profile Photo</h4>
+                        <ul>
+                            <li>Drag & drop or browse</li>
+                            <li>Accepts: JPG, JPEG, PNG, GIF, WEBP</li>
+                            <li>Max size: 5MB</li>
+                            <li>Preview before saving</li>
+                        </ul>
+
+                        <h3>Special Components</h3>
+
+                        <h4>📱 International Phone Input</h4>
+                        <p>Uses <code>intl-tel-input</code> library:</p>
+                        <ul>
+                            <li>Country selector with flags</li>
+                            <li>Auto-formats number based on country</li>
+                            <li>Stores full international format (+XX XXXXXXXXX)</li>
+                            <li>Default country: Australia</li>
+                        </ul>
+
+                        <h3>User Type Display</h3>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>mem_type Value</th>
+                                    <th>Display Name</th>
+                                    <th>Badge Color</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>superAdmin</td>
+                                    <td>Super Admin</td>
+                                    <td>Purple</td>
+                                </tr>
+                                <tr>
+                                    <td>Admin</td>
+                                    <td>Admin</td>
+                                    <td>Blue</td>
+                                </tr>
+                                <tr>
+                                    <td>institutionAdmin</td>
+                                    <td>Institution Admin</td>
+                                    <td>Indigo</td>
+                                </tr>
+                                <tr>
+                                    <td>member</td>
+                                    <td>Member</td>
+                                    <td>Gray</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3>Permissions</h3>
+                        <ul>
+                            <li>All logged-in users can access their profile</li>
+                            <li>Users can only edit their own information</li>
+                            <li>Username, Member ID, User Type, Status are read-only</li>
+                        </ul>
+
+                        <h3>Technical Details</h3>
+                        <ul>
+                            <li><strong>Shortcode:</strong> <code>[eau_my_profile]</code></li>
+                            <li><strong>PHP Class:</strong> <code>class-eau-my-profile.php</code></li>
+                            <li><strong>JavaScript:</strong> <code>eau-my-profile.js</code></li>
+                            <li><strong>CSS:</strong> <code>eau-my-profile.css</code></li>
+                            <li><strong>AJAX Handler:</strong> <code>class-eau-my-profile-ajax.php</code></li>
+                            <li><strong>External Library:</strong> intl-tel-input v18.2.1</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- Design System -->
                 <div class="eau-doc-card">
                     <div class="eau-doc-card-header">
-                        <h2>6. Design System</h2>
+                        <h2>8. Design System</h2>
                         <span class="eau-doc-badge eau-badge-info">Reference</span>
                     </div>
                     <div class="eau-doc-card-body">
@@ -962,6 +1383,8 @@ class Eau_Documentation {
                             <li><strong>Cards:</strong> Container for grouped content</li>
                             <li><strong>Toasts:</strong> Success/error notifications</li>
                             <li><strong>Skeletons:</strong> Loading placeholders</li>
+                            <li><strong>Media Upload:</strong> File upload with drag & drop</li>
+                            <li><strong>WYSIWYG:</strong> Rich text editor (Quill.js)</li>
                         </ul>
 
                         <h3>Documentation</h3>

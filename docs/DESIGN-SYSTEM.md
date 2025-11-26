@@ -384,9 +384,47 @@ EauMembersManagement.closeModal('eau-modal-edit');
 
 ---
 
-### 9. Media Upload
+### 9. Media Upload (Eau_Media_Upload)
+
+> ⚠️ **REGRA CRÍTICA - LEIA COM ATENÇÃO**
+>
+> **SEMPRE** use o componente `Eau_Media_Upload` para **QUALQUER** funcionalidade de upload de arquivos no sistema.
+>
+> **NUNCA** crie HTML customizado para upload, mesmo que pareça mais simples ou específico para seu caso de uso.
+>
+> **Exemplos de uso obrigatório:**
+> - Upload de foto de perfil
+> - Upload de certificados/provas
+> - Upload de documentos
+> - Upload de imagens para qualquer finalidade
+> - Qualquer campo que aceite arquivo ou URL de arquivo
+>
+> **O que NÃO fazer:**
+> ```php
+> // ❌ ERRADO - Nunca criar HTML de upload manualmente
+> <div class="eau-media-upload-wrapper">
+>     <div class="eau-media-upload-dropzone">
+>         <input type="file" ...>
+>         <!-- HTML customizado -->
+>     </div>
+> </div>
+>
+> // ❌ ERRADO - Nunca usar wp.media do WordPress
+> wp.media({ title: 'Select File' }).open();
+> ```
+>
+> **O que fazer:**
+> ```php
+> // ✅ CORRETO - Sempre usar o componente
+> use EauSystem\Components\Eau_Media_Upload;
+> echo Eau_Media_Upload::field('meu-upload', 'campo', '', $config);
+> ```
 
 **Uso**: Upload de arquivos com drag & drop, URL externa ou seleção de arquivos já enviados
+
+**Arquivo do componente**: `includes/components/class-eau-media-upload.php`
+
+**Referência de implementação**: Ver uso em `class-eau-my-cpds.php` linhas 272-283
 
 **Estrutura**:
 ```php
@@ -488,6 +526,49 @@ self.isImageUrl(url);       // Retorna boolean
 O componente usa o endpoint `eau_upload_file` que deve estar registrado:
 ```php
 add_action('wp_ajax_eau_upload_file', array(__CLASS__, 'upload_file'));
+```
+
+**Exemplos de Casos de Uso Comuns**:
+
+```php
+// Upload de foto de perfil (apenas imagens, só upload)
+echo Eau_Media_Upload::field(
+    'profile-photo',
+    'profile_photo',
+    $current_photo_id,
+    array(
+        'type' => 'media',  // só upload, sem URL
+        'allowed_types' => 'image/*',
+        'allowed_extensions' => 'jpg,jpeg,png,gif,webp',
+        'max_file_size' => 5 * 1024 * 1024, // 5MB
+    )
+);
+
+// Upload de certificado/prova (PDF e imagens, com opção de URL)
+echo Eau_Media_Upload::field(
+    'certificate',
+    'certificate',
+    '',
+    array(
+        'type' => 'both',  // URL e upload
+        'allowed_types' => 'image/*,.pdf,application/pdf',
+        'allowed_extensions' => 'jpg,jpeg,png,gif,pdf',
+        'url_placeholder' => 'https://example.com/certificate.pdf',
+    )
+);
+
+// Upload de documento (apenas PDF)
+echo Eau_Media_Upload::field(
+    'document',
+    'document',
+    '',
+    array(
+        'type' => 'media',
+        'allowed_types' => 'application/pdf',
+        'allowed_extensions' => 'pdf',
+        'max_file_size' => 20 * 1024 * 1024, // 20MB
+    )
+);
 ```
 
 ---

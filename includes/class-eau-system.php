@@ -62,6 +62,10 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-settings.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-settings-ajax.php';
 
+        // My Profile (v1.40.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-profile.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-my-profile-ajax.php';
+
         // Duplicate Manager (v1.18.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-duplicate-database.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-duplicate-scanner.php';
@@ -118,6 +122,7 @@ class Eau_System {
         Eau_Categories_Management::register_shortcode();
         Eau_My_Cpds::register_shortcode();
         Eau_Settings::register_shortcode();
+        Eau_My_Profile::register_shortcode();
         Eau_Duplicate_Manager::register_shortcode();
 
         // Registra AJAX handlers
@@ -127,6 +132,7 @@ class Eau_System {
         Eau_Categories_Ajax::register_ajax_handlers();
         \EauSystem\Ajax\Eau_My_Cpds_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_Settings_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_My_Profile_Ajax::register_handlers();
         Eau_Duplicate_Ajax::register_endpoints();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
