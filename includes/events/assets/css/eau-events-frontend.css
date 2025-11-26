@@ -920,24 +920,28 @@
 }
 
 /* ==========================================================================
-   Single Page - LIVE Badge (Discreto)
+   Single Page - LIVE Badge (Inline com Price Label)
    ========================================================================== */
+
+.eau-event-price-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
 
 .eau-event-live-badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
+    gap: 6px;
     background: #dc2626;
-    padding: 10px 16px;
-    border-radius: var(--eau-border-radius);
-    margin-bottom: 16px;
+    padding: 4px 10px;
+    border-radius: 50px;
 }
 
 .eau-live-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--eau-white);
     border-radius: 50%;
     animation: live-blink 1s ease-in-out infinite;
@@ -953,11 +957,11 @@
 }
 
 .eau-live-text {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--eau-white);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .eau-event-live-location {
@@ -982,6 +986,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    margin-bottom: 16px;
 }
 
 /* ==========================================================================

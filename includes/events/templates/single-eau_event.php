@@ -127,7 +127,15 @@ while (have_posts()) : the_post();
             <!-- Sidebar -->
             <aside class="eau-event-sidebar">
                 <div class="eau-event-price-card">
-                    <span class="eau-event-price-label"><?php _e('Member Price', 'eau-system'); ?></span>
+                    <div class="eau-event-price-header">
+                        <span class="eau-event-price-label"><?php _e('Member Price', 'eau-system'); ?></span>
+                        <?php if ($data['is_live']) : ?>
+                            <div class="eau-event-live-badge">
+                                <span class="eau-live-dot"></span>
+                                <span class="eau-live-text"><?php _e('LIVE', 'eau-system'); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                     <span class="eau-event-price-value <?php echo $data['price']['is_free'] ? 'eau-event-price-free' : ''; ?>">
                         <?php echo esc_html($data['price']['display']); ?>
                     </span>
@@ -143,12 +151,6 @@ while (have_posts()) : the_post();
                     <?php endif; ?>
 
                     <?php if ($data['is_live']) : ?>
-                        <!-- LIVE NOW Badge -->
-                        <div class="eau-event-live-badge">
-                            <span class="eau-live-dot"></span>
-                            <span class="eau-live-text"><?php _e('LIVE NOW', 'eau-system'); ?></span>
-                        </div>
-
                         <?php
                         $event_type = $meta['event_type'] ?: 'in-person';
                         $show_location = in_array($event_type, array('in-person', 'hybrid'));
@@ -206,7 +208,7 @@ while (have_posts()) : the_post();
 
                     <!-- CPD Link -->
                     <?php if ($meta['cpd_points'] && floatval($meta['cpd_points']) > 0) : ?>
-                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/my-cpd/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
+                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
                             <?php _e('View in My CPD', 'eau-system'); ?>
                         </a>
                     <?php endif; ?>
