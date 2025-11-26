@@ -83,9 +83,9 @@ class Eau_Event_Registrations_Ajax {
             wp_send_json_error(array('message' => __('You are already registered for this event.', 'eau-system')));
         }
 
-        // Verificar capacidade
-        $capacity = get_post_meta($event_id, 'event_capacity', true);
-        if ($capacity) {
+        // Verificar capacidade (evt_ é o prefixo do módulo Events)
+        $capacity = get_post_meta($event_id, 'evt_capacity', true);
+        if ($capacity && intval($capacity) > 0) {
             $current_registrations = self::count_registrations($event_id);
             if ($current_registrations >= intval($capacity)) {
                 wp_send_json_error(array('message' => __('This event is at full capacity.', 'eau-system')));
