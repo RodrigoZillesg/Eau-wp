@@ -596,7 +596,7 @@ class Eau_Events_Management_Ajax {
             wp_send_json_error(array('message' => 'Invalid registration ID'));
         }
 
-        $valid_statuses = array('confirmed', 'pending', 'cancelled');
+        $valid_statuses = array('paid', 'pending', 'failed', 'refunded');
         if (!in_array($new_status, $valid_statuses)) {
             wp_send_json_error(array('message' => 'Invalid status'));
         }
@@ -604,7 +604,7 @@ class Eau_Events_Management_Ajax {
         update_post_meta($registration_id, 'reg_status', $new_status);
 
         wp_send_json_success(array(
-            'message' => 'Status updated successfully',
+            'message' => 'Payment status updated successfully',
             'new_status' => $new_status,
         ));
     }
@@ -638,17 +638,19 @@ class Eau_Events_Management_Ajax {
 
         // Status class
         $status_classes = array(
-            'confirmed' => 'success',
-            'pending'   => 'warning',
-            'cancelled' => 'danger',
+            'paid'     => 'success',
+            'pending'  => 'warning',
+            'failed'   => 'danger',
+            'refunded' => 'refunded',
         );
         $status_class = isset($status_classes[$status]) ? $status_classes[$status] : 'secondary';
 
         // Status label
         $status_labels = array(
-            'confirmed' => 'Confirmed',
-            'pending'   => 'Pending',
-            'cancelled' => 'Cancelled',
+            'paid'     => 'Paid',
+            'pending'  => 'Pending',
+            'failed'   => 'Failed',
+            'refunded' => 'Refunded',
         );
         $status_label = isset($status_labels[$status]) ? $status_labels[$status] : ucfirst($status);
 
@@ -674,10 +676,11 @@ class Eau_Events_Management_Ajax {
         global $wpdb;
 
         $stats = array(
-            'total'     => 0,
-            'confirmed' => 0,
-            'pending'   => 0,
-            'cancelled' => 0,
+            'total'    => 0,
+            'paid'     => 0,
+            'pending'  => 0,
+            'failed'   => 0,
+            'refunded' => 0,
         );
 
         // Get all registrations for this event

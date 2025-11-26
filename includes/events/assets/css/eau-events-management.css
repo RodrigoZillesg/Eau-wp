@@ -1502,6 +1502,10 @@ button.eau-btn-secondary {
     color: #2563eb;
 }
 
+.eau-icon-refunded {
+    color: #6b7280;
+}
+
 .eau-text-success {
     color: var(--eau-success) !important;
 }
@@ -1516,4 +1520,14 @@ button.eau-btn-secondary {
 
 .eau-text-revenue {
     color: #2563eb !important;
+}
+
+.eau-text-refunded {
+    color: #6b7280 !important;
+}
+
+/* Badge refunded */
+.eau-badge-refunded {
+    background-color: #f3f4f6 !important;
+    color: #6b7280 !important;
 }

@@ -218,10 +218,11 @@ class Eau_Event_Registrations_Page {
                 </div>
                 <div class="eau-filter-select-wrapper">
                     <select id="eau-registrations-status-filter" class="eau-filter-select">
-                        <option value="">All Status</option>
-                        <option value="confirmed">Confirmed</option>
+                        <option value="">All Payments</option>
+                        <option value="paid">Paid</option>
                         <option value="pending">Pending</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="failed">Failed</option>
+                        <option value="refunded">Refunded</option>
                     </select>
                 </div>
             </div>
@@ -240,7 +241,7 @@ class Eau_Event_Registrations_Page {
                                 Registration Date
                                 <i data-lucide="chevrons-up-down"></i>
                             </th>
-                            <th>Status</th>
+                            <th>Payment</th>
                             <th class="eau-table-actions-col">Actions</th>
                         </tr>
                     </thead>
@@ -284,8 +285,8 @@ class Eau_Event_Registrations_Page {
             <div class="eau-stats-card">
                 <div class="eau-stats-card-inner">
                     <div class="eau-stats-card-content">
-                        <p class="eau-stats-card-label">Confirmed</p>
-                        <p class="eau-stats-card-value eau-text-success"><?php echo esc_html($stats['confirmed']); ?></p>
+                        <p class="eau-stats-card-label">Paid</p>
+                        <p class="eau-stats-card-value eau-text-success"><?php echo esc_html($stats['paid']); ?></p>
                     </div>
                     <div class="eau-stats-card-icon eau-icon-success">
                         <i data-lucide="check-circle"></i>
@@ -306,11 +307,22 @@ class Eau_Event_Registrations_Page {
             <div class="eau-stats-card">
                 <div class="eau-stats-card-inner">
                     <div class="eau-stats-card-content">
-                        <p class="eau-stats-card-label">Cancelled</p>
-                        <p class="eau-stats-card-value eau-text-danger"><?php echo esc_html($stats['cancelled']); ?></p>
+                        <p class="eau-stats-card-label">Failed</p>
+                        <p class="eau-stats-card-value eau-text-danger"><?php echo esc_html($stats['failed']); ?></p>
                     </div>
                     <div class="eau-stats-card-icon eau-icon-danger">
                         <i data-lucide="x-circle"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="eau-stats-card">
+                <div class="eau-stats-card-inner">
+                    <div class="eau-stats-card-content">
+                        <p class="eau-stats-card-label">Refunded</p>
+                        <p class="eau-stats-card-value eau-text-refunded"><?php echo esc_html($stats['refunded']); ?></p>
+                    </div>
+                    <div class="eau-stats-card-icon eau-icon-refunded">
+                        <i data-lucide="rotate-ccw"></i>
                     </div>
                 </div>
             </div>
@@ -340,11 +352,12 @@ class Eau_Event_Registrations_Page {
      */
     private static function get_stats($event_id, $price = 0) {
         $stats = array(
-            'total'     => 0,
-            'confirmed' => 0,
-            'pending'   => 0,
-            'cancelled' => 0,
-            'revenue'   => 0,
+            'total'    => 0,
+            'paid'     => 0,
+            'pending'  => 0,
+            'failed'   => 0,
+            'refunded' => 0,
+            'revenue'  => 0,
         );
 
         $registrations = get_posts(array(
@@ -370,8 +383,8 @@ class Eau_Event_Registrations_Page {
             }
         }
 
-        // Calculate revenue (confirmed registrations * price)
-        $stats['revenue'] = $stats['confirmed'] * $price;
+        // Calculate revenue (paid registrations * price)
+        $stats['revenue'] = $stats['paid'] * $price;
 
         return $stats;
     }

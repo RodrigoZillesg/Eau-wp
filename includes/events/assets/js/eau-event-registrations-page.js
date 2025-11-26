@@ -70,10 +70,25 @@
                 self.loadRegistrations();
             });
 
+            // Dropdown toggle
+            $(document).on('click', '.eau-action-more', function(e) {
+                e.stopPropagation();
+                const $menu = $(this).siblings('.eau-dropdown-menu');
+                $('.eau-dropdown-menu').not($menu).removeClass('active');
+                $menu.toggleClass('active');
+            });
+
+            // Close dropdown on click outside
+            $(document).on('click', function() {
+                $('.eau-dropdown-menu').removeClass('active');
+            });
+
             // Status change actions
-            $(document).on('click', '.eau-reg-status-btn', function() {
+            $(document).on('click', '.eau-reg-status-btn', function(e) {
+                e.stopPropagation();
                 const regId = $(this).data('id');
                 const newStatus = $(this).data('status');
+                $('.eau-dropdown-menu').removeClass('active');
                 self.updateRegistrationStatus(regId, newStatus);
             });
 
@@ -171,28 +186,44 @@
         },
 
         /**
-         * Render status action buttons
+         * Render status action buttons (dropdown with payment status options)
          */
         renderStatusActions: function(row) {
             let actions = '';
 
-            if (row.status !== 'confirmed') {
-                actions += '<button class="eau-action-btn eau-action-btn-success eau-reg-status-btn" data-id="' + row.id + '" data-status="confirmed" title="Confirm">';
-                actions += '<i data-lucide="check"></i>';
-                actions += '</button>';
-            }
+            // Dropdown for payment status
+            actions += '<div class="eau-dropdown" data-id="' + row.id + '">';
+            actions += '<button class="eau-action-btn eau-action-more" title="Change Payment Status">';
+            actions += '<i data-lucide="more-vertical"></i>';
+            actions += '</button>';
+            actions += '<div class="eau-dropdown-menu">';
 
-            if (row.status !== 'cancelled') {
-                actions += '<button class="eau-action-btn eau-action-btn-danger eau-reg-status-btn" data-id="' + row.id + '" data-status="cancelled" title="Cancel">';
-                actions += '<i data-lucide="x"></i>';
+            if (row.status !== 'paid') {
+                actions += '<button class="eau-dropdown-item eau-reg-status-btn" data-id="' + row.id + '" data-status="paid">';
+                actions += '<i data-lucide="check-circle"></i> Mark as Paid';
                 actions += '</button>';
             }
 
             if (row.status !== 'pending') {
-                actions += '<button class="eau-action-btn eau-action-btn-warning eau-reg-status-btn" data-id="' + row.id + '" data-status="pending" title="Set Pending">';
-                actions += '<i data-lucide="clock"></i>';
+                actions += '<button class="eau-dropdown-item eau-reg-status-btn" data-id="' + row.id + '" data-status="pending">';
+                actions += '<i data-lucide="clock"></i> Mark as Pending';
                 actions += '</button>';
             }
+
+            if (row.status !== 'failed') {
+                actions += '<button class="eau-dropdown-item eau-dropdown-item-danger eau-reg-status-btn" data-id="' + row.id + '" data-status="failed">';
+                actions += '<i data-lucide="x-circle"></i> Mark as Failed';
+                actions += '</button>';
+            }
+
+            if (row.status !== 'refunded') {
+                actions += '<button class="eau-dropdown-item eau-reg-status-btn" data-id="' + row.id + '" data-status="refunded">';
+                actions += '<i data-lucide="rotate-ccw"></i> Mark as Refunded';
+                actions += '</button>';
+            }
+
+            actions += '</div>';
+            actions += '</div>';
 
             return actions;
         },
