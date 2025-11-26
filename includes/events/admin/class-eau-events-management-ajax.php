@@ -38,6 +38,9 @@ class Eau_Events_Management_Ajax {
         add_action('wp_ajax_eau_delete_event', array(__CLASS__, 'delete_event'));
         add_action('wp_ajax_eau_duplicate_event', array(__CLASS__, 'duplicate_event'));
         add_action('wp_ajax_eau_toggle_event_status', array(__CLASS__, 'toggle_event_status'));
+        add_action('wp_ajax_eau_get_event_registrations', array(__CLASS__, 'get_event_registrations'));
+        add_action('wp_ajax_eau_update_registration_status', array(__CLASS__, 'update_registration_status'));
+        add_action('wp_ajax_eau_export_event_registrations', array(__CLASS__, 'export_event_registrations'));
     }
 
     /**
@@ -196,7 +199,7 @@ class Eau_Events_Management_Ajax {
         }
 
         // Numbers (allow empty values to delete meta)
-        $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'early_bird_price', 'max_guests', 'cpd_points', 'cpd_category');
+        $numbers = array('image_id', 'capacity', 'member_price', 'early_bird_price', 'cpd_points', 'cpd_category');
         foreach ($numbers as $f) {
             if (isset($_POST[$f])) {
                 if ($_POST[$f] !== '' && $_POST[$f] !== null) {
@@ -208,7 +211,7 @@ class Eau_Events_Management_Ajax {
         }
 
         // Checkboxes
-        $checks = array('allow_guests', 'require_approval', 'members_only');
+        $checks = array('require_approval');
         foreach ($checks as $f) {
             update_post_meta($event_id, $prefix . $f, isset($_POST[$f]) && $_POST[$f] ? '1' : '');
         }
@@ -267,7 +270,7 @@ class Eau_Events_Management_Ajax {
         }
 
         // Numbers
-        $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'early_bird_price', 'max_guests', 'cpd_points', 'cpd_category');
+        $numbers = array('image_id', 'capacity', 'member_price', 'early_bird_price', 'cpd_points', 'cpd_category');
         foreach ($numbers as $f) {
             if (isset($_POST[$f])) {
                 $val = $_POST[$f];
@@ -280,7 +283,7 @@ class Eau_Events_Management_Ajax {
         }
 
         // Checkboxes
-        $checks = array('allow_guests', 'require_approval', 'members_only');
+        $checks = array('require_approval');
         foreach ($checks as $f) {
             update_post_meta($event_id, $prefix . $f, isset($_POST[$f]) && $_POST[$f] ? '1' : '');
         }
@@ -464,6 +467,349 @@ class Eau_Events_Management_Ajax {
             'edit_url' => admin_url('post.php?post=' . $post_id . '&action=edit'),
             'view_url' => get_permalink($post_id),
         );
+    }
+
+    /**
+     * AJAX: Get registrations for a specific event
+     *
+     * @since  1.29.3
+     * @return void
+     */
+    public static function get_event_registrations() {
+        check_ajax_referer('eau_events_management_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+
+        if (!$event_id) {
+            wp_send_json_error(array('message' => 'Invalid event ID'));
+        }
+
+        // Parameters
+        $page = isset($_POST['page']) ? absint($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? absint($_POST['per_page']) : 20;
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
+        $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'registration_date';
+        $order = isset($_POST['order']) ? strtoupper(sanitize_text_field($_POST['order'])) : 'DESC';
+
+        // Query args
+        $args = array(
+            'post_type'      => 'eau_event_reg',
+            'posts_per_page' => $per_page,
+            'paged'          => $page,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                array(
+                    'key'   => 'reg_event_id',
+                    'value' => $event_id,
+                    'compare' => '=',
+                ),
+            ),
+        );
+
+        // Add status filter
+        if (!empty($status)) {
+            $args['meta_query'][] = array(
+                'key'   => 'reg_status',
+                'value' => $status,
+                'compare' => '=',
+            );
+        }
+
+        // Add search
+        if (!empty($search)) {
+            $args['meta_query'][] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'reg_attendee_name',
+                    'value'   => $search,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => 'reg_attendee_email',
+                    'value'   => $search,
+                    'compare' => 'LIKE',
+                ),
+            );
+        }
+
+        // Order
+        if ($orderby === 'registration_date') {
+            $args['meta_key'] = 'reg_registration_date';
+            $args['orderby'] = 'meta_value';
+            $args['order'] = $order;
+        } elseif ($orderby === 'attendee_name') {
+            $args['meta_key'] = 'reg_attendee_name';
+            $args['orderby'] = 'meta_value';
+            $args['order'] = $order;
+        } else {
+            $args['orderby'] = 'date';
+            $args['order'] = $order;
+        }
+
+        $query = new \WP_Query($args);
+
+        // Format results
+        $rows = array();
+        foreach ($query->posts as $post) {
+            $rows[] = self::format_registration_row($post);
+        }
+
+        // Get stats
+        $stats = self::get_registration_stats($event_id);
+
+        // Get event title
+        $event_title = get_the_title($event_id);
+
+        wp_send_json_success(array(
+            'rows'        => $rows,
+            'total'       => $query->found_posts,
+            'page'        => $page,
+            'per_page'    => $per_page,
+            'total_pages' => $query->max_num_pages,
+            'stats'       => $stats,
+            'event_title' => $event_title,
+        ));
+    }
+
+    /**
+     * AJAX: Update registration status
+     *
+     * @since  1.29.3
+     * @return void
+     */
+    public static function update_registration_status() {
+        check_ajax_referer('eau_events_management_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $registration_id = isset($_POST['registration_id']) ? absint($_POST['registration_id']) : 0;
+        $new_status = isset($_POST['status']) ? sanitize_key($_POST['status']) : '';
+
+        if (!$registration_id) {
+            wp_send_json_error(array('message' => 'Invalid registration ID'));
+        }
+
+        $valid_statuses = array('confirmed', 'pending', 'cancelled');
+        if (!in_array($new_status, $valid_statuses)) {
+            wp_send_json_error(array('message' => 'Invalid status'));
+        }
+
+        update_post_meta($registration_id, 'reg_status', $new_status);
+
+        wp_send_json_success(array(
+            'message' => 'Status updated successfully',
+            'new_status' => $new_status,
+        ));
+    }
+
+    /**
+     * Format registration row for table
+     *
+     * @since  1.29.3
+     * @param  \WP_Post $post Registration post
+     * @return array Formatted data
+     */
+    private static function format_registration_row($post) {
+        $post_id = $post->ID;
+
+        $attendee_name = get_post_meta($post_id, 'reg_attendee_name', true);
+        $attendee_email = get_post_meta($post_id, 'reg_attendee_email', true);
+        $registration_date = get_post_meta($post_id, 'reg_registration_date', true);
+        $status = get_post_meta($post_id, 'reg_status', true) ?: 'pending';
+
+        // Format date
+        $date_formatted = '';
+        if ($registration_date) {
+            $date_obj = \DateTime::createFromFormat('Y-m-d\TH:i', $registration_date);
+            if (!$date_obj) {
+                $date_obj = \DateTime::createFromFormat('Y-m-d H:i:s', $registration_date);
+            }
+            if ($date_obj) {
+                $date_formatted = $date_obj->format('M j, Y g:i A');
+            }
+        }
+
+        // Status class
+        $status_classes = array(
+            'confirmed' => 'success',
+            'pending'   => 'warning',
+            'cancelled' => 'danger',
+        );
+        $status_class = isset($status_classes[$status]) ? $status_classes[$status] : 'secondary';
+
+        // Status label
+        $status_labels = array(
+            'confirmed' => 'Confirmed',
+            'pending'   => 'Pending',
+            'cancelled' => 'Cancelled',
+        );
+        $status_label = isset($status_labels[$status]) ? $status_labels[$status] : ucfirst($status);
+
+        return array(
+            'id'           => $post_id,
+            'attendee_name' => $attendee_name ?: '—',
+            'attendee_email' => $attendee_email ?: '—',
+            'registration_date' => $date_formatted ?: '—',
+            'status'       => $status,
+            'status_label' => $status_label,
+            'status_class' => $status_class,
+        );
+    }
+
+    /**
+     * Get registration stats for an event
+     *
+     * @since  1.29.3
+     * @param  int $event_id Event ID
+     * @return array Stats
+     */
+    private static function get_registration_stats($event_id) {
+        global $wpdb;
+
+        $stats = array(
+            'total'     => 0,
+            'confirmed' => 0,
+            'pending'   => 0,
+            'cancelled' => 0,
+        );
+
+        // Get all registrations for this event
+        $registrations = get_posts(array(
+            'post_type'      => 'eau_event_reg',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'   => 'reg_event_id',
+                    'value' => $event_id,
+                    'compare' => '=',
+                ),
+            ),
+        ));
+
+        $stats['total'] = count($registrations);
+
+        foreach ($registrations as $reg_id) {
+            $status = get_post_meta($reg_id, 'reg_status', true) ?: 'pending';
+            if (isset($stats[$status])) {
+                $stats[$status]++;
+            }
+        }
+
+        return $stats;
+    }
+
+    /**
+     * AJAX: Export event registrations as CSV
+     *
+     * @since  1.29.3
+     * @return void
+     */
+    public static function export_event_registrations() {
+        check_ajax_referer('eau_events_management_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+
+        if (!$event_id) {
+            wp_send_json_error(array('message' => 'Invalid event ID'));
+        }
+
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
+
+        // Query args
+        $args = array(
+            'post_type'      => 'eau_event_reg',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                array(
+                    'key'   => 'reg_event_id',
+                    'value' => $event_id,
+                    'compare' => '=',
+                ),
+            ),
+        );
+
+        // Add status filter
+        if (!empty($status)) {
+            $args['meta_query'][] = array(
+                'key'   => 'reg_status',
+                'value' => $status,
+                'compare' => '=',
+            );
+        }
+
+        // Add search
+        if (!empty($search)) {
+            $args['meta_query'][] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'reg_attendee_name',
+                    'value'   => $search,
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => 'reg_attendee_email',
+                    'value'   => $search,
+                    'compare' => 'LIKE',
+                ),
+            );
+        }
+
+        $query = new \WP_Query($args);
+
+        // Build CSV
+        $csv_lines = array();
+        $csv_lines[] = '"Name","Email","Registration Date","Status"';
+
+        foreach ($query->posts as $post) {
+            $name = get_post_meta($post->ID, 'reg_attendee_name', true);
+            $email = get_post_meta($post->ID, 'reg_attendee_email', true);
+            $date = get_post_meta($post->ID, 'reg_registration_date', true);
+            $reg_status = get_post_meta($post->ID, 'reg_status', true) ?: 'pending';
+
+            // Format date
+            $date_formatted = '';
+            if ($date) {
+                $date_obj = \DateTime::createFromFormat('Y-m-d\TH:i', $date);
+                if (!$date_obj) {
+                    $date_obj = \DateTime::createFromFormat('Y-m-d H:i:s', $date);
+                }
+                if ($date_obj) {
+                    $date_formatted = $date_obj->format('Y-m-d H:i');
+                }
+            }
+
+            $csv_lines[] = sprintf(
+                '"%s","%s","%s","%s"',
+                str_replace('"', '""', $name),
+                str_replace('"', '""', $email),
+                $date_formatted,
+                ucfirst($reg_status)
+            );
+        }
+
+        $csv = implode("\n", $csv_lines);
+        $event_title = get_the_title($event_id);
+        $filename = sanitize_file_name($event_title . '-registrations-' . date('Y-m-d')) . '.csv';
+
+        wp_send_json_success(array(
+            'csv' => $csv,
+            'filename' => $filename,
+        ));
     }
 
     /**

@@ -103,8 +103,7 @@
                         this.duplicateEvent(eventId);
                         break;
                     case 'registrations':
-                        // TODO: Implement registrations view
-                        this.showToast('Registrations feature coming soon', 'info');
+                        this.viewRegistrations(eventId);
                         break;
                     case 'delete':
                         this.deleteEvent(eventId);
@@ -151,6 +150,11 @@
 
             // Image upload
             $('#eau-select-image').on('click', () => {
+                this.openMediaLibrary();
+            });
+
+            // Click on preview also opens media library
+            $(document).on('click', '#eau-image-preview, #eau-image-placeholder', () => {
                 this.openMediaLibrary();
             });
 
@@ -220,7 +224,7 @@
                 const toggleText = row.status === 'Published' ? 'Unpublish' : 'Publish';
 
                 html += `
-                    <tr>
+                    <tr data-slug="${this.escapeHtml(row.slug)}">
                         <td class="eau-event-title-cell">
                             <span class="eau-event-title">${this.escapeHtml(row.title)}</span>
                         </td>
@@ -426,10 +430,8 @@
             $('#eau-edit-virtual_url').val(event.virtual_url || '');
             $('#eau-edit-capacity').val(event.capacity || '');
             $('#eau-edit-member_price').val(event.member_price || '');
-            $('#eau-edit-non_member_price').val(event.non_member_price || '');
             $('#eau-edit-early_bird_price').val(event.early_bird_price || '');
             $('#eau-edit-early_bird_end_date').val(event.early_bird_end_date || '');
-            $('#eau-edit-max_guests').val(event.max_guests || '');
             $('#eau-edit-cpd_points').val(event.cpd_points || '');
             $('#eau-edit-cpd_category').val(event.cpd_category || '');
             $('#eau-edit-visibility').val(event.visibility || 'public');
@@ -442,9 +444,7 @@
             this.toggleLocationFields(eventType);
 
             // Checkboxes
-            $('#eau-edit-allow_guests').prop('checked', event.allow_guests === '1');
             $('#eau-edit-require_approval').prop('checked', event.require_approval === '1');
-            $('#eau-edit-members_only').prop('checked', event.members_only === '1');
 
             // Image
             if (event.image_id && event.image_url) {
@@ -516,10 +516,8 @@
          */
         setImage: function(imageId, imageUrl) {
             $('#eau-edit-image_id').val(imageId);
-            $('#eau-image-preview-img').attr('src', imageUrl).show();
-            $('#eau-image-placeholder').hide();
+            $('#eau-image-preview').html('<img src="' + imageUrl + '" alt="">');
             $('#eau-remove-image').show();
-            $('#eau-image-preview').css('border-style', 'solid');
         },
 
         /**
@@ -527,11 +525,13 @@
          */
         removeImage: function() {
             $('#eau-edit-image_id').val('');
-            $('#eau-image-preview-img').attr('src', '').hide();
-            $('#eau-image-placeholder').show();
+            $('#eau-image-preview').html(
+                '<div class="eau-image-placeholder" id="eau-image-placeholder">' +
+                '<span class="dashicons dashicons-format-image"></span>' +
+                '<p>Click to upload</p>' +
+                '</div>'
+            );
             $('#eau-remove-image').hide();
-            $('#eau-image-preview').css('border-style', 'dashed');
-            lucide.createIcons();
         },
 
         /**
@@ -677,6 +677,40 @@
                 timer: 3000,
                 timerProgressBar: true
             });
+        },
+
+        /**
+         * View Registrations - redirect to registrations page
+         */
+        viewRegistrations: function(eventId) {
+            // Find event slug from table row
+            const $row = $(`.eau-dropdown[data-id="${eventId}"]`).closest('tr');
+            const eventSlug = $row.data('slug');
+
+            if (eventSlug) {
+                window.location.href = eauEventsManagement.registrationsUrl.replace('{slug}', eventSlug);
+            } else {
+                // Fallback: fetch slug via AJAX
+                $.ajax({
+                    url: eauEventsManagement.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'eau_get_event',
+                        nonce: eauEventsManagement.nonce,
+                        event_id: eventId
+                    },
+                    success: (response) => {
+                        if (response.success && response.data.event.slug) {
+                            window.location.href = eauEventsManagement.registrationsUrl.replace('{slug}', response.data.event.slug);
+                        } else {
+                            this.showToast('Could not load event', 'error');
+                        }
+                    },
+                    error: () => {
+                        this.showToast('Error loading event', 'error');
+                    }
+                });
+            }
         },
 
         /**

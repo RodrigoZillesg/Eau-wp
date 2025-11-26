@@ -11,8 +11,6 @@
 
 namespace EauSystem\Events\Admin;
 
-use EauSystem\Events\Config;
-
 if (!defined('WPINC')) {
     die;
 }
@@ -52,7 +50,7 @@ class Eau_Events_Admin {
      * @since 1.28.0
      */
     private function __construct() {
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'), 20);
     }
 
     /**
@@ -88,7 +86,7 @@ class Eau_Events_Admin {
             $current_post_type = sanitize_key($_GET['post_type']);
         }
 
-        if ($current_post_type !== Config\POST_TYPE) {
+        if ($current_post_type !== 'eau_event') {
             return;
         }
 

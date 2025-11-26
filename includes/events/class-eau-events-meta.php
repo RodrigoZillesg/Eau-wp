@@ -430,19 +430,15 @@ class Eau_Events_Meta {
 
             // Pricing fields
             array('title' => 'Capacity', 'name' => $p.'capacity', 'object_type' => 'field', 'type' => 'number', 'min_value' => 0, 'width' => '100%', 'id' => $base_id++),
-            array('title' => 'Member Price ($)', 'name' => $p.'member_price', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'step_value' => 0.01, 'id' => $base_id++),
-            array('title' => 'Non-Member Price ($)', 'name' => $p.'non_member_price', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'step_value' => 0.01, 'id' => $base_id++),
+            array('title' => 'Price ($)', 'name' => $p.'member_price', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'step_value' => 0.01, 'id' => $base_id++),
             array('title' => 'Early Bird Price ($)', 'name' => $p.'early_bird_price', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'step_value' => 0.01, 'id' => $base_id++),
             array('title' => 'Early Bird End Date', 'name' => $p.'early_bird_end_date', 'object_type' => 'field', 'type' => 'datetime-local', 'width' => '50%', 'id' => $base_id++),
-            array('title' => 'Allow Guests', 'name' => $p.'allow_guests', 'object_type' => 'field', 'type' => 'switcher', 'width' => '50%', 'id' => $base_id++),
-            array('title' => 'Max Guests', 'name' => $p.'max_guests', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 1, 'max_value' => 10, 'id' => $base_id++),
 
             // Settings fields
             array('title' => 'CPD Points', 'name' => $p.'cpd_points', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'step_value' => 0.5, 'id' => $base_id++),
             array('title' => 'CPD Category ID', 'name' => $p.'cpd_category', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'description' => 'ID from eau_activity_categories table', 'id' => $base_id++),
             array('title' => 'Visibility', 'name' => $p.'visibility', 'object_type' => 'field', 'type' => 'select', 'options' => $vs, 'default_value' => Config\DEFAULT_VISIBILITY, 'id' => $base_id++),
-            array('title' => 'Require Approval', 'name' => $p.'require_approval', 'object_type' => 'field', 'type' => 'switcher', 'width' => '50%', 'id' => $base_id++),
-            array('title' => 'Members Only', 'name' => $p.'members_only', 'object_type' => 'field', 'type' => 'switcher', 'default_value' => true, 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'Require Approval', 'name' => $p.'require_approval', 'object_type' => 'field', 'type' => 'switcher', 'width' => '100%', 'id' => $base_id++),
         );
 
         return $fields;

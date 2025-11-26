@@ -26,7 +26,6 @@ if (!defined('WPINC')) {
  * - CPD Category (taxonomy dropdown)
  * - Visibility (select: public, members, private)
  * - Require Approval (checkbox)
- * - Members Only (checkbox)
  *
  * @since  1.28.0
  * @param  array $meta Array com valores dos meta fields
@@ -81,20 +80,11 @@ function render_settings($meta) {
             </div>
 
             <!-- Require Approval -->
-            <div class="eau-form-field">
+            <div class="eau-form-field eau-form-field-span-2">
                 <label class="eau-checkbox-label">
                     <input type="checkbox" name="<?php echo $p; ?>require_approval" value="1"
                            <?php checked($meta['require_approval'], '1'); ?>>
                     <?php _e('Require approval', 'eau-system'); ?>
-                </label>
-            </div>
-
-            <!-- Members Only -->
-            <div class="eau-form-field">
-                <label class="eau-checkbox-label">
-                    <input type="checkbox" name="<?php echo $p; ?>members_only" value="1"
-                           <?php checked($meta['members_only'], '1'); ?>>
-                    <?php _e('Members only registration', 'eau-system'); ?>
                 </label>
             </div>
         </div>

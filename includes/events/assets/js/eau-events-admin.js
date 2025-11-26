@@ -8,6 +8,8 @@
 (function($) {
     'use strict';
 
+    console.log('Eau Events Admin JS loaded');
+
     // Fallback for localized data
     var eauEventsAdminData = window.eauEventsAdmin || {
         mediaTitle: 'Select Event Image',
@@ -31,7 +33,6 @@
             this.bindTabEvents();
             this.bindImageUpload();
             this.bindEventTypeChange();
-            this.bindGuestSettings();
             this.initConditionalFields();
         },
 
@@ -199,36 +200,10 @@
         },
 
         /**
-         * Bind guest settings
-         */
-        bindGuestSettings: function() {
-            const self = this;
-
-            $(document).on('change', 'input[name="evt_allow_guests"]', function() {
-                self.updateGuestFields();
-            });
-        },
-
-        /**
-         * Update guest fields visibility
-         */
-        updateGuestFields: function() {
-            const allowGuests = $('input[name="evt_allow_guests"]').is(':checked');
-            const $guestFields = $('.eau-guests-field');
-
-            if (allowGuests) {
-                $guestFields.removeClass('hidden');
-            } else {
-                $guestFields.addClass('hidden');
-            }
-        },
-
-        /**
          * Initialize conditional fields on page load
          */
         initConditionalFields: function() {
             this.updateLocationFields();
-            this.updateGuestFields();
         },
 
         /**
@@ -295,8 +270,12 @@
      * Initialize on document ready
      */
     $(document).ready(function() {
+        console.log('Document ready - checking for .eau-event-metabox');
+        console.log('Found elements:', $('.eau-event-metabox').length);
+
         // Only initialize if we're on an event edit page
         if ($('.eau-event-metabox').length > 0) {
+            console.log('Initializing EauEventsAdmin');
             EauEventsAdmin.init();
 
             // Bind form validation

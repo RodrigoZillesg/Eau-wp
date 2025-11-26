@@ -30,7 +30,7 @@ class Eau_Events {
      *
      * @var string
      */
-    const VERSION = '1.29.1';
+    const VERSION = '1.29.5';
 
     /**
      * Instância singleton
@@ -96,6 +96,7 @@ class Eau_Events {
         // Events Management (Dashboard)
         require_once $base . 'admin/class-eau-events-management.php';
         require_once $base . 'admin/class-eau-events-management-ajax.php';
+        require_once $base . 'admin/class-eau-event-registrations-page.php';
     }
 
     /**
@@ -117,6 +118,9 @@ class Eau_Events {
         // Events Management (shortcode e AJAX)
         Admin\Eau_Events_Management::register_shortcode();
         Admin\Eau_Events_Management_Ajax::register_handlers();
+
+        // Event Registrations Page
+        Admin\Eau_Event_Registrations_Page::register();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();

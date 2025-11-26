@@ -39,16 +39,12 @@ function get_meta_fields() {
         'virtual_url'         => 'string',
         'capacity'            => 'integer',
         'member_price'        => 'number',
-        'non_member_price'    => 'number',
         'early_bird_price'    => 'number',
         'early_bird_end_date' => 'string',
-        'allow_guests'        => 'boolean',
-        'max_guests'          => 'integer',
         'cpd_points'          => 'number',
         'cpd_category'        => 'integer',
         'visibility'          => 'string',
         'require_approval'    => 'boolean',
-        'members_only'        => 'boolean',
     );
 }
 
@@ -76,16 +72,12 @@ function get_defaults() {
         'virtual_url'         => '',
         'capacity'            => '',
         'member_price'        => '0',
-        'non_member_price'    => '0',
         'early_bird_price'    => '',
         'early_bird_end_date' => '',
-        'allow_guests'        => '',
-        'max_guests'          => '1',
         'cpd_points'          => '1',
         'cpd_category'        => '',
         'visibility'          => DEFAULT_VISIBILITY,
         'require_approval'    => '',
-        'members_only'        => '1',
     );
 }
 
