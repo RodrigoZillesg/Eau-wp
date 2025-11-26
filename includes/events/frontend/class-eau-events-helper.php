@@ -61,7 +61,7 @@ class Eau_Events_Helper {
             'end_obj' => $end_obj,
             'location' => $location,
             'price' => $price,
-            'is_past' => $start_obj && $start_obj->getTimestamp() < current_time('timestamp'),
+            'is_past' => $end_obj ? $end_obj->getTimestamp() < current_time('timestamp') : ($start_obj && $start_obj->getTimestamp() < current_time('timestamp')),
         );
     }
 
