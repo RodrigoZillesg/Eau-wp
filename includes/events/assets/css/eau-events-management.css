@@ -185,7 +185,7 @@ button.eau-btn-primary {
    Stats Cards
    ========================================================================== */
 
-.eau-events-management-container .eau-stats-cards {
+.eau-events-management-container .eau-stats-cards-event {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
@@ -193,7 +193,7 @@ button.eau-btn-primary {
 }
 
 @media (min-width: 768px) {
-    .eau-events-management-container .eau-stats-cards {
+    .eau-events-management-container .eau-stats-cards-event {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }
@@ -674,8 +674,13 @@ button.eau-dropdown-item:hover {
 }
 
 @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* ==========================================================================
@@ -1039,7 +1044,7 @@ button.eau-dropdown-item:hover {
     justify-content: center !important;
     gap: 8px !important;
     height: 44px !important;
-    padding: 0 24px !important;
+    padding: 24px 12px !important;
     background: #fff !important;
     color: #374151 !important;
     border: 1px solid #d1d5db !important;
@@ -1093,7 +1098,7 @@ button.eau-btn-secondary {
     justify-content: center !important;
     gap: 8px !important;
     height: 40px !important;
-    padding: 0 16px !important;
+    padding: 16px 12px !important;
     background: var(--eau-white) !important;
     color: var(--eau-gray-700) !important;
     border: 1px solid var(--eau-gray-300) !important;
@@ -1410,21 +1415,24 @@ button.eau-btn-secondary {
 /* Back Link */
 .eau-back-link {
     margin-bottom: 24px;
+    margin-top: 80px
 }
 
 .eau-back-link a {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    color: var(--eau-gray-600);
+    color: var(--eau-primary);
     text-decoration: none;
+    font-family: "Inter", Sans-serif;
     font-size: 14px;
-    font-weight: 500;
-    transition: color 0.2s ease;
+    font-weight: 400;
+    line-height: 1.2em;
 }
 
 .eau-back-link a:hover {
-    color: var(--eau-primary);
+    color: var(--e-global-color-efabdf6);
+    transform: none !important;
+    font-size: 14px;
 }
 
 .eau-back-link svg {

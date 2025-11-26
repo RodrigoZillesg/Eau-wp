@@ -92,6 +92,7 @@ class Eau_Event_Registrations_Metabox {
         $registration_date = get_post_meta($post->ID, $prefix . 'registration_date', true);
         $member_type = get_post_meta($post->ID, $prefix . 'member_type', true);
         $status = get_post_meta($post->ID, $prefix . 'status', true) ?: Config\DEFAULT_STATUS;
+        $payment_status = get_post_meta($post->ID, $prefix . 'payment_status', true) ?: 'pending';
 
         // Get events for dropdown
         $events = get_posts(array(
@@ -105,6 +106,7 @@ class Eau_Event_Registrations_Metabox {
         // Get options
         $status_options = Config\get_status_options();
         $member_type_options = Config\get_member_type_options();
+        $payment_status_options = Config\get_payment_status_options();
         ?>
         <style>
             .eau-metabox-grid {
@@ -203,6 +205,18 @@ class Eau_Event_Registrations_Metabox {
                     <?php endforeach; ?>
                 </select>
             </div>
+
+            <!-- Payment Status -->
+            <div class="eau-metabox-field">
+                <label for="eau_payment_status"><?php esc_html_e('Payment Status', 'eau-system'); ?></label>
+                <select id="eau_payment_status" name="eau_payment_status">
+                    <?php foreach ($payment_status_options as $key => $label) : ?>
+                        <option value="<?php echo esc_attr($key); ?>" <?php selected($payment_status, $key); ?>>
+                            <?php echo esc_html($label); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
         <?php
     }
@@ -269,6 +283,15 @@ class Eau_Event_Registrations_Metabox {
             $status = sanitize_key($_POST['eau_status']);
             if (in_array($status, $valid_statuses)) {
                 update_post_meta($post_id, $prefix . 'status', $status);
+            }
+        }
+
+        // Save payment status
+        if (isset($_POST['eau_payment_status'])) {
+            $valid_payment_statuses = array_keys(Config\get_payment_status_options());
+            $payment_status = sanitize_key($_POST['eau_payment_status']);
+            if (in_array($payment_status, $valid_payment_statuses)) {
+                update_post_meta($post_id, $prefix . 'payment_status', $payment_status);
             }
         }
 

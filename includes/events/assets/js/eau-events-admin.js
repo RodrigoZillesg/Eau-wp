@@ -8,8 +8,6 @@
 (function($) {
     'use strict';
 
-    console.log('Eau Events Admin JS loaded');
-
     // Fallback for localized data
     var eauEventsAdminData = window.eauEventsAdmin || {
         mediaTitle: 'Select Event Image',
@@ -30,6 +28,7 @@
          * Initialize
          */
         init: function() {
+            console.log('EauEventsAdmin.init() called');
             this.bindTabEvents();
             this.bindImageUpload();
             this.bindEventTypeChange();
@@ -42,19 +41,29 @@
         bindTabEvents: function() {
             const self = this;
 
-            $(document).on('click', '.eau-tab-btn', function(e) {
+            console.log('bindTabEvents - Found tabs:', $('.eau-tab-btn').length);
+            console.log('bindTabEvents - Found panels:', $('.eau-tab-panel').length);
+
+            // Direct click handler on tab buttons
+            $('.eau-event-metabox').on('click', '.eau-tab-btn', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
 
                 const $btn = $(this);
                 const tabId = $btn.data('tab');
 
-                // Update active states
+                console.log('Tab clicked:', tabId);
+
+                // Update active states on buttons
                 $('.eau-tab-btn').removeClass('active');
                 $btn.addClass('active');
 
                 // Show/hide panels
-                $('.eau-tab-panel').removeClass('active');
-                $('#tab-' + tabId).addClass('active');
+                $('.eau-tab-panel').removeClass('active').hide();
+                const $targetPanel = $('#tab-' + tabId);
+                $targetPanel.addClass('active').show();
+
+                console.log('Target panel found:', $targetPanel.length);
 
                 // Save active tab to session storage
                 if (typeof sessionStorage !== 'undefined') {
@@ -65,9 +74,18 @@
             // Restore active tab from session storage
             if (typeof sessionStorage !== 'undefined') {
                 const savedTab = sessionStorage.getItem('eau_event_active_tab');
-                if (savedTab && $('.eau-tab-btn[data-tab="' + savedTab + '"]').length) {
-                    $('.eau-tab-btn[data-tab="' + savedTab + '"]').trigger('click');
+                if (savedTab) {
+                    const $savedTabBtn = $('.eau-tab-btn[data-tab="' + savedTab + '"]');
+                    if ($savedTabBtn.length) {
+                        console.log('Restoring saved tab:', savedTab);
+                        $savedTabBtn.trigger('click');
+                    }
                 }
+            }
+
+            // Ensure first tab is active if none selected
+            if (!$('.eau-tab-btn.active').length) {
+                $('.eau-tab-btn').first().trigger('click');
             }
         },
 
@@ -78,14 +96,14 @@
             const self = this;
 
             // Click on preview or upload button
-            $(document).on('click', '.eau-image-preview, .eau-upload-image-btn', function(e) {
+            $('.eau-event-metabox').on('click', '.eau-image-preview, .eau-upload-image-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 self.openMediaFrame();
             });
 
             // Remove image
-            $(document).on('click', '.eau-remove-image-btn', function(e) {
+            $('.eau-event-metabox').on('click', '.eau-remove-image-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 self.removeImage();
@@ -165,7 +183,7 @@
         bindEventTypeChange: function() {
             const self = this;
 
-            $(document).on('change', 'input[name="evt_event_type"]', function() {
+            $('.eau-event-metabox').on('change', 'input[name="evt_event_type"]', function() {
                 self.updateLocationFields();
             });
         },

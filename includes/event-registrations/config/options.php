@@ -43,6 +43,21 @@ function get_member_type_options() {
 }
 
 /**
+ * Retorna opções de status de pagamento
+ *
+ * @since  1.30.0
+ * @return array
+ */
+function get_payment_status_options() {
+    return array(
+        'pending'  => __('Pending', 'eau-system'),
+        'paid'     => __('Paid', 'eau-system'),
+        'failed'   => __('Failed', 'eau-system'),
+        'refunded' => __('Refunded', 'eau-system'),
+    );
+}
+
+/**
  * Converte array de opções para formato JetEngine
  *
  * @since  1.29.0
@@ -50,12 +65,5 @@ function get_member_type_options() {
  * @return array Opções no formato JetEngine
  */
 function to_jet_format($options) {
-    $result = array();
-    foreach ($options as $key => $label) {
-        $result[] = array(
-            'key'   => $key,
-            'value' => $label,
-        );
-    }
-    return $result;
+    return \EauSystem\Shared\to_jet_format($options);
 }

@@ -29,6 +29,7 @@ function get_meta_fields() {
         'registration_date' => 'string',
         'member_type'       => 'string',
         'status'            => 'string',
+        'payment_status'    => 'string',
         'user_id'           => 'integer',
     );
 }

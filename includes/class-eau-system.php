@@ -20,6 +20,9 @@ class Eau_System {
     }
 
     private function load_dependencies() {
+        // Shared helpers (must load first)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/shared/helpers.php';
+
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-admin.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-csv-handler.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-post-type-creator.php';

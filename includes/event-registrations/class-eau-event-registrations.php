@@ -29,7 +29,7 @@ class Eau_Event_Registrations {
      *
      * @var string
      */
-    const VERSION = '1.29.2';
+    const VERSION = '1.30.0';
 
     /**
      * Instância singleton
@@ -83,6 +83,12 @@ class Eau_Event_Registrations {
 
         // Frontend
         require_once $base . 'frontend/class-eau-event-registrations-ajax.php';
+
+        // Dashboard (Registrations Page)
+        require_once $base . 'dashboard/class-registrations-stats.php';
+        require_once $base . 'dashboard/class-registrations-assets.php';
+        require_once $base . 'dashboard/class-registrations-template.php';
+        require_once $base . 'dashboard/class-registrations-page.php';
     }
 
     /**
@@ -105,6 +111,9 @@ class Eau_Event_Registrations {
 
         // Frontend AJAX
         Frontend\Eau_Event_Registrations_Ajax::register_handlers();
+
+        // Dashboard Registrations Page
+        Dashboard\Registrations_Page::register();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();

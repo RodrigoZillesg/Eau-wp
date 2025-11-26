@@ -561,23 +561,6 @@ class Eau_Events_Management {
      * @return array Lista de categorias
      */
     private static function get_cpd_categories() {
-        global $wpdb;
-
-        $table_name = $wpdb->prefix . 'eau_activity_categories';
-
-        // Verifica se a tabela existe
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
-        if (!$table_exists) {
-            return array();
-        }
-
-        $results = $wpdb->get_results(
-            "SELECT id, category_serial, category_name, points_per_hour
-             FROM $table_name
-             ORDER BY category_name ASC",
-            ARRAY_A
-        );
-
-        return $results ? $results : array();
+        return Config\get_cpd_categories_from_db();
     }
 }
