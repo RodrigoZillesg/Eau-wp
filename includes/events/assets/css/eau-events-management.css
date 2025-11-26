@@ -194,7 +194,7 @@ button.eau-btn-primary {
 
 @media (min-width: 768px) {
     .eau-events-management-container .eau-stats-cards {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }
 
@@ -1483,27 +1483,22 @@ button.eau-btn-secondary {
 
 /* Revenue card */
 .eau-icon-primary {
-    background: #e0e7ff;
     color: #4f46e5;
 }
 
 .eau-icon-success {
-    background: var(--eau-success-light);
     color: var(--eau-success);
 }
 
 .eau-icon-warning {
-    background: #fef3c7;
     color: var(--eau-warning);
 }
 
 .eau-icon-danger {
-    background: #fee2e2;
     color: var(--eau-error);
 }
 
 .eau-icon-revenue {
-    background: #dbeafe;
     color: #2563eb;
 }
 
