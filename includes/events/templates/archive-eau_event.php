@@ -30,23 +30,40 @@ $base_args = array(
 );
 
 if (!empty($search)) $base_args['s'] = $search;
+
+// Upcoming events meta query
+$upcoming_meta = array(
+    'relation' => 'AND',
+    array('key' => 'evt_start_datetime', 'value' => current_time('Y-m-d\TH:i'), 'compare' => '>=', 'type' => 'DATETIME'),
+);
 if ($category > 0) {
-    $base_args['meta_query'][] = array('key' => 'evt_cpd_category', 'value' => $category, 'compare' => '=');
+    $upcoming_meta[] = array('key' => 'evt_cpd_category', 'value' => (string) $category, 'compare' => '=', 'type' => 'NUMERIC');
+}
+if (!empty($event_type)) {
+    $upcoming_meta[] = array('key' => 'evt_event_type', 'value' => $event_type, 'compare' => '=');
 }
 
-// Upcoming events
 $upcoming_args = array_merge($base_args, array(
     'order' => 'ASC',
-    'meta_query' => array(array('key' => 'evt_start_datetime', 'value' => current_time('Y-m-d H:i:s'), 'compare' => '>=', 'type' => 'DATETIME')),
+    'meta_query' => $upcoming_meta,
 ));
-if (!empty($event_type)) $upcoming_args['meta_query'][] = array('key' => 'evt_event_type', 'value' => $event_type);
 
-// Past events
+// Past events meta query
+$past_meta = array(
+    'relation' => 'AND',
+    array('key' => 'evt_start_datetime', 'value' => current_time('Y-m-d\TH:i'), 'compare' => '<', 'type' => 'DATETIME'),
+);
+if ($category > 0) {
+    $past_meta[] = array('key' => 'evt_cpd_category', 'value' => (string) $category, 'compare' => '=', 'type' => 'NUMERIC');
+}
+if (!empty($event_type)) {
+    $past_meta[] = array('key' => 'evt_event_type', 'value' => $event_type, 'compare' => '=');
+}
+
 $past_args = array_merge($base_args, array(
     'order' => 'DESC',
-    'meta_query' => array(array('key' => 'evt_start_datetime', 'value' => current_time('Y-m-d H:i:s'), 'compare' => '<', 'type' => 'DATETIME')),
+    'meta_query' => $past_meta,
 ));
-if (!empty($event_type)) $past_args['meta_query'][] = array('key' => 'evt_event_type', 'value' => $event_type);
 
 $upcoming = new WP_Query($upcoming_args);
 $past = new WP_Query($past_args);
