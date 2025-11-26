@@ -588,13 +588,38 @@
          * Save event (create or update)
          */
         saveEvent: function() {
+            // Sync Quill content to hidden input before saving
+            if (this.quillEditor) {
+                const html = this.quillEditor.root.innerHTML;
+                $('#eau-edit-full_description').val(html === '<p><br></p>' ? '' : html);
+            }
+
             const $form = $('#eau-event-edit-form');
-            const formData = new FormData($form[0]);
             const mode = $('#eau-edit-mode').val();
             const isCreate = mode === 'create';
 
-            formData.append('action', isCreate ? 'eau_create_event' : 'eau_update_event');
-            formData.append('nonce', eauEventsManagement.nonce);
+            // Build data object from form
+            const data = {
+                action: isCreate ? 'eau_create_event' : 'eau_update_event',
+                nonce: eauEventsManagement.nonce
+            };
+
+            // Add form fields
+            $form.find('input, select, textarea').each(function() {
+                const $field = $(this);
+                const name = $field.attr('name');
+                if (!name) return;
+
+                if ($field.is(':checkbox')) {
+                    data[name] = $field.is(':checked') ? '1' : '';
+                } else if ($field.is(':radio')) {
+                    if ($field.is(':checked')) {
+                        data[name] = $field.val();
+                    }
+                } else {
+                    data[name] = $field.val();
+                }
+            });
 
             // Disable save button
             const $saveBtn = $('#eau-modal-save');
@@ -605,7 +630,7 @@
             $.ajax({
                 url: eauEventsManagement.ajaxUrl,
                 type: 'POST',
-                data: Object.fromEntries(formData),
+                data: data,
                 success: (response) => {
                     if (response.success) {
                         this.showToast(isCreate ? 'Event created successfully' : 'Event updated successfully', 'success');
