@@ -62,10 +62,8 @@ class Eau_Events_CPT {
      * @return void
      */
     public function register_post_type() {
-        // Don't register if JetEngine is managing this CPT (status='publish')
-        if ($this->is_managed_by_jet_engine()) {
-            return;
-        }
+        // Remove from JetEngine if exists to avoid conflicts
+        $this->remove_from_jet_engine();
 
         register_post_type(Config\POST_TYPE, array(
             'labels'             => $this->get_labels(),
@@ -109,23 +107,20 @@ class Eau_Events_CPT {
     }
 
     /**
-     * Verifica se o CPT é gerenciado pelo JetEngine (status='publish')
+     * Remove CPT da tabela JetEngine para evitar conflitos
      *
-     * @since  1.28.6
-     * @return bool
+     * @since  1.31.3
+     * @return void
      */
-    private function is_managed_by_jet_engine() {
+    private function remove_from_jet_engine() {
         global $wpdb;
         $table = $wpdb->prefix . 'jet_post_types';
 
         if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
-            return false;
+            return;
         }
 
-        // Only return true if exists with 'publish' status (managed by JetEngine)
-        return (bool) $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table WHERE slug = %s AND status = 'publish'",
-            Config\POST_TYPE
-        ));
+        // Delete from JetEngine table
+        $wpdb->delete($table, array('slug' => Config\POST_TYPE), array('%s'));
     }
 }
