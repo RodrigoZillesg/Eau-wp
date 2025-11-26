@@ -847,6 +847,21 @@
     margin-bottom: 16px;
 }
 
+.eau-event-not-registered-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: #fef3c7;
+    color: #d97706;
+    border-radius: var(--eau-border-radius);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
 /* ==========================================================================
    Single Page - Countdown
    ========================================================================== */

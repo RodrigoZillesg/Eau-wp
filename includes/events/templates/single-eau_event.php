@@ -164,11 +164,18 @@ while (have_posts()) : the_post();
                             </div>
                         <?php endif; ?>
 
-                        <?php if ($show_virtual && !empty($meta['virtual_url'])) : ?>
-                            <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn" data-event-id="<?php echo esc_attr($data['id']); ?>">
-                                <?php echo Helper::icon('video', 18); ?>
-                                <?php _e('Join Online', 'eau-system'); ?>
-                            </a>
+                        <?php if ($is_registered) : ?>
+                            <?php if ($show_virtual && !empty($meta['virtual_url'])) : ?>
+                                <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn" data-event-id="<?php echo esc_attr($data['id']); ?>">
+                                    <?php echo Helper::icon('video', 18); ?>
+                                    <?php _e('Join Online', 'eau-system'); ?>
+                                </a>
+                            <?php endif; ?>
+                        <?php else : ?>
+                            <div class="eau-event-not-registered-badge">
+                                <?php echo Helper::icon('alert-circle', 18); ?>
+                                <?php _e('You must be registered to join this event', 'eau-system'); ?>
+                            </div>
                         <?php endif; ?>
 
                     <?php elseif (!$data['is_past']) : ?>
