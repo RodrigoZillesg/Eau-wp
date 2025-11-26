@@ -143,34 +143,31 @@ while (have_posts()) : the_post();
                     <?php endif; ?>
 
                     <?php if ($data['is_live']) : ?>
-                        <!-- LIVE NOW -->
-                        <div class="eau-event-live-section">
-                            <div class="eau-event-live-badge">
-                                <span class="eau-live-dot"></span>
-                                <span class="eau-live-text"><?php _e('LIVE NOW', 'eau-system'); ?></span>
-                            </div>
-                            <div class="eau-event-live-title"><?php echo esc_html($data['title']); ?></div>
-
-                            <?php
-                            $event_type = $meta['event_type'] ?: 'in-person';
-                            $show_location = in_array($event_type, array('in-person', 'hybrid'));
-                            $show_virtual = in_array($event_type, array('virtual', 'hybrid'));
-                            ?>
-
-                            <?php if ($show_location && !empty($data['location']['full'])) : ?>
-                                <div class="eau-event-live-location">
-                                    <?php echo Helper::icon('map-pin', 18); ?>
-                                    <span><?php echo esc_html($data['location']['full']); ?></span>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if ($show_virtual && !empty($meta['virtual_url'])) : ?>
-                                <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn">
-                                    <?php echo Helper::icon('video', 18); ?>
-                                    <?php _e('Join Online', 'eau-system'); ?>
-                                </a>
-                            <?php endif; ?>
+                        <!-- LIVE NOW Badge -->
+                        <div class="eau-event-live-badge">
+                            <span class="eau-live-dot"></span>
+                            <span class="eau-live-text"><?php _e('LIVE NOW', 'eau-system'); ?></span>
                         </div>
+
+                        <?php
+                        $event_type = $meta['event_type'] ?: 'in-person';
+                        $show_location = in_array($event_type, array('in-person', 'hybrid'));
+                        $show_virtual = in_array($event_type, array('virtual', 'hybrid'));
+                        ?>
+
+                        <?php if ($show_location && !empty($data['location']['full'])) : ?>
+                            <div class="eau-event-live-location">
+                                <?php echo Helper::icon('map-pin', 16); ?>
+                                <span><?php echo esc_html($data['location']['full']); ?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($show_virtual && !empty($meta['virtual_url'])) : ?>
+                            <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn">
+                                <?php echo Helper::icon('video', 18); ?>
+                                <?php _e('Join Online', 'eau-system'); ?>
+                            </a>
+                        <?php endif; ?>
 
                     <?php elseif (!$data['is_past']) : ?>
                         <?php if ($is_registered) : ?>
