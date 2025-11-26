@@ -20,6 +20,9 @@ class Eau_System {
     }
 
     private function load_dependencies() {
+        // Shared helpers (must load first)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/shared/helpers.php';
+
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-admin.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-csv-handler.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-post-type-creator.php';
@@ -52,6 +55,9 @@ class Eau_System {
 
         // Events Module (v1.28.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/events/class-eau-events.php';
+
+        // Event Registrations CPT (v1.29.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/event-registrations/class-eau-event-registrations.php';
     }
 
     private function define_admin_hooks() {
@@ -114,6 +120,9 @@ class Eau_System {
 
         // Initialize Events Module
         \EauSystem\Events\Eau_Events::get_instance();
+
+        // Initialize Event Registrations CPT
+        \EauSystem\EventRegistrations\Eau_Event_Registrations::get_instance();
     }
 
     public function get_plugin_name() {

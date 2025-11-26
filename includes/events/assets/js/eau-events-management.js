@@ -103,8 +103,7 @@
                         this.duplicateEvent(eventId);
                         break;
                     case 'registrations':
-                        // TODO: Implement registrations view
-                        this.showToast('Registrations feature coming soon', 'info');
+                        this.viewRegistrations(eventId);
                         break;
                     case 'delete':
                         this.deleteEvent(eventId);
@@ -147,6 +146,20 @@
             // Event type radio - show/hide location fields
             $('input[name="event_type"]').on('change', (e) => {
                 this.toggleLocationFields(e.target.value);
+            });
+
+            // Image upload
+            $('#eau-select-image').on('click', () => {
+                this.openMediaLibrary();
+            });
+
+            // Click on preview also opens media library
+            $(document).on('click', '#eau-image-preview, #eau-image-placeholder', () => {
+                this.openMediaLibrary();
+            });
+
+            $('#eau-remove-image').on('click', () => {
+                this.removeImage();
             });
 
             // Pagination
@@ -211,7 +224,7 @@
                 const toggleText = row.status === 'Published' ? 'Unpublish' : 'Publish';
 
                 html += `
-                    <tr>
+                    <tr data-slug="${this.escapeHtml(row.slug)}">
                         <td class="eau-event-title-cell">
                             <span class="eau-event-title">${this.escapeHtml(row.title)}</span>
                         </td>
@@ -323,6 +336,9 @@
             $('#eau-edit-country').val('Australia');
             $('#eau-edit-visibility').val('public');
 
+            // Clear image
+            this.removeImage();
+
             // Show correct location fields for default type
             this.toggleLocationFields('in-person');
 
@@ -414,10 +430,8 @@
             $('#eau-edit-virtual_url').val(event.virtual_url || '');
             $('#eau-edit-capacity').val(event.capacity || '');
             $('#eau-edit-member_price').val(event.member_price || '');
-            $('#eau-edit-non_member_price').val(event.non_member_price || '');
             $('#eau-edit-early_bird_price').val(event.early_bird_price || '');
             $('#eau-edit-early_bird_end_date').val(event.early_bird_end_date || '');
-            $('#eau-edit-max_guests').val(event.max_guests || '');
             $('#eau-edit-cpd_points').val(event.cpd_points || '');
             $('#eau-edit-cpd_category').val(event.cpd_category || '');
             $('#eau-edit-visibility').val(event.visibility || 'public');
@@ -430,9 +444,14 @@
             this.toggleLocationFields(eventType);
 
             // Checkboxes
-            $('#eau-edit-allow_guests').prop('checked', event.allow_guests === '1');
             $('#eau-edit-require_approval').prop('checked', event.require_approval === '1');
-            $('#eau-edit-members_only').prop('checked', event.members_only === '1');
+
+            // Image
+            if (event.image_id && event.image_url) {
+                this.setImage(event.image_id, event.image_url);
+            } else {
+                this.removeImage();
+            }
         },
 
         /**
@@ -466,6 +485,53 @@
                     $virtualFields.hide();
                     $inPersonFields.show();
             }
+        },
+
+        /**
+         * Open WordPress Media Library
+         */
+        openMediaLibrary: function() {
+            // Create media frame if not exists
+            if (!this.mediaFrame) {
+                this.mediaFrame = wp.media({
+                    title: 'Select Event Image',
+                    button: {
+                        text: 'Use this image'
+                    },
+                    multiple: false
+                });
+
+                // When image is selected
+                this.mediaFrame.on('select', () => {
+                    const attachment = this.mediaFrame.state().get('selection').first().toJSON();
+                    this.setImage(attachment.id, attachment.url);
+                });
+            }
+
+            this.mediaFrame.open();
+        },
+
+        /**
+         * Set image preview
+         */
+        setImage: function(imageId, imageUrl) {
+            $('#eau-edit-image_id').val(imageId);
+            $('#eau-image-preview').html('<img src="' + imageUrl + '" alt="">');
+            $('#eau-remove-image').show();
+        },
+
+        /**
+         * Remove image
+         */
+        removeImage: function() {
+            $('#eau-edit-image_id').val('');
+            $('#eau-image-preview').html(
+                '<div class="eau-image-placeholder" id="eau-image-placeholder">' +
+                '<span class="dashicons dashicons-format-image"></span>' +
+                '<p>Click to upload</p>' +
+                '</div>'
+            );
+            $('#eau-remove-image').hide();
         },
 
         /**
@@ -611,6 +677,40 @@
                 timer: 3000,
                 timerProgressBar: true
             });
+        },
+
+        /**
+         * View Registrations - redirect to registrations page
+         */
+        viewRegistrations: function(eventId) {
+            // Find event slug from table row
+            const $row = $(`.eau-dropdown[data-id="${eventId}"]`).closest('tr');
+            const eventSlug = $row.data('slug');
+
+            if (eventSlug) {
+                window.location.href = eauEventsManagement.registrationsUrl.replace('{slug}', eventSlug);
+            } else {
+                // Fallback: fetch slug via AJAX
+                $.ajax({
+                    url: eauEventsManagement.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'eau_get_event',
+                        nonce: eauEventsManagement.nonce,
+                        event_id: eventId
+                    },
+                    success: (response) => {
+                        if (response.success && response.data.event.slug) {
+                            window.location.href = eauEventsManagement.registrationsUrl.replace('{slug}', response.data.event.slug);
+                        } else {
+                            this.showToast('Could not load event', 'error');
+                        }
+                    },
+                    error: () => {
+                        this.showToast('Error loading event', 'error');
+                    }
+                });
+            }
         },
 
         /**

@@ -442,3 +442,78 @@
 #eau_event_details .postbox-header {
     border-bottom: none !important;
 }
+
+/* ==========================================================================
+   Media Modal z-index fix
+   ========================================================================== */
+
+/* Ensure WordPress media modal is above everything */
+.media-modal {
+    z-index: 160000 !important;
+}
+
+.media-modal-backdrop {
+    z-index: 159999 !important;
+}
+
+/* Fix media modal content z-index */
+.media-modal-content {
+    z-index: 160001 !important;
+}
+
+/* Fix media modal button styles - restore WordPress defaults */
+.media-modal .media-toolbar .media-toolbar-primary .button.media-button-select,
+.media-modal .media-toolbar .media-toolbar-primary .button.media-button-insert {
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    padding: 0 10px !important;
+    height: 30px !important;
+    line-height: 28px !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+}
+
+.media-modal .media-toolbar .media-toolbar-primary .button.media-button-select:hover,
+.media-modal .media-toolbar .media-toolbar-primary .button.media-button-insert:hover {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+    color: #fff !important;
+}
+
+/* Fix secondary buttons in media modal */
+.media-modal .media-toolbar .button {
+    background: #f6f7f7 !important;
+    border-color: #c3c4c7 !important;
+    color: #2c3338 !important;
+}
+
+.media-modal .media-toolbar .button:hover {
+    background: #f0f0f1 !important;
+    border-color: #8c8f94 !important;
+    color: #1d2327 !important;
+}
+
+/* Fix media modal close button */
+.media-modal .media-modal-close {
+    z-index: 160002 !important;
+}
+
+/* Fix any metabox z-index issues */
+.eau-event-metabox {
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure our metabox doesn't interfere with modals */
+#eau_event_details {
+    z-index: auto !important;
+}
+
+/* Fix JetEngine modal conflicts if any */
+.jet-engine-cpt-metabox,
+.jet-engine-meta-box {
+    z-index: 1 !important;
+}

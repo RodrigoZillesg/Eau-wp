@@ -219,6 +219,22 @@ class Eau_Events_Management {
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Event Image</label>
+                                    <div class="eau-image-upload-wrapper">
+                                        <div class="eau-image-preview" id="eau-image-preview">
+                                            <div class="eau-image-placeholder" id="eau-image-placeholder">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                                <p><?php _e('Click to upload', 'eau-system'); ?></p>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="image_id" id="eau-edit-image_id" value="">
+                                        <div class="eau-image-actions">
+                                            <button type="button" class="button eau-upload-image-btn" id="eau-select-image"><?php _e('Choose', 'eau-system'); ?></button>
+                                            <button type="button" class="button eau-remove-image-btn" id="eau-remove-image" style="display: none;"><?php _e('Remove', 'eau-system'); ?></button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -289,14 +305,12 @@ class Eau_Events_Management {
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-form-label">Event Capacity</label>
                                     <input type="number" name="capacity" id="eau-edit-capacity" class="eau-form-input" min="0" placeholder="50">
+                                    <p class="eau-form-hint">Leave empty for unlimited</p>
                                 </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Member Price ($)</label>
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Price ($)</label>
                                     <input type="number" name="member_price" id="eau-edit-member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
-                                </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Non-Member Price ($)</label>
-                                    <input type="number" name="non_member_price" id="eau-edit-non_member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
+                                    <p class="eau-form-hint">Leave 0 for free events</p>
                                 </div>
 
                                 <div class="eau-form-field eau-form-field-span-2">
@@ -309,16 +323,6 @@ class Eau_Events_Management {
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">Early Bird End Date</label>
                                     <input type="datetime-local" name="early_bird_end_date" id="eau-edit-early_bird_end_date" class="eau-form-input">
-                                </div>
-
-                                <div class="eau-form-field eau-form-field-span-2">
-                                    <p class="eau-form-section-title">Guest Settings</p>
-                                </div>
-                                <div class="eau-form-field eau-form-field-span-2">
-                                    <label class="eau-checkbox-label">
-                                        <input type="checkbox" name="allow_guests" id="eau-edit-allow_guests" value="1">
-                                        Allow guests
-                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -360,12 +364,6 @@ class Eau_Events_Management {
                                     <label class="eau-checkbox-label">
                                         <input type="checkbox" name="require_approval" id="eau-edit-require_approval" value="1">
                                         Require approval for registrations
-                                    </label>
-                                </div>
-                                <div class="eau-form-field eau-form-field-span-2">
-                                    <label class="eau-checkbox-label">
-                                        <input type="checkbox" name="members_only" id="eau-edit-members_only" value="1">
-                                        Members Only (only authenticated members can register)
                                     </label>
                                 </div>
                             </div>
@@ -488,6 +486,9 @@ class Eau_Events_Management {
      * @return void
      */
     private static function enqueue_assets() {
+        // WordPress Media Library
+        wp_enqueue_media();
+
         // Garante que eau-components está registrado
         if (!wp_style_is('eau-components', 'registered')) {
             wp_register_style(
@@ -546,6 +547,7 @@ class Eau_Events_Management {
             'nonce' => wp_create_nonce('eau_events_management_nonce'),
             'editUrl' => admin_url('post.php?post={id}&action=edit'),
             'viewUrl' => home_url('/events/{slug}/'),
+            'registrationsUrl' => home_url('/dashboard/events/{slug}/registrations/'),
         ));
 
         // Inicializa Lucide icons
@@ -559,23 +561,6 @@ class Eau_Events_Management {
      * @return array Lista de categorias
      */
     private static function get_cpd_categories() {
-        global $wpdb;
-
-        $table_name = $wpdb->prefix . 'eau_activity_categories';
-
-        // Verifica se a tabela existe
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
-        if (!$table_exists) {
-            return array();
-        }
-
-        $results = $wpdb->get_results(
-            "SELECT id, category_serial, category_name, points_per_hour
-             FROM $table_name
-             ORDER BY category_name ASC",
-            ARRAY_A
-        );
-
-        return $results ? $results : array();
+        return Config\get_cpd_categories_from_db();
     }
 }

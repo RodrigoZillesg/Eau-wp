@@ -23,10 +23,9 @@ if (!defined('WPINC')) {
  *
  * Campos incluídos:
  * - CPD Points (number, step 0.5)
- * - CPD Category (taxonomy dropdown)
+ * - CPD Category (select)
  * - Visibility (select: public, members, private)
  * - Require Approval (checkbox)
- * - Members Only (checkbox)
  *
  * @since  1.28.0
  * @param  array $meta Array com valores dos meta fields
@@ -52,15 +51,14 @@ function render_settings($meta) {
             <!-- CPD Category -->
             <div class="eau-form-field">
                 <label class="eau-form-label"><?php _e('CPD Category', 'eau-system'); ?></label>
-                <?php wp_dropdown_categories(array(
-                    'taxonomy'          => Config\TAXONOMY,
-                    'name'              => $p . 'cpd_category',
-                    'class'             => 'eau-form-select',
-                    'show_option_none'  => __('Select category', 'eau-system'),
-                    'option_none_value' => '',
-                    'selected'          => $meta['cpd_category'],
-                    'hide_empty'        => false,
-                )); ?>
+                <select name="<?php echo $p; ?>cpd_category" class="eau-form-select">
+                    <option value=""><?php _e('Select category', 'eau-system'); ?></option>
+                    <?php foreach (Config\get_cpd_categories_from_db() as $cat) : ?>
+                        <option value="<?php echo esc_attr($cat['id']); ?>" <?php selected($meta['cpd_category'], $cat['id']); ?>>
+                            <?php echo esc_html($cat['category_name']); ?> (<?php echo esc_html($cat['points_per_hour']); ?> pts/hr)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <!-- Visibility Section -->
@@ -81,20 +79,11 @@ function render_settings($meta) {
             </div>
 
             <!-- Require Approval -->
-            <div class="eau-form-field">
+            <div class="eau-form-field eau-form-field-span-2">
                 <label class="eau-checkbox-label">
                     <input type="checkbox" name="<?php echo $p; ?>require_approval" value="1"
                            <?php checked($meta['require_approval'], '1'); ?>>
                     <?php _e('Require approval', 'eau-system'); ?>
-                </label>
-            </div>
-
-            <!-- Members Only -->
-            <div class="eau-form-field">
-                <label class="eau-checkbox-label">
-                    <input type="checkbox" name="<?php echo $p; ?>members_only" value="1"
-                           <?php checked($meta['members_only'], '1'); ?>>
-                    <?php _e('Members only registration', 'eau-system'); ?>
                 </label>
             </div>
         </div>

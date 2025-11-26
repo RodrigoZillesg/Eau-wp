@@ -30,7 +30,7 @@ class Eau_Events {
      *
      * @var string
      */
-    const VERSION = '1.28.3';
+    const VERSION = '1.30.0';
 
     /**
      * Instância singleton
@@ -80,15 +80,13 @@ class Eau_Events {
         require_once $base . 'class-eau-events-cpt.php';
         require_once $base . 'class-eau-events-meta.php';
 
-        // Admin (se não tiver JetEngine)
-        if (!defined('JET_ENGINE_VERSION')) {
-            require_once $base . 'admin/class-eau-events-admin.php';
-            require_once $base . 'admin/class-eau-events-metabox.php';
-            require_once $base . 'admin/tabs/tab-basic-info.php';
-            require_once $base . 'admin/tabs/tab-location.php';
-            require_once $base . 'admin/tabs/tab-pricing.php';
-            require_once $base . 'admin/tabs/tab-settings.php';
-        }
+        // Admin metaboxes - always load (JetEngine meta fields may not work for built-in CPTs)
+        require_once $base . 'admin/class-eau-events-admin.php';
+        require_once $base . 'admin/class-eau-events-metabox.php';
+        require_once $base . 'admin/tabs/tab-basic-info.php';
+        require_once $base . 'admin/tabs/tab-location.php';
+        require_once $base . 'admin/tabs/tab-pricing.php';
+        require_once $base . 'admin/tabs/tab-settings.php';
 
         // Frontend
         require_once $base . 'frontend/class-eau-events-helper.php';
@@ -110,9 +108,8 @@ class Eau_Events {
         Eau_Events_CPT::get_instance();
         Eau_Events_Meta::get_instance();
 
-        if (!defined('JET_ENGINE_VERSION')) {
-            Admin\Eau_Events_Admin::get_instance();
-        }
+        // Always init admin metaboxes
+        Admin\Eau_Events_Admin::get_instance();
 
         Frontend\Eau_Events_Templates::get_instance();
         Frontend\Eau_Events_Assets::get_instance();

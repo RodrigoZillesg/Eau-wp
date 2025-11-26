@@ -34,7 +34,7 @@ class Eau_Events_Metabox {
      * @return void
      */
     public static function init() {
-        add_action('add_meta_boxes', array(__CLASS__, 'add_metabox'));
+        add_action('add_meta_boxes', array(__CLASS__, 'add_metabox'), 5);
         add_action('save_post_' . Config\POST_TYPE, array(__CLASS__, 'save'), 10, 2);
     }
 
@@ -125,7 +125,7 @@ class Eau_Events_Metabox {
         }
 
         // Numbers
-        $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'early_bird_price', 'max_guests', 'cpd_points', 'cpd_category');
+        $numbers = array('image_id', 'capacity', 'member_price', 'early_bird_price', 'cpd_points', 'cpd_category');
         foreach ($numbers as $f) {
             if (isset($_POST[$prefix . $f])) {
                 $val = $_POST[$prefix . $f];
@@ -138,7 +138,7 @@ class Eau_Events_Metabox {
         }
 
         // Checkboxes
-        $checks = array('allow_guests', 'require_approval', 'members_only');
+        $checks = array('require_approval');
         foreach ($checks as $f) {
             update_post_meta($post_id, $prefix . $f, isset($_POST[$prefix . $f]) ? '1' : '');
         }

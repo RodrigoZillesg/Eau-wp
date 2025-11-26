@@ -185,7 +185,7 @@ button.eau-btn-primary {
    Stats Cards
    ========================================================================== */
 
-.eau-events-management-container .eau-stats-cards {
+.eau-events-management-container .eau-stats-cards-event {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
@@ -193,8 +193,8 @@ button.eau-btn-primary {
 }
 
 @media (min-width: 768px) {
-    .eau-events-management-container .eau-stats-cards {
-        grid-template-columns: repeat(4, 1fr);
+    .eau-events-management-container .eau-stats-cards-event {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }
 
@@ -674,8 +674,13 @@ button.eau-dropdown-item:hover {
 }
 
 @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* ==========================================================================
@@ -1039,7 +1044,7 @@ button.eau-dropdown-item:hover {
     justify-content: center !important;
     gap: 8px !important;
     height: 44px !important;
-    padding: 0 24px !important;
+    padding: 24px 12px !important;
     background: #fff !important;
     color: #374151 !important;
     border: 1px solid #d1d5db !important;
@@ -1093,7 +1098,7 @@ button.eau-btn-secondary {
     justify-content: center !important;
     gap: 8px !important;
     height: 40px !important;
-    padding: 0 16px !important;
+    padding: 16px 12px !important;
     background: var(--eau-white) !important;
     color: var(--eau-gray-700) !important;
     border: 1px solid var(--eau-gray-300) !important;
@@ -1176,6 +1181,109 @@ button.eau-btn-secondary {
 }
 
 /* ==========================================================================
+   Image Upload - WordPress Admin Style
+   ========================================================================== */
+
+#eau-event-edit-modal .eau-image-upload-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+#eau-event-edit-modal .eau-image-preview {
+    width: 100% !important;
+    max-width: 400px !important;
+    min-height: 200px !important;
+    border: 2px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    background: #f9fafb !important;
+}
+
+#eau-event-edit-modal .eau-image-preview:hover {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+}
+
+#eau-event-edit-modal .eau-image-preview img {
+    max-width: 100% !important;
+    max-height: 300px !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+}
+
+#eau-event-edit-modal .eau-image-placeholder {
+    text-align: center !important;
+    padding: 40px !important;
+    color: #9ca3af !important;
+}
+
+#eau-event-edit-modal .eau-image-placeholder .dashicons {
+    font-size: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    margin-bottom: 12px !important;
+    color: #d1d5db !important;
+}
+
+#eau-event-edit-modal .eau-image-placeholder p {
+    margin: 0 0 4px 0 !important;
+    font-size: 14px !important;
+    color: #6b7280 !important;
+}
+
+#eau-event-edit-modal .eau-image-actions {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+#eau-event-edit-modal .eau-image-actions .button {
+    padding: 6px 14px !important;
+}
+
+#eau-event-edit-modal .eau-upload-image-btn {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+}
+
+#eau-event-edit-modal .eau-upload-image-btn:hover,
+#eau-event-edit-modal .eau-upload-image-btn:focus {
+    background: #f9fafb !important;
+    border-color: #9ca3af !important;
+    color: #374151 !important;
+}
+
+#eau-event-edit-modal .eau-remove-image-btn {
+    background: #ffffff !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+#eau-event-edit-modal .eau-remove-image-btn:hover,
+#eau-event-edit-modal .eau-remove-image-btn:focus {
+    background: #fef2f2 !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+#eau-event-edit-modal .eau-btn-danger {
+    color: #dc2626 !important;
+    border-color: #fecaca !important;
+}
+
+#eau-event-edit-modal .eau-btn-danger:hover {
+    background: #fef2f2 !important;
+    border-color: #dc2626 !important;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 
@@ -1207,4 +1315,227 @@ button.eau-btn-secondary {
     .eau-data-table-wrapper {
         overflow-x: auto;
     }
+}
+
+/* ==========================================================================
+   WordPress Media Library Override
+   Ensure media library appears above event modal
+   Reset Elementor Kit styles that interfere with WP core UI
+   ========================================================================== */
+
+.media-modal {
+    z-index: 1000001 !important;
+}
+
+.media-modal-backdrop {
+    z-index: 1000000 !important;
+}
+
+/* Reset media modal close button - fix Elementor Kit interference */
+.media-modal-close,
+.media-modal .media-modal-close {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 50px !important;
+    height: 50px !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    cursor: pointer !important;
+    color: #50575e !important;
+    outline: none !important;
+}
+
+.media-modal-close:hover,
+.media-modal .media-modal-close:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #135e96 !important;
+}
+
+.media-modal-close:focus,
+.media-modal .media-modal-close:focus {
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.media-modal-close .media-modal-icon,
+.media-modal .media-modal-close .media-modal-icon {
+    background: transparent !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Reset other media modal elements that Elementor might affect */
+.media-modal button:not(.media-button),
+.media-modal .button:not(.media-button) {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.media-modal .media-button,
+.media-modal button.media-button {
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+    color: #fff !important;
+    padding: 0 10px !important;
+    height: 30px !important;
+    line-height: 28px !important;
+    border-radius: 3px !important;
+}
+
+.media-modal .media-button:hover,
+.media-modal button.media-button:hover {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+}
+
+.media-modal .media-button-primary,
+.media-modal button.media-button-primary {
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+}
+
+.media-modal .media-button-primary:hover,
+.media-modal button.media-button-primary:hover {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+}
+
+/* ==========================================================================
+   Event Registrations Page - Additional Styles
+   ========================================================================== */
+
+/* Back Link */
+.eau-back-link {
+    margin-bottom: 24px;
+    margin-top: 80px
+}
+
+.eau-back-link a {
+    display: inline-flex;
+    align-items: center;
+    color: var(--eau-primary);
+    text-decoration: none;
+    font-family: "Inter", Sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.2em;
+}
+
+.eau-back-link a:hover {
+    color: var(--e-global-color-efabdf6);
+    transform: none !important;
+    font-size: 14px;
+}
+
+.eau-back-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Status Action Buttons */
+.eau-action-btn-success {
+    color: var(--eau-success) !important;
+}
+
+.eau-action-btn-success:hover {
+    background: var(--eau-success-light) !important;
+}
+
+.eau-action-btn-warning {
+    color: var(--eau-warning) !important;
+}
+
+.eau-action-btn-warning:hover {
+    background: #fef3c7 !important;
+}
+
+.eau-action-btn-danger {
+    color: var(--eau-error) !important;
+}
+
+.eau-action-btn-danger:hover {
+    background: #fee2e2 !important;
+}
+
+/* Badge danger variant */
+.eau-badge-danger {
+    background-color: #fee2e2 !important;
+    color: var(--eau-error) !important;
+}
+
+/* Contact cell link */
+.eau-contact-cell a,
+.eau-member-cell a {
+    color: var(--eau-primary);
+    text-decoration: none;
+}
+
+.eau-contact-cell a:hover,
+.eau-member-cell a:hover {
+    text-decoration: underline;
+}
+
+/* Member name */
+.eau-member-cell .eau-member-name {
+    font-weight: 500;
+    color: var(--eau-gray-800);
+}
+
+/* Revenue card */
+.eau-icon-primary {
+    color: #4f46e5;
+}
+
+.eau-icon-success {
+    color: var(--eau-success);
+}
+
+.eau-icon-warning {
+    color: var(--eau-warning);
+}
+
+.eau-icon-danger {
+    color: var(--eau-error);
+}
+
+.eau-icon-revenue {
+    color: #2563eb;
+}
+
+.eau-icon-refunded {
+    color: #6b7280;
+}
+
+.eau-text-success {
+    color: var(--eau-success) !important;
+}
+
+.eau-text-warning {
+    color: var(--eau-warning) !important;
+}
+
+.eau-text-danger {
+    color: var(--eau-error) !important;
+}
+
+.eau-text-revenue {
+    color: #2563eb !important;
+}
+
+.eau-text-refunded {
+    color: #6b7280 !important;
+}
+
+/* Badge refunded */
+.eau-badge-refunded {
+    background-color: #f3f4f6 !important;
+    color: #6b7280 !important;
 }

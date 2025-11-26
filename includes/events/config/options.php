@@ -96,6 +96,16 @@ function get_visibility_options() {
 }
 
 /**
+ * Retorna categorias CPD do banco de dados
+ *
+ * @since  1.30.0
+ * @return array Array de categorias com id, category_name, points_per_hour
+ */
+function get_cpd_categories_from_db() {
+    return \EauSystem\Shared\get_cpd_categories();
+}
+
+/**
  * Converte array para formato JetEngine
  *
  * @since  1.28.0
@@ -103,9 +113,5 @@ function get_visibility_options() {
  * @return array Array no formato [['key' => '', 'value' => ''], ...]
  */
 function to_jet_format($array) {
-    $options = array();
-    foreach ($array as $key => $value) {
-        $options[] = array('key' => $key, 'value' => $value);
-    }
-    return $options;
+    return \EauSystem\Shared\to_jet_format($array);
 }

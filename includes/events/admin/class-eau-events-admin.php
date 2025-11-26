@@ -11,8 +11,6 @@
 
 namespace EauSystem\Events\Admin;
 
-use EauSystem\Events\Config;
-
 if (!defined('WPINC')) {
     die;
 }
@@ -52,7 +50,7 @@ class Eau_Events_Admin {
      * @since 1.28.0
      */
     private function __construct() {
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'), 20);
     }
 
     /**
@@ -63,13 +61,32 @@ class Eau_Events_Admin {
      * @return void
      */
     public function enqueue_assets($hook) {
-        global $post_type;
-
-        if ($post_type !== Config\POST_TYPE) {
+        // Only on edit/new post screens
+        if (!in_array($hook, array('post.php', 'post-new.php'))) {
             return;
         }
 
-        if (!in_array($hook, array('post.php', 'post-new.php'))) {
+        // Get post type - try multiple methods for compatibility
+        global $post_type, $post;
+
+        $current_post_type = $post_type;
+
+        // Fallback: get from post object
+        if (empty($current_post_type) && !empty($post)) {
+            $current_post_type = $post->post_type;
+        }
+
+        // Fallback: get from query string (for post.php)
+        if (empty($current_post_type) && isset($_GET['post'])) {
+            $current_post_type = get_post_type(absint($_GET['post']));
+        }
+
+        // Fallback: get from post_type query string (for post-new.php)
+        if (empty($current_post_type) && isset($_GET['post_type'])) {
+            $current_post_type = sanitize_key($_GET['post_type']);
+        }
+
+        if ($current_post_type !== 'eau_event') {
             return;
         }
 
@@ -82,10 +99,11 @@ class Eau_Events_Admin {
             EAU_SYSTEM_VERSION
         );
 
-        wp_enqueue_script(
+        // Localize script data BEFORE enqueueing the script
+        wp_register_script(
             'eau-events-admin',
             EAU_SYSTEM_PLUGIN_URL . 'includes/events/assets/js/eau-events-admin.js',
-            array('jquery'),
+            array('jquery', 'media-upload', 'thickbox'),
             EAU_SYSTEM_VERSION,
             true
         );
@@ -94,5 +112,16 @@ class Eau_Events_Admin {
             'mediaTitle'  => __('Select Event Image', 'eau-system'),
             'mediaButton' => __('Use this image', 'eau-system'),
         ));
+
+        wp_enqueue_script('eau-events-admin');
+
+        // Fallback inline script in case localize doesn't work
+        wp_add_inline_script('eau-events-admin',
+            'window.eauEventsAdmin = window.eauEventsAdmin || {
+                mediaTitle: "' . esc_js(__('Select Event Image', 'eau-system')) . '",
+                mediaButton: "' . esc_js(__('Use this image', 'eau-system')) . '"
+            };',
+            'before'
+        );
     }
 }

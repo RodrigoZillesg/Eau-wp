@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 /**
  * Class Eau_Events_CPT
  *
- * Registra o Custom Post Type 'eau_event' e taxonomy 'cpd_category'.
+ * Registra o Custom Post Type 'eau_event'.
  *
  * @since 1.28.0
  */
@@ -53,7 +53,6 @@ class Eau_Events_CPT {
      */
     private function __construct() {
         add_action('init', array($this, 'register_post_type'), 10);
-        add_action('init', array($this, 'register_taxonomy'), 10);
     }
 
     /**
@@ -63,7 +62,8 @@ class Eau_Events_CPT {
      * @return void
      */
     public function register_post_type() {
-        if (defined('JET_ENGINE_VERSION') && $this->exists_in_jet_engine()) {
+        // Don't register if JetEngine is managing this CPT (status='publish')
+        if ($this->is_managed_by_jet_engine()) {
             return;
         }
 
@@ -82,24 +82,6 @@ class Eau_Events_CPT {
             'menu_icon'          => 'dashicons-calendar-alt',
             'supports'           => array('title', 'thumbnail'),
             'show_in_rest'       => true,
-        ));
-    }
-
-    /**
-     * Registra a Taxonomy CPD Category
-     *
-     * @since  1.28.0
-     * @return void
-     */
-    public function register_taxonomy() {
-        register_taxonomy(Config\TAXONOMY, array(Config\POST_TYPE), array(
-            'hierarchical'      => true,
-            'labels'            => $this->get_taxonomy_labels(),
-            'show_ui'           => true,
-            'show_admin_column' => true,
-            'query_var'         => true,
-            'rewrite'           => array('slug' => 'cpd-category'),
-            'show_in_rest'      => true,
         ));
     }
 
@@ -127,30 +109,12 @@ class Eau_Events_CPT {
     }
 
     /**
-     * Retorna labels da Taxonomy
+     * Verifica se o CPT é gerenciado pelo JetEngine (status='publish')
      *
-     * @since  1.28.0
-     * @return array
-     */
-    private function get_taxonomy_labels() {
-        return array(
-            'name'          => __('CPD Categories', 'eau-system'),
-            'singular_name' => __('CPD Category', 'eau-system'),
-            'search_items'  => __('Search CPD Categories', 'eau-system'),
-            'all_items'     => __('All CPD Categories', 'eau-system'),
-            'edit_item'     => __('Edit CPD Category', 'eau-system'),
-            'add_new_item'  => __('Add New CPD Category', 'eau-system'),
-            'menu_name'     => __('CPD Categories', 'eau-system'),
-        );
-    }
-
-    /**
-     * Verifica se já existe na tabela do JetEngine
-     *
-     * @since  1.28.0
+     * @since  1.28.6
      * @return bool
      */
-    private function exists_in_jet_engine() {
+    private function is_managed_by_jet_engine() {
         global $wpdb;
         $table = $wpdb->prefix . 'jet_post_types';
 
@@ -158,8 +122,9 @@ class Eau_Events_CPT {
             return false;
         }
 
+        // Only return true if exists with 'publish' status (managed by JetEngine)
         return (bool) $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table WHERE slug = %s",
+            "SELECT id FROM $table WHERE slug = %s AND status = 'publish'",
             Config\POST_TYPE
         ));
     }
