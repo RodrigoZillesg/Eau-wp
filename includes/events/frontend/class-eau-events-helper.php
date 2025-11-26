@@ -51,6 +51,14 @@ class Eau_Events_Helper {
         // Price
         $price = self::format_price($meta['member_price']);
 
+        // Time checks
+        $now = current_time('timestamp');
+        $start_ts = $start_obj ? $start_obj->getTimestamp() : 0;
+        $end_ts = $end_obj ? $end_obj->getTimestamp() : 0;
+
+        $is_past = $end_ts ? $end_ts < $now : ($start_ts && $start_ts < $now);
+        $is_live = $start_ts && $end_ts && $start_ts <= $now && $end_ts >= $now;
+
         return array(
             'id' => $post_id,
             'title' => $post->post_title,
@@ -61,7 +69,8 @@ class Eau_Events_Helper {
             'end_obj' => $end_obj,
             'location' => $location,
             'price' => $price,
-            'is_past' => $start_obj && $start_obj->getTimestamp() < current_time('timestamp'),
+            'is_past' => $is_past,
+            'is_live' => $is_live,
         );
     }
 

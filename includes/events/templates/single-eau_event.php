@@ -127,7 +127,15 @@ while (have_posts()) : the_post();
             <!-- Sidebar -->
             <aside class="eau-event-sidebar">
                 <div class="eau-event-price-card">
-                    <span class="eau-event-price-label"><?php _e('Member Price', 'eau-system'); ?></span>
+                    <div class="eau-event-price-header">
+                        <span class="eau-event-price-label"><?php _e('Member Price', 'eau-system'); ?></span>
+                        <?php if ($data['is_live']) : ?>
+                            <div class="eau-event-live-badge">
+                                <span class="eau-live-dot"></span>
+                                <span class="eau-live-text"><?php _e('LIVE', 'eau-system'); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                     <span class="eau-event-price-value <?php echo $data['price']['is_free'] ? 'eau-event-price-free' : ''; ?>">
                         <?php echo esc_html($data['price']['display']); ?>
                     </span>
@@ -142,7 +150,28 @@ while (have_posts()) : the_post();
                         </div>
                     <?php endif; ?>
 
-                    <?php if (!$data['is_past']) : ?>
+                    <?php if ($data['is_live']) : ?>
+                        <?php
+                        $event_type = $meta['event_type'] ?: 'in-person';
+                        $show_location = in_array($event_type, array('in-person', 'hybrid'));
+                        $show_virtual = in_array($event_type, array('virtual', 'hybrid'));
+                        ?>
+
+                        <?php if ($show_location && !empty($data['location']['full'])) : ?>
+                            <div class="eau-event-live-location">
+                                <?php echo Helper::icon('map-pin', 16); ?>
+                                <span><?php echo esc_html($data['location']['full']); ?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($show_virtual && !empty($meta['virtual_url'])) : ?>
+                            <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn">
+                                <?php echo Helper::icon('video', 18); ?>
+                                <?php _e('Join Online', 'eau-system'); ?>
+                            </a>
+                        <?php endif; ?>
+
+                    <?php elseif (!$data['is_past']) : ?>
                         <?php if ($is_registered) : ?>
                             <div class="eau-event-registered-badge">
                                 <?php echo Helper::icon('check-circle', 20); ?>
@@ -179,7 +208,7 @@ while (have_posts()) : the_post();
 
                     <!-- CPD Link -->
                     <?php if ($meta['cpd_points'] && floatval($meta['cpd_points']) > 0) : ?>
-                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/my-cpd/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
+                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
                             <?php _e('View in My CPD', 'eau-system'); ?>
                         </a>
                     <?php endif; ?>

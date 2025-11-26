@@ -920,6 +920,76 @@
 }
 
 /* ==========================================================================
+   Single Page - LIVE Badge (Inline com Price Label)
+   ========================================================================== */
+
+.eau-event-price-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.eau-event-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #dc2626;
+    padding: 4px 10px;
+    border-radius: 50px;
+}
+
+.eau-live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--eau-white);
+    border-radius: 50%;
+    animation: live-blink 1s ease-in-out infinite;
+}
+
+@keyframes live-blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.eau-live-text {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--eau-white);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eau-event-live-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--eau-gray-600);
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--eau-gray-50);
+    border-radius: var(--eau-border-radius);
+}
+
+.eau-event-live-location svg {
+    flex-shrink: 0;
+    color: var(--eau-gray-400);
+}
+
+.eau-event-join-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+/* ==========================================================================
    Single Page - CPD Link
    ========================================================================== */
 

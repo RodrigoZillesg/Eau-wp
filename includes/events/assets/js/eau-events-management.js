@@ -16,13 +16,46 @@
         statusFilter: '',
         orderBy: 'start_datetime',
         order: 'ASC',
+        quillEditor: null,
 
         /**
          * Initialize
          */
         init: function() {
+            this.initQuillEditor();
             this.bindEvents();
             this.loadEvents();
+        },
+
+        /**
+         * Initialize Quill Editor
+         */
+        initQuillEditor: function() {
+            if (typeof Quill === 'undefined') {
+                console.warn('Quill not loaded');
+                return;
+            }
+
+            this.quillEditor = new Quill('#eau-quill-editor', {
+                theme: 'snow',
+                placeholder: 'Enter full event description...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        ['link'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Sync Quill content to hidden input on text change
+            this.quillEditor.on('text-change', () => {
+                const html = this.quillEditor.root.innerHTML;
+                $('#eau-edit-full_description').val(html === '<p><br></p>' ? '' : html);
+            });
         },
 
         /**
@@ -339,6 +372,12 @@
             // Clear image
             this.removeImage();
 
+            // Clear Quill editor
+            if (this.quillEditor) {
+                this.quillEditor.setContents([]);
+                $('#eau-edit-full_description').val('');
+            }
+
             // Show correct location fields for default type
             this.toggleLocationFields('in-person');
 
@@ -418,6 +457,17 @@
             $('#eau-edit-event-id').val(eventId);
             $('#eau-edit-title').val(event.title || '');
             $('#eau-edit-short_description').val(event.short_description || '');
+
+            // Load Full Description into Quill
+            if (this.quillEditor) {
+                const fullDescription = event.full_description || '';
+                if (fullDescription) {
+                    this.quillEditor.root.innerHTML = fullDescription;
+                } else {
+                    this.quillEditor.setContents([]);
+                }
+                $('#eau-edit-full_description').val(fullDescription);
+            }
             $('#eau-edit-start_datetime').val(event.start_datetime || '');
             $('#eau-edit-end_datetime').val(event.end_datetime || '');
             $('#eau-edit-timezone').val(event.timezone || 'Australia/Sydney');
@@ -538,13 +588,38 @@
          * Save event (create or update)
          */
         saveEvent: function() {
+            // Sync Quill content to hidden input before saving
+            if (this.quillEditor) {
+                const html = this.quillEditor.root.innerHTML;
+                $('#eau-edit-full_description').val(html === '<p><br></p>' ? '' : html);
+            }
+
             const $form = $('#eau-event-edit-form');
-            const formData = new FormData($form[0]);
             const mode = $('#eau-edit-mode').val();
             const isCreate = mode === 'create';
 
-            formData.append('action', isCreate ? 'eau_create_event' : 'eau_update_event');
-            formData.append('nonce', eauEventsManagement.nonce);
+            // Build data object from form
+            const data = {
+                action: isCreate ? 'eau_create_event' : 'eau_update_event',
+                nonce: eauEventsManagement.nonce
+            };
+
+            // Add form fields
+            $form.find('input, select, textarea').each(function() {
+                const $field = $(this);
+                const name = $field.attr('name');
+                if (!name) return;
+
+                if ($field.is(':checkbox')) {
+                    data[name] = $field.is(':checked') ? '1' : '';
+                } else if ($field.is(':radio')) {
+                    if ($field.is(':checked')) {
+                        data[name] = $field.val();
+                    }
+                } else {
+                    data[name] = $field.val();
+                }
+            });
 
             // Disable save button
             const $saveBtn = $('#eau-modal-save');
@@ -555,7 +630,7 @@
             $.ajax({
                 url: eauEventsManagement.ajaxUrl,
                 type: 'POST',
-                data: Object.fromEntries(formData),
+                data: data,
                 success: (response) => {
                     if (response.success) {
                         this.showToast(isCreate ? 'Event created successfully' : 'Event updated successfully', 'success');
