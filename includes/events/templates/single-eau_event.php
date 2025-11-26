@@ -165,7 +165,7 @@ while (have_posts()) : the_post();
                         <?php endif; ?>
 
                         <?php if ($show_virtual && !empty($meta['virtual_url'])) : ?>
-                            <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn">
+                            <a href="<?php echo esc_url($meta['virtual_url']); ?>" target="_blank" class="eau-btn eau-btn-primary eau-btn-full eau-event-join-btn" data-event-id="<?php echo esc_attr($data['id']); ?>">
                                 <?php echo Helper::icon('video', 18); ?>
                                 <?php _e('Join Online', 'eau-system'); ?>
                             </a>
@@ -367,6 +367,27 @@ while (have_posts()) : the_post();
                 messageEl.className = 'eau-form-message eau-form-message-error';
                 messageEl.innerHTML = '<?php _e('An error occurred. Please try again.', 'eau-system'); ?>';
             });
+        });
+    }
+
+    // Join button - marca presença quando usuário clica
+    var joinBtn = document.querySelector('.eau-event-join-btn');
+    if (joinBtn) {
+        joinBtn.addEventListener('click', function() {
+            var eventId = this.dataset.eventId;
+            if (!eventId) return;
+
+            // Envia AJAX para marcar presença (em background, não bloqueia o link)
+            var formData = new FormData();
+            formData.append('action', 'eau_mark_event_attended');
+            formData.append('nonce', '<?php echo wp_create_nonce('eau_event_registration'); ?>');
+            formData.append('event_id', eventId);
+
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData
+            });
+            // Não precisa esperar resposta - o link já vai abrir
         });
     }
 })();

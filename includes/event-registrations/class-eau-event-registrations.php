@@ -89,6 +89,9 @@ class Eau_Event_Registrations {
         require_once $base . 'dashboard/class-registrations-assets.php';
         require_once $base . 'dashboard/class-registrations-template.php';
         require_once $base . 'dashboard/class-registrations-page.php';
+
+        // Activity Creator (auto-create CPD activities from events)
+        require_once $base . 'class-eau-event-activity-creator.php';
     }
 
     /**
@@ -114,6 +117,9 @@ class Eau_Event_Registrations {
 
         // Dashboard Registrations Page
         Dashboard\Registrations_Page::register();
+
+        // Activity Creator (auto-create CPD activities from events)
+        Eau_Event_Activity_Creator::register();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();

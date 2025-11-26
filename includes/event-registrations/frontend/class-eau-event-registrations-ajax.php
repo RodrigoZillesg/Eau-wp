@@ -123,10 +123,19 @@ class Eau_Event_Registrations_Ajax {
         update_post_meta($post_id, $prefix . 'registration_date', current_time('Y-m-d\TH:i'));
         update_post_meta($post_id, $prefix . 'member_type', $member_type);
         update_post_meta($post_id, $prefix . 'status', Config\DEFAULT_STATUS);
+        update_post_meta($post_id, $prefix . 'attended', '0');
+        update_post_meta($post_id, $prefix . 'activity_created', '0');
 
-        // Salvar user_id se logado
+        // Salvar user_id e mem_userid se logado
         if (is_user_logged_in()) {
-            update_post_meta($post_id, $prefix . 'user_id', get_current_user_id());
+            $wp_user_id = get_current_user_id();
+            update_post_meta($post_id, $prefix . 'user_id', $wp_user_id);
+
+            // Salvar mem_userid do usuário
+            $mem_userid = get_user_meta($wp_user_id, 'mem_userid', true);
+            if (!empty($mem_userid)) {
+                update_post_meta($post_id, $prefix . 'mem_userid', $mem_userid);
+            }
         }
 
         wp_send_json_success(array(
