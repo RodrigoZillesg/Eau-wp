@@ -1,0 +1,94 @@
+/**
+ * EAU System - Institutions Management
+ * Versão: 1.0.0
+ *
+ * CSS específico da página de gerenciamento de instituições.
+ * A maioria dos estilos é herdada de eau-components.css
+ */
+
+/* Container principal */
+.eau-institutions-management-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Page Header */
+.eau-page-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-page-header-title h1 {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.eau-page-header-subtitle {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+.eau-page-header-actions {
+    display: flex !important;
+    gap: 0.75rem !important;
+}
+
+/* Institution Cell */
+.eau-institution-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.eau-institution-cell strong {
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Institution Code Badge */
+.eau-institution-code {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+/* Members Count */
+.eau-members-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.75rem;
+    background-color: #eff6ff;
+    color: #1e40af;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 2.5rem;
+}
+
+/* Form Grid - Span 2 para campos grandes */
+.eau-form-field-span-2 {
+    grid-column: span 2;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .eau-institutions-management-container {
+        padding: 1rem;
+    }
+
+    .eau-form-field-span-2 {
+        grid-column: span 1;
+    }
+}

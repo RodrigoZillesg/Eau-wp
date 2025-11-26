@@ -18,6 +18,15 @@ class Eau_Members_Ajax {
         // Delete member
         add_action('wp_ajax_eau_delete_member', array(__CLASS__, 'delete_member'));
 
+        // Bulk delete members (apenas super admin)
+        add_action('wp_ajax_eau_bulk_delete_members', array(__CLASS__, 'bulk_delete_members'));
+
+        // Get filtered member IDs (apenas super admin)
+        add_action('wp_ajax_eau_get_filtered_member_ids', array(__CLASS__, 'get_filtered_member_ids'));
+
+        // Bulk delete members em lotes (apenas super admin)
+        add_action('wp_ajax_eau_bulk_delete_members_batch', array(__CLASS__, 'bulk_delete_members_batch'));
+
         // Update member
         add_action('wp_ajax_eau_update_member', array(__CLASS__, 'update_member'));
 
@@ -31,7 +40,7 @@ class Eau_Members_Ajax {
         add_action('wp_ajax_eau_get_editable_fields', array(__CLASS__, 'get_editable_fields'));
 
         // Get institutions for select dropdown
-        add_action('wp_ajax_eau_get_institutions', array(__CLASS__, 'get_institutions'));
+        add_action('wp_ajax_eau_get_institutions_list', array(__CLASS__, 'get_institutions'));
 
         // Export CSV
         add_action('wp_ajax_eau_export_members_csv', array(__CLASS__, 'export_members_csv'));
@@ -250,6 +259,34 @@ class Eau_Members_Ajax {
         $current_user_id = get_current_user_id();
         if (!Eau_User_Institution_Helper::can_user_access_user($current_user_id, $user_id)) {
             wp_send_json_error(array('message' => 'You do not have permission to delete this user.'));
+        }
+
+        // CASCADING DELETE: Deleta todas as atividades deste membro primeiro
+        global $wpdb;
+
+        // Pega o mem_userid do membro
+        $mem_userid = get_user_meta($user_id, 'mem_userid', true);
+
+        if (!empty($mem_userid)) {
+            // Busca todas as atividades com esse act_user_id
+            $activity_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT p.ID
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = 'activitie'
+                AND p.post_status = 'publish'
+                AND pm.meta_key = 'act_user_id'
+                AND pm.meta_value = %s",
+                $mem_userid
+            ));
+
+            // Deleta cada atividade (force delete, não vai para trash)
+            foreach ($activity_ids as $activity_id) {
+                wp_delete_post($activity_id, true);
+            }
+
+            // Invalida cache de estatísticas
+            \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
         }
 
         // Deleta usuário
@@ -516,11 +553,16 @@ class Eau_Members_Ajax {
             }
         }
 
-        // Institution Admin: seta automaticamente o company_id da instituição dele
+        // Institution Admin: seta automaticamente o company_id da instituição
+        // CORRETO: Usa get_user_managed_company_ids() para pegar TODAS as instituições
+        // TODO: Frontend deveria permitir ESCOLHER a instituição ao criar membro
         $current_user_id = get_current_user_id();
         if (Eau_User_Institution_Helper::is_institution_admin($current_user_id)) {
-            $company_id = Eau_User_Institution_Helper::get_user_company_id($current_user_id);
-            if (!empty($company_id)) {
+            $company_ids = Eau_User_Institution_Helper::get_user_managed_company_ids($current_user_id);
+            if (!empty($company_ids)) {
+                // Por enquanto, usa a PRIMEIRA instituição
+                // TODO: Adicionar seletor de instituição no frontend
+                $company_id = $company_ids[0];
                 update_user_meta($user_id, 'mem_membercompanyname', $company_id);
             }
         }
@@ -580,5 +622,209 @@ class Eau_Members_Ajax {
         }
 
         wp_send_json_success($institutions);
+    }
+
+    /**
+     * AJAX: Bulk Delete Members (apenas super admin)
+     */
+    public static function bulk_delete_members() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica se é super admin
+        if (!Eau_User_Institution_Helper::is_super_admin()) {
+            wp_send_json_error(array(
+                'message' => 'Permission denied. Only super admins can perform bulk deletions.'
+            ));
+        }
+
+        // Pega IDs dos membros
+        $member_ids = isset($_POST['ids']) ? array_map('absint', $_POST['ids']) : array();
+
+        if (empty($member_ids)) {
+            wp_send_json_error(array(
+                'message' => 'No members selected for deletion.'
+            ));
+        }
+
+        $deleted_count = 0;
+        $failed_count = 0;
+        $failed_members = array();
+
+        foreach ($member_ids as $user_id) {
+            // Não permite deletar o próprio usuário
+            if ($user_id === get_current_user_id()) {
+                $failed_count++;
+                $user = get_userdata($user_id);
+                $failed_members[] = $user ? $user->display_name : "ID: $user_id";
+                continue;
+            }
+
+            // Tenta deletar o usuário
+            $deleted = wp_delete_user($user_id);
+
+            if ($deleted) {
+                $deleted_count++;
+            } else {
+                $failed_count++;
+                $user = get_userdata($user_id);
+                $failed_members[] = $user ? $user->display_name : "ID: $user_id";
+            }
+        }
+
+        // Prepara mensagem de resposta
+        $message = sprintf(
+            '%d member(s) deleted successfully.',
+            $deleted_count
+        );
+
+        if ($failed_count > 0) {
+            $message .= sprintf(
+                ' %d member(s) could not be deleted: %s',
+                $failed_count,
+                implode(', ', $failed_members)
+            );
+        }
+
+        wp_send_json_success(array(
+            'message' => $message,
+            'deleted_count' => $deleted_count,
+            'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Get Filtered Member IDs (apenas super admin)
+     * Retorna todos os IDs de membros que correspondem aos filtros atuais
+     */
+    public static function get_filtered_member_ids() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica se é super admin
+        if (!Eau_User_Institution_Helper::is_super_admin()) {
+            wp_send_json_error(array(
+                'message' => 'Permission denied. Only super admins can perform this action.'
+            ));
+        }
+
+        // Pega filtros
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
+        $role = isset($_POST['role']) ? sanitize_text_field($_POST['role']) : '';
+        $institution_id = isset($_POST['institution_id']) ? absint($_POST['institution_id']) : 0;
+        $membership_type = isset($_POST['membership_type']) ? sanitize_text_field($_POST['membership_type']) : '';
+        $registered_date_from = isset($_POST['registered_date_from']) ? sanitize_text_field($_POST['registered_date_from']) : '';
+        $registered_date_to = isset($_POST['registered_date_to']) ? sanitize_text_field($_POST['registered_date_to']) : '';
+
+        // Busca usuários com filtros (sem paginação)
+        $result = Eau_User_Institution_Helper::get_users_with_institutions(array(
+            'number' => -1, // Sem limite
+            'offset' => 0,
+            'search' => $search,
+            'role' => $role,
+            'status' => $status,
+            'institution_id' => $institution_id,
+            'membership_type' => $membership_type,
+            'registered_date_from' => $registered_date_from,
+            'registered_date_to' => $registered_date_to,
+        ));
+
+        $member_ids = array();
+        foreach ($result['users'] as $user) {
+            $member_ids[] = $user['ID'];
+        }
+
+        wp_send_json_success(array(
+            'ids' => $member_ids,
+            'total' => count($member_ids),
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Delete Members Batch (apenas super admin)
+     * Deleta um lote de membros por vez (max 50)
+     */
+    public static function bulk_delete_members_batch() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica se é super admin
+        if (!Eau_User_Institution_Helper::is_super_admin()) {
+            wp_send_json_error(array(
+                'message' => 'Permission denied. Only super admins can perform bulk deletions.'
+            ));
+        }
+
+        // Pega IDs do lote (máximo 50)
+        $member_ids = isset($_POST['ids']) ? array_map('absint', $_POST['ids']) : array();
+
+        // Limita a 50 por lote para evitar timeout
+        $member_ids = array_slice($member_ids, 0, 50);
+
+        if (empty($member_ids)) {
+            wp_send_json_error(array(
+                'message' => 'No members provided for deletion.'
+            ));
+        }
+
+        $deleted_count = 0;
+        $failed_count = 0;
+        $failed_members = array();
+        $current_user_id = get_current_user_id();
+
+        global $wpdb;
+
+        foreach ($member_ids as $user_id) {
+            // Não permite deletar o próprio usuário
+            if ($user_id === $current_user_id) {
+                $failed_count++;
+                $user = get_userdata($user_id);
+                $failed_members[] = $user ? $user->display_name : "ID: $user_id";
+                continue;
+            }
+
+            // CASCADING DELETE: Deleta todas as atividades deste membro primeiro
+            $mem_userid = get_user_meta($user_id, 'mem_userid', true);
+
+            if (!empty($mem_userid)) {
+                // Busca todas as atividades com esse act_user_id
+                $activity_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT p.ID
+                    FROM {$wpdb->posts} p
+                    INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                    WHERE p.post_type = 'activitie'
+                    AND p.post_status = 'publish'
+                    AND pm.meta_key = 'act_user_id'
+                    AND pm.meta_value = %s",
+                    $mem_userid
+                ));
+
+                // Deleta cada atividade (force delete, não vai para trash)
+                foreach ($activity_ids as $activity_id) {
+                    wp_delete_post($activity_id, true);
+                }
+            }
+
+            // Tenta deletar o usuário
+            $deleted = wp_delete_user($user_id);
+
+            if ($deleted) {
+                $deleted_count++;
+            } else {
+                $failed_count++;
+                $user = get_userdata($user_id);
+                $failed_members[] = $user ? $user->display_name : "ID: $user_id";
+            }
+        }
+
+        // Invalida cache de estatísticas (bulk delete afeta múltiplos usuários)
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
+
+        wp_send_json_success(array(
+            'deleted_count' => $deleted_count,
+            'failed_count' => $failed_count,
+            'failed_members' => $failed_members,
+        ));
     }
 }

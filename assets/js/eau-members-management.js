@@ -1,6 +1,6 @@
 /**
  * EAU System - Members Management JS
- * Versão: 1.9.0
+ * Versão: 1.9.2
  */
 
 (function($) {
@@ -68,7 +68,7 @@
                 type: 'POST',
                 async: false, // Sincrono para garantir que carregue antes de renderizar forms
                 data: {
-                    action: 'eau_get_institutions',
+                    action: 'eau_get_institutions_list',
                     nonce: eauMembersData.nonce
                 },
                 success: function(response) {
@@ -145,11 +145,17 @@
             $('.eau-filters-apply').on('click', this.handleApplyFilters.bind(this));
             $('.eau-filters-clear').on('click', this.handleClearFilters.bind(this));
 
-            // Auto-apply on filter change (optional - pode ser removido se quiser aplicar apenas no botão)
+            // Auto-apply on filter change (opcional - pode ser removido se quiser aplicar apenas no botão)
             $(document).on('change', '.eau-filter-select, .eau-filter-date', function() {
                 // Aplicar filtros automaticamente ao mudar (comentar essa linha se preferir apenas com o botão Apply)
                 // self.handleApplyFilters();
             });
+
+            // Bulk Delete (apenas para super admin)
+            if (eauMembersData.isSuperAdmin) {
+                $('#eau-bulk-delete-members').on('click', this.handleBulkDelete.bind(this));
+                $('#eau-delete-all-filtered-members').on('click', this.handleDeleteAllFiltered.bind(this));
+            }
         },
 
         /**
@@ -323,20 +329,28 @@
                 self.selectedIds.push($(this).val());
             });
 
+            // Mostrar/ocultar botão de deleção em massa (apenas para super admin)
+            if (eauMembersData.isSuperAdmin) {
+                if (this.selectedIds.length > 0) {
+                    $('#eau-bulk-delete-members').show();
+                } else {
+                    $('#eau-bulk-delete-members').hide();
+                }
+            }
         },
 
         /**
          * Show loading overlay
          */
         showLoading: function() {
-            $('#members-table-wrapper-loading').show();
+            $('#members-table-loading').show();
         },
 
         /**
          * Hide loading overlay
          */
         hideLoading: function() {
-            $('#members-table-wrapper-loading').hide();
+            $('#members-table-loading').hide();
         },
 
         /**
@@ -606,6 +620,8 @@
                 }
             });
 
+            // Mostra skeleton durante filtragem
+            this.showLoading();
 
             // Reset para primeira página e recarrega
             this.currentPage = 1;
@@ -626,6 +642,9 @@
 
             // Limpa o objeto de filtros
             this.filters = {};
+
+            // Mostra skeleton durante limpeza de filtros
+            this.showLoading();
 
             // Reset para primeira página e recarrega
             this.currentPage = 1;
@@ -1021,6 +1040,174 @@
                     EauNotifications.error('Network Error', 'Please try again');
                 }
             });
+        },
+
+        /**
+         * Handle bulk delete
+         */
+        handleBulkDelete: function() {
+            const self = this;
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('No Selection', 'Please select members to delete.');
+                return;
+            }
+
+            const count = this.selectedIds.length;
+            EauNotifications.confirm({
+                title: 'Delete Members?',
+                message: `Are you sure you want to delete ${count} member(s)? This action cannot be undone.`,
+                type: 'danger',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauMembersData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_bulk_delete_members',
+                            nonce: eauMembersData.nonce,
+                            ids: self.selectedIds
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Deleted!', response.data.message);
+                                self.selectedIds = [];
+                                self.loadMembers();
+                                $('#eau-bulk-delete-members').hide();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to delete members');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Handle delete all filtered members (em lotes)
+         */
+        handleDeleteAllFiltered: function() {
+            const self = this;
+
+            // Primeiro, busca todos os IDs filtrados
+            $.ajax({
+                url: eauMembersData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_filtered_member_ids',
+                    nonce: eauMembersData.nonce,
+                    search: self.searchTerm,
+                    ...self.filters
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const totalIds = response.data.ids;
+                        const totalCount = response.data.total;
+
+                        if (totalCount === 0) {
+                            EauNotifications.warning('No Members', 'No members found with current filters.');
+                            return;
+                        }
+
+                        // Confirma com o usuário
+                        EauNotifications.confirm({
+                            title: 'Delete All Filtered Members?',
+                            message: `Are you sure you want to delete ${totalCount} member(s)? This action cannot be undone and will be processed in batches.`,
+                            type: 'danger',
+                            confirmText: 'Delete All',
+                            cancelText: 'Cancel',
+                            onConfirm: function() {
+                                self.processBatchDeletion(totalIds, 'members');
+                            }
+                        });
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to fetch filtered members');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Please try again');
+                }
+            });
+        },
+
+        /**
+         * Processa deleção em lotes com barra de progresso
+         */
+        processBatchDeletion: function(allIds, type) {
+            const self = this;
+            const batchSize = 50;
+            const totalCount = allIds.length;
+            let processedCount = 0;
+            let deletedCount = 0;
+            let failedCount = 0;
+
+            // Cria notificação de progresso
+            const progressNotification = EauNotifications.info(
+                'Deleting...',
+                `Processing 0 of ${totalCount} ${type}...`,
+                { duration: 0 } // Não fecha automaticamente
+            );
+
+            // Função para processar próximo lote
+            function processNextBatch() {
+                if (processedCount >= totalCount) {
+                    // Finalizado
+                    EauNotifications.close(progressNotification);
+
+                    let message = `Successfully deleted ${deletedCount} ${type}.`;
+                    if (failedCount > 0) {
+                        message += ` ${failedCount} ${type} could not be deleted.`;
+                    }
+
+                    EauNotifications.success('Completed!', message);
+                    self.loadMembers();
+                    return;
+                }
+
+                // Pega próximo lote
+                const batch = allIds.slice(processedCount, processedCount + batchSize);
+
+                $.ajax({
+                    url: eauMembersData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'eau_bulk_delete_members_batch',
+                        nonce: eauMembersData.nonce,
+                        ids: batch
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            deletedCount += response.data.deleted_count;
+                            failedCount += response.data.failed_count;
+                        } else {
+                            failedCount += batch.length;
+                        }
+
+                        processedCount += batch.length;
+
+                        // Atualiza progresso
+                        const percentage = Math.round((processedCount / totalCount) * 100);
+                        EauNotifications.update(progressNotification, {
+                            message: `Processing ${processedCount} of ${totalCount} ${type}... (${percentage}%)`
+                        });
+
+                        // Processa próximo lote
+                        processNextBatch();
+                    },
+                    error: function() {
+                        failedCount += batch.length;
+                        processedCount += batch.length;
+                        processNextBatch();
+                    }
+                });
+            }
+
+            // Inicia processamento
+            processNextBatch();
         },
 
         /**

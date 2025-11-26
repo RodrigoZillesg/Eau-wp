@@ -1,0 +1,602 @@
+/**
+ * My Profile Page Styles
+ *
+ * @since 1.40.0
+ * @updated 1.40.3 - Layout sidebar + design simplificado
+ */
+
+/* ============================================
+   Container Principal - Layout Sidebar
+   ============================================ */
+.eau-my-profile-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem 0;
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* Sidebar (Profile Header) */
+.eau-profile-sidebar {
+    position: sticky;
+    top: 1.5rem;
+}
+
+/* Content Area (Sections) */
+.eau-profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ============================================
+   Profile Header (Card Lateral)
+   ============================================ */
+.eau-profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.eau-profile-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.eau-profile-avatar-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e5e7eb;
+    background-color: #f3f4f6;
+}
+
+.eau-profile-avatar-upload {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #2563eb;
+    color: #fff;
+    border: 2px solid #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.eau-profile-avatar-upload:hover {
+    background-color: #1d4ed8;
+    transform: scale(1.05);
+}
+
+.eau-profile-avatar-upload svg,
+.eau-profile-avatar-upload i {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px;
+    color: #fff;
+    stroke: #fff;
+}
+
+.eau-profile-info {
+    width: 100%;
+}
+
+.eau-profile-name {
+    font-size: 34px !important;
+    font-weight: 600 !important;
+    margin: 0 0 0.25rem 0 !important;
+    color: #111827 !important;
+    line-height: 1.2 !important;
+}
+
+.eau-profile-email {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 0.5rem 0;
+    word-break: break-all;
+}
+
+.eau-profile-since {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.eau-profile-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.eau-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.eau-profile-badge i {
+    width: 12px;
+    height: 12px;
+}
+
+.eau-profile-badge-status-active {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.eau-profile-badge-status-inactive {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* ============================================
+   Profile Sections
+   ============================================ */
+.eau-profile-section {
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.eau-profile-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-profile-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.eau-profile-section-title i {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+.eau-profile-section-body {
+    padding: 1.25rem;
+}
+
+/* ============================================
+   Profile Grid (campos de dados)
+   ============================================ */
+.eau-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .eau-profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.eau-profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.eau-profile-field-span-2 {
+    grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+    .eau-profile-field-span-2 {
+        grid-column: span 1;
+    }
+}
+
+.eau-profile-field-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.eau-profile-field-value {
+    font-size: 0.9375rem;
+    color: #111827;
+    word-break: break-word;
+}
+
+.eau-profile-field-value:empty::after {
+    content: '-';
+    color: #9ca3af;
+}
+
+.eau-profile-field-readonly {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Status badges nos campos */
+.eau-profile-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.eau-profile-status-active {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.eau-profile-status-inactive {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.eau-profile-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* ============================================
+   Password Input com Toggle
+   ============================================ */
+.eau-password-input-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.eau-password-input-wrapper .eau-form-input {
+    padding-right: 2.75rem !important;
+}
+
+/* Password toggle button - reset all button styles */
+.eau-password-input-wrapper button.eau-password-toggle,
+button.eau-password-toggle,
+.eau-password-toggle {
+    position: absolute !important;
+    right: 0.75rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    padding: 0.25rem !important;
+    margin: 0 !important;
+    color: #6b7280 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: color 0.2s ease !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: unset !important;
+    min-height: unset !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.eau-password-input-wrapper button.eau-password-toggle:hover,
+button.eau-password-toggle:hover,
+.eau-password-toggle:hover {
+    color: #111827 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.eau-password-input-wrapper button.eau-password-toggle:focus,
+button.eau-password-toggle:focus,
+.eau-password-toggle:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-password-toggle i,
+.eau-password-toggle svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    color: inherit !important;
+    stroke: currentColor !important;
+}
+
+/* ============================================
+   Photo Upload Modal/Overlay
+   ============================================ */
+.eau-photo-upload-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.eau-photo-upload-modal {
+    background-color: #fff;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+.eau-photo-upload-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-photo-upload-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.eau-photo-upload-body {
+    padding: 1.25rem;
+}
+
+.eau-photo-upload-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Preview da foto atual */
+.eau-photo-current-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+}
+
+.eau-photo-current-preview img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.eau-photo-current-info {
+    flex: 1;
+}
+
+.eau-photo-current-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.eau-photo-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    color: #dc2626;
+    background: none;
+    border: 1px solid #dc2626;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.eau-photo-remove-btn:hover {
+    background-color: #dc2626;
+    color: #fff;
+}
+
+.eau-photo-remove-btn i {
+    width: 14px;
+    height: 14px;
+}
+
+/* ============================================
+   Modal Overlays - Centralização
+   ============================================ */
+#edit-personal-modal-overlay,
+#edit-address-modal-overlay,
+#change-password-modal-overlay,
+#upload-photo-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+#edit-personal-modal-overlay[style*="block"],
+#edit-address-modal-overlay[style*="block"],
+#change-password-modal-overlay[style*="block"],
+#upload-photo-modal-overlay[style*="block"] {
+    display: flex !important;
+}
+
+/* ============================================
+   Form Fields dentro de modais
+   ============================================ */
+.eau-modal-form .eau-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ============================================
+   Hint text
+   ============================================ */
+.eau-form-hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+/* ============================================
+   intl-tel-input Customization
+   ============================================ */
+.iti {
+    width: 100%;
+}
+
+.iti__tel-input {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: #111827;
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.iti__tel-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.iti__selected-dial-code {
+    font-size: 0.9375rem;
+    color: #111827;
+}
+
+.iti__country-list {
+    z-index: 10000;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.iti__country {
+    padding: 0.5rem 0.75rem;
+}
+
+.iti__country:hover {
+    background-color: #f3f4f6;
+}
+
+.iti__country--highlight {
+    background-color: #dbeafe;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+    .eau-my-profile-container {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-profile-sidebar {
+        position: static;
+    }
+
+    .eau-profile-header {
+        flex-direction: row;
+        text-align: left;
+        gap: 1rem;
+    }
+
+    .eau-profile-avatar-image {
+        width: 80px;
+        height: 80px;
+    }
+
+    .eau-profile-badges {
+        justify-content: flex-start;
+        border-top: none;
+        margin-top: 0.5rem;
+        padding-top: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .eau-profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .eau-profile-name {
+        font-size: 28px !important;
+    }
+
+    .eau-profile-badges {
+        justify-content: center;
+    }
+
+    .eau-profile-section-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .eau-modal-footer {
+        flex-direction: column;
+    }
+
+    .eau-modal-footer .eau-btn {
+        width: 100%;
+    }
+}

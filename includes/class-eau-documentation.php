@@ -166,6 +166,139 @@ class Eau_Documentation {
                     </div>
                 </div>
 
+                <!-- Institutions Management -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>Institutions Management</h2>
+                        <span class="eau-doc-badge eau-badge-admin">Admin Only</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Complete institution management system with CRUD operations, search, filters, and member tracking.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_institutions_management]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_institutions_management]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Search by institution name or code</li>
+                                <li>✅ Filter by status (active/inactive) and creation date</li>
+                                <li>✅ Sort by any column (name, code, status, etc)</li>
+                                <li>✅ Pagination with 20 items per page</li>
+                                <li>✅ Create, Edit, View, and Delete institutions</li>
+                                <li>✅ Member count tracking per institution</li>
+                                <li>✅ Export to CSV (all or selected)</li>
+                                <li>✅ Skeleton loading states</li>
+                                <li>✅ Toast notifications for feedback</li>
+                                <li>✅ Delete protection (cannot delete with active members)</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "Institutions" accessible only to administrators for complete institution control.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Integrated with JetEngine CCT table <code>wp_jet_cct_institutions</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activities Management -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>Activities Management</h2>
+                        <span class="eau-doc-badge eau-badge-admin">Admin Only</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Complete management interface for CPD (Continuing Professional Development) activities with verification workflow and hours tracking.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_activities_management]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_activities_management]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Real-time stats (Total, Verified, Pending, Total Hours)</li>
+                                <li>✅ Advanced search and filtering</li>
+                                <li>✅ Filter by verification status</li>
+                                <li>✅ Filter by institution</li>
+                                <li>✅ Filter by date range</li>
+                                <li>✅ Sortable columns (Activity, Member, Institution, Hours, Date)</li>
+                                <li>✅ Create, view, edit, and delete activities</li>
+                                <li>✅ Verification workflow (Pending/Verified)</li>
+                                <li>✅ Hours tracking with decimal precision</li>
+                                <li>✅ CSV export with all filters applied</li>
+                                <li>✅ Institution Admin scope (see only their members' activities)</li>
+                                <li>✅ Paginated results (30 per page)</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "CPD Activities" for administrators and institution admins to manage, verify, and track professional development activities.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Activities belong to members via WordPress <code>post_author</code> field. Each activity tracks hours and verification status.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Management -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>Categories Management</h2>
+                        <span class="eau-doc-badge eau-badge-admin">Admin Only</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Configure activity categories and assign points per hour for CPD activities tracking.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_categories_management]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_categories_management]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Search by category name or ID</li>
+                                <li>✅ Sort by any column (ID, Name, Points/Hour, Date)</li>
+                                <li>✅ Pagination with 20 items per page</li>
+                                <li>✅ Create, Edit, View, and Delete categories</li>
+                                <li>✅ Refresh/Sync from existing activities</li>
+                                <li>✅ Configure points per hour for each category</li>
+                                <li>✅ Statistics cards (Total, Configured, Not Configured, Avg Points)</li>
+                                <li>✅ Skeleton loading states</li>
+                                <li>✅ Toast notifications for feedback</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "Categories" accessible only to administrators to configure point values for different activity categories.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Categories are automatically extracted from existing activities using <code>act_category_serial</code> and <code>categoria_de_ato</code> fields.
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Duplicate Manager -->
                 <div class="eau-doc-card">
                     <div class="eau-doc-card-header">
@@ -219,6 +352,97 @@ class Eau_Documentation {
 
                         <div class="eau-doc-warning">
                             <strong>⚠️ Warning:</strong> Merge operations cannot be undone. One member will be permanently deleted.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My CPDs -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>My CPDs</h2>
+                        <span class="eau-doc-badge eau-badge-member">All Members</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Personal CPD tracking page where members can view their activities, track progress towards annual goals, and submit new activities for approval.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_my_cpds]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_my_cpds]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Annual progress ring (20 points goal)</li>
+                                <li>✅ Statistics cards (Total Points, Activities, Verified, Pending)</li>
+                                <li>✅ Searchable activities table</li>
+                                <li>✅ Filter by status and category</li>
+                                <li>✅ Sort by any column</li>
+                                <li>✅ View activity details modal</li>
+                                <li>✅ Add new activity with file upload</li>
+                                <li>✅ Edit pending activities</li>
+                                <li>✅ Delete pending activities</li>
+                                <li>✅ Proof upload (file or URL)</li>
+                                <li>✅ WYSIWYG description editor</li>
+                                <li>✅ Skeleton loading states</li>
+                                <li>✅ Toast notifications</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "My CPDs" in the member dashboard area. Each member sees only their own CPD activities and progress.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Members can only edit or delete activities with "Pending" status. Verified activities are read-only.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Profile -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>My Profile</h2>
+                        <span class="eau-doc-badge eau-badge-member">All Members</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <p>Personal profile page where members can view and update their personal information, address, and account settings.</p>
+
+                        <div class="eau-code-block">
+                            <div class="eau-code-header">
+                                <span>Shortcode</span>
+                                <button class="eau-copy-btn" onclick="copyToClipboard('[eau_my_profile]', this)">Copy</button>
+                            </div>
+                            <pre><code class="language-markup">[eau_my_profile]</code></pre>
+                        </div>
+
+                        <div class="eau-doc-features">
+                            <h4>Features:</h4>
+                            <ul>
+                                <li>✅ Profile photo with upload functionality</li>
+                                <li>✅ Personal information section (name, email, phone, bio)</li>
+                                <li>✅ Address section (street, city, postcode)</li>
+                                <li>✅ Account information (username, member ID, type, status)</li>
+                                <li>✅ Change password functionality</li>
+                                <li>✅ International phone input with country selector</li>
+                                <li>✅ Modal-based editing</li>
+                                <li>✅ Real-time validation</li>
+                                <li>✅ Toast notifications</li>
+                                <li>✅ Responsive design</li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-doc-example">
+                            <h4>Use Case:</h4>
+                            <p>Add to a page called "Profile" in the member dashboard area. Each member can view and edit their own profile information.</p>
+                        </div>
+
+                        <div class="eau-doc-note">
+                            <strong>📝 Note:</strong> Some fields like Username, Member ID, and User Type are read-only and cannot be changed by the member.
                         </div>
                     </div>
                 </div>
@@ -366,10 +590,317 @@ class Eau_Documentation {
                     </div>
                 </div>
 
+                <!-- Institutions Management Feature -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>3. Institutions Management</h2>
+                        <span class="eau-doc-badge eau-badge-v1">v1.28.0+</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <h3>Overview</h3>
+                        <p>A complete CRUD system for managing institutions with advanced filtering, searching, sorting, and member tracking capabilities.</p>
+
+                        <h3>Key Features</h3>
+
+                        <h4>🔍 Search</h4>
+                        <p>Real-time search across:</p>
+                        <ul>
+                            <li>Institution name</li>
+                            <li>Institution code</li>
+                        </ul>
+
+                        <h4>🎯 Filters</h4>
+                        <ul>
+                            <li><strong>Status:</strong> All, Active, Inactive</li>
+                            <li><strong>Creation Date:</strong> Date range picker (from/to)</li>
+                        </ul>
+
+                        <h4>📊 Sorting</h4>
+                        <p>Click any column header to sort (ascending/descending):</p>
+                        <ul>
+                            <li>Institution Name</li>
+                            <li>Code</li>
+                            <li>Contact Info</li>
+                            <li>Member Count</li>
+                            <li>Status</li>
+                        </ul>
+
+                        <h4>✏️ CRUD Operations</h4>
+                        <ul>
+                            <li><strong>Create:</strong> Add new institutions with validated forms</li>
+                            <li><strong>Edit:</strong> Update existing institution information</li>
+                            <li><strong>View:</strong> Read-only view of institution details</li>
+                            <li><strong>Delete:</strong> Remove institutions with safety checks</li>
+                        </ul>
+
+                        <h3>Institution Fields</h3>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Institution Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                    <td>Full name of the institution</td>
+                                </tr>
+                                <tr>
+                                    <td>Code</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                    <td>Unique identifier (must be unique)</td>
+                                </tr>
+                                <tr>
+                                    <td>Email</td>
+                                    <td>Email</td>
+                                    <td>No</td>
+                                    <td>Primary contact email</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone</td>
+                                    <td>Tel</td>
+                                    <td>No</td>
+                                    <td>Primary contact phone</td>
+                                </tr>
+                                <tr>
+                                    <td>Address</td>
+                                    <td>Text</td>
+                                    <td>No</td>
+                                    <td>Street address</td>
+                                </tr>
+                                <tr>
+                                    <td>City</td>
+                                    <td>Text</td>
+                                    <td>No</td>
+                                    <td>City name</td>
+                                </tr>
+                                <tr>
+                                    <td>State</td>
+                                    <td>Text</td>
+                                    <td>No</td>
+                                    <td>State/Province</td>
+                                </tr>
+                                <tr>
+                                    <td>ZIP Code</td>
+                                    <td>Text</td>
+                                    <td>No</td>
+                                    <td>Postal/ZIP code</td>
+                                </tr>
+                                <tr>
+                                    <td>Country</td>
+                                    <td>Text</td>
+                                    <td>No</td>
+                                    <td>Country name</td>
+                                </tr>
+                                <tr>
+                                    <td>Status</td>
+                                    <td>Select</td>
+                                    <td>Yes</td>
+                                    <td>Active or Inactive</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3>Member Tracking</h3>
+                        <p>Each institution shows the number of members associated with it. The system:</p>
+                        <ul>
+                            <li>Counts users with matching <code>mem_membercompanyname</code> field</li>
+                            <li>Displays count in real-time</li>
+                            <li>Shows count in View and Edit modals</li>
+                            <li>Prevents deletion if institution has members</li>
+                        </ul>
+
+                        <h3>Safety Features</h3>
+                        <ul>
+                            <li>✅ Code uniqueness validation (no duplicate codes)</li>
+                            <li>✅ Delete protection (cannot delete with active members)</li>
+                            <li>✅ Confirmation required before delete</li>
+                            <li>✅ Form validation (client and server-side)</li>
+                            <li>✅ Toast notifications for all actions</li>
+                        </ul>
+
+                        <h3>Export Functionality</h3>
+                        <p>Export institutions to CSV with options:</p>
+                        <ul>
+                            <li><strong>Export All:</strong> Exports all institutions with current filters</li>
+                            <li><strong>Export Selected:</strong> Exports only checked institutions</li>
+                        </ul>
+                        <p>CSV includes: ID, Name, Code, Email, Phone, Address, City, State, ZIP, Country, Status, Member Count, Created Date</p>
+
+                        <h3>User Experience</h3>
+                        <ul>
+                            <li><strong>Skeleton Loading:</strong> Shows placeholders while loading data</li>
+                            <li><strong>Toast Notifications:</strong> Success/error feedback</li>
+                            <li><strong>Confirm Modals:</strong> Safety confirmations for destructive actions</li>
+                            <li><strong>Form Validation:</strong> Client-side and server-side validation</li>
+                            <li><strong>Responsive Design:</strong> Works on mobile, tablet, and desktop</li>
+                        </ul>
+
+                        <h3>Integration</h3>
+                        <p>Fully integrated with JetEngine Content Custom Tables (CCT):</p>
+                        <ul>
+                            <li>Table: <code>wp_jet_cct_institutions</code></li>
+                            <li>Direct database queries for performance</li>
+                            <li>Automatic timestamps (created/modified)</li>
+                            <li>Author tracking</li>
+                        </ul>
+
+                        <h3>Permissions</h3>
+                        <p>Only users with <code>manage_options</code> capability (Admin and Super Admin) can access this feature.</p>
+
+                        <h3>Statistics Cards</h3>
+                        <div class="eau-doc-grid">
+                            <div class="eau-doc-stat">
+                                <h4>Total Institutions</h4>
+                                <p>Count of all registered institutions.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Active Institutions</h4>
+                                <p>Count of institutions with status = active.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>New This Month</h4>
+                                <p>Count of institutions created in current month.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Inactive Institutions</h4>
+                                <p>Count of institutions with status = inactive.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Management Feature -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>4. Categories Management</h2>
+                        <span class="eau-doc-badge eau-badge-v1">v1.31.0+</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <h3>Overview</h3>
+                        <p>A complete system for configuring activity categories and assigning points per hour for CPD activities tracking.</p>
+
+                        <h3>Key Features</h3>
+
+                        <h4>🔍 Search</h4>
+                        <p>Real-time search across:</p>
+                        <ul>
+                            <li>Category name</li>
+                            <li>Category ID (serial)</li>
+                        </ul>
+
+                        <h4>📊 Sorting</h4>
+                        <p>Click any column header to sort (ascending/descending):</p>
+                        <ul>
+                            <li>Category ID</li>
+                            <li>Category Name</li>
+                            <li>Points per Hour</li>
+                            <li>Last Updated</li>
+                        </ul>
+
+                        <h4>✏️ CRUD Operations</h4>
+                        <ul>
+                            <li><strong>Create:</strong> Add new categories manually</li>
+                            <li><strong>Edit:</strong> Update category name and points per hour</li>
+                            <li><strong>View:</strong> Read-only view of category details</li>
+                            <li><strong>Delete:</strong> Remove categories with confirmation</li>
+                            <li><strong>Refresh:</strong> Sync categories from existing activities</li>
+                        </ul>
+
+                        <h3>Category Fields</h3>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Category ID</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                    <td>Unique identifier (must be unique)</td>
+                                </tr>
+                                <tr>
+                                    <td>Category Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                    <td>Full name of the category</td>
+                                </tr>
+                                <tr>
+                                    <td>Points per Hour</td>
+                                    <td>Decimal</td>
+                                    <td>Yes</td>
+                                    <td>How many points 1 hour of this activity is worth</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3>Sync from Activities</h3>
+                        <p>Click "Refresh from Activities" to automatically:</p>
+                        <ul>
+                            <li>Extract all distinct categories from published activities</li>
+                            <li>Read <code>act_category_serial</code> (Category ID)</li>
+                            <li>Read <code>categoria_de_ato</code> (Category Name)</li>
+                            <li>Add new categories found (with 0 points by default)</li>
+                            <li>Skip categories that already exist</li>
+                        </ul>
+
+                        <h3>User Experience</h3>
+                        <ul>
+                            <li><strong>Skeleton Loading:</strong> Shows placeholders while loading data</li>
+                            <li><strong>Toast Notifications:</strong> Success/error feedback</li>
+                            <li><strong>Confirm Modals:</strong> Safety confirmations for destructive actions</li>
+                            <li><strong>Form Validation:</strong> Client-side and server-side validation</li>
+                            <li><strong>Responsive Design:</strong> Works on mobile, tablet, and desktop</li>
+                        </ul>
+
+                        <h3>Permissions</h3>
+                        <p>Only users with <code>manage_options</code> capability (Admin and Super Admin) can access this feature.</p>
+
+                        <h3>Statistics Cards</h3>
+                        <div class="eau-doc-grid">
+                            <div class="eau-doc-stat">
+                                <h4>Total Categories</h4>
+                                <p>Count of all registered categories.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Configured</h4>
+                                <p>Categories with points > 0 configured.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Not Configured</h4>
+                                <p>Categories with 0 points (need configuration).</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Avg Points/Hour</h4>
+                                <p>Average points per hour across all configured categories.</p>
+                            </div>
+                        </div>
+
+                        <h3>Integration</h3>
+                        <p>Custom database table:</p>
+                        <ul>
+                            <li>Table: <code>wp_eau_activity_categories</code></li>
+                            <li>Automatic timestamps (created/updated)</li>
+                            <li>Unique constraint on category_serial</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- Duplicate Manager Feature -->
                 <div class="eau-doc-card">
                     <div class="eau-doc-card-header">
-                        <h2>3. Duplicate Manager</h2>
+                        <h2>5. Duplicate Manager</h2>
                         <span class="eau-doc-badge eau-badge-v1">v1.18.0+</span>
                     </div>
                     <div class="eau-doc-card-body">
@@ -503,10 +1034,340 @@ class Eau_Documentation {
                     </div>
                 </div>
 
+                <!-- My CPDs Feature -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>6. My CPDs (Member Area)</h2>
+                        <span class="eau-doc-badge eau-badge-v1">v1.37.0+</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <h3>Overview</h3>
+                        <p>Personal CPD tracking page where members can view their professional development activities, track progress towards annual goals (20 points), and submit new activities for approval.</p>
+
+                        <h3>Key Features</h3>
+
+                        <h4>📊 Progress Tracking</h4>
+                        <ul>
+                            <li><strong>Annual Progress Ring:</strong> Visual circular progress indicator showing points earned vs. 20-point annual goal</li>
+                            <li><strong>Points Display:</strong> Current points and remaining points needed</li>
+                            <li><strong>Year Context:</strong> Shows current calendar year for tracking</li>
+                        </ul>
+
+                        <h4>📈 Statistics Cards</h4>
+                        <div class="eau-doc-grid">
+                            <div class="eau-doc-stat">
+                                <h4>Total Points</h4>
+                                <p>Sum of all verified activity points for current year.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Total Activities</h4>
+                                <p>Count of all submitted activities.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Verified</h4>
+                                <p>Activities approved by administrators.</p>
+                            </div>
+                            <div class="eau-doc-stat">
+                                <h4>Pending</h4>
+                                <p>Activities awaiting approval.</p>
+                            </div>
+                        </div>
+
+                        <h4>🔍 Search & Filter</h4>
+                        <ul>
+                            <li><strong>Search:</strong> By activity name or description</li>
+                            <li><strong>Status Filter:</strong> All, Verified, Pending</li>
+                            <li><strong>Category Filter:</strong> Dynamic list from user's activities</li>
+                        </ul>
+
+                        <h4>📋 Activities Table</h4>
+                        <ul>
+                            <li>Activity name with category badge</li>
+                            <li>Date completed</li>
+                            <li>Hours/Points earned</li>
+                            <li>Verification status (badge)</li>
+                            <li>Actions: View, Edit (pending only), Delete (pending only)</li>
+                        </ul>
+
+                        <h4>➕ Add New Activity</h4>
+                        <p>Modal form with fields:</p>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Activity Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Category</td>
+                                    <td>Select (with search)</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Date Completed</td>
+                                    <td>Date Picker</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Hours</td>
+                                    <td>Number (0.5 step)</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Description</td>
+                                    <td>WYSIWYG Editor</td>
+                                    <td>No</td>
+                                </tr>
+                                <tr>
+                                    <td>Proof/Evidence</td>
+                                    <td>File Upload or URL</td>
+                                    <td>No</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>📎 Proof Upload Component</h4>
+                        <p>Uses the <code>Eau_Media_Upload</code> component with three options:</p>
+                        <ul>
+                            <li><strong>URL Tab:</strong> Enter external link to evidence</li>
+                            <li><strong>Upload Tab:</strong> Drag & drop or browse for files (JPG, PNG, PDF)</li>
+                            <li><strong>My Files Tab:</strong> Select from previously uploaded files</li>
+                        </ul>
+
+                        <h3>Workflow</h3>
+                        <ol>
+                            <li>Member submits activity → Status: <strong>Pending</strong></li>
+                            <li>Admin reviews in Activities Management</li>
+                            <li>Admin verifies → Status: <strong>Verified</strong>, points counted</li>
+                            <li>Member sees updated progress</li>
+                        </ol>
+
+                        <h3>Permissions</h3>
+                        <ul>
+                            <li>All logged-in members can access their own CPDs</li>
+                            <li>Members can only see their own activities</li>
+                            <li>Edit/Delete only available for Pending activities</li>
+                        </ul>
+
+                        <h3>Technical Details</h3>
+                        <ul>
+                            <li><strong>Shortcode:</strong> <code>[eau_my_cpds]</code></li>
+                            <li><strong>PHP Class:</strong> <code>class-eau-my-cpds.php</code></li>
+                            <li><strong>JavaScript:</strong> <code>eau-my-cpds.js</code></li>
+                            <li><strong>CSS:</strong> <code>eau-my-cpds.css</code></li>
+                            <li><strong>AJAX Handler:</strong> <code>class-eau-my-cpds-ajax.php</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- My Profile Feature -->
+                <div class="eau-doc-card">
+                    <div class="eau-doc-card-header">
+                        <h2>7. My Profile (Member Area)</h2>
+                        <span class="eau-doc-badge eau-badge-v1">v1.40.0+</span>
+                    </div>
+                    <div class="eau-doc-card-body">
+                        <h3>Overview</h3>
+                        <p>Personal profile page where members can view and update their personal information, address, profile photo, and security settings.</p>
+
+                        <h3>Page Layout</h3>
+
+                        <h4>👤 Profile Header</h4>
+                        <ul>
+                            <li>Profile photo (clickable to change)</li>
+                            <li>Full name (h1)</li>
+                            <li>Email address</li>
+                            <li>Member since date</li>
+                            <li>User type badge (Super Admin, Admin, Institution Admin, Member)</li>
+                            <li>Status badge (Active, Inactive, Pending)</li>
+                        </ul>
+
+                        <h4>📋 Information Sections</h4>
+
+                        <h5>Personal Information</h5>
+                        <ul>
+                            <li>First Name</li>
+                            <li>Last Name</li>
+                            <li>Email</li>
+                            <li>Phone (with international format)</li>
+                            <li>Bio</li>
+                        </ul>
+
+                        <h5>Address</h5>
+                        <ul>
+                            <li>Street Address</li>
+                            <li>City</li>
+                            <li>Postcode</li>
+                        </ul>
+
+                        <h5>Account Information (Read-only)</h5>
+                        <ul>
+                            <li>Username</li>
+                            <li>Member ID</li>
+                            <li>User Type</li>
+                            <li>Status</li>
+                            <li>Institution (if applicable)</li>
+                        </ul>
+
+                        <h5>Security</h5>
+                        <ul>
+                            <li>Change Password button</li>
+                        </ul>
+
+                        <h3>Edit Modals</h3>
+
+                        <h4>Edit Personal Information</h4>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Editable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>First Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Last Name</td>
+                                    <td>Text</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Email</td>
+                                    <td>Email</td>
+                                    <td>Yes (validated)</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone</td>
+                                    <td>International Phone Input</td>
+                                    <td>Yes</td>
+                                </tr>
+                                <tr>
+                                    <td>Bio</td>
+                                    <td>Textarea</td>
+                                    <td>Yes</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Edit Address</h4>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Street Address</td>
+                                    <td>Text</td>
+                                </tr>
+                                <tr>
+                                    <td>City</td>
+                                    <td>Text</td>
+                                </tr>
+                                <tr>
+                                    <td>Postcode</td>
+                                    <td>Text</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Change Password</h4>
+                        <ul>
+                            <li>Current Password (required)</li>
+                            <li>New Password (min 8 characters)</li>
+                            <li>Confirm New Password</li>
+                            <li>Password visibility toggle (eye icon)</li>
+                        </ul>
+
+                        <h4>Update Profile Photo</h4>
+                        <ul>
+                            <li>Drag & drop or browse</li>
+                            <li>Accepts: JPG, JPEG, PNG, GIF, WEBP</li>
+                            <li>Max size: 5MB</li>
+                            <li>Preview before saving</li>
+                        </ul>
+
+                        <h3>Special Components</h3>
+
+                        <h4>📱 International Phone Input</h4>
+                        <p>Uses <code>intl-tel-input</code> library:</p>
+                        <ul>
+                            <li>Country selector with flags</li>
+                            <li>Auto-formats number based on country</li>
+                            <li>Stores full international format (+XX XXXXXXXXX)</li>
+                            <li>Default country: Australia</li>
+                        </ul>
+
+                        <h3>User Type Display</h3>
+                        <table class="eau-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>mem_type Value</th>
+                                    <th>Display Name</th>
+                                    <th>Badge Color</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>superAdmin</td>
+                                    <td>Super Admin</td>
+                                    <td>Purple</td>
+                                </tr>
+                                <tr>
+                                    <td>Admin</td>
+                                    <td>Admin</td>
+                                    <td>Blue</td>
+                                </tr>
+                                <tr>
+                                    <td>institutionAdmin</td>
+                                    <td>Institution Admin</td>
+                                    <td>Indigo</td>
+                                </tr>
+                                <tr>
+                                    <td>member</td>
+                                    <td>Member</td>
+                                    <td>Gray</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3>Permissions</h3>
+                        <ul>
+                            <li>All logged-in users can access their profile</li>
+                            <li>Users can only edit their own information</li>
+                            <li>Username, Member ID, User Type, Status are read-only</li>
+                        </ul>
+
+                        <h3>Technical Details</h3>
+                        <ul>
+                            <li><strong>Shortcode:</strong> <code>[eau_my_profile]</code></li>
+                            <li><strong>PHP Class:</strong> <code>class-eau-my-profile.php</code></li>
+                            <li><strong>JavaScript:</strong> <code>eau-my-profile.js</code></li>
+                            <li><strong>CSS:</strong> <code>eau-my-profile.css</code></li>
+                            <li><strong>AJAX Handler:</strong> <code>class-eau-my-profile-ajax.php</code></li>
+                            <li><strong>External Library:</strong> intl-tel-input v18.2.1</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- Design System -->
                 <div class="eau-doc-card">
                     <div class="eau-doc-card-header">
-                        <h2>4. Design System</h2>
+                        <h2>8. Design System</h2>
                         <span class="eau-doc-badge eau-badge-info">Reference</span>
                     </div>
                     <div class="eau-doc-card-body">
@@ -522,6 +1383,8 @@ class Eau_Documentation {
                             <li><strong>Cards:</strong> Container for grouped content</li>
                             <li><strong>Toasts:</strong> Success/error notifications</li>
                             <li><strong>Skeletons:</strong> Loading placeholders</li>
+                            <li><strong>Media Upload:</strong> File upload with drag & drop</li>
+                            <li><strong>WYSIWYG:</strong> Rich text editor (Quill.js)</li>
                         </ul>
 
                         <h3>Documentation</h3>

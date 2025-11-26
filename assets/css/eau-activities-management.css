@@ -1,0 +1,131 @@
+/**
+ * Activities Management Styles
+ */
+
+.eau-activities-management-container {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 2rem 1rem !important;
+}
+
+/* Page Header */
+.eau-page-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-page-header-title h1 {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.eau-page-header-subtitle {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+.eau-page-header-actions {
+    display: flex !important;
+    gap: 0.75rem !important;
+}
+
+/* Search and Filters Bar */
+.eau-search-filters-bar {
+    display: flex !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Stats Cards específicos para activities */
+.eau-hours-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.375rem 0.75rem !important;
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
+    border-radius: 6px !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+}
+
+.eau-status-badge-verified {
+    background-color: #d1fae5 !important;
+    color: #059669 !important;
+}
+
+.eau-status-badge-pending {
+    background-color: #fef3c7 !important;
+    color: #d97706 !important;
+}
+
+/* Activity cell */
+.eau-activity-cell {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.eau-activity-cell strong {
+    color: #111827 !important;
+    font-weight: 600 !important;
+}
+
+/* Member and Institution */
+.eau-member-name,
+.eau-institution-name {
+    color: #374151 !important;
+    font-size: 0.9375rem !important;
+}
+
+.eau-activity-date {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Form fields específicos para activities */
+.eau-form-textarea {
+    width: 100% !important;
+    padding: 0.75rem 1rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    font-size: 0.9375rem !important;
+    font-family: inherit !important;
+    resize: vertical !important;
+    min-height: 100px !important;
+}
+
+.eau-form-textarea:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-form-textarea[readonly] {
+    background-color: #f9fafb !important;
+    cursor: not-allowed !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .eau-activities-management-container {
+        padding: 1rem 0.5rem !important;
+    }
+
+    .eau-page-header {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    .eau-page-header-actions {
+        width: 100% !important;
+        justify-content: stretch !important;
+    }
+
+    .eau-page-header-actions button {
+        flex: 1 !important;
+    }
+}

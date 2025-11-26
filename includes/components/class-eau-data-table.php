@@ -126,10 +126,9 @@ class Eau_Data_Table {
                 </table>
             </div>
 
-            <!-- Loading Overlay -->
+            <!-- Loading Overlay - Skeleton -->
             <div class="eau-table-loading-overlay" id="<?php echo $table_id; ?>-loading" style="display: none;">
-                <div class="eau-spinner"></div>
-                <p><?php echo esc_html($this->config['loading_message']); ?></p>
+                <?php echo $this->render_skeleton_overlay(); ?>
             </div>
 
         </div>
@@ -296,6 +295,46 @@ class Eau_Data_Table {
                 <p style="color: #6b7280; margin: 0;"><?php echo esc_html($this->config['empty_message']); ?></p>
             </td>
         </tr>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza skeleton overlay para loading
+     *
+     * @return string HTML do skeleton overlay
+     */
+    private function render_skeleton_overlay() {
+        $colspan = count($this->config['columns']);
+        if ($this->config['selectable']) $colspan++;
+        if (!empty($this->config['actions'])) $colspan++;
+
+        ob_start();
+        ?>
+        <table class="eau-table">
+            <thead>
+                <tr>
+                    <?php if ($this->config['selectable']): ?>
+                        <th class="eau-table-th-checkbox"></th>
+                    <?php endif; ?>
+
+                    <?php foreach ($this->config['columns'] as $column): ?>
+                        <th class="eau-table-th"><?php echo esc_html($column['label']); ?></th>
+                    <?php endforeach; ?>
+
+                    <?php if (!empty($this->config['actions'])): ?>
+                        <th class="eau-table-th eau-table-th-actions">ACTIONS</th>
+                    <?php endif; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="<?php echo $colspan; ?>" style="padding: 0;">
+                        <?php echo Eau_Skeleton::table(10); ?>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
         <?php
         return ob_get_clean();
     }

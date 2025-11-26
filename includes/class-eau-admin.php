@@ -274,6 +274,12 @@ class Eau_Admin {
             wp_send_json_error(array('message' => $result->get_error_message()));
         }
 
+        // Auto-sync categories se estamos importando atividades
+        if ($post_type_slug === 'activitie' && $result['imported'] > 0) {
+            $sync_stats = Eau_Categories_Database::sync_categories_from_activities();
+            $result['categories_sync'] = $sync_stats;
+        }
+
         wp_send_json_success($result);
     }
 

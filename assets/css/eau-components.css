@@ -1,6 +1,6 @@
 /**
  * EAU System - Componentes Reutilizáveis
- * Versão: 1.9.0
+ * Versão: 2.0.4
  * Componentes compartilhados entre Dashboard e Members Management
  */
 
@@ -257,6 +257,13 @@
 
 .eau-search-input::placeholder {
     color: #9ca3af !important;
+}
+
+.eau-search-filters-bar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
 }
 
 /* ==========================================================================
@@ -603,18 +610,20 @@
     text-decoration: underline !important;
 }
 
-/* Loading Overlay */
+/* Loading Overlay - Skeleton */
 .eau-table-loading-overlay {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
+    min-height: 100% !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     z-index: 10 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 /* Loading Overlay Hidden (default state) */
@@ -623,22 +632,18 @@
 }
 
 /* Loading Overlay Visible (when loading) */
-.eau-table-loading-overlay[style*="display: flex"],
 .eau-table-loading-overlay[style*="display: block"] {
-    display: flex !important;
+    display: block !important;
 }
 
-.eau-spinner {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-    border: 3px solid #e5e7eb !important;
-    border-top-color: #2563eb !important;
-    border-radius: 50% !important;
-    animation: eau-spin 0.8s linear infinite !important;
+/* Skeleton dentro do overlay */
+.eau-table-loading-overlay .eau-table {
+    width: 100% !important;
 }
 
-@keyframes eau-spin {
-    to { transform: rotate(360deg); }
+.eau-table-loading-overlay .eau-table thead th {
+    background: transparent !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 /* Responsivo - Data Table */
@@ -1256,20 +1261,38 @@
    SKELETON LOADING
    ========================================================================== */
 
-/* Skeleton Base */
-.eau-skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
-    background-size: 200% 100% !important;
-    animation: eauSkeletonLoading 1.5s ease-in-out infinite !important;
+/* Skeleton Base - MÁXIMA ESPECIFICIDADE para sobrescrever WordPress */
+.eau-data-table-wrapper .eau-skeleton,
+.eau-skeleton-table .eau-skeleton,
+div.eau-skeleton {
+    background-color: #e5e7eb !important;
     border-radius: 4px !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-@keyframes eauSkeletonLoading {
+.eau-data-table-wrapper .eau-skeleton-shimmer,
+.eau-skeleton-table .eau-skeleton-shimmer,
+div.eau-skeleton > .eau-skeleton-shimmer {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -150% !important;
+    width: 150% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%) !important;
+    animation: eauSkeletonShimmer 1.5s ease-in-out infinite !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+@keyframes eauSkeletonShimmer {
     0% {
-        background-position: 200% 0;
+        transform: translateX(0);
     }
     100% {
-        background-position: -200% 0;
+        transform: translateX(300%);
     }
 }
 
@@ -1301,44 +1324,51 @@
     margin-bottom: 0.5rem !important;
 }
 
-/* Skeleton Table */
+/* Skeleton Table - Nova Estrutura */
 .eau-skeleton-table {
     width: 100% !important;
-}
-
-.eau-skeleton-table-header {
-    display: grid !important;
-    grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr 100px !important;
-    gap: 1rem !important;
-    padding: 1rem 1.5rem !important;
-    background: #f9fafb !important;
-    border-bottom: 1px solid #e5e7eb !important;
-}
-
-.eau-skeleton-table-header .eau-skeleton {
-    height: 1rem !important;
-}
-
-.eau-skeleton-table-body {
     padding: 0 !important;
+    min-height: 100% !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .eau-skeleton-table-row {
-    display: grid !important;
-    grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr 100px !important;
-    gap: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
     padding: 1rem 1.5rem !important;
     border-bottom: 1px solid #e5e7eb !important;
-    align-items: center !important;
+    gap: 1.5rem !important;
+    min-height: 60px !important;
 }
 
-.eau-skeleton-table-row .eau-skeleton {
-    height: 1rem !important;
+.eau-skeleton-table-cell {
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
-.eau-skeleton-table-row .eau-skeleton-circle {
-    width: 20px !important;
-    height: 20px !important;
+.eau-skeleton-table-cell-checkbox {
+    flex: 0 0 50px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.eau-skeleton-table-cell-actions {
+    flex: 0 0 120px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.eau-skeleton-checkbox {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 3px !important;
+}
+
+.eau-skeleton-table-row .eau-skeleton-text {
+    width: 100% !important;
+    max-width: 150px !important;
 }
 
 /* Skeleton Stats Cards */
@@ -1593,4 +1623,596 @@
 .eau-confirm-actions .eau-btn {
     min-width: 100px !important;
     justify-content: center !important;
+}
+
+/* ==========================================================================
+   WYSIWYG EDITOR COMPONENT (Quill.js)
+   ========================================================================== */
+
+.eau-wysiwyg-wrapper {
+    width: 100% !important;
+}
+
+.eau-wysiwyg-editor {
+    background: #fff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0 0 8px 8px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-wysiwyg-editor .ql-editor {
+    min-height: 150px !important;
+    line-height: 1.6 !important;
+}
+
+.eau-wysiwyg-editor .ql-editor.ql-blank::before {
+    color: #9ca3af !important;
+    font-style: normal !important;
+}
+
+/* Quill toolbar customization */
+.eau-wysiwyg-wrapper .ql-toolbar.ql-snow {
+    border: 1px solid #d1d5db !important;
+    border-bottom: none !important;
+    border-radius: 8px 8px 0 0 !important;
+    background: #f9fafb !important;
+}
+
+.eau-wysiwyg-wrapper .ql-container.ql-snow {
+    border: 1px solid #d1d5db !important;
+    border-radius: 0 0 8px 8px !important;
+}
+
+.eau-wysiwyg-wrapper .ql-snow .ql-picker-label,
+.eau-wysiwyg-wrapper .ql-snow .ql-picker-options {
+    background: #fff !important;
+}
+
+.eau-wysiwyg-wrapper .ql-snow .ql-stroke {
+    stroke: #4b5563 !important;
+}
+
+.eau-wysiwyg-wrapper .ql-snow .ql-fill {
+    fill: #4b5563 !important;
+}
+
+.eau-wysiwyg-wrapper .ql-snow button:hover .ql-stroke,
+.eau-wysiwyg-wrapper .ql-snow button:focus .ql-stroke,
+.eau-wysiwyg-wrapper .ql-snow button.ql-active .ql-stroke {
+    stroke: #2563eb !important;
+}
+
+.eau-wysiwyg-wrapper .ql-snow button:hover .ql-fill,
+.eau-wysiwyg-wrapper .ql-snow button:focus .ql-fill,
+.eau-wysiwyg-wrapper .ql-snow button.ql-active .ql-fill {
+    fill: #2563eb !important;
+}
+
+/* ==========================================================================
+   MEDIA UPLOAD COMPONENT
+   ========================================================================== */
+
+.eau-media-upload-wrapper {
+    width: 100% !important;
+}
+
+/* Tabs */
+.eau-media-upload-tabs {
+    display: flex !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.eau-media-upload-tab {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    padding: 0.5rem 1rem !important;
+    background: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-media-upload-tab i,
+.eau-media-upload-tab svg {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+.eau-media-upload-tab:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.eau-media-upload-tab.eau-media-upload-tab-active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
+}
+
+/* Panels */
+.eau-media-upload-panel {
+    display: none;
+}
+
+.eau-media-upload-panel.active {
+    display: block;
+}
+
+/* URL Input */
+.eau-media-upload-input-group {
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+.eau-media-upload-url-input {
+    flex: 1 !important;
+}
+
+/* Dropzone */
+.eau-media-upload-dropzone {
+    border: 2px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    padding: 2rem !important;
+    text-align: center !important;
+    background: #f9fafb !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-media-upload-dropzone:hover {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+}
+
+.eau-media-upload-dropzone-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+.eau-media-upload-dropzone-content > i,
+.eau-media-upload-dropzone-content > svg {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    color: #9ca3af !important;
+}
+
+.eau-media-upload-dropzone-text {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+}
+
+.eau-media-upload-browse-btn {
+    background: none !important;
+    border: none !important;
+    color: #2563eb !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    text-decoration: underline !important;
+    padding: 0 !important;
+}
+
+.eau-media-upload-browse-btn:hover {
+    color: #1d4ed8 !important;
+}
+
+.eau-media-upload-dropzone-hint {
+    font-size: 0.75rem !important;
+    color: #9ca3af !important;
+}
+
+/* Preview */
+.eau-media-upload-preview {
+    margin-top: 0.75rem !important;
+}
+
+.eau-media-upload-preview-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    border-radius: 8px !important;
+}
+
+/* Thumbnail container */
+.eau-media-upload-preview-thumbnail {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 48px !important;
+    height: 48px !important;
+    flex-shrink: 0 !important;
+    background: #dcfce7 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+}
+
+.eau-media-upload-preview-thumbnail .eau-media-upload-preview-icon {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    color: #16a34a !important;
+}
+
+.eau-media-upload-preview-thumbnail .eau-media-upload-preview-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.eau-media-upload-preview-thumbnail.has-image .eau-media-upload-preview-icon {
+    display: none !important;
+}
+
+.eau-media-upload-preview-thumbnail.has-image .eau-media-upload-preview-image {
+    display: block !important;
+}
+
+/* Preview info */
+.eau-media-upload-preview-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.eau-media-upload-preview-icon {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    color: #16a34a !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-media-upload-preview-name {
+    display: block !important;
+    font-size: 0.875rem !important;
+    color: #374151 !important;
+    font-weight: 500 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Preview actions */
+.eau-media-upload-preview-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-media-upload-preview-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.375rem !important;
+    color: #6b7280 !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-media-upload-preview-link:hover {
+    color: #2563eb !important;
+    background: rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-media-upload-preview-link i,
+.eau-media-upload-preview-link svg {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+.eau-media-upload-remove {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.375rem !important;
+    background: none !important;
+    border: none !important;
+    color: #9ca3af !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-media-upload-remove:hover {
+    color: #dc2626 !important;
+    background: rgba(220, 38, 38, 0.1) !important;
+}
+
+.eau-media-upload-remove i,
+.eau-media-upload-remove svg {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+/* Upload Progress */
+.eau-media-upload-progress {
+    margin-top: 1rem !important;
+    padding: 1rem !important;
+    background: #f3f4f6 !important;
+    border-radius: 8px !important;
+}
+
+.eau-media-upload-progress-bar {
+    height: 8px !important;
+    background: #e5e7eb !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.eau-media-upload-progress-fill {
+    height: 100% !important;
+    width: 0% !important;
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important;
+    border-radius: 4px !important;
+    transition: width 0.3s ease !important;
+}
+
+.eau-media-upload-progress-text {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    text-align: center !important;
+    display: block !important;
+}
+
+/* Dropzone Drag Active State */
+.eau-media-upload-dropzone.drag-active {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+    transform: scale(1.01) !important;
+}
+
+.eau-media-upload-dropzone.drag-active .eau-media-upload-dropzone-content > i,
+.eau-media-upload-dropzone.drag-active .eau-media-upload-dropzone-content > svg {
+    color: #2563eb !important;
+}
+
+/* My Files Panel - Hidden by default, shown only when tab is active */
+.eau-media-upload-myfiles-panel {
+    max-height: 300px !important;
+    overflow: hidden !important;
+    display: none !important;
+    flex-direction: column !important;
+}
+
+.eau-media-upload-myfiles-panel.active {
+    display: flex !important;
+}
+
+.eau-media-upload-myfiles-header {
+    padding-bottom: 0.75rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.eau-media-upload-myfiles-search {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+    background: #f9fafb !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+}
+
+.eau-media-upload-myfiles-search i,
+.eau-media-upload-myfiles-search svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    color: #9ca3af !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-media-upload-myfiles-search-input {
+    flex: 1 !important;
+    border: none !important;
+    background: transparent !important;
+    font-size: 0.875rem !important;
+    color: #374151 !important;
+    outline: none !important;
+    padding: 0 !important;
+}
+
+.eau-media-upload-myfiles-search-input::placeholder {
+    color: #9ca3af !important;
+}
+
+.eau-media-upload-myfiles-list {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.eau-media-upload-myfiles-loading {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 2rem !important;
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-media-upload-myfiles-loading i,
+.eau-media-upload-myfiles-loading svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+.eau-media-upload-myfiles-empty {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 2rem !important;
+    color: #9ca3af !important;
+    font-size: 0.875rem !important;
+    text-align: center !important;
+}
+
+.eau-media-upload-myfiles-empty i,
+.eau-media-upload-myfiles-empty svg {
+    width: 2rem !important;
+    height: 2rem !important;
+}
+
+/* File Item */
+.eau-media-upload-file-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.625rem 0.75rem !important;
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-media-upload-file-item:hover {
+    background: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+}
+
+.eau-media-upload-file-item.selected {
+    background: #eff6ff !important;
+    border-color: #2563eb !important;
+}
+
+.eau-media-upload-file-item-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-media-upload-file-item-icon i,
+.eau-media-upload-file-item-icon svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    color: #6b7280 !important;
+}
+
+.eau-media-upload-file-item-icon.is-image {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.eau-media-upload-file-item-icon.is-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.eau-media-upload-file-item-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.eau-media-upload-file-item-name {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block !important;
+}
+
+.eau-media-upload-file-item-meta {
+    font-size: 0.75rem !important;
+    color: #9ca3af !important;
+}
+
+.eau-media-upload-file-item-select {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-media-upload-file-item.selected .eau-media-upload-file-item-select {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+.eau-media-upload-file-item.selected .eau-media-upload-file-item-select::after {
+    content: '' !important;
+    width: 6px !important;
+    height: 6px !important;
+    background: #fff !important;
+    border-radius: 50% !important;
+}
+
+/* ==========================================================================
+   DATEPICKER COMPONENT (Flatpickr)
+   ========================================================================== */
+
+.eau-datepicker-wrapper {
+    position: relative !important;
+    width: 100% !important;
+}
+
+.eau-datepicker-input {
+    width: 100% !important;
+    padding-right: 2.5rem !important;
+}
+
+.eau-datepicker-icon {
+    position: absolute !important;
+    right: 0.75rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    color: #9ca3af !important;
+}
+
+.eau-datepicker-icon i,
+.eau-datepicker-icon svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+/* Flatpickr customization */
+.flatpickr-calendar {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+.flatpickr-day:hover {
+    background: #eff6ff !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: #2563eb !important;
 }

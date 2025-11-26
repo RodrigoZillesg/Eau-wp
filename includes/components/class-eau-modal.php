@@ -80,11 +80,8 @@ class Eau_Modal {
                     <?php if (!empty($this->config['content'])) : ?>
                         <?php echo $this->config['content']; ?>
                     <?php else : ?>
-                        <!-- Conteúdo será carregado dinamicamente via JavaScript -->
-                        <div class="eau-modal-loading">
-                            <div class="eau-spinner"></div>
-                            <p>Loading...</p>
-                        </div>
+                        <!-- Skeleton loading (conteúdo será carregado dinamicamente via JavaScript) -->
+                        <?php echo \EauSystem\Components\Eau_Skeleton::form(3); ?>
                     <?php endif; ?>
                 </div>
 

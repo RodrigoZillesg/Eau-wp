@@ -260,6 +260,17 @@
     color: #111827 !important;
 }
 
+/* Indigo - Institutions */
+.eau-card-indigo .eau-card-icon i,
+.eau-card-indigo .eau-card-icon svg {
+    color: #6366f1 !important; /* indigo-500 */
+    stroke: #6366f1 !important;
+}
+
+.eau-card-indigo .eau-card-number {
+    color: #111827 !important;
+}
+
 /* Responsivo Cards - Mobile First */
 
 /* Mobile (padrão) - 1 coluna */
@@ -402,10 +413,11 @@
     }
 }
 
-/* Institution Badge */
+/* Institution Badge - Suporta múltiplas badges */
 .eau-institution-badge {
     display: inline-block !important;
     margin-left: 0.5rem !important;
+    margin-top: 0.25rem !important; /* Espaço vertical para múltiplas badges */
     padding: 0.25rem 0.75rem !important;
     background: #eff6ff !important; /* Blue 50 */
     color: #2563eb !important; /* Blue 600 */
@@ -416,11 +428,21 @@
     border: 1px solid #bfdbfe !important; /* Blue 200 */
 }
 
+/* Primeira badge: sem margin-left */
+.eau-institution-badge:first-of-type {
+    margin-left: 0 !important;
+}
+
 @media (max-width: 767px) {
     .eau-institution-badge {
-        display: block !important;
-        margin-left: 0 !important;
+        display: inline-block !important;
+        margin-left: 0.25rem !important;
         margin-top: 0.5rem !important;
-        width: fit-content !important;
+        width: auto !important;
+    }
+
+    /* Primeira badge em mobile */
+    .eau-institution-badge:first-of-type {
+        margin-left: 0 !important;
     }
 }
