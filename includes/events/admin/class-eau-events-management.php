@@ -203,6 +203,11 @@ class Eau_Events_Management {
                                     <label class="eau-form-label">Short Description</label>
                                     <textarea name="short_description" id="eau-edit-short_description" class="eau-form-textarea" rows="2" maxlength="500" placeholder="Brief description for event cards (max 500 characters)"></textarea>
                                 </div>
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Full Description</label>
+                                    <div id="eau-quill-editor"></div>
+                                    <input type="hidden" name="full_description" id="eau-edit-full_description">
+                                </div>
                                 <div class="eau-form-field">
                                     <label class="eau-form-label">Start Date & Time <span class="required">*</span></label>
                                     <input type="datetime-local" name="start_datetime" id="eau-edit-start_datetime" class="eau-form-input" required>
@@ -532,11 +537,26 @@ class Eau_Events_Management {
             true
         );
 
+        // Quill.js Editor
+        wp_enqueue_style(
+            'quill',
+            'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css',
+            array(),
+            '2.0.3'
+        );
+        wp_enqueue_script(
+            'quill',
+            'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js',
+            array(),
+            '2.0.3',
+            true
+        );
+
         // JavaScript
         wp_enqueue_script(
             'eau-events-management',
             EAU_SYSTEM_PLUGIN_URL . 'includes/events/assets/js/eau-events-management.js',
-            array('jquery', 'lucide'),
+            array('jquery', 'lucide', 'quill'),
             EAU_SYSTEM_VERSION,
             true
         );

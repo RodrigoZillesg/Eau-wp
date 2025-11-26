@@ -1284,6 +1284,61 @@ button.eau-btn-secondary {
 }
 
 /* ==========================================================================
+   Quill Editor
+   ========================================================================== */
+
+#eau-event-edit-modal #eau-quill-editor {
+    min-height: 150px !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    background: #fff !important;
+    border: 1px solid #d1d5db !important;
+    border-top: none !important;
+    border-radius: 0 0 8px 8px !important;
+    font-size: 14px !important;
+}
+
+#eau-event-edit-modal .ql-toolbar.ql-snow {
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px 8px 0 0 !important;
+    background: #f9fafb !important;
+    padding: 8px !important;
+}
+
+#eau-event-edit-modal .ql-container.ql-snow {
+    border: none !important;
+    font-family: inherit !important;
+}
+
+#eau-event-edit-modal .ql-editor {
+    padding: 12px !important;
+    min-height: 120px !important;
+}
+
+#eau-event-edit-modal .ql-editor.ql-blank::before {
+    color: #9ca3af !important;
+    font-style: normal !important;
+}
+
+#eau-event-edit-modal .ql-snow .ql-stroke {
+    stroke: #6b7280 !important;
+}
+
+#eau-event-edit-modal .ql-snow .ql-fill {
+    fill: #6b7280 !important;
+}
+
+#eau-event-edit-modal .ql-snow button:hover .ql-stroke,
+#eau-event-edit-modal .ql-snow button.ql-active .ql-stroke {
+    stroke: #005eb8 !important;
+}
+
+#eau-event-edit-modal .ql-snow button:hover .ql-fill,
+#eau-event-edit-modal .ql-snow button.ql-active .ql-fill {
+    fill: #005eb8 !important;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 

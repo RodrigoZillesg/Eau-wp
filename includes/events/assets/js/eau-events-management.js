@@ -16,13 +16,46 @@
         statusFilter: '',
         orderBy: 'start_datetime',
         order: 'ASC',
+        quillEditor: null,
 
         /**
          * Initialize
          */
         init: function() {
+            this.initQuillEditor();
             this.bindEvents();
             this.loadEvents();
+        },
+
+        /**
+         * Initialize Quill Editor
+         */
+        initQuillEditor: function() {
+            if (typeof Quill === 'undefined') {
+                console.warn('Quill not loaded');
+                return;
+            }
+
+            this.quillEditor = new Quill('#eau-quill-editor', {
+                theme: 'snow',
+                placeholder: 'Enter full event description...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        ['link'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Sync Quill content to hidden input on text change
+            this.quillEditor.on('text-change', () => {
+                const html = this.quillEditor.root.innerHTML;
+                $('#eau-edit-full_description').val(html === '<p><br></p>' ? '' : html);
+            });
         },
 
         /**
@@ -339,6 +372,12 @@
             // Clear image
             this.removeImage();
 
+            // Clear Quill editor
+            if (this.quillEditor) {
+                this.quillEditor.setContents([]);
+                $('#eau-edit-full_description').val('');
+            }
+
             // Show correct location fields for default type
             this.toggleLocationFields('in-person');
 
@@ -418,6 +457,17 @@
             $('#eau-edit-event-id').val(eventId);
             $('#eau-edit-title').val(event.title || '');
             $('#eau-edit-short_description').val(event.short_description || '');
+
+            // Load Full Description into Quill
+            if (this.quillEditor) {
+                const fullDescription = event.full_description || '';
+                if (fullDescription) {
+                    this.quillEditor.root.innerHTML = fullDescription;
+                } else {
+                    this.quillEditor.setContents([]);
+                }
+                $('#eau-edit-full_description').val(fullDescription);
+            }
             $('#eau-edit-start_datetime').val(event.start_datetime || '');
             $('#eau-edit-end_datetime').val(event.end_datetime || '');
             $('#eau-edit-timezone').val(event.timezone || 'Australia/Sydney');
