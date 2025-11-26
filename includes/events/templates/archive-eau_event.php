@@ -17,8 +17,8 @@ $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
 $category = isset($_GET['category']) ? absint($_GET['category']) : 0;
 $event_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
 
-// CPD categories
-$cpd_categories = get_terms(array('taxonomy' => 'cpd_category', 'hide_empty' => false));
+// CPD categories from database
+$cpd_categories = \EauSystem\Shared\get_cpd_categories();
 
 // Base query args
 $base_args = array(
@@ -31,7 +31,7 @@ $base_args = array(
 
 if (!empty($search)) $base_args['s'] = $search;
 if ($category > 0) {
-    $base_args['tax_query'] = array(array('taxonomy' => 'cpd_category', 'field' => 'term_id', 'terms' => $category));
+    $base_args['meta_query'][] = array('key' => 'evt_cpd_category', 'value' => $category, 'compare' => '=');
 }
 
 // Upcoming events
@@ -78,7 +78,7 @@ $past = new WP_Query($past_args);
                     <select name="category" class="eau-filter-select">
                         <option value=""><?php _e('All Categories', 'eau-system'); ?></option>
                         <?php foreach ($cpd_categories as $cat) : ?>
-                            <option value="<?php echo esc_attr($cat->term_id); ?>" <?php selected($category, $cat->term_id); ?>><?php echo esc_html($cat->name); ?></option>
+                            <option value="<?php echo esc_attr($cat['id']); ?>" <?php selected($category, $cat['id']); ?>><?php echo esc_html($cat['category_name']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
