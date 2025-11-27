@@ -201,7 +201,7 @@
         },
 
         // === LOAD STATES FOR COUNTRY ===
-        loadStatesForCountry: function(countryCode, selectedState) {
+        loadStatesForCountry: function(countryCode, selectedState, selectedCity) {
             const self = this;
             const $stateSelect = $('#eau-edit-ins_company_company_state');
             const $stateText = $('#eau-edit-ins_company_company_state_text');
@@ -244,16 +244,16 @@
                             $stateSelect.html(html).show();
                             $stateText.hide().val('');
 
-                            // If state was pre-selected, load cities
+                            // If state was pre-selected, load cities with selectedCity
                             if (selectedState && states[selectedState]) {
-                                self.loadCitiesForState(countryCode, selectedState);
+                                self.loadCitiesForState(countryCode, selectedState, selectedCity);
                             }
                         } else {
                             // No states - show text input
                             $stateSelect.hide();
                             $stateText.show().val(selectedState || '');
                             $citySelect.hide();
-                            $cityText.show();
+                            $cityText.show().val(selectedCity || '');
                         }
                     }
                 },
@@ -1440,22 +1440,15 @@
             const countryCode = data.ins_company_company_country || '';
             $('#eau-edit-ins_company_company_country').val(countryCode);
 
-            // Load states if country is set
+            // Load states if country is set (pass city for cascade)
             if (countryCode) {
-                this.loadStatesForCountry(countryCode, data.ins_company_company_state);
-                // After states load, load cities
-                setTimeout(function() {
-                    if (data.ins_company_company_state) {
-                        self.loadCitiesForState(countryCode, data.ins_company_company_state, data.ins_company_company_suburb);
-                    } else {
-                        // No state, check if we need text input for city
-                        $('#eau-edit-ins_company_company_suburb_text').val(data.ins_company_company_suburb || '');
-                    }
-                }, 500);
+                this.loadStatesForCountry(countryCode, data.ins_company_company_state, data.ins_company_company_suburb);
             } else {
                 // No country - show text inputs
-                $('#eau-edit-ins_company_company_state_text').val(data.ins_company_company_state || '');
-                $('#eau-edit-ins_company_company_suburb_text').val(data.ins_company_company_suburb || '');
+                $('#eau-edit-ins_company_company_state').hide();
+                $('#eau-edit-ins_company_company_state_text').show().val(data.ins_company_company_state || '');
+                $('#eau-edit-ins_company_company_suburb').hide();
+                $('#eau-edit-ins_company_company_suburb_text').show().val(data.ins_company_company_suburb || '');
             }
 
             // Set logo if exists
