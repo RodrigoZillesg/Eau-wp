@@ -312,7 +312,7 @@
 
             // Create FormData
             const formData = new FormData();
-            formData.append('action', 'eau_upload_file');
+            formData.append('action', 'eau_upload_institution_file');
             formData.append('nonce', this.config.nonce);
             formData.append('file', file);
             formData.append('max_size', maxSize);

@@ -746,6 +746,7 @@
          * Render Institution Form
          */
         renderInstitutionForm: function(modalId, data, mode) {
+            const self = this;
             const isView = mode === 'view';
             const isAdd = mode === 'add';
             const readonly = isView ? 'readonly' : '';
@@ -757,6 +758,88 @@
             // Hidden institution ID
             if (data._ID) {
                 html += `<input type="hidden" name="institution_id" value="${data._ID}">`;
+            }
+
+            // Logo - View mode (display only) - show if logo exists
+            if (isView) {
+                const logoUrl = data.ins_company_logo_url || '';
+                if (logoUrl && logoUrl.length > 0) {
+                    html += `
+                        <div class="eau-form-field eau-form-field-span-2">
+                            <label class="eau-form-label">Institution Logo</label>
+                            <div class="eau-institution-logo-preview">
+                                <img src="${logoUrl}" alt="Institution Logo" style="max-width: 200px; max-height: 100px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Logo - Edit mode (upload component)
+            if (!isView) {
+                const logoUrl = data.ins_company_logo_url || '';
+                const logoId = data.ins_company_logo || '';
+                const logoFilename = logoUrl ? logoUrl.split('/').pop() : '';
+                const hasLogo = logoUrl && logoUrl.length > 0;
+
+                html += `
+                    <div class="eau-form-field eau-form-field-span-2">
+                        <label class="eau-form-label">Institution Logo</label>
+                        <div class="eau-media-upload-wrapper" id="ins-logo-upload-wrapper"
+                            data-type="media"
+                            data-allowed-types="image/*"
+                            data-allowed-extensions="jpg,jpeg,png,gif,webp"
+                            data-max-file-size="5242880">
+
+                            <!-- Upload Panel -->
+                            <div class="eau-media-upload-panel eau-media-upload-file-panel active">
+                                <div class="eau-media-upload-dropzone" id="ins-logo-dropzone">
+                                    <input type="file" class="eau-media-upload-file-input" id="ins-logo-file-input" accept="image/*" style="display: none;">
+                                    <div class="eau-media-upload-dropzone-content">
+                                        <i data-lucide="upload-cloud"></i>
+                                        <span class="eau-media-upload-dropzone-text">
+                                            Drag & drop or <button type="button" class="eau-media-upload-browse-btn">Browse</button>
+                                        </span>
+                                        <span class="eau-media-upload-dropzone-hint">
+                                            Allowed: JPG, PNG, GIF, WEBP<br>Max size: 5 MB
+                                        </span>
+                                    </div>
+                                    <!-- Upload progress -->
+                                    <div class="eau-media-upload-progress" style="display: none;">
+                                        <div class="eau-media-upload-progress-bar">
+                                            <div class="eau-media-upload-progress-fill"></div>
+                                        </div>
+                                        <span class="eau-media-upload-progress-text">Uploading... 0%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div class="eau-media-upload-preview" id="ins-logo-preview" style="${hasLogo ? '' : 'display:none;'}">
+                                <div class="eau-media-upload-preview-content">
+                                    <div class="eau-media-upload-preview-thumbnail" id="ins-logo-thumbnail">
+                                        <img src="${logoUrl}" alt="Preview" class="eau-media-upload-preview-image" style="${hasLogo ? '' : 'display: none;'}">
+                                        <i data-lucide="image" class="eau-media-upload-preview-icon" style="${hasLogo ? 'display: none;' : ''}"></i>
+                                    </div>
+                                    <div class="eau-media-upload-preview-info">
+                                        <span class="eau-media-upload-preview-name" id="ins-logo-preview-name">${logoFilename}</span>
+                                    </div>
+                                    <div class="eau-media-upload-preview-actions">
+                                        <a href="${logoUrl}" target="_blank" class="eau-media-upload-preview-link" id="ins-logo-preview-link" title="Open file" ${hasLogo ? '' : 'style="display:none;"'}>
+                                            <i data-lucide="external-link"></i>
+                                        </a>
+                                        <button type="button" class="eau-media-upload-remove" id="ins-logo-remove" title="Remove file">
+                                            <i data-lucide="x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden inputs -->
+                            <input type="hidden" id="ins-logo-value" name="ins_company_logo" value="${logoId}" class="eau-media-upload-value">
+                        </div>
+                    </div>
+                `;
             }
 
             // Institution Name
@@ -866,6 +949,232 @@
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+
+            // Bind media upload events for edit/add modes
+            if (!isView) {
+                this.bindLogoUploadEvents();
+            }
+        },
+
+        /**
+         * Bind logo upload events
+         */
+        bindLogoUploadEvents: function() {
+            const self = this;
+            const wrapper = $('#ins-logo-upload-wrapper');
+
+            if (!wrapper.length) return;
+
+            const dropzone = wrapper.find('.eau-media-upload-dropzone');
+            const fileInput = wrapper.find('.eau-media-upload-file-input');
+            const browseBtn = wrapper.find('.eau-media-upload-browse-btn');
+            const removeBtn = wrapper.find('.eau-media-upload-remove');
+
+            // Browse button click
+            browseBtn.off('click').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput[0].click(); // Use native click instead of jQuery trigger
+            });
+
+            // Dropzone click (outside browse button and file input)
+            dropzone.off('click').on('click', function(e) {
+                // Prevent triggering on browse button or file input itself
+                if ($(e.target).hasClass('eau-media-upload-browse-btn') ||
+                    $(e.target).hasClass('eau-media-upload-file-input') ||
+                    $(e.target).closest('.eau-media-upload-browse-btn').length) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput[0].click(); // Use native click instead of jQuery trigger
+            });
+
+            // File input change
+            fileInput.off('change').on('change', function(e) {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    self.uploadLogoFile(wrapper, files[0]);
+                }
+            });
+
+            // Drag and drop
+            dropzone.off('dragover dragleave drop');
+            dropzone.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('eau-media-upload-dragover');
+            });
+
+            dropzone.on('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('eau-media-upload-dragover');
+            });
+
+            dropzone.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('eau-media-upload-dragover');
+
+                const files = e.originalEvent.dataTransfer.files;
+                if (files && files.length > 0) {
+                    self.uploadLogoFile(wrapper, files[0]);
+                }
+            });
+
+            // Remove button
+            removeBtn.off('click').on('click', function(e) {
+                e.preventDefault();
+                self.clearLogoUpload(wrapper);
+            });
+        },
+
+        /**
+         * Upload logo file
+         */
+        uploadLogoFile: function(wrapper, file) {
+            const self = this;
+
+            // Validate file type
+            const allowedExtensions = wrapper.data('allowed-extensions') || 'jpg,jpeg,png,gif,webp';
+            const maxSize = wrapper.data('max-file-size') || 5242880;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const allowedArr = allowedExtensions.split(',').map(e => e.trim().toLowerCase());
+
+            if (!allowedArr.includes(ext)) {
+                EauNotifications.error('Invalid File', 'Allowed file types: ' + allowedExtensions.toUpperCase());
+                return;
+            }
+
+            if (file.size > maxSize) {
+                EauNotifications.error('File Too Large', 'Maximum file size is ' + this.formatFileSize(maxSize));
+                return;
+            }
+
+            // Show progress
+            const progressContainer = wrapper.find('.eau-media-upload-progress');
+            const progressFill = wrapper.find('.eau-media-upload-progress-fill');
+            const progressText = wrapper.find('.eau-media-upload-progress-text');
+            const dropzoneContent = wrapper.find('.eau-media-upload-dropzone-content');
+
+            dropzoneContent.hide();
+            progressContainer.show();
+            progressFill.css('width', '0%');
+            progressText.text('Uploading... 0%');
+
+            // Create FormData
+            const formData = new FormData();
+            formData.append('action', 'eau_upload_institution_logo');
+            formData.append('nonce', eauInstitutionsData.nonce);
+            formData.append('file', file);
+            formData.append('max_size', maxSize);
+            formData.append('allowed_extensions', allowedExtensions);
+
+            // Upload via AJAX with progress
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressFill.css('width', percent + '%');
+                    progressText.text('Uploading... ' + percent + '%');
+                }
+            });
+
+            xhr.addEventListener('load', function() {
+                progressContainer.hide();
+                dropzoneContent.show();
+
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            self.setLogoValueFromUpload(wrapper, response.data);
+                            EauNotifications.success('Uploaded', 'Logo uploaded successfully');
+                        } else {
+                            EauNotifications.error('Upload Failed', response.data.message || 'Failed to upload logo');
+                        }
+                    } catch (e) {
+                        EauNotifications.error('Upload Failed', 'Invalid server response');
+                    }
+                } else {
+                    EauNotifications.error('Upload Failed', 'Server error: ' + xhr.status);
+                }
+            });
+
+            xhr.addEventListener('error', function() {
+                progressContainer.hide();
+                dropzoneContent.show();
+                EauNotifications.error('Upload Failed', 'Network error occurred');
+            });
+
+            xhr.open('POST', eauInstitutionsData.ajaxUrl);
+            xhr.send(formData);
+        },
+
+        /**
+         * Set logo value from upload response
+         */
+        setLogoValueFromUpload: function(wrapper, data) {
+            // Update hidden input with attachment ID
+            wrapper.find('.eau-media-upload-value').val(data.id);
+
+            // Update preview
+            const preview = wrapper.find('.eau-media-upload-preview');
+            const previewImg = preview.find('.eau-media-upload-preview-image');
+            const previewIcon = preview.find('.eau-media-upload-preview-icon');
+            const previewName = preview.find('.eau-media-upload-preview-name');
+            const previewLink = preview.find('.eau-media-upload-preview-link');
+
+            // Show image preview
+            previewImg.attr('src', data.url).show();
+            previewIcon.hide();
+            previewName.text(data.filename);
+            previewLink.attr('href', data.url).show();
+
+            // Show preview, hide dropzone
+            preview.show();
+            wrapper.find('.eau-media-upload-file-panel').hide();
+
+            // Re-initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Clear logo upload
+         */
+        clearLogoUpload: function(wrapper) {
+            // Clear hidden input
+            wrapper.find('.eau-media-upload-value').val('');
+
+            // Clear file input
+            wrapper.find('.eau-media-upload-file-input').val('');
+
+            // Hide preview, show dropzone
+            wrapper.find('.eau-media-upload-preview').hide();
+            wrapper.find('.eau-media-upload-file-panel').show();
+
+            // Reset preview
+            const preview = wrapper.find('.eau-media-upload-preview');
+            preview.find('.eau-media-upload-preview-image').attr('src', '').hide();
+            preview.find('.eau-media-upload-preview-icon').show();
+            preview.find('.eau-media-upload-preview-name').text('');
+            preview.find('.eau-media-upload-preview-link').attr('href', '#').hide();
+        },
+
+        /**
+         * Format file size
+         */
+        formatFileSize: function(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
 
         /**
