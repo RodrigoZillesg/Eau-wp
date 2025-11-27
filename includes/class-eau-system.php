@@ -83,6 +83,17 @@ class Eau_System {
 
         // Event Registrations CPT (v1.29.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/event-registrations/class-eau-event-registrations.php';
+
+        // OpenLearning Integration (v1.41.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-openlearning-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-openlearning-post-type.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-openlearning-service.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-openlearning-courses.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-openlearning-ajax.php';
+
+        // OpenLearning Management (v1.43.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-openlearning-management.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-openlearning-management-ajax.php';
     }
 
     private function define_admin_hooks() {
@@ -133,6 +144,8 @@ class Eau_System {
         Eau_Settings::register_shortcode();
         Eau_My_Profile::register_shortcode();
         Eau_Duplicate_Manager::register_shortcode();
+        Eau_OpenLearning_Courses::register_shortcode();
+        Eau_OpenLearning_Management::register_shortcode();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();
@@ -143,6 +156,8 @@ class Eau_System {
         \EauSystem\Ajax\Eau_Settings_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_My_Profile_Ajax::register_handlers();
         Eau_Duplicate_Ajax::register_endpoints();
+        \EauSystem\Ajax\Eau_OpenLearning_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_OpenLearning_Management_Ajax::register_handlers();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
         Eau_Duplicate_Scanner::register_hooks();
@@ -163,6 +178,17 @@ class Eau_System {
 
         // Initialize Event Registrations CPT
         \EauSystem\EventRegistrations\Eau_Event_Registrations::get_instance();
+
+        // Garante que tabelas do OpenLearning existem
+        if (!Eau_OpenLearning_Database::tables_exist()) {
+            Eau_OpenLearning_Database::create_tables();
+        }
+
+        // Registra OpenLearning Post Type
+        Eau_OpenLearning_Post_Type::register_hooks();
+
+        // Registra WP Cron para sincronização de cursos OpenLearning
+        add_action('eau_openlearning_sync_courses', array('EauSystem\\Eau_OpenLearning_Service', 'cron_sync_handler'));
     }
 
     public function get_plugin_name() {
