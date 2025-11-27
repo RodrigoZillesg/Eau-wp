@@ -5,6 +5,10 @@ use EauSystem\Components\Eau_Access_Denied;
 
 /**
  * Classe para gerenciar dashboards customizados
+ *
+ * @since 1.0.0
+ * @updated 1.41.0 - Adicionada seção de cursos OpenLearning
+ * @updated 1.42.0 - Dashboard mostra 4 cursos do Post Type (não AJAX)
  */
 class Eau_Dashboard {
 
@@ -13,6 +17,41 @@ class Eau_Dashboard {
      */
     public static function register_shortcode() {
         add_shortcode('eau_admin_dashboard', array(__CLASS__, 'render_admin_dashboard'));
+    }
+
+    /**
+     * Enfileira assets específicos do dashboard
+     */
+    public static function enqueue_dashboard_assets() {
+        // CSS para cursos OpenLearning
+        wp_enqueue_style(
+            'eau-openlearning-courses',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/css/eau-openlearning-courses.css',
+            array(),
+            EAU_SYSTEM_VERSION
+        );
+
+        // JavaScript para OpenLearning SSO (apenas para SSO, não para carregar cursos)
+        wp_enqueue_script(
+            'eau-openlearning',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-openlearning.js',
+            array('jquery'),
+            EAU_SYSTEM_VERSION,
+            true
+        );
+
+        // Passa dados para o JavaScript
+        wp_localize_script('eau-openlearning', 'eauOpenLearning', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('eau_openlearning_nonce'),
+            'coursesUrl' => '/dashboard/courses/', // URL da página de listagem
+            'i18n' => array(
+                'launching' => __('Opening OpenLearning...', 'eau-system'),
+                'launchError' => __('Failed to open course', 'eau-system'),
+                'accessCourse' => __('Access Course', 'eau-system'),
+                'free' => __('Free', 'eau-system'),
+            ),
+        ));
     }
 
     /**
@@ -26,6 +65,9 @@ class Eau_Dashboard {
 
         // Por enquanto, qualquer usuário logado pode ver
         // TODO: Adicionar verificação de mem_type depois
+
+        // Enfileira assets do dashboard (OpenLearning)
+        self::enqueue_dashboard_assets();
 
         // Coleta estatísticas
         $stats = self::get_dashboard_stats();
@@ -146,6 +188,76 @@ class Eau_Dashboard {
                 </div>
 
             </div>
+
+            <!-- OpenLearning Courses Section -->
+            <?php
+            // Busca 4 cursos do Post Type (destaques primeiro)
+            $dashboard_courses = Eau_OpenLearning_Post_Type::get_dashboard_courses();
+            $total_courses = Eau_OpenLearning_Post_Type::count_visible_courses();
+            ?>
+            <div class="eau-openlearning-section">
+                <div class="eau-openlearning-header">
+                    <div class="eau-openlearning-title-group">
+                        <h2 class="eau-openlearning-title">
+                            <i data-lucide="graduation-cap"></i>
+                            Available Courses
+                        </h2>
+                        <p class="eau-openlearning-subtitle">Access your professional development courses on OpenLearning</p>
+                    </div>
+                    <?php if ($total_courses > 4): ?>
+                    <a href="/dashboard/courses/" class="eau-btn eau-btn-secondary eau-btn-sm">
+                        <i data-lucide="arrow-right"></i>
+                        View All Courses (<?php echo $total_courses; ?>)
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!empty($dashboard_courses)): ?>
+                <!-- Courses Grid (renderizado server-side) -->
+                <div class="eau-openlearning-courses-grid" id="eau-openlearning-courses">
+                    <?php foreach ($dashboard_courses as $course): ?>
+                    <?php
+                        $price_label = $course['price'] > 0 ? '$' . number_format($course['price'], 2) : 'Free';
+                        $price_class = $course['price'] > 0 ? '' : 'eau-course-free';
+                        $description = !empty($course['description']) ? wp_trim_words($course['description'], 15, '...') : '';
+                    ?>
+                    <div class="eau-course-card" data-course-id="<?php echo esc_attr($course['course_id']); ?>">
+                        <div class="eau-course-image">
+                            <?php if (!empty($course['image_url'])): ?>
+                                <img src="<?php echo esc_url($course['image_url']); ?>" alt="<?php echo esc_attr($course['title']); ?>">
+                            <?php else: ?>
+                                <div class="eau-course-image-placeholder"><i data-lucide="book-open"></i></div>
+                            <?php endif; ?>
+                            <span class="eau-course-price-badge <?php echo $price_class; ?>"><?php echo $price_label; ?></span>
+                            <?php if ($course['is_featured']): ?>
+                                <span class="eau-course-featured-badge"><i data-lucide="star"></i></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="eau-course-content">
+                            <h3 class="eau-course-title"><?php echo esc_html($course['title']); ?></h3>
+                            <p class="eau-course-description"><?php echo esc_html($description); ?></p>
+                            <div class="eau-course-footer">
+                                <button type="button"
+                                        class="eau-course-access-btn"
+                                        data-course-id="<?php echo esc_attr($course['course_id']); ?>">
+                                    <i data-lucide="external-link"></i>
+                                    Access Course
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <!-- Empty State -->
+                <div class="eau-openlearning-empty">
+                    <i data-lucide="book-x"></i>
+                    <p>No courses available at the moment.</p>
+                    <p class="eau-openlearning-empty-hint">Courses are being synchronized. Please check back later.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+
         </div>
 
         <script>

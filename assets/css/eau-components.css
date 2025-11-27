@@ -502,6 +502,34 @@
     flex-shrink: 0 !important;
 }
 
+/* Loading state for action buttons */
+.eau-action-btn.eau-loading {
+    position: relative !important;
+    pointer-events: none !important;
+}
+
+.eau-action-btn.eau-loading i,
+.eau-action-btn.eau-loading svg {
+    visibility: hidden !important;
+}
+
+.eau-action-btn.eau-loading::after {
+    content: '' !important;
+    position: absolute !important;
+    width: 14px !important;
+    height: 14px !important;
+    border: 2px solid #e5e7eb !important;
+    border-top-color: #2563eb !important;
+    border-radius: 50% !important;
+    animation: eau-btn-spin 0.8s linear infinite !important;
+}
+
+@keyframes eau-btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .eau-action-view:hover {
     color: #2563eb !important;
 }

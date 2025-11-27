@@ -3,7 +3,7 @@
  * Plugin Name: Eau System
  * Plugin URI: https://platty.com.br
  * Description: Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
- * Version: 1.31.1
+ * Version: 1.43.8
  * Author: Platty / Rodrigo Zillesg
  * Author URI: https://platty.com.br
  * Text Domain: eau-system
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define constantes do plugin
-define('EAU_SYSTEM_VERSION', '1.31.1');
+define('EAU_SYSTEM_VERSION', '1.43.8');
 define('EAU_SYSTEM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EAU_SYSTEM_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EAU_SYSTEM_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -73,11 +73,20 @@ register_activation_hook(__FILE__, function() {
     // Cria tabelas de duplicatas
     \EauSystem\Eau_Duplicate_Database::create_tables();
 
+    // Cria tabelas do OpenLearning
+    \EauSystem\Eau_OpenLearning_Database::create_tables();
+
+    // Cria Post Type OpenLearning no JetEngine
+    \EauSystem\Eau_OpenLearning_Post_Type::save_to_jet_engine();
+    \EauSystem\Eau_OpenLearning_Post_Type::save_backup();
+
     // Setup cache cron para activities stats
     \EauSystem\Eau_Activities_Stats_Cache::setup_cron();
 
     // Setup cron para processar eventos finalizados e criar Activities
     \EauSystem\EventRegistrations\Eau_Event_Activity_Creator::setup_cron();
+    // Setup cron para sincronização OpenLearning
+    \EauSystem\Eau_OpenLearning_Service::setup_cron();
 
     // Cria tabelas necessárias se precisar
     flush_rewrite_rules();
@@ -90,6 +99,8 @@ register_deactivation_hook(__FILE__, function() {
 
     // Remove cron de eventos finalizados
     \EauSystem\EventRegistrations\Eau_Event_Activity_Creator::clear_cron();
+    // Remove OpenLearning sync cron
+    \EauSystem\Eau_OpenLearning_Service::clear_cron();
 
     flush_rewrite_rules();
 });
