@@ -478,6 +478,27 @@ class Eau_Event_Activity_Creator {
         update_post_meta($post_id, 'act_source_event_id', $event_data['event_id']);
         update_post_meta($post_id, 'act_source_registration_id', $registration_id);
 
+        // Gera certificado e salva na mídia
+        $certificate_id = Certificate\Certificate_Generator::generate(array(
+            'first_name'   => $user_data['first_name'],
+            'last_name'    => $user_data['last_name'],
+            'event_title'  => $event_data['event_title'],
+            'event_date'   => $event_data['event_date'],
+            'cpd_points'   => $event_data['cpd_points'],
+            'cpd_category' => $event_data['category_name'],
+        ));
+
+        if ($certificate_id) {
+            // Salva ID da mídia no meta field act_event_website_where_possible
+            update_post_meta($post_id, 'act_event_website_where_possible', $certificate_id);
+
+            // Envia email com o certificado
+            $certificate_url = wp_get_attachment_url($certificate_id);
+            if ($certificate_url) {
+                \EauSystem\Email\Email_Events::send_certificate_email($registration_id, $certificate_url);
+            }
+        }
+
         return $post_id;
     }
 

@@ -149,6 +149,9 @@ class Eau_Event_Registrations_Ajax {
             }
         }
 
+        // Envia email de confirmação
+        \EauSystem\Email\Email_Events::send_registration_confirmation($post_id);
+
         wp_send_json_success(array(
             'message'         => __('Registration successful! You will receive a confirmation email shortly.', 'eau-system'),
             'registration_id' => $post_id,
