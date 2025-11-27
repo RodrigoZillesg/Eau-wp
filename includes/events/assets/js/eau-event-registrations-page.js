@@ -168,7 +168,7 @@
                 html += '<span class="eau-member-name">' + self.escapeHtml(row.attendee_name) + '</span>';
                 html += '</td>';
                 html += '<td class="eau-contact-cell">';
-                html += '<a href="mailto:' + self.escapeHtml(row.attendee_email) + '">' + self.escapeHtml(row.attendee_email) + '</a>';
+                html += '<span>' + self.escapeHtml(row.attendee_email) + '</span>';
                 html += '</td>';
                 html += '<td>' + row.registration_date + '</td>';
                 html += '<td>';
