@@ -1,0 +1,851 @@
+/**
+ * My Institution Page Styles
+ *
+ * @since 1.44.0
+ */
+
+/* ========================================
+   Container
+   ======================================== */
+
+.eau-my-institution-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ========================================
+   Page Header
+   ======================================== */
+
+.eau-my-institution-container .eau-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.eau-my-institution-container .eau-page-header h2 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.eau-my-institution-container .eau-page-header-subtitle {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   Stats Grid (2 columns)
+   ======================================== */
+
+.eau-stats-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .eau-stats-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
+   Sections
+   ======================================== */
+
+.eau-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.eau-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.eau-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.eau-section-title i,
+.eau-section-title svg {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+.eau-section-body {
+    padding: 20px;
+}
+
+/* ========================================
+   Institution Cards
+   ======================================== */
+
+.eau-institution-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.eau-institution-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.eau-institution-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.eau-institution-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-institution-card-logo {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.eau-institution-card-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.eau-institution-card-logo i,
+.eau-institution-card-logo svg {
+    width: 28px;
+    height: 28px;
+    color: #9ca3af;
+}
+
+.eau-institution-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-institution-card-name {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.3;
+}
+
+.eau-institution-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.eau-institution-card-body {
+    padding: 16px 20px;
+}
+
+.eau-institution-card-details p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.eau-institution-card-details p:last-child {
+    margin-bottom: 0;
+}
+
+.eau-institution-card-details i,
+.eau-institution-card-details svg {
+    width: 16px;
+    height: 16px;
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.eau-institution-card-details a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.eau-institution-card-details a:hover {
+    text-decoration: underline;
+}
+
+.eau-institution-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+/* ========================================
+   Search Results
+   ======================================== */
+
+.eau-search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.eau-search-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.eau-search-result-item:hover {
+    background: #f3f4f6;
+}
+
+.eau-search-result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-search-result-name {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.eau-search-result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.eau-search-result-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.eau-search-result-meta i,
+.eau-search-result-meta svg {
+    width: 14px;
+    height: 14px;
+}
+
+.eau-search-result-action {
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+/* ========================================
+   Requests Lists
+   ======================================== */
+
+.eau-requests-list,
+.eau-incoming-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.eau-request-item,
+.eau-incoming-request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.eau-request-info,
+.eau-incoming-request-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-request-institution {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.eau-request-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.eau-request-date i,
+.eau-request-date svg {
+    width: 14px;
+    height: 14px;
+}
+
+.eau-request-actions,
+.eau-incoming-request-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+/* Incoming Requests */
+.eau-incoming-request-user {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.eau-incoming-request-user strong {
+    font-size: 15px;
+    color: #1f2937;
+}
+
+.eau-incoming-request-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.eau-incoming-request-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.eau-incoming-request-meta i,
+.eau-incoming-request-meta svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ========================================
+   Empty States
+   ======================================== */
+
+.eau-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.eau-empty-state-sm {
+    padding: 30px 20px;
+}
+
+.eau-empty-state i,
+.eau-empty-state svg {
+    width: 48px;
+    height: 48px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+.eau-empty-state-sm i,
+.eau-empty-state-sm svg {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 12px;
+}
+
+.eau-empty-state p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 15px;
+}
+
+.eau-empty-state .eau-text-muted {
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+.eau-loading-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px 20px;
+    color: #6b7280;
+}
+
+.eau-spin {
+    animation: eau-spin 1s linear infinite;
+}
+
+@keyframes eau-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   Badges
+   ======================================== */
+
+.eau-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.eau-badge i,
+.eau-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+.eau-badge-primary {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.eau-badge-success {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.eau-badge-warning {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.eau-badge-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.eau-badge-purple {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.eau-badge-secondary {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.eau-badge-outline {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #6b7280;
+}
+
+/* ========================================
+   Alerts
+   ======================================== */
+
+.eau-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin: 16px 0;
+}
+
+.eau-alert i,
+.eau-alert svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.eau-alert-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.eau-alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* ========================================
+   Modal Additions
+   ======================================== */
+
+.eau-institution-preview {
+    padding: 16px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    margin: 12px 0;
+    text-align: center;
+}
+
+.eau-institution-preview strong {
+    font-size: 16px;
+    color: #1f2937;
+}
+
+.eau-request-details {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+/* ========================================
+   Form Static (view mode)
+   ======================================== */
+
+.eau-form-static {
+    margin: 0;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #374151;
+}
+
+.eau-text-primary {
+    color: #2563eb !important;
+    font-weight: 600;
+}
+
+/* ========================================
+   Button Variants
+   ======================================== */
+
+.eau-btn-success {
+    background: #10b981;
+    color: #fff;
+    border: none;
+}
+
+.eau-btn-success:hover {
+    background: #059669;
+}
+
+.eau-btn-outline-danger {
+    background: transparent;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
+.eau-btn-outline-danger:hover {
+    background: #fee2e2;
+    border-color: #dc2626;
+}
+
+/* ========================================
+   Utilities
+   ======================================== */
+
+.eau-mb-4 {
+    margin-bottom: 16px;
+}
+
+.eau-mt-4 {
+    margin-top: 16px;
+}
+
+.eau-text-center {
+    text-align: center;
+}
+
+.eau-text-muted {
+    color: #6b7280 !important;
+}
+
+/* ========================================
+   History List
+   ======================================== */
+
+.eau-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.eau-history-item {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.eau-history-item:hover {
+    border-color: #d1d5db;
+}
+
+.eau-history-item-approved {
+    border-left: 4px solid #10b981;
+}
+
+.eau-history-item-rejected {
+    border-left: 4px solid #ef4444;
+}
+
+.eau-history-item-cancelled {
+    border-left: 4px solid #9ca3af;
+}
+
+.eau-history-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 12px;
+}
+
+.eau-history-item-institution,
+.eau-history-item-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.eau-history-item-institution i,
+.eau-history-item-user > i {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.eau-history-item-institution strong,
+.eau-history-item-user strong {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eau-history-item-user > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.eau-history-item-user .eau-text-muted {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eau-history-item-details {
+    padding: 14px 16px;
+}
+
+.eau-history-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.eau-history-item-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.eau-history-item-meta i {
+    width: 16px;
+    height: 16px;
+    color: #9ca3af;
+}
+
+.eau-history-item-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.eau-history-item-dates span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.eau-history-item-dates i {
+    width: 14px;
+    height: 14px;
+    color: #9ca3af;
+}
+
+.eau-history-item-notes {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    background: #fef3c7;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+}
+
+.eau-history-item-notes i {
+    width: 18px;
+    height: 18px;
+    color: #b45309;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.eau-history-item-notes span {
+    font-size: 14px;
+    color: #92400e;
+    line-height: 1.5;
+}
+
+/* Approved notes - different color */
+.eau-history-item-approved .eau-history-item-notes {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+
+.eau-history-item-approved .eau-history-item-notes i {
+    color: #047857;
+}
+
+.eau-history-item-approved .eau-history-item-notes span {
+    color: #065f46;
+}
+
+/* ========================================
+   Pagination Container
+   ======================================== */
+
+.eau-pagination-container {
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+
+@media (max-width: 768px) {
+    .eau-my-institution-container {
+        padding: 16px;
+    }
+
+    .eau-institution-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-search-result-item,
+    .eau-request-item,
+    .eau-incoming-request-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .eau-search-result-action,
+    .eau-request-actions,
+    .eau-incoming-request-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .eau-institution-card-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .eau-institution-card-badges {
+        justify-content: center;
+    }
+
+    .eau-institution-card-footer {
+        justify-content: center;
+    }
+
+    .eau-history-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .eau-history-item-dates {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .eau-history-item-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

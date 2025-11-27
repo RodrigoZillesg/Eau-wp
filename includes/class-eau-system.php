@@ -100,6 +100,10 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-template.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-service.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-events.php';
+        // My Institution (v1.44.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institution-requests-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-institution.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-my-institution-ajax.php';
     }
 
     private function define_admin_hooks() {
@@ -158,6 +162,7 @@ class Eau_System {
         Eau_Duplicate_Manager::register_shortcode();
         Eau_OpenLearning_Courses::register_shortcode();
         Eau_OpenLearning_Management::register_shortcode();
+        Eau_My_Institution::register_shortcode();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();
@@ -170,6 +175,7 @@ class Eau_System {
         Eau_Duplicate_Ajax::register_endpoints();
         \EauSystem\Ajax\Eau_OpenLearning_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_OpenLearning_Management_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_My_Institution_Ajax::register_handlers();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
         Eau_Duplicate_Scanner::register_hooks();
@@ -201,6 +207,11 @@ class Eau_System {
 
         // Registra WP Cron para sincronização de cursos OpenLearning
         add_action('eau_openlearning_sync_courses', array('EauSystem\\Eau_OpenLearning_Service', 'cron_sync_handler'));
+
+        // Garante que tabela de requests de instituição existe
+        if (!Eau_Institution_Requests_Database::table_exists()) {
+            Eau_Institution_Requests_Database::create_table();
+        }
     }
 
     public function get_plugin_name() {
