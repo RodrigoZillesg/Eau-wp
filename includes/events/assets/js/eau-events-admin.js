@@ -32,6 +32,7 @@
             this.bindTabEvents();
             this.bindImageUpload();
             this.bindEventTypeChange();
+            this.bindCpdCategoryChange();
             this.initConditionalFields();
         },
 
@@ -185,6 +186,20 @@
 
             $('.eau-event-metabox').on('change', 'input[name="evt_event_type"]', function() {
                 self.updateLocationFields();
+            });
+        },
+
+        /**
+         * Bind CPD Category change to auto-update CPD Points
+         */
+        bindCpdCategoryChange: function() {
+            $('.eau-event-metabox').on('change', '#eau-cpd-category', function() {
+                const $selected = $(this).find('option:selected');
+                const pointsPerHour = $selected.data('points');
+
+                if (pointsPerHour !== undefined && pointsPerHour !== '') {
+                    $('#eau-cpd-points').val(pointsPerHour);
+                }
             });
         },
 

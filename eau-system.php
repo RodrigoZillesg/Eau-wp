@@ -83,6 +83,8 @@ register_activation_hook(__FILE__, function() {
     // Setup cache cron para activities stats
     \EauSystem\Eau_Activities_Stats_Cache::setup_cron();
 
+    // Setup cron para processar eventos finalizados e criar Activities
+    \EauSystem\EventRegistrations\Eau_Event_Activity_Creator::setup_cron();
     // Setup cron para sincronização OpenLearning
     \EauSystem\Eau_OpenLearning_Service::setup_cron();
 
@@ -95,6 +97,8 @@ register_deactivation_hook(__FILE__, function() {
     // Remove cache cron
     \EauSystem\Eau_Activities_Stats_Cache::clear_cron();
 
+    // Remove cron de eventos finalizados
+    \EauSystem\EventRegistrations\Eau_Event_Activity_Creator::clear_cron();
     // Remove OpenLearning sync cron
     \EauSystem\Eau_OpenLearning_Service::clear_cron();
 

@@ -78,7 +78,7 @@ $past = new WP_Query($past_args);
                 <p class="eau-events-subtitle"><?php _e('Discover and register for upcoming events', 'eau-system'); ?></p>
             </div>
             <?php if (Helper::is_admin()) : ?>
-                <a href="<?php echo admin_url('edit.php?post_type=eau_event'); ?>" class="eau-btn eau-btn-primary">
+                <a href="<?php echo site_url('dashboard/events'); ?>" class="eau-btn eau-btn-primary">
                     <?php echo Helper::icon('settings', 16); ?>
                     <?php _e('Manage Events', 'eau-system'); ?>
                 </a>

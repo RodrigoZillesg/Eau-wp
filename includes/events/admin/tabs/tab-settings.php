@@ -44,17 +44,17 @@ function render_settings($meta) {
             <!-- CPD Points -->
             <div class="eau-form-field">
                 <label class="eau-form-label"><?php _e('CPD Points', 'eau-system'); ?></label>
-                <input type="number" name="<?php echo $p; ?>cpd_points" class="eau-form-input"
+                <input type="number" name="<?php echo $p; ?>cpd_points" id="eau-cpd-points" class="eau-form-input"
                        value="<?php echo esc_attr($meta['cpd_points']); ?>" min="0" step="0.5">
             </div>
 
             <!-- CPD Category -->
             <div class="eau-form-field">
                 <label class="eau-form-label"><?php _e('CPD Category', 'eau-system'); ?></label>
-                <select name="<?php echo $p; ?>cpd_category" class="eau-form-select">
-                    <option value=""><?php _e('Select category', 'eau-system'); ?></option>
+                <select name="<?php echo $p; ?>cpd_category" id="eau-cpd-category" class="eau-form-select">
+                    <option value="" data-points="0"><?php _e('Select category', 'eau-system'); ?></option>
                     <?php foreach (Config\get_cpd_categories_from_db() as $cat) : ?>
-                        <option value="<?php echo esc_attr($cat['id']); ?>" <?php selected($meta['cpd_category'], $cat['id']); ?>>
+                        <option value="<?php echo esc_attr($cat['id']); ?>" data-points="<?php echo esc_attr($cat['points_per_hour']); ?>" <?php selected($meta['cpd_category'], $cat['id']); ?>>
                             <?php echo esc_html($cat['category_name']); ?> (<?php echo esc_html($cat['points_per_hour']); ?> pts/hr)
                         </option>
                     <?php endforeach; ?>

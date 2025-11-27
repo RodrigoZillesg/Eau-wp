@@ -30,7 +30,10 @@ function get_meta_fields() {
         'member_type'       => 'string',
         'status'            => 'string',
         'payment_status'    => 'string',
-        'user_id'           => 'integer',
+        'user_id'           => 'integer',   // WordPress User ID
+        'mem_userid'        => 'string',    // EAU Member ID (mem_userid from user meta)
+        'attended'          => 'boolean',   // Se o usuário clicou em Join/participou
+        'activity_created'  => 'boolean',   // Se a Activity CPD já foi criada
     );
 }
 
