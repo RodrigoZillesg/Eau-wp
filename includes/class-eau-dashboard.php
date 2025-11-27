@@ -132,6 +132,24 @@ class Eau_Dashboard {
                 </a>
                 <?php endif; ?>
 
+                <!-- Pending Member Requests (apenas para institutionAdmin) -->
+                <?php if (Eau_User_Institution_Helper::is_institution_admin()): ?>
+                <a href="/dashboard/my-instituion/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-teal">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">Member Requests</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number"><?php echo number_format($stats['pending_member_requests']); ?></span>
+                                <span class="eau-card-pending">Pending Approval</span>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="user-plus"></i>
+                        </div>
+                    </div>
+                </a>
+                <?php endif; ?>
+
                 <!-- CPD Activities -->
                 <a href="/dashboard/manage-activities/" class="eau-dashboard-card-link">
                     <div class="eau-dashboard-card eau-card-green">
@@ -296,6 +314,7 @@ class Eau_Dashboard {
             'total_members' => $user_stats['total'],
             'active_members' => $user_stats['active'],
             'total_institutions' => self::get_total_institutions(),
+            'pending_member_requests' => self::get_pending_member_requests(),
             'cpd_activities' => self::get_cpd_activities(),
             'pending_approval' => self::get_pending_approval(),
             'active_events' => self::get_active_events(),
@@ -310,6 +329,30 @@ class Eau_Dashboard {
     private static function get_total_institutions() {
         $count = wp_count_posts('institutions');
         return isset($count->publish) ? $count->publish : 0;
+    }
+
+    /**
+     * Pending Member Requests (para institutionAdmin)
+     * Conta solicitações pendentes de membros que querem se vincular às instituições gerenciadas
+     */
+    private static function get_pending_member_requests() {
+        // Apenas para institutionAdmin
+        if (!Eau_User_Institution_Helper::is_institution_admin()) {
+            return 0;
+        }
+
+        $user_id = get_current_user_id();
+
+        // Pega as instituições gerenciadas
+        $managed = Eau_User_Institution_Helper::get_user_managed_institutions($user_id);
+        $institution_ids = array_map(function($inst) { return $inst->ID; }, $managed);
+
+        if (empty($institution_ids)) {
+            return 0;
+        }
+
+        // Conta solicitações pendentes usando o database helper
+        return Eau_Institution_Requests_Database::count_pending_for_institutions($institution_ids);
     }
 
     /**
