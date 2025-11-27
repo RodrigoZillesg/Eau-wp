@@ -17,11 +17,14 @@
         institutionHistoryPage: 1,
         institutionHistoryPerPage: 10,
         searchTimeout: null,
+        phoneIti: null, // intl-tel-input instance
+        currentCountryHasDetailedData: false,
 
         // === INIT ===
         init: function() {
             this.config = window.eauMyInstitutionData || {};
             this.bindEvents();
+            this.bindLocationEvents();
             this.loadInitialData();
         },
 
@@ -81,6 +84,28 @@
                 e.preventDefault();
                 const institutionId = $(this).data('institution-id');
                 self.viewInstitutionDetails(institutionId);
+            });
+
+            // Edit institution (for institutionAdmin)
+            $(document).on('click', '.eau-edit-institution-btn', function(e) {
+                e.preventDefault();
+                const institutionId = $(this).data('institution-id');
+                self.openEditInstitutionModal(institutionId);
+            });
+
+            // Save institution changes
+            $('#eau-save-institution-btn').on('click', function() {
+                self.saveInstitution();
+            });
+
+            // Close edit modal
+            $('#eau-edit-institution-modal-overlay').on('click', '[data-action="close"]', function() {
+                self.closeEditModal();
+            });
+            $('#eau-edit-institution-modal-overlay').on('click', function(e) {
+                if ($(e.target).is('#eau-edit-institution-modal-overlay')) {
+                    self.closeEditModal();
+                }
             });
 
             // Leave institution button
@@ -155,6 +180,169 @@
                     self.loadInstitutionHistory();
                 }
             });
+        },
+
+        // === BIND LOCATION EVENTS (Country -> State -> City cascade) ===
+        bindLocationEvents: function() {
+            const self = this;
+
+            // Country change - load states
+            $('#eau-edit-ins_company_company_country').on('change', function() {
+                const countryCode = $(this).val();
+                self.loadStatesForCountry(countryCode);
+            });
+
+            // State change - load cities
+            $('#eau-edit-ins_company_company_state').on('change', function() {
+                const countryCode = $('#eau-edit-ins_company_company_country').val();
+                const stateCode = $(this).val();
+                self.loadCitiesForState(countryCode, stateCode);
+            });
+        },
+
+        // === LOAD STATES FOR COUNTRY ===
+        loadStatesForCountry: function(countryCode, selectedState) {
+            const self = this;
+            const $stateSelect = $('#eau-edit-ins_company_company_state');
+            const $stateText = $('#eau-edit-ins_company_company_state_text');
+            const $citySelect = $('#eau-edit-ins_company_company_suburb');
+            const $cityText = $('#eau-edit-ins_company_company_suburb_text');
+
+            // Reset fields
+            $stateSelect.html('<option value="">' + (self.config.strings.loadingStates || 'Loading...') + '</option>');
+            $citySelect.html('<option value="">' + (self.config.strings.selectCity || 'Select city...') + '</option>');
+
+            if (!countryCode) {
+                $stateSelect.html('<option value="">' + (self.config.strings.selectState || 'Select state...') + '</option>');
+                $stateSelect.show();
+                $stateText.hide();
+                $citySelect.show();
+                $cityText.hide();
+                return;
+            }
+
+            $.ajax({
+                url: self.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_states',
+                    nonce: self.config.nonce,
+                    country: countryCode
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const states = response.data.states;
+                        self.currentCountryHasDetailedData = response.data.has_detailed_data;
+
+                        if (Object.keys(states).length > 0) {
+                            // Has states - show select
+                            let html = '<option value="">' + (self.config.strings.selectState || 'Select state...') + '</option>';
+                            for (const code in states) {
+                                const selected = (selectedState && selectedState === code) ? ' selected' : '';
+                                html += '<option value="' + code + '"' + selected + '>' + self.escapeHtml(states[code]) + '</option>';
+                            }
+                            $stateSelect.html(html).show();
+                            $stateText.hide().val('');
+
+                            // If state was pre-selected, load cities
+                            if (selectedState && states[selectedState]) {
+                                self.loadCitiesForState(countryCode, selectedState);
+                            }
+                        } else {
+                            // No states - show text input
+                            $stateSelect.hide();
+                            $stateText.show().val(selectedState || '');
+                            $citySelect.hide();
+                            $cityText.show();
+                        }
+                    }
+                },
+                error: function() {
+                    $stateSelect.html('<option value="">' + (self.config.strings.selectState || 'Select state...') + '</option>');
+                }
+            });
+        },
+
+        // === LOAD CITIES FOR STATE ===
+        loadCitiesForState: function(countryCode, stateCode, selectedCity) {
+            const self = this;
+            const $citySelect = $('#eau-edit-ins_company_company_suburb');
+            const $cityText = $('#eau-edit-ins_company_company_suburb_text');
+
+            // Reset city
+            $citySelect.html('<option value="">' + (self.config.strings.loadingCities || 'Loading...') + '</option>');
+
+            if (!countryCode || !stateCode) {
+                $citySelect.html('<option value="">' + (self.config.strings.selectCity || 'Select city...') + '</option>');
+                $citySelect.show();
+                $cityText.hide();
+                return;
+            }
+
+            $.ajax({
+                url: self.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_cities',
+                    nonce: self.config.nonce,
+                    country: countryCode,
+                    state: stateCode
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const cities = response.data.cities;
+
+                        if (cities.length > 0) {
+                            // Has cities - show select
+                            let html = '<option value="">' + (self.config.strings.selectCity || 'Select city...') + '</option>';
+                            cities.forEach(function(city) {
+                                const selected = (selectedCity && selectedCity === city) ? ' selected' : '';
+                                html += '<option value="' + self.escapeHtml(city) + '"' + selected + '>' + self.escapeHtml(city) + '</option>';
+                            });
+                            $citySelect.html(html).show();
+                            $cityText.hide().val('');
+                        } else {
+                            // No cities - show text input
+                            $citySelect.hide();
+                            $cityText.show().val(selectedCity || '');
+                        }
+                    }
+                },
+                error: function() {
+                    $citySelect.html('<option value="">' + (self.config.strings.selectCity || 'Select city...') + '</option>');
+                }
+            });
+        },
+
+        // === INITIALIZE PHONE INPUT ===
+        initPhoneInput: function() {
+            const phoneInput = document.querySelector('#eau-edit-ins_company_company_phone');
+            if (phoneInput && typeof intlTelInput !== 'undefined') {
+                // Destroy existing instance if any
+                if (this.phoneIti) {
+                    this.phoneIti.destroy();
+                }
+
+                this.phoneIti = intlTelInput(phoneInput, {
+                    initialCountry: 'au',
+                    preferredCountries: ['au', 'nz', 'gb', 'us'],
+                    separateDialCode: true,
+                    utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js',
+                    formatOnDisplay: true,
+                    nationalMode: false,
+                    autoPlaceholder: 'aggressive'
+                });
+            }
+        },
+
+        // === CLOSE EDIT MODAL ===
+        closeEditModal: function() {
+            $('#eau-edit-institution-modal-overlay').fadeOut(200);
+            // Destroy phone input instance
+            if (this.phoneIti) {
+                this.phoneIti.destroy();
+                this.phoneIti = null;
+            }
         },
 
         // === LOAD INITIAL DATA ===
@@ -327,6 +515,13 @@
                                 <i data-lucide="eye"></i>
                                 View Details
                             </button>
+                            ${inst.role === 'admin' ? `
+                                <button type="button" class="eau-btn eau-btn-primary eau-btn-sm eau-edit-institution-btn"
+                                        data-institution-id="${inst.id}">
+                                    <i data-lucide="edit"></i>
+                                    Edit
+                                </button>
+                            ` : ''}
                             ${inst.role === 'member' ? `
                                 <button type="button" class="eau-btn eau-btn-outline-danger eau-btn-sm eau-leave-institution-btn"
                                         data-institution-id="${inst.id}"
@@ -1178,6 +1373,222 @@
                 'pending': '<i data-lucide="clock"></i>'
             };
             return icons[status] || '';
+        },
+
+        // === EDIT INSTITUTION (for institutionAdmin) ===
+        openEditInstitutionModal: function(institutionId) {
+            const self = this;
+
+            // Show modal with loading state
+            $('#eau-edit-institution-title').text('Edit Institution');
+            $('#eau-edit-institution-form')[0].reset();
+            $('#eau-edit-institution-modal-overlay').css('display', 'flex').hide().fadeIn(200);
+
+            // Initialize phone input
+            setTimeout(function() {
+                self.initPhoneInput();
+            }, 100);
+
+            // Load institution data
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_institution_for_edit',
+                    nonce: this.config.nonce,
+                    institution_id: institutionId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.populateEditForm(response.data);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || self.config.strings.error);
+                        self.closeEditModal();
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', self.config.strings.error);
+                    self.closeEditModal();
+                }
+            });
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        populateEditForm: function(data) {
+            const self = this;
+
+            $('#eau-edit-institution-id').val(data.id);
+            $('#eau-edit-institution-title').text('Edit: ' + data.ins_company_name);
+            $('#eau-edit-ins_company_id').val(data.ins_company_id);
+            $('#eau-edit-ins_company_name').val(data.ins_company_name);
+            $('#eau-edit-ins_company_email').val(data.ins_company_email);
+            $('#eau-edit-ins_company_company_address_line_1').val(data.ins_company_company_address_line_1);
+            $('#eau-edit-ins_company_company_postcode').val(data.ins_company_company_postcode);
+            $('#eau-edit-ins_status').val(data.ins_status || 'active');
+
+            // Set phone with intl-tel-input
+            if (this.phoneIti && data.ins_company_company_phone) {
+                this.phoneIti.setNumber(data.ins_company_company_phone);
+            } else {
+                $('#eau-edit-ins_company_company_phone').val(data.ins_company_company_phone || '');
+            }
+
+            // Set country and trigger cascade
+            const countryCode = data.ins_company_company_country || '';
+            $('#eau-edit-ins_company_company_country').val(countryCode);
+
+            // Load states if country is set
+            if (countryCode) {
+                this.loadStatesForCountry(countryCode, data.ins_company_company_state);
+                // After states load, load cities
+                setTimeout(function() {
+                    if (data.ins_company_company_state) {
+                        self.loadCitiesForState(countryCode, data.ins_company_company_state, data.ins_company_company_suburb);
+                    } else {
+                        // No state, check if we need text input for city
+                        $('#eau-edit-ins_company_company_suburb_text').val(data.ins_company_company_suburb || '');
+                    }
+                }, 500);
+            } else {
+                // No country - show text inputs
+                $('#eau-edit-ins_company_company_state_text').val(data.ins_company_company_state || '');
+                $('#eau-edit-ins_company_company_suburb_text').val(data.ins_company_company_suburb || '');
+            }
+
+            // Set logo if exists
+            if (data.ins_company_logo) {
+                this.setMediaUploadValue(data.ins_company_logo, data.ins_company_logo_url);
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        // Set media upload value
+        setMediaUploadValue: function(value, url) {
+            const $wrapper = $('#eau-edit-ins_company_logo').closest('.eau-media-upload-wrapper');
+            if ($wrapper.length && value) {
+                // Update hidden input
+                $wrapper.find('input[name="ins_company_logo"]').val(value);
+                $wrapper.find('input[name="ins_company_logo_type"]').val('media');
+
+                // Show preview if it's an image URL
+                if (url) {
+                    const $preview = $wrapper.find('.eau-media-upload-preview');
+                    const $thumbnail = $preview.find('.eau-media-upload-preview-thumbnail');
+                    const filename = url.split('/').pop();
+
+                    if (this.isImageUrl(url)) {
+                        $thumbnail.addClass('has-image').html('<img src="' + url + '" alt="Logo">');
+                    } else {
+                        $thumbnail.removeClass('has-image').html('<i data-lucide="file"></i>');
+                    }
+
+                    $preview.find('.eau-media-upload-preview-filename').text(filename);
+                    $preview.find('.eau-media-upload-preview-link').attr('href', url);
+                    $preview.show();
+                    $wrapper.find('.eau-media-upload-tabs, .eau-media-upload-panel').hide();
+
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            }
+        },
+
+        // Check if URL is an image
+        isImageUrl: function(url) {
+            if (!url) return false;
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+            const ext = url.split('.').pop().toLowerCase().split('?')[0];
+            return imageExtensions.includes(ext);
+        },
+
+        saveInstitution: function() {
+            const self = this;
+            const $form = $('#eau-edit-institution-form');
+
+            // Validate form
+            if (!$form[0].checkValidity()) {
+                $form[0].reportValidity();
+                return;
+            }
+
+            const institutionId = $('#eau-edit-institution-id').val();
+            const fields = {};
+
+            // Basic fields
+            fields['ins_company_name'] = $('#eau-edit-ins_company_name').val();
+            fields['ins_company_email'] = $('#eau-edit-ins_company_email').val();
+            fields['ins_company_company_address_line_1'] = $('#eau-edit-ins_company_company_address_line_1').val();
+            fields['ins_company_company_postcode'] = $('#eau-edit-ins_company_company_postcode').val();
+            fields['ins_status'] = $('#eau-edit-ins_status').val();
+            fields['ins_company_company_country'] = $('#eau-edit-ins_company_company_country').val();
+
+            // Phone with intl-tel-input
+            if (this.phoneIti) {
+                fields['ins_company_company_phone'] = this.phoneIti.getNumber();
+            } else {
+                fields['ins_company_company_phone'] = $('#eau-edit-ins_company_company_phone').val();
+            }
+
+            // State - check if select or text
+            const $stateSelect = $('#eau-edit-ins_company_company_state');
+            const $stateText = $('#eau-edit-ins_company_company_state_text');
+            if ($stateSelect.is(':visible')) {
+                fields['ins_company_company_state'] = $stateSelect.val();
+            } else {
+                fields['ins_company_company_state'] = $stateText.val();
+            }
+
+            // City - check if select or text
+            const $citySelect = $('#eau-edit-ins_company_company_suburb');
+            const $cityText = $('#eau-edit-ins_company_company_suburb_text');
+            if ($citySelect.is(':visible')) {
+                fields['ins_company_company_suburb'] = $citySelect.val();
+            } else {
+                fields['ins_company_company_suburb'] = $cityText.val();
+            }
+
+            // Logo
+            const $logoWrapper = $('#eau-edit-ins_company_logo').closest('.eau-media-upload-wrapper');
+            const logoValue = $logoWrapper.find('input[name="ins_company_logo"]').val();
+            if (logoValue) {
+                fields['ins_company_logo'] = logoValue;
+            }
+
+            const $btn = $('#eau-save-institution-btn');
+            $btn.prop('disabled', true).addClass('eau-loading');
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_update_my_institution',
+                    nonce: this.config.nonce,
+                    institution_id: institutionId,
+                    fields: fields
+                },
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success('Success', self.config.strings.institutionUpdated);
+                        self.closeEditModal();
+                        self.loadCurrentInstitution();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || self.config.strings.error);
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', self.config.strings.error);
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).removeClass('eau-loading');
+                }
+            });
         },
 
         // === UTILITIES ===
