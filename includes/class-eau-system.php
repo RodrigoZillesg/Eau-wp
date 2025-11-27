@@ -94,6 +94,12 @@ class Eau_System {
         // OpenLearning Management (v1.43.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-openlearning-management.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-openlearning-management-ajax.php';
+
+        // Email Service (v1.44.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-config.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-template.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-service.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-events.php';
     }
 
     private function define_admin_hooks() {
@@ -106,6 +112,12 @@ class Eau_System {
         // Documentation pages
         add_action('admin_menu', array('EauSystem\Eau_Documentation', 'register_admin_pages'));
         add_action('admin_enqueue_scripts', array('EauSystem\Eau_Documentation', 'enqueue_admin_assets'));
+
+        // Email preview
+        Email\Email_Service::register();
+
+        // Email events cron
+        Email\Email_Events::register();
     }
 
     private function define_frontend_hooks() {

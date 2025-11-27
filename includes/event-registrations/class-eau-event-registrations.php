@@ -92,6 +92,11 @@ class Eau_Event_Registrations {
 
         // Activity Creator (auto-create CPD activities from events)
         require_once $base . 'class-eau-event-activity-creator.php';
+
+        // Certificate Generator
+        require_once $base . 'certificate/class-certificate-config.php';
+        require_once $base . 'certificate/class-certificate-renderer.php';
+        require_once $base . 'certificate/class-certificate-generator.php';
     }
 
     /**
@@ -120,6 +125,9 @@ class Eau_Event_Registrations {
 
         // Activity Creator (auto-create CPD activities from events)
         Eau_Event_Activity_Creator::register();
+
+        // Certificate Generator (preview endpoint)
+        Certificate\Certificate_Generator::register();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();
