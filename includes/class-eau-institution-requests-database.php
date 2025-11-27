@@ -315,28 +315,99 @@ class Eau_Institution_Requests_Database {
     }
 
     /**
-     * Get request history for a user
+     * Get request history for a user (all completed requests)
      *
      * @param int $user_id User ID
      * @param int $limit Limit
-     * @return array Array of request objects
+     * @param int $offset Offset
+     * @return array Array with 'requests' and 'total'
      */
-    public static function get_user_history($user_id, $limit = 10) {
+    public static function get_user_history($user_id, $limit = 20, $offset = 0) {
         global $wpdb;
 
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT r.*, p.post_title as institution_name
-            FROM " . self::get_table_name() . " r
-            LEFT JOIN {$wpdb->posts} p ON r.institution_id = p.ID
-            WHERE r.user_id = %d
-            AND r.status IN (%s, %s)
-            ORDER BY r.response_date DESC
-            LIMIT %d",
+        // Count total
+        $total = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . self::get_table_name() . "
+            WHERE user_id = %d
+            AND status IN (%s, %s, %s)",
             $user_id,
             self::STATUS_APPROVED,
             self::STATUS_REJECTED,
-            $limit
+            self::STATUS_CANCELLED
         ));
+
+        // Get requests
+        $requests = $wpdb->get_results($wpdb->prepare(
+            "SELECT r.*,
+                    p.post_title as institution_name,
+                    ru.display_name as responded_by_name
+            FROM " . self::get_table_name() . " r
+            LEFT JOIN {$wpdb->posts} p ON r.institution_id = p.ID
+            LEFT JOIN {$wpdb->users} ru ON r.responded_by = ru.ID
+            WHERE r.user_id = %d
+            AND r.status IN (%s, %s, %s)
+            ORDER BY COALESCE(r.response_date, r.request_date) DESC
+            LIMIT %d OFFSET %d",
+            $user_id,
+            self::STATUS_APPROVED,
+            self::STATUS_REJECTED,
+            self::STATUS_CANCELLED,
+            $limit,
+            $offset
+        ));
+
+        return array(
+            'requests' => $requests,
+            'total' => (int) $total
+        );
+    }
+
+    /**
+     * Get request history for institutions (for institutionAdmin)
+     *
+     * @param array $institution_ids Array of institution post IDs
+     * @param int $limit Limit
+     * @param int $offset Offset
+     * @return array Array with 'requests' and 'total'
+     */
+    public static function get_institution_history($institution_ids, $limit = 20, $offset = 0) {
+        global $wpdb;
+
+        if (empty($institution_ids)) {
+            return array('requests' => array(), 'total' => 0);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($institution_ids), '%d'));
+
+        // Count total
+        $count_sql = "SELECT COUNT(*) FROM " . self::get_table_name() . "
+                      WHERE institution_id IN ($placeholders)
+                      AND status IN (%s, %s)";
+        $count_params = array_merge($institution_ids, array(self::STATUS_APPROVED, self::STATUS_REJECTED));
+        $total = $wpdb->get_var($wpdb->prepare($count_sql, ...$count_params));
+
+        // Get requests with user and institution data
+        $sql = "SELECT r.*,
+                       p.post_title as institution_name,
+                       u.display_name as user_name,
+                       u.user_email as user_email,
+                       ru.display_name as responded_by_name
+                FROM " . self::get_table_name() . " r
+                LEFT JOIN {$wpdb->posts} p ON r.institution_id = p.ID
+                LEFT JOIN {$wpdb->users} u ON r.user_id = u.ID
+                LEFT JOIN {$wpdb->users} ru ON r.responded_by = ru.ID
+                WHERE r.institution_id IN ($placeholders)
+                AND r.status IN (%s, %s)
+                ORDER BY r.response_date DESC
+                LIMIT %d OFFSET %d";
+
+        $params = array_merge($institution_ids, array(self::STATUS_APPROVED, self::STATUS_REJECTED, $limit, $offset));
+        $requests = $wpdb->get_results($wpdb->prepare($sql, ...$params));
+
+        return array(
+            'requests' => $requests,
+            'total' => (int) $total
+        );
     }
 
     /**

@@ -12,6 +12,10 @@
         searchPerPage: 10,
         incomingPage: 1,
         incomingPerPage: 10,
+        myHistoryPage: 1,
+        myHistoryPerPage: 10,
+        institutionHistoryPage: 1,
+        institutionHistoryPerPage: 10,
         searchTimeout: null,
 
         // === INIT ===
@@ -131,6 +135,26 @@
                     self.loadIncomingRequests();
                 }
             });
+
+            // My history pagination
+            $(document).on('click', '#eau-my-history-pagination .eau-pagination-btn', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                if (page) {
+                    self.myHistoryPage = page;
+                    self.loadMyHistory();
+                }
+            });
+
+            // Institution history pagination
+            $(document).on('click', '#eau-institution-history-pagination .eau-pagination-btn', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                if (page) {
+                    self.institutionHistoryPage = page;
+                    self.loadInstitutionHistory();
+                }
+            });
         },
 
         // === LOAD INITIAL DATA ===
@@ -138,9 +162,11 @@
             this.loadStats();
             this.loadCurrentInstitution();
             this.loadPendingRequests();
+            this.loadMyHistory();
 
             if (this.config.isInstitutionAdmin) {
                 this.loadIncomingRequests();
+                this.loadInstitutionHistory();
             }
         },
 
@@ -923,6 +949,235 @@
                     $btn.prop('disabled', false).removeClass('eau-loading');
                 }
             });
+        },
+
+        // === MY REQUEST HISTORY ===
+        loadMyHistory: function() {
+            const self = this;
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_my_request_history',
+                    nonce: this.config.nonce,
+                    page: this.myHistoryPage,
+                    per_page: this.myHistoryPerPage
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.renderMyHistory(response.data);
+                    }
+                }
+            });
+        },
+
+        renderMyHistory: function(data) {
+            const self = this;
+            const requests = data.requests || [];
+
+            if (requests.length === 0) {
+                $('#eau-my-history-body').html(`
+                    <div class="eau-empty-state eau-empty-state-sm">
+                        <i data-lucide="file-clock"></i>
+                        <p>${this.config.strings.noHistory}</p>
+                    </div>
+                `);
+                $('#eau-my-history-pagination').hide();
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            let html = '<div class="eau-history-list">';
+
+            requests.forEach(function(req) {
+                const statusIcon = self.getStatusIcon(req.status);
+
+                html += `
+                    <div class="eau-history-item eau-history-item-${req.status}">
+                        <div class="eau-history-item-header">
+                            <div class="eau-history-item-institution">
+                                <i data-lucide="building-2"></i>
+                                <strong>${self.escapeHtml(req.institution_name)}</strong>
+                            </div>
+                            <span class="eau-badge eau-badge-${req.status_class}">
+                                ${statusIcon}
+                                ${req.status_label}
+                            </span>
+                        </div>
+                        <div class="eau-history-item-details">
+                            <div class="eau-history-item-dates">
+                                <span><i data-lucide="calendar"></i> Requested: ${req.request_date_formatted}</span>
+                                ${req.response_date_formatted ? `<span><i data-lucide="calendar-check"></i> Responded: ${req.response_date_formatted}</span>` : ''}
+                                ${req.responded_by_name ? `<span><i data-lucide="user"></i> By: ${self.escapeHtml(req.responded_by_name)}</span>` : ''}
+                            </div>
+                            ${req.notes ? `
+                                <div class="eau-history-item-notes">
+                                    <i data-lucide="message-square"></i>
+                                    <span>${self.escapeHtml(req.notes)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            $('#eau-my-history-body').html(html);
+
+            // Render pagination
+            if (data.total_pages > 1) {
+                this.renderHistoryPagination(data, '#eau-my-history-pagination');
+            } else {
+                $('#eau-my-history-pagination').hide();
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        // === INSTITUTION REQUEST HISTORY (for institutionAdmin) ===
+        loadInstitutionHistory: function() {
+            const self = this;
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_institution_request_history',
+                    nonce: this.config.nonce,
+                    page: this.institutionHistoryPage,
+                    per_page: this.institutionHistoryPerPage
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.renderInstitutionHistory(response.data);
+                    }
+                }
+            });
+        },
+
+        renderInstitutionHistory: function(data) {
+            const self = this;
+            const requests = data.requests || [];
+
+            if (requests.length === 0) {
+                $('#eau-institution-history-body').html(`
+                    <div class="eau-empty-state eau-empty-state-sm">
+                        <i data-lucide="history"></i>
+                        <p>${this.config.strings.noInstitutionHistory}</p>
+                    </div>
+                `);
+                $('#eau-institution-history-pagination').hide();
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            let html = '<div class="eau-history-list">';
+
+            requests.forEach(function(req) {
+                const statusIcon = self.getStatusIcon(req.status);
+
+                html += `
+                    <div class="eau-history-item eau-history-item-${req.status}">
+                        <div class="eau-history-item-header">
+                            <div class="eau-history-item-user">
+                                <i data-lucide="user"></i>
+                                <div>
+                                    <strong>${self.escapeHtml(req.user_name)}</strong>
+                                    <span class="eau-text-muted">${self.escapeHtml(req.user_email)}</span>
+                                </div>
+                            </div>
+                            <span class="eau-badge eau-badge-${req.status_class}">
+                                ${statusIcon}
+                                ${req.status_label}
+                            </span>
+                        </div>
+                        <div class="eau-history-item-details">
+                            <div class="eau-history-item-meta">
+                                <span><i data-lucide="building-2"></i> ${self.escapeHtml(req.institution_name)}</span>
+                            </div>
+                            <div class="eau-history-item-dates">
+                                <span><i data-lucide="calendar"></i> Requested: ${req.request_date_formatted}</span>
+                                ${req.response_date_formatted ? `<span><i data-lucide="calendar-check"></i> Responded: ${req.response_date_formatted}</span>` : ''}
+                                ${req.responded_by_name ? `<span><i data-lucide="user-check"></i> By: ${self.escapeHtml(req.responded_by_name)}</span>` : ''}
+                            </div>
+                            ${req.notes ? `
+                                <div class="eau-history-item-notes">
+                                    <i data-lucide="message-square"></i>
+                                    <span>${self.escapeHtml(req.notes)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            $('#eau-institution-history-body').html(html);
+
+            // Render pagination
+            if (data.total_pages > 1) {
+                this.renderHistoryPagination(data, '#eau-institution-history-pagination');
+            } else {
+                $('#eau-institution-history-pagination').hide();
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        renderHistoryPagination: function(data, container) {
+            let html = '<div class="eau-pagination">';
+
+            // Previous
+            if (data.page > 1) {
+                html += `<button class="eau-pagination-btn" data-page="${data.page - 1}"><i data-lucide="chevron-left"></i></button>`;
+            }
+
+            // Pages
+            for (let i = 1; i <= data.total_pages; i++) {
+                if (i === data.page) {
+                    html += `<button class="eau-pagination-btn eau-pagination-btn-active">${i}</button>`;
+                } else if (i <= 2 || i > data.total_pages - 2 || Math.abs(i - data.page) <= 1) {
+                    html += `<button class="eau-pagination-btn" data-page="${i}">${i}</button>`;
+                } else if (i === 3 && data.page > 4) {
+                    html += '<span class="eau-pagination-ellipsis">...</span>';
+                } else if (i === data.total_pages - 2 && data.page < data.total_pages - 3) {
+                    html += '<span class="eau-pagination-ellipsis">...</span>';
+                }
+            }
+
+            // Next
+            if (data.page < data.total_pages) {
+                html += `<button class="eau-pagination-btn" data-page="${data.page + 1}"><i data-lucide="chevron-right"></i></button>`;
+            }
+
+            html += '</div>';
+
+            $(container).html(html).show();
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        getStatusIcon: function(status) {
+            const icons = {
+                'approved': '<i data-lucide="check-circle"></i>',
+                'rejected': '<i data-lucide="x-circle"></i>',
+                'cancelled': '<i data-lucide="minus-circle"></i>',
+                'pending': '<i data-lucide="clock"></i>'
+            };
+            return icons[status] || '';
         },
 
         // === UTILITIES ===

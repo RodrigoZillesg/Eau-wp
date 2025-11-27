@@ -138,6 +138,36 @@ class Eau_My_Institution {
                 </div>
             </div>
 
+            <!-- Request History Section (for institutionAdmin) -->
+            <?php if ($is_institution_admin): ?>
+            <div class="eau-section" id="eau-institution-history-section">
+                <div class="eau-section-header">
+                    <h2 class="eau-section-title">
+                        <i data-lucide="history"></i>
+                        Request History
+                    </h2>
+                </div>
+                <div class="eau-section-body" id="eau-institution-history-body">
+                    <?php echo Eau_Skeleton::text(3); ?>
+                </div>
+                <div id="eau-institution-history-pagination" class="eau-pagination-container" style="display: none;"></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- My Request History Section -->
+            <div class="eau-section" id="eau-my-history-section">
+                <div class="eau-section-header">
+                    <h2 class="eau-section-title">
+                        <i data-lucide="file-clock"></i>
+                        My Request History
+                    </h2>
+                </div>
+                <div class="eau-section-body" id="eau-my-history-body">
+                    <?php echo Eau_Skeleton::text(3); ?>
+                </div>
+                <div id="eau-my-history-pagination" class="eau-pagination-container" style="display: none;"></div>
+            </div>
+
             <!-- Modals -->
             <?php echo self::render_request_modal(); ?>
             <?php echo self::render_respond_modal(); ?>
@@ -396,6 +426,8 @@ class Eau_My_Institution {
                 'noResults' => 'No institutions found. Try a different search term.',
                 'noPendingRequests' => 'You have no pending requests.',
                 'noIncomingRequests' => 'No pending requests to review.',
+                'noHistory' => 'No request history yet.',
+                'noInstitutionHistory' => 'No processed requests yet.',
                 'confirmCancel' => 'Are you sure you want to cancel this request?',
                 'requestSent' => 'Request sent successfully!',
                 'requestCancelled' => 'Request cancelled.',

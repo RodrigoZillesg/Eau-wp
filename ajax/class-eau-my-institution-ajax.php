@@ -41,6 +41,12 @@ class Eau_My_Institution_Ajax {
 
         // Get stats for My Institution page
         add_action('wp_ajax_eau_get_my_institution_stats', array(__CLASS__, 'get_my_institution_stats'));
+
+        // Get user's request history
+        add_action('wp_ajax_eau_get_my_request_history', array(__CLASS__, 'get_my_request_history'));
+
+        // Get institution request history (for institutionAdmin)
+        add_action('wp_ajax_eau_get_institution_request_history', array(__CLASS__, 'get_institution_request_history'));
     }
 
     /**
@@ -604,5 +610,143 @@ class Eau_My_Institution_Ajax {
         }
 
         wp_send_json_success($stats);
+    }
+
+    /**
+     * AJAX: Get user's request history
+     */
+    public static function get_my_request_history() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $user_id = get_current_user_id();
+        $page = isset($_POST['page']) ? absint($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? absint($_POST['per_page']) : 10;
+        $offset = ($page - 1) * $per_page;
+
+        $result = Eau_Institution_Requests_Database::get_user_history($user_id, $per_page, $offset);
+
+        $formatted = array();
+        foreach ($result['requests'] as $request) {
+            $formatted[] = array(
+                'request_id' => $request->request_id,
+                'institution_id' => $request->institution_id,
+                'institution_name' => $request->institution_name,
+                'status' => $request->status,
+                'status_label' => self::get_status_label($request->status),
+                'status_class' => self::get_status_class($request->status),
+                'request_date' => $request->request_date,
+                'request_date_formatted' => date_i18n('M j, Y', strtotime($request->request_date)),
+                'response_date' => $request->response_date,
+                'response_date_formatted' => $request->response_date ? date_i18n('M j, Y', strtotime($request->response_date)) : null,
+                'responded_by_name' => $request->responded_by_name,
+                'notes' => $request->notes,
+            );
+        }
+
+        wp_send_json_success(array(
+            'requests' => $formatted,
+            'total' => $result['total'],
+            'page' => $page,
+            'per_page' => $per_page,
+            'total_pages' => ceil($result['total'] / $per_page),
+        ));
+    }
+
+    /**
+     * AJAX: Get institution request history (for institutionAdmin)
+     */
+    public static function get_institution_request_history() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $user_id = get_current_user_id();
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+
+        // Only institutionAdmin can see history
+        if ($mem_type !== 'institutionAdmin') {
+            wp_send_json_success(array('requests' => array(), 'total' => 0));
+        }
+
+        $page = isset($_POST['page']) ? absint($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? absint($_POST['per_page']) : 10;
+        $offset = ($page - 1) * $per_page;
+
+        // Get managed institution IDs
+        $managed = Eau_User_Institution_Helper::get_user_managed_institutions($user_id);
+        $institution_ids = array_map(function($inst) { return $inst->ID; }, $managed);
+
+        if (empty($institution_ids)) {
+            wp_send_json_success(array('requests' => array(), 'total' => 0));
+        }
+
+        $result = Eau_Institution_Requests_Database::get_institution_history($institution_ids, $per_page, $offset);
+
+        $formatted = array();
+        foreach ($result['requests'] as $request) {
+            $formatted[] = array(
+                'request_id' => $request->request_id,
+                'user_id' => $request->user_id,
+                'user_name' => $request->user_name,
+                'user_email' => $request->user_email,
+                'institution_id' => $request->institution_id,
+                'institution_name' => $request->institution_name,
+                'status' => $request->status,
+                'status_label' => self::get_status_label($request->status),
+                'status_class' => self::get_status_class($request->status),
+                'request_date' => $request->request_date,
+                'request_date_formatted' => date_i18n('M j, Y', strtotime($request->request_date)),
+                'response_date' => $request->response_date,
+                'response_date_formatted' => $request->response_date ? date_i18n('M j, Y', strtotime($request->response_date)) : null,
+                'responded_by_name' => $request->responded_by_name,
+                'notes' => $request->notes,
+            );
+        }
+
+        wp_send_json_success(array(
+            'requests' => $formatted,
+            'total' => $result['total'],
+            'page' => $page,
+            'per_page' => $per_page,
+            'total_pages' => ceil($result['total'] / $per_page),
+        ));
+    }
+
+    /**
+     * Get human-readable status label
+     *
+     * @param string $status Status code
+     * @return string Label
+     */
+    private static function get_status_label($status) {
+        $labels = array(
+            'pending' => 'Pending',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'cancelled' => 'Cancelled',
+        );
+        return isset($labels[$status]) ? $labels[$status] : ucfirst($status);
+    }
+
+    /**
+     * Get CSS class for status badge
+     *
+     * @param string $status Status code
+     * @return string CSS class
+     */
+    private static function get_status_class($status) {
+        $classes = array(
+            'pending' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'cancelled' => 'secondary',
+        );
+        return isset($classes[$status]) ? $classes[$status] : 'secondary';
     }
 }
