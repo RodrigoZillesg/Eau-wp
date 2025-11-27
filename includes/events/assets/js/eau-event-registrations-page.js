@@ -115,7 +115,7 @@
             const $tbody = $('#eau-registrations-tbody');
 
             // Show skeleton loading
-            $tbody.html('<tr><td colspan="5" class="eau-loading-cell"><div class="eau-skeleton-row"></div></td></tr>');
+            $tbody.html('<tr><td colspan="6" class="eau-loading-cell"><div class="eau-skeleton-row"></div></td></tr>');
 
             $.ajax({
                 url: eauEventRegistrations.ajaxUrl,
@@ -137,12 +137,12 @@
                         self.renderPagination(response.data);
                         self.updateStats(response.data.stats);
                     } else {
-                        $tbody.html('<tr><td colspan="5" class="eau-empty-cell">Error loading registrations</td></tr>');
+                        $tbody.html('<tr><td colspan="6" class="eau-empty-cell">Error loading registrations</td></tr>');
                     }
                     lucide.createIcons();
                 },
                 error: function() {
-                    $tbody.html('<tr><td colspan="5" class="eau-empty-cell">Error loading registrations</td></tr>');
+                    $tbody.html('<tr><td colspan="6" class="eau-empty-cell">Error loading registrations</td></tr>');
                 }
             });
         },
@@ -155,7 +155,7 @@
             const $tbody = $('#eau-registrations-tbody');
 
             if (!rows || rows.length === 0) {
-                $tbody.html('<tr><td colspan="5" class="eau-empty-cell">No registrations found</td></tr>');
+                $tbody.html('<tr><td colspan="6" class="eau-empty-cell">No registrations found</td></tr>');
                 return;
             }
 
@@ -173,6 +173,22 @@
                 html += '<td>' + row.registration_date + '</td>';
                 html += '<td>';
                 html += '<span class="eau-badge ' + statusBadgeClass + '">' + row.status_label + '</span>';
+                html += '</td>';
+                html += '<td class="eau-attended-cell">';
+                if (row.attended) {
+                    html += '<span class="eau-attended-badge eau-attended-yes" title="Clicked Join Online">';
+                    html += '<i data-lucide="check-circle"></i>';
+                    html += '</span>';
+                    if (row.activity_created) {
+                        html += '<span class="eau-cpd-badge" title="CPD Activity Created">';
+                        html += '<i data-lucide="award"></i>';
+                        html += '</span>';
+                    }
+                } else {
+                    html += '<span class="eau-attended-badge eau-attended-no" title="Not attended yet">';
+                    html += '<i data-lucide="minus"></i>';
+                    html += '</span>';
+                }
                 html += '</td>';
                 html += '<td class="eau-table-actions-col">';
                 html += '<div class="eau-table-actions">';

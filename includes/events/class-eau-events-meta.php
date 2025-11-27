@@ -57,6 +57,31 @@ class Eau_Events_Meta {
         add_action('init', array($this, 'register_meta'), 10);
         add_action('init', array($this, 'register_to_jet_engine'), 5);
         add_action('admin_init', array($this, 'handle_force_sync_request'));
+
+        // One-time reset to force resync with new args (v1.31.5)
+        $this->maybe_reset_jet_version();
+    }
+
+    /**
+     * Reset jet version option to force resync (one-time fix)
+     *
+     * @since 1.31.5
+     */
+    private function maybe_reset_jet_version() {
+        // v1317 - force complete resync
+        $reset_key = 'eau_events_jet_args_reset_v1317';
+        if (!get_option($reset_key)) {
+            global $wpdb;
+            $table = $wpdb->prefix . 'jet_post_types';
+
+            // Delete existing entry completely
+            if ($wpdb->get_var("SHOW TABLES LIKE '$table'") == $table) {
+                $wpdb->delete($table, array('slug' => Config\POST_TYPE), array('%s'));
+            }
+
+            delete_option('eau_events_jet_version');
+            update_option($reset_key, '1');
+        }
     }
 
     /**
@@ -215,9 +240,11 @@ class Eau_Events_Meta {
         $saved_version = get_option($version_key);
 
         if ($this->exists_in_jet_engine()) {
-            // Update if version changed
+            // Update if version changed - delete and recreate for clean update
             if ($saved_version !== $current_version) {
-                $this->update_in_jet_engine();
+                // Delete old entry and recreate to ensure all args are correct
+                $wpdb->delete($table, array('slug' => Config\POST_TYPE), array('%s'));
+                $this->save_to_jet_engine();
                 update_option($version_key, $current_version);
             }
             return;
@@ -376,13 +403,24 @@ class Eau_Events_Meta {
      */
     private function get_args() {
         return array(
-            'public'       => true,
-            'has_archive'  => true,
-            'show_in_rest' => true,
-            'menu_icon'    => 'dashicons-calendar-alt',
-            'supports'     => array('title', 'thumbnail'),
-            'rewrite'      => true,
-            'rewrite_slug' => 'events',
+            'public'              => true,
+            'publicly_queryable'  => true,
+            'show_ui'             => true,
+            'show_in_menu'        => true,
+            'show_in_admin_bar'   => true,
+            'show_in_nav_menus'   => true,
+            'query_var'           => true,
+            'has_archive'         => true,
+            'hierarchical'        => false,
+            'show_in_rest'        => false, // Disable Gutenberg - use classic editor for our metabox
+            'menu_position'       => 25,
+            'menu_icon'           => 'dashicons-calendar-alt',
+            'capability_type'     => 'post',
+            'map_meta_cap'        => true,
+            'supports'            => array('title', 'thumbnail'),
+            'rewrite'             => true,
+            'rewrite_slug'        => 'events',
+            'with_front'          => false,
         );
     }
 

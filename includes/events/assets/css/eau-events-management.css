@@ -1594,3 +1594,53 @@ button.eau-btn-secondary {
     background-color: #f3f4f6 !important;
     color: #6b7280 !important;
 }
+
+/* ==========================================================================
+   Attended Badge Styles
+   ========================================================================== */
+
+.eau-attended-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.eau-attended-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
+.eau-attended-badge svg {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-attended-yes {
+    background-color: var(--eau-success-light);
+    color: var(--eau-success);
+}
+
+.eau-attended-no {
+    background-color: var(--eau-gray-100);
+    color: var(--eau-gray-400);
+}
+
+.eau-cpd-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.eau-cpd-badge svg {
+    width: 16px;
+    height: 16px;
+}
