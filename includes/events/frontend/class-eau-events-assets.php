@@ -87,5 +87,11 @@ class Eau_Events_Assets {
             EAU_SYSTEM_VERSION,
             true
         );
+
+        // Pass AJAX data to script
+        wp_localize_script('eau-events-frontend', 'eauEventsFrontendData', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('eau_event_registration'),
+        ));
     }
 }

@@ -35,7 +35,37 @@ class Eau_Events_Metabox {
      */
     public static function init() {
         add_action('add_meta_boxes', array(__CLASS__, 'add_metabox'), 5);
+        add_action('add_meta_boxes', array(__CLASS__, 'remove_jet_metaboxes'), 99);
         add_action('save_post_' . Config\POST_TYPE, array(__CLASS__, 'save'), 10, 2);
+    }
+
+    /**
+     * Remove JetEngine metaboxes to avoid duplicate fields
+     *
+     * @since  1.31.8
+     * @return void
+     */
+    public static function remove_jet_metaboxes() {
+        // Remove all JetEngine meta boxes for eau_event
+        remove_meta_box('jet-engine-cpt-1', Config\POST_TYPE, 'normal');
+        remove_meta_box('jet-engine-cpt-1', Config\POST_TYPE, 'side');
+        remove_meta_box('jet-engine-cpt-1', Config\POST_TYPE, 'advanced');
+
+        // Also try generic JetEngine metabox IDs
+        global $wp_meta_boxes;
+        if (isset($wp_meta_boxes[Config\POST_TYPE])) {
+            foreach (array('normal', 'side', 'advanced') as $context) {
+                if (isset($wp_meta_boxes[Config\POST_TYPE][$context])) {
+                    foreach ($wp_meta_boxes[Config\POST_TYPE][$context] as $priority => $boxes) {
+                        foreach ($boxes as $id => $box) {
+                            if (strpos($id, 'jet-engine') !== false || strpos($id, 'jet_engine') !== false) {
+                                remove_meta_box($id, Config\POST_TYPE, $context);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

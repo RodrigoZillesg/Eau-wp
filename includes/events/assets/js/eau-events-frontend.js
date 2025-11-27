@@ -21,6 +21,125 @@
             this.initShareButton();
             this.initSaveButton();
             this.initFilterForm();
+            this.initRegistrationModal();
+            this.initJoinButton();
+        },
+
+        /**
+         * Initialize registration modal
+         */
+        initRegistrationModal: function() {
+            const modal = document.getElementById('eau-registration-modal');
+            const registerBtn = document.querySelector('.eau-event-register-btn');
+
+            if (!modal || !registerBtn) return;
+
+            const closeBtn = modal.querySelector('.eau-reg-modal-close');
+            const cancelBtn = document.getElementById('eau-cancel-registration');
+            const overlay = modal.querySelector('.eau-reg-modal-overlay');
+            const messageEl = document.getElementById('eau-registration-message');
+            const confirmBtn = document.getElementById('eau-confirm-registration');
+            const nonceEl = document.getElementById('eau-reg-nonce');
+
+            const self = this;
+
+            function openModal() {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                if (messageEl) {
+                    messageEl.innerHTML = '';
+                    messageEl.className = 'eau-reg-message';
+                }
+            }
+
+            registerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openModal();
+            });
+
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+            if (overlay) overlay.addEventListener('click', closeModal);
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+
+            if (confirmBtn && nonceEl) {
+                confirmBtn.addEventListener('click', function() {
+                    const eventId = this.dataset.eventId;
+                    const btnText = this.querySelector('.btn-text');
+                    const btnLoading = this.querySelector('.btn-loading');
+
+                    this.disabled = true;
+                    if (btnText) btnText.style.display = 'none';
+                    if (btnLoading) btnLoading.style.display = 'inline';
+
+                    const formData = new FormData();
+                    formData.append('action', 'eau_register_for_event');
+                    formData.append('event_id', eventId);
+                    formData.append('nonce', nonceEl.value);
+
+                    fetch(eauEventsFrontendData.ajaxUrl, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        confirmBtn.disabled = false;
+                        if (btnText) btnText.style.display = 'inline';
+                        if (btnLoading) btnLoading.style.display = 'none';
+
+                        if (data.success) {
+                            messageEl.className = 'eau-reg-message eau-reg-message-success';
+                            messageEl.innerHTML = data.data.message;
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            messageEl.className = 'eau-reg-message eau-reg-message-error';
+                            messageEl.innerHTML = data.data.message;
+                        }
+                    })
+                    .catch(function(error) {
+                        confirmBtn.disabled = false;
+                        if (btnText) btnText.style.display = 'inline';
+                        if (btnLoading) btnLoading.style.display = 'none';
+                        messageEl.className = 'eau-reg-message eau-reg-message-error';
+                        messageEl.innerHTML = 'An error occurred. Please try again.';
+                    });
+                });
+            }
+        },
+
+        /**
+         * Initialize join button (marks attendance)
+         */
+        initJoinButton: function() {
+            const joinBtn = document.querySelector('.eau-event-join-btn');
+            if (!joinBtn) return;
+
+            joinBtn.addEventListener('click', function() {
+                const eventId = this.dataset.eventId;
+                if (!eventId) return;
+
+                const formData = new FormData();
+                formData.append('action', 'eau_mark_event_attended');
+                formData.append('nonce', eauEventsFrontendData.nonce);
+                formData.append('event_id', eventId);
+
+                fetch(eauEventsFrontendData.ajaxUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+            });
         },
 
         /**

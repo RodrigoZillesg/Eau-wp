@@ -250,155 +250,43 @@ while (have_posts()) : the_post();
 </div>
 
 <!-- Registration Modal -->
-<div class="eau-modal" id="eau-registration-modal">
-    <div class="eau-modal-backdrop"></div>
-    <div class="eau-modal-content">
-        <div class="eau-modal-header">
-            <h3 class="eau-modal-title"><?php _e('Register for Event', 'eau-system'); ?></h3>
-            <button class="eau-modal-close" type="button">&times;</button>
+<div class="eau-reg-modal" id="eau-registration-modal">
+    <div class="eau-reg-modal-overlay"></div>
+    <div class="eau-reg-modal-container">
+        <div class="eau-reg-modal-header">
+            <h2 class="eau-reg-modal-title"><?php _e('Confirm Registration', 'eau-system'); ?></h2>
+            <button type="button" class="eau-reg-modal-close" aria-label="Close">&times;</button>
         </div>
-        <div class="eau-modal-body">
-            <div class="eau-registration-event-info">
+        <div class="eau-reg-modal-body">
+            <div class="eau-reg-event-info">
                 <strong><?php echo esc_html($data['title']); ?></strong>
                 <span><?php echo esc_html($date_display); ?> &bull; <?php echo esc_html($time_display); ?></span>
             </div>
-            <form id="eau-registration-form" class="eau-registration-form">
-                <input type="hidden" name="event_id" value="<?php echo esc_attr($data['id']); ?>">
-                <?php wp_nonce_field('eau_event_registration', 'eau_reg_nonce'); ?>
 
-                <div class="eau-form-group">
-                    <label for="eau-attendee-name"><?php _e('Full Name', 'eau-system'); ?> <span class="required">*</span></label>
-                    <input type="text" id="eau-attendee-name" name="attendee_name" value="<?php echo esc_attr($user_name); ?>" required>
+            <div class="eau-reg-user-info">
+                <p class="eau-reg-info-label"><?php _e('You will be registered as:', 'eau-system'); ?></p>
+                <div class="eau-reg-info-row">
+                    <span class="eau-reg-info-icon">👤</span>
+                    <span class="eau-reg-info-value"><?php echo esc_html($user_name); ?></span>
                 </div>
-
-                <div class="eau-form-group">
-                    <label for="eau-attendee-email"><?php _e('Email Address', 'eau-system'); ?> <span class="required">*</span></label>
-                    <input type="email" id="eau-attendee-email" name="attendee_email" value="<?php echo esc_attr($user_email); ?>" required>
+                <div class="eau-reg-info-row">
+                    <span class="eau-reg-info-icon">✉️</span>
+                    <span class="eau-reg-info-value"><?php echo esc_html($user_email); ?></span>
                 </div>
+            </div>
 
-                <div class="eau-form-message" id="eau-registration-message"></div>
-
-                <div class="eau-form-actions">
-                    <button type="button" class="eau-btn eau-btn-outline eau-modal-cancel"><?php _e('Cancel', 'eau-system'); ?></button>
-                    <button type="submit" class="eau-btn eau-btn-primary" id="eau-submit-registration">
-                        <span class="btn-text"><?php _e('Complete Registration', 'eau-system'); ?></span>
-                        <span class="btn-loading" style="display:none;"><?php _e('Registering...', 'eau-system'); ?></span>
-                    </button>
-                </div>
-            </form>
+            <div class="eau-reg-message" id="eau-registration-message"></div>
         </div>
+        <div class="eau-reg-modal-footer">
+            <button type="button" class="eau-reg-btn-cancel" id="eau-cancel-registration"><?php _e('Cancel', 'eau-system'); ?></button>
+            <button type="button" class="eau-reg-btn-confirm" id="eau-confirm-registration" data-event-id="<?php echo esc_attr($data['id']); ?>">
+                <span class="btn-text"><?php _e('Confirm', 'eau-system'); ?></span>
+                <span class="btn-loading" style="display:none;"><?php _e('Registering...', 'eau-system'); ?></span>
+            </button>
+        </div>
+        <input type="hidden" id="eau-reg-nonce" value="<?php echo wp_create_nonce('eau_event_registration'); ?>">
     </div>
 </div>
-
-<script>
-(function() {
-    var modal = document.getElementById('eau-registration-modal');
-    var form = document.getElementById('eau-registration-form');
-    var registerBtn = document.querySelector('.eau-event-register-btn');
-    var closeBtn = modal ? modal.querySelector('.eau-modal-close') : null;
-    var cancelBtn = modal ? modal.querySelector('.eau-modal-cancel') : null;
-    var backdrop = modal ? modal.querySelector('.eau-modal-backdrop') : null;
-    var messageEl = document.getElementById('eau-registration-message');
-    var submitBtn = document.getElementById('eau-submit-registration');
-
-    function openModal() {
-        if (modal) {
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    function closeModal() {
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-            if (messageEl) {
-                messageEl.innerHTML = '';
-                messageEl.className = 'eau-form-message';
-            }
-        }
-    }
-
-    if (registerBtn) {
-        registerBtn.addEventListener('click', openModal);
-    }
-
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    if (backdrop) backdrop.addEventListener('click', closeModal);
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
-    });
-
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            var btnText = submitBtn.querySelector('.btn-text');
-            var btnLoading = submitBtn.querySelector('.btn-loading');
-
-            submitBtn.disabled = true;
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'inline';
-
-            var formData = new FormData(form);
-            formData.append('action', 'eau_register_for_event');
-            formData.append('nonce', formData.get('eau_reg_nonce'));
-
-            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                method: 'POST',
-                body: formData
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                submitBtn.disabled = false;
-                btnText.style.display = 'inline';
-                btnLoading.style.display = 'none';
-
-                if (data.success) {
-                    messageEl.className = 'eau-form-message eau-form-message-success';
-                    messageEl.innerHTML = data.data.message;
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    messageEl.className = 'eau-form-message eau-form-message-error';
-                    messageEl.innerHTML = data.data.message;
-                }
-            })
-            .catch(function(error) {
-                submitBtn.disabled = false;
-                btnText.style.display = 'inline';
-                btnLoading.style.display = 'none';
-                messageEl.className = 'eau-form-message eau-form-message-error';
-                messageEl.innerHTML = '<?php _e('An error occurred. Please try again.', 'eau-system'); ?>';
-            });
-        });
-    }
-
-    // Join button - marca presença quando usuário clica
-    var joinBtn = document.querySelector('.eau-event-join-btn');
-    if (joinBtn) {
-        joinBtn.addEventListener('click', function() {
-            var eventId = this.dataset.eventId;
-            if (!eventId) return;
-
-            // Envia AJAX para marcar presença (em background, não bloqueia o link)
-            var formData = new FormData();
-            formData.append('action', 'eau_mark_event_attended');
-            formData.append('nonce', '<?php echo wp_create_nonce('eau_event_registration'); ?>');
-            formData.append('event_id', eventId);
-
-            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                method: 'POST',
-                body: formData
-            });
-            // Não precisa esperar resposta - o link já vai abrir
-        });
-    }
-})();
-</script>
 
 <?php endwhile;
 

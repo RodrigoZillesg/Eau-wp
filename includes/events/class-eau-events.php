@@ -30,7 +30,7 @@ class Eau_Events {
      *
      * @var string
      */
-    const VERSION = '1.30.0';
+    const VERSION = '1.31.8';
 
     /**
      * Instância singleton

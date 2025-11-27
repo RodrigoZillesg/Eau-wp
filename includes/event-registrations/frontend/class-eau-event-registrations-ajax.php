@@ -58,6 +58,17 @@ class Eau_Event_Registrations_Ajax {
         $attendee_name = isset($_POST['attendee_name']) ? sanitize_text_field($_POST['attendee_name']) : '';
         $attendee_email = isset($_POST['attendee_email']) ? sanitize_email($_POST['attendee_email']) : '';
 
+        // Se usuário está logado e não enviou nome/email, usa dados do usuário
+        if (is_user_logged_in()) {
+            $current_user = wp_get_current_user();
+            if (empty($attendee_name)) {
+                $attendee_name = $current_user->display_name;
+            }
+            if (empty($attendee_email)) {
+                $attendee_email = $current_user->user_email;
+            }
+        }
+
         // Validações
         if (!$event_id) {
             wp_send_json_error(array('message' => __('Invalid event.', 'eau-system')));

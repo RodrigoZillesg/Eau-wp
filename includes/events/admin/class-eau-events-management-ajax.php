@@ -623,6 +623,8 @@ class Eau_Events_Management_Ajax {
         $attendee_email = get_post_meta($post_id, 'reg_attendee_email', true);
         $registration_date = get_post_meta($post_id, 'reg_registration_date', true);
         $status = get_post_meta($post_id, 'reg_status', true) ?: 'pending';
+        $attended = get_post_meta($post_id, 'reg_attended', true);
+        $activity_created = get_post_meta($post_id, 'reg_activity_created', true);
 
         // Format date
         $date_formatted = '';
@@ -655,13 +657,15 @@ class Eau_Events_Management_Ajax {
         $status_label = isset($status_labels[$status]) ? $status_labels[$status] : ucfirst($status);
 
         return array(
-            'id'           => $post_id,
-            'attendee_name' => $attendee_name ?: '—',
-            'attendee_email' => $attendee_email ?: '—',
+            'id'               => $post_id,
+            'attendee_name'    => $attendee_name ?: '—',
+            'attendee_email'   => $attendee_email ?: '—',
             'registration_date' => $date_formatted ?: '—',
-            'status'       => $status,
-            'status_label' => $status_label,
-            'status_class' => $status_class,
+            'status'           => $status,
+            'status_label'     => $status_label,
+            'status_class'     => $status_class,
+            'attended'         => $attended === '1',
+            'activity_created' => $activity_created === '1',
         );
     }
 

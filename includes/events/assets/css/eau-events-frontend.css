@@ -1136,82 +1136,270 @@
    Registration Modal
    ========================================================================== */
 
-.eau-modal {
+.eau-reg-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999;
     display: none;
+}
+
+.eau-reg-modal.active {
+    display: block;
+}
+
+.eau-reg-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 99999;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-}
-
-.eau-modal.active {
-    display: flex;
-}
-
-.eau-modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 1;
 }
 
-.eau-modal-content {
-    position: relative;
-    z-index: 2;
-    background: var(--eau-white);
-    border-radius: var(--eau-border-radius-lg);
-    box-shadow: var(--eau-shadow-lg);
-    max-width: 480px;
-    width: 100%;
+.eau-reg-modal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 440px;
     max-height: 90vh;
-    overflow-y: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-.eau-modal-header {
+.eau-reg-modal-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     padding: 20px 24px;
     border-bottom: 1px solid var(--eau-gray-200);
 }
 
-.eau-modal-title {
-    font-size: 18px;
+.eau-reg-modal-title {
+    font-size: 20px;
     font-weight: 600;
     color: var(--eau-gray-900);
     margin: 0;
+    padding: 0;
 }
 
-.eau-modal-close {
-    width: 32px;
-    height: 32px;
+.eau-reg-modal-close,
+button.eau-reg-modal-close,
+.eau-reg-modal .eau-reg-modal-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    color: var(--eau-gray-500) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    font-size: 28px !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-reg-modal-close:hover,
+button.eau-reg-modal-close:hover,
+.eau-reg-modal .eau-reg-modal-close:hover {
+    background: var(--eau-gray-100) !important;
+    color: var(--eau-gray-900) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.eau-reg-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.eau-reg-modal-footer {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    font-size: 24px;
-    color: var(--eau-gray-400);
-    cursor: pointer;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--eau-gray-200);
+    background: var(--eau-gray-50);
+}
+
+/* Event Info in Modal */
+.eau-reg-event-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px;
+    background: var(--eau-gray-50);
     border-radius: var(--eau-border-radius);
-    transition: all 0.2s ease;
+    border: 1px solid var(--eau-gray-200);
 }
 
-.eau-modal-close:hover {
-    background: var(--eau-gray-100);
-    color: var(--eau-gray-600);
+.eau-reg-event-info strong {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--eau-gray-900);
 }
 
-.eau-modal-body {
-    padding: 24px;
+.eau-reg-event-info span {
+    font-size: 13px;
+    color: var(--eau-gray-500);
+}
+
+/* User Info Display */
+.eau-reg-user-info {
+    margin-top: 20px;
+}
+
+.eau-reg-info-label {
+    font-size: 13px;
+    color: var(--eau-gray-500);
+    margin: 0 0 12px 0;
+}
+
+.eau-reg-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius);
+    margin-bottom: 8px;
+}
+
+.eau-reg-info-row:last-child {
+    margin-bottom: 0;
+}
+
+.eau-reg-info-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.eau-reg-info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-900);
+}
+
+/* Modal Buttons */
+.eau-reg-btn-cancel,
+button.eau-reg-btn-cancel,
+.eau-reg-modal .eau-reg-btn-cancel {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 16px !important;
+    background: #fff !important;
+    color: var(--eau-gray-700) !important;
+    border: 1px solid var(--eau-gray-300) !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: var(--eau-font-family) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    line-height: 1.5 !important;
+}
+
+.eau-reg-btn-cancel:hover,
+button.eau-reg-btn-cancel:hover,
+.eau-reg-modal .eau-reg-btn-cancel:hover {
+    background: var(--eau-gray-50) !important;
+    border-color: var(--eau-gray-400) !important;
+    color: var(--eau-gray-900) !important;
+    box-shadow: none !important;
+}
+
+.eau-reg-btn-confirm,
+button.eau-reg-btn-confirm,
+.eau-reg-modal .eau-reg-btn-confirm {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 20px !important;
+    background: var(--eau-primary) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: var(--eau-font-family) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    line-height: 1.5 !important;
+}
+
+.eau-reg-btn-confirm:hover,
+button.eau-reg-btn-confirm:hover,
+.eau-reg-modal .eau-reg-btn-confirm:hover {
+    background: var(--eau-primary-hover) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.eau-reg-btn-confirm:disabled,
+button.eau-reg-btn-confirm:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+/* Message */
+.eau-reg-message {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: var(--eau-border-radius);
+    font-size: 14px;
+    display: none;
+}
+
+.eau-reg-message:not(:empty) {
+    display: block;
+}
+
+.eau-reg-message-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.eau-reg-message-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }
 
 /* Registration Event Info */

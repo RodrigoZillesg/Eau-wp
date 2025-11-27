@@ -36,6 +36,103 @@ class Eau_Event_Activity_Creator {
 
         // AJAX para marcar presença quando usuário clica em Join
         add_action('wp_ajax_eau_mark_event_attended', array(__CLASS__, 'mark_attended'));
+
+        // Debug endpoint
+        add_action('admin_init', array(__CLASS__, 'handle_debug'));
+    }
+
+    /**
+     * Debug endpoint para verificar status dos registrations
+     *
+     * Acesse: /wp-admin/?eau_event_debug=1
+     *
+     * @since  1.32.2
+     * @return void
+     */
+    public static function handle_debug() {
+        if (!isset($_GET['eau_event_debug']) || !current_user_can('manage_options')) {
+            return;
+        }
+
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<h1>Eau Event Registration Debug</h1>';
+
+        // Lista todos os registrations
+        $prefix = Config\META_PREFIX;
+        $registrations = new \WP_Query(array(
+            'post_type'      => Config\POST_TYPE,
+            'post_status'    => 'publish',
+            'posts_per_page' => 50,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        echo '<h2>Event Registrations (' . $registrations->found_posts . ')</h2>';
+        echo '<table border="1" cellpadding="10" style="border-collapse: collapse;">';
+        echo '<tr><th>ID</th><th>Title</th><th>Event ID</th><th>User ID</th><th>mem_userid</th><th>Status</th><th>Attended</th><th>Activity Created</th></tr>';
+
+        foreach ($registrations->posts as $reg) {
+            $event_id = get_post_meta($reg->ID, $prefix . 'event_id', true);
+            $user_id = get_post_meta($reg->ID, $prefix . 'user_id', true);
+            $mem_userid = get_post_meta($reg->ID, $prefix . 'mem_userid', true);
+            $status = get_post_meta($reg->ID, $prefix . 'status', true);
+            $attended = get_post_meta($reg->ID, $prefix . 'attended', true);
+            $activity_created = get_post_meta($reg->ID, $prefix . 'activity_created', true);
+
+            echo '<tr>';
+            echo '<td>' . $reg->ID . '</td>';
+            echo '<td>' . esc_html($reg->post_title) . '</td>';
+            echo '<td>' . $event_id . '</td>';
+            echo '<td>' . $user_id . '</td>';
+            echo '<td style="background:' . (empty($mem_userid) ? '#fee2e2' : '#dcfce7') . '">' . ($mem_userid ?: '<strong>EMPTY!</strong>') . '</td>';
+            echo '<td>' . $status . '</td>';
+            echo '<td style="background:' . ($attended === '1' ? '#dcfce7' : '#fef3c7') . '">' . ($attended === '1' ? 'YES' : 'NO') . '</td>';
+            echo '<td style="background:' . ($activity_created === '1' ? '#dcfce7' : '#f3f4f6') . '">' . ($activity_created === '1' ? 'YES' : 'NO') . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+
+        // Lista eventos
+        echo '<h2>Events (completed)</h2>';
+        $now = current_time('Y-m-d\TH:i');
+        echo '<p>Current time: ' . $now . '</p>';
+
+        $events = new \WP_Query(array(
+            'post_type'      => 'eau_event',
+            'post_status'    => 'publish',
+            'posts_per_page' => 20,
+        ));
+
+        echo '<table border="1" cellpadding="10" style="border-collapse: collapse;">';
+        echo '<tr><th>ID</th><th>Title</th><th>End DateTime</th><th>Completed?</th><th>CPD Category</th></tr>';
+
+        foreach ($events->posts as $event) {
+            $end_datetime = get_post_meta($event->ID, 'evt_end_datetime', true);
+            $is_completed = $end_datetime && $end_datetime < $now;
+            $cpd_category = get_post_meta($event->ID, 'evt_cpd_category', true);
+
+            echo '<tr>';
+            echo '<td>' . $event->ID . '</td>';
+            echo '<td>' . esc_html($event->post_title) . '</td>';
+            echo '<td>' . $end_datetime . '</td>';
+            echo '<td style="background:' . ($is_completed ? '#dcfce7' : '#fef3c7') . '">' . ($is_completed ? 'YES' : 'NO') . '</td>';
+            echo '<td>' . $cpd_category . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+
+        // Botão para forçar processamento
+        echo '<h2>Actions</h2>';
+        echo '<p><a href="' . admin_url('?eau_event_debug=1&force_process=1') . '" style="background:#005eb8;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;">Force Process Completed Events</a></p>';
+
+        if (isset($_GET['force_process'])) {
+            echo '<h3>Processing...</h3>';
+            $result = self::process_completed_events();
+            echo '<p>Done! Check registrations table above for updates.</p>';
+            echo '<script>setTimeout(function(){ window.location.href="' . admin_url('?eau_event_debug=1') . '"; }, 2000);</script>';
+        }
+
+        exit;
     }
 
     /**
@@ -279,17 +376,52 @@ class Eau_Event_Activity_Creator {
     }
 
     /**
+     * Obtém dados do usuário a partir do mem_userid
+     *
+     * @since  1.32.3
+     * @param  string $mem_userid mem_userid do participante
+     * @return array Dados do usuário (first_name, last_name, email)
+     */
+    private static function get_user_data_by_mem_userid($mem_userid) {
+        // Busca usuário pelo mem_userid
+        $users = get_users(array(
+            'meta_key'   => 'mem_userid',
+            'meta_value' => $mem_userid,
+            'number'     => 1,
+        ));
+
+        if (!empty($users)) {
+            $user = $users[0];
+
+            return array(
+                'first_name' => get_user_meta($user->ID, 'mem_memberfirstname', true) ?: '',
+                'last_name'  => get_user_meta($user->ID, 'mem_memberlastname', true) ?: '',
+                'email'      => $user->user_email,
+            );
+        }
+
+        return array(
+            'first_name' => '',
+            'last_name'  => '',
+            'email'      => '',
+        );
+    }
+
+    /**
      * Cria uma Activity CPD
      *
      * Meta fields da Activity:
      * - act_user_id: mem_userid do usuário
+     * - act_activity_serial: UUID único da activity
+     * - act_first_name: Primeiro nome do usuário
+     * - act_last_name: Último nome do usuário
+     * - act_email: Email do usuário
+     * - act_pd_activity_name: Nome do evento/atividade
      * - act_category_serial: ID da categoria CPD
      * - act_category: Nome da categoria CPD
      * - act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5: Horas do evento
      * - act_supply_evidence_e_g_attendance_statement: 1 (sempre tem evidência - o evento)
      * - act_verified: 1 (verificado automaticamente)
-     * - act_event_website_where_possible: ID da mídia/comprovante (não usar por agora)
-     * - activity_serial: UUID gerado
      *
      * @since  1.30.9
      * @param  int    $registration_id ID do registration
@@ -303,6 +435,9 @@ class Eau_Event_Activity_Creator {
 
         // Data do post = data do evento
         $post_date = $event_data['event_date'] . ' 12:00:00';
+
+        // Obtém dados do usuário
+        $user_data = self::get_user_data_by_mem_userid($mem_userid);
 
         // Cria o post
         $post_id = wp_insert_post(array(
@@ -321,14 +456,22 @@ class Eau_Event_Activity_Creator {
             return false;
         }
 
-        // Meta fields
-        update_post_meta($post_id, 'activity_serial', self::generate_activity_serial());
+        // Meta fields - Identificação
+        update_post_meta($post_id, 'act_activity_serial', self::generate_activity_serial());
         update_post_meta($post_id, 'act_user_id', $mem_userid);
+
+        // Meta fields - Dados do usuário
+        update_post_meta($post_id, 'act_first_name', $user_data['first_name']);
+        update_post_meta($post_id, 'act_last_name', $user_data['last_name']);
+        update_post_meta($post_id, 'act_email', $user_data['email']);
+
+        // Meta fields - Dados da atividade
+        update_post_meta($post_id, 'act_pd_activity_name', $event_data['event_title']);
         update_post_meta($post_id, 'act_category_serial', $event_data['category_serial']);
         update_post_meta($post_id, 'act_category', $event_data['category_name']);
         update_post_meta($post_id, 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5', $event_data['hours']);
-        update_post_meta($post_id, 'act_supply_evidence_e_g_attendance_statement', '1'); // Sempre tem evidência
-        update_post_meta($post_id, 'act_verified', '1'); // Verificado automaticamente
+        update_post_meta($post_id, 'act_supply_evidence_e_g_attendance_statement', '1');
+        update_post_meta($post_id, 'act_verified', '1');
         update_post_meta($post_id, 'act_completed_date', $event_data['event_date']);
 
         // Referência ao evento e registration (para rastreabilidade)

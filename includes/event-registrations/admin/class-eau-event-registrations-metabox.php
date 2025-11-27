@@ -93,6 +93,8 @@ class Eau_Event_Registrations_Metabox {
         $member_type = get_post_meta($post->ID, $prefix . 'member_type', true);
         $status = get_post_meta($post->ID, $prefix . 'status', true) ?: Config\DEFAULT_STATUS;
         $payment_status = get_post_meta($post->ID, $prefix . 'payment_status', true) ?: 'pending';
+        $attended = get_post_meta($post->ID, $prefix . 'attended', true);
+        $activity_created = get_post_meta($post->ID, $prefix . 'activity_created', true);
 
         // Get events for dropdown
         $events = get_posts(array(
@@ -217,6 +219,26 @@ class Eau_Event_Registrations_Metabox {
                     <?php endforeach; ?>
                 </select>
             </div>
+
+            <!-- Attended (CPD) -->
+            <div class="eau-metabox-field">
+                <label for="eau_attended"><?php esc_html_e('Attended (Clicked Join)', 'eau-system'); ?></label>
+                <select id="eau_attended" name="eau_attended">
+                    <option value="" <?php selected($attended, ''); ?>><?php esc_html_e('No', 'eau-system'); ?></option>
+                    <option value="1" <?php selected($attended, '1'); ?>><?php esc_html_e('Yes', 'eau-system'); ?></option>
+                </select>
+                <span class="description"><?php esc_html_e('Marked when user clicks "Join Online" button.', 'eau-system'); ?></span>
+            </div>
+
+            <!-- Activity Created -->
+            <div class="eau-metabox-field">
+                <label for="eau_activity_created"><?php esc_html_e('Activity Created', 'eau-system'); ?></label>
+                <select id="eau_activity_created" name="eau_activity_created">
+                    <option value="" <?php selected($activity_created, ''); ?>><?php esc_html_e('No', 'eau-system'); ?></option>
+                    <option value="1" <?php selected($activity_created, '1'); ?>><?php esc_html_e('Yes', 'eau-system'); ?></option>
+                </select>
+                <span class="description"><?php esc_html_e('CPD Activity automatically created after event ends.', 'eau-system'); ?></span>
+            </div>
         </div>
         <?php
     }
@@ -293,6 +315,18 @@ class Eau_Event_Registrations_Metabox {
             if (in_array($payment_status, $valid_payment_statuses)) {
                 update_post_meta($post_id, $prefix . 'payment_status', $payment_status);
             }
+        }
+
+        // Save attended
+        if (isset($_POST['eau_attended'])) {
+            $attended = $_POST['eau_attended'] === '1' ? '1' : '';
+            update_post_meta($post_id, $prefix . 'attended', $attended);
+        }
+
+        // Save activity created
+        if (isset($_POST['eau_activity_created'])) {
+            $activity_created = $_POST['eau_activity_created'] === '1' ? '1' : '';
+            update_post_meta($post_id, $prefix . 'activity_created', $activity_created);
         }
 
         // Update post title based on attendee name and event

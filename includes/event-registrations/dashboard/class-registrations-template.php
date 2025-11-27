@@ -244,6 +244,7 @@ class Registrations_Template {
                             <i data-lucide="chevrons-up-down"></i>
                         </th>
                         <th>Payment</th>
+                        <th>Attended</th>
                         <th class="eau-table-actions-col">Actions</th>
                     </tr>
                 </thead>
