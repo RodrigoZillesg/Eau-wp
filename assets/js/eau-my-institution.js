@@ -25,6 +25,7 @@
             this.config = window.eauMyInstitutionData || {};
             this.bindEvents();
             this.bindLocationEvents();
+            this.bindMediaUploadEvents();
             this.loadInitialData();
         },
 
@@ -198,6 +199,225 @@
                 const stateCode = $(this).val();
                 self.loadCitiesForState(countryCode, stateCode);
             });
+        },
+
+        // === BIND MEDIA UPLOAD EVENTS ===
+        bindMediaUploadEvents: function() {
+            const self = this;
+
+            // Media upload - Browse button (trigger file input)
+            $(document).on('click', '.eau-media-upload-browse-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileInput = wrapper.find('.eau-media-upload-file-input')[0];
+                if (fileInput) {
+                    fileInput.click();
+                }
+            });
+
+            // Media upload - Click on dropzone to trigger file input
+            $(document).on('click', '.eau-media-upload-dropzone', function(e) {
+                // Don't trigger if clicking on the browse button or file input itself
+                if ($(e.target).closest('.eau-media-upload-browse-btn').length ||
+                    $(e.target).is('input[type="file"]')) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileInput = wrapper.find('.eau-media-upload-file-input')[0];
+                if (fileInput) {
+                    fileInput.click();
+                }
+            });
+
+            // Media upload - File input change (handle file selection)
+            $(document).on('change', '.eau-media-upload-file-input', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const file = this.files[0];
+
+                if (file) {
+                    self.uploadFile(wrapper, file);
+                }
+
+                // Clear the input so the same file can be selected again
+                $(this).val('');
+            });
+
+            // Media upload - Drag and drop
+            $(document).on('dragover dragenter', '.eau-media-upload-dropzone', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('drag-active');
+            });
+
+            $(document).on('dragleave dragend drop', '.eau-media-upload-dropzone', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('drag-active');
+            });
+
+            $(document).on('drop', '.eau-media-upload-dropzone', function(e) {
+                e.preventDefault();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const files = e.originalEvent.dataTransfer.files;
+
+                if (files.length > 0) {
+                    self.uploadFile(wrapper, files[0]);
+                }
+            });
+
+            // Media upload - Remove button
+            $(document).on('click', '.eau-media-upload-remove', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                self.clearMediaUpload(wrapper);
+            });
+        },
+
+        // === UPLOAD FILE ===
+        uploadFile: function(wrapper, file) {
+            const self = this;
+            const maxSize = parseInt(wrapper.data('max-file-size')) || 10485760; // 10MB
+            const allowedExtensions = wrapper.data('allowed-extensions') || '';
+
+            // Validate file size
+            if (file.size > maxSize) {
+                EauNotifications.error('Error', 'File is too large. Maximum size is ' + this.formatFileSize(maxSize));
+                return;
+            }
+
+            // Validate extension
+            if (allowedExtensions) {
+                const allowed = allowedExtensions.toLowerCase().split(',');
+                const ext = file.name.split('.').pop().toLowerCase();
+
+                if (!allowed.includes(ext)) {
+                    EauNotifications.error('Error', 'File type not allowed. Allowed: ' + allowed.map(e => e.toUpperCase()).join(', '));
+                    return;
+                }
+            }
+
+            // Show progress
+            const dropzone = wrapper.find('.eau-media-upload-dropzone');
+            const progressContainer = dropzone.find('.eau-media-upload-progress');
+            const progressFill = progressContainer.find('.eau-media-upload-progress-fill');
+            const progressText = progressContainer.find('.eau-media-upload-progress-text');
+            const dropzoneContent = dropzone.find('.eau-media-upload-dropzone-content');
+
+            dropzoneContent.hide();
+            progressContainer.show();
+            progressFill.css('width', '0%');
+            progressText.text('Uploading... 0%');
+
+            // Create FormData
+            const formData = new FormData();
+            formData.append('action', 'eau_upload_file');
+            formData.append('nonce', this.config.nonce);
+            formData.append('file', file);
+            formData.append('max_size', maxSize);
+            formData.append('allowed_extensions', allowedExtensions);
+
+            // Upload via AJAX
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            progressFill.css('width', percent + '%');
+                            progressText.text('Uploading... ' + percent + '%');
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.setMediaValueFromUpload(wrapper, response.data.id, response.data.filename, response.data.url);
+                        EauNotifications.success('Success', 'File uploaded successfully');
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Upload failed');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Upload failed. Please try again.');
+                },
+                complete: function() {
+                    progressContainer.hide();
+                    dropzoneContent.show();
+                }
+            });
+        },
+
+        // === SET MEDIA VALUE FROM UPLOAD ===
+        setMediaValueFromUpload: function(wrapper, value, filename, url) {
+            const valueInput = wrapper.find('.eau-media-upload-value');
+            const typeInput = wrapper.find('.eau-media-upload-type');
+            const preview = wrapper.find('.eau-media-upload-preview');
+            const previewName = wrapper.find('.eau-media-upload-preview-name');
+            const previewLink = wrapper.find('.eau-media-upload-preview-link');
+            const thumbnail = wrapper.find('.eau-media-upload-preview-thumbnail');
+            const thumbnailImage = thumbnail.find('.eau-media-upload-preview-image');
+
+            valueInput.val(value);
+            typeInput.val('media');
+            previewName.text(filename);
+            previewLink.attr('href', url);
+
+            // Check if file is an image and show preview
+            const isImage = this.isImageFile(filename);
+
+            if (isImage && url) {
+                thumbnailImage.attr('src', url).show();
+                thumbnail.addClass('has-image');
+            } else {
+                thumbnailImage.attr('src', '').hide();
+                thumbnail.removeClass('has-image');
+            }
+
+            // Hide dropzone and show preview
+            wrapper.find('.eau-media-upload-panel').hide();
+            preview.show();
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        // === CLEAR MEDIA UPLOAD ===
+        clearMediaUpload: function(wrapper) {
+            wrapper.find('.eau-media-upload-value').val('');
+            wrapper.find('.eau-media-upload-type').val('');
+            wrapper.find('.eau-media-upload-preview').hide();
+
+            // Show dropzone again
+            wrapper.find('.eau-media-upload-file-panel').show();
+
+            // Clear image preview
+            const thumbnail = wrapper.find('.eau-media-upload-preview-thumbnail');
+            thumbnail.removeClass('has-image');
+            thumbnail.find('.eau-media-upload-preview-image').attr('src', '').hide();
+        },
+
+        // === CHECK IF IMAGE FILE ===
+        isImageFile: function(filename) {
+            if (!filename) return false;
+            const ext = filename.split('.').pop().toLowerCase();
+            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        },
+
+        // === FORMAT FILE SIZE ===
+        formatFileSize: function(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
 
         // === LOAD STATES FOR COUNTRY ===
