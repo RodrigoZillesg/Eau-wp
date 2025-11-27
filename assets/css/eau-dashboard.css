@@ -114,6 +114,7 @@
     gap: 1.25rem !important;
     transition: all 0.2s ease !important;
     min-width: 280px !important;
+    min-height: 146px !important; /* Altura mínima para consistência entre cards */
     margin: 0 !important;
 }
 
@@ -269,6 +270,21 @@
 
 .eau-card-indigo .eau-card-number {
     color: #111827 !important;
+}
+
+/* Teal - Pending Member Requests */
+.eau-card-teal .eau-card-icon i,
+.eau-card-teal .eau-card-icon svg {
+    color: #0d9488 !important; /* teal-600 */
+    stroke: #0d9488 !important;
+}
+
+.eau-card-teal .eau-card-number {
+    color: #111827 !important;
+}
+
+.eau-card-teal .eau-card-pending {
+    color: #0d9488 !important;
 }
 
 /* Responsivo Cards - Mobile First */
