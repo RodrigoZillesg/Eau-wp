@@ -436,9 +436,9 @@ button.eau-btn-primary {
 }
 
 .eau-events-management-container .eau-data-table tbody td {
-    padding: 16px 24px;
+    padding: 16px 24px!important;
     font-size: 14px;
-    color: var(--eau-gray-700);
+    color: var(--eau-gray-700)!important;
     vertical-align: middle;
     white-space: nowrap;
     border: none !important;
