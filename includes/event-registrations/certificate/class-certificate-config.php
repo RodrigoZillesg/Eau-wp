@@ -34,19 +34,45 @@ class Certificate_Config {
      * Retorna fonte do sistema
      */
     public static function get_font($type = 'regular') {
-        $fonts = [
+        // Primeiro tenta fontes no plugin
+        $plugin_fonts = [
+            'regular' => EAU_SYSTEM_PLUGIN_DIR . 'assets/fonts/OpenSans-Regular.ttf',
+            'bold'    => EAU_SYSTEM_PLUGIN_DIR . 'assets/fonts/OpenSans-Bold.ttf',
+            'italic'  => EAU_SYSTEM_PLUGIN_DIR . 'assets/fonts/OpenSans-Italic.ttf',
+        ];
+
+        $plugin_font = $plugin_fonts[$type] ?? $plugin_fonts['regular'];
+        if (file_exists($plugin_font)) {
+            return $plugin_font;
+        }
+
+        // Fallback: fontes Linux comuns
+        $linux_fonts = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+        ];
+
+        foreach ($linux_fonts as $font) {
+            if (file_exists($font)) {
+                return $font;
+            }
+        }
+
+        // Fallback: fontes Windows
+        $windows_fonts = [
             'regular' => 'C:/Windows/Fonts/arial.ttf',
             'bold'    => 'C:/Windows/Fonts/arialbd.ttf',
             'italic'  => 'C:/Windows/Fonts/ariali.ttf',
         ];
 
-        $font = $fonts[$type] ?? $fonts['regular'];
-
-        // Fallback Linux
-        if (!file_exists($font)) {
-            return '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
+        $win_font = $windows_fonts[$type] ?? $windows_fonts['regular'];
+        if (file_exists($win_font)) {
+            return $win_font;
         }
 
-        return $font;
+        // Último fallback - GD built-in (retorna número da fonte)
+        return 5;
     }
 }
