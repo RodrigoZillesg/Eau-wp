@@ -41,7 +41,7 @@ class Email_Config {
     }
 
     public static function get_logo_url() {
-        $custom_logo = get_option('eau_email_logo_url', '');
+        $custom_logo = get_option('eau_email_logo', '');
         if (!empty($custom_logo)) {
             return $custom_logo;
         }
