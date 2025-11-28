@@ -16,6 +16,7 @@ class Email_Settings {
 
     const OPTION_ENV = 'eau_email_environment';
     const OPTION_DEV_EMAILS = 'eau_email_dev_recipients';
+    const OPTION_LOGO = 'eau_email_logo';
 
     /**
      * Registra hooks
@@ -55,6 +56,24 @@ class Email_Settings {
             'default' => 'dev@platty.tech',
             'sanitize_callback' => 'sanitize_textarea_field',
         ]);
+
+        register_setting('eau_email_settings', self::OPTION_LOGO, [
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => 'esc_url_raw',
+        ]);
+    }
+
+    /**
+     * Retorna URL da logo do email
+     */
+    public static function get_logo_url() {
+        $logo = get_option(self::OPTION_LOGO, '');
+        if (empty($logo)) {
+            // Fallback para logo padrão
+            return EAU_SYSTEM_PLUGIN_URL . 'assets/images/email-logo.png';
+        }
+        return $logo;
     }
 
     /**
@@ -71,6 +90,9 @@ class Email_Settings {
             [],
             EAU_SYSTEM_VERSION
         );
+
+        // Media uploader
+        wp_enqueue_media();
     }
 
     /**
@@ -108,6 +130,7 @@ class Email_Settings {
     public static function render_page() {
         $environment = get_option(self::OPTION_ENV, 'dev');
         $dev_emails = get_option(self::OPTION_DEV_EMAILS, 'dev@platty.tech');
+        $logo_url = get_option(self::OPTION_LOGO, '');
         $is_dev = $environment === 'dev';
         ?>
         <div class="wrap">
@@ -171,9 +194,38 @@ class Email_Settings {
                         ><?php echo esc_textarea($dev_emails); ?></textarea>
                     </div>
 
+                    <!-- Email Logo -->
+                    <div class="eau-setting-row" style="margin-bottom: 20px;">
+                        <h2 style="margin: 0 0 10px 0; font-size: 16px;"><?php _e('Email Logo', 'eau-system'); ?></h2>
+                        <p style="color: #666; margin: 0 0 15px 0; font-size: 13px;">
+                            <?php _e('Upload a logo to display in email headers. Recommended size: 140px width.', 'eau-system'); ?>
+                        </p>
+
+                        <div style="display: flex; gap: 15px; align-items: flex-start;">
+                            <div id="eau-logo-preview" style="width: 140px; height: 60px; border: 2px dashed #ddd; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #f9f9f9; overflow: hidden;">
+                                <?php if ($logo_url): ?>
+                                    <img src="<?php echo esc_url($logo_url); ?>" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                <?php else: ?>
+                                    <span style="color: #999; font-size: 12px;"><?php _e('No logo', 'eau-system'); ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button type="button" id="eau-upload-logo" class="button button-secondary">
+                                    <?php _e('Upload Logo', 'eau-system'); ?>
+                                </button>
+                                <?php if ($logo_url): ?>
+                                    <button type="button" id="eau-remove-logo" class="button" style="color: #dc2626;">
+                                        <?php _e('Remove', 'eau-system'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <input type="hidden" name="<?php echo self::OPTION_LOGO; ?>" id="eau-logo-url" value="<?php echo esc_url($logo_url); ?>">
+                    </div>
+
                     <!-- Submit -->
                     <div class="eau-setting-row">
-                        <?php submit_button(__('Save Settings', 'eau-system'), 'primary', 'submit', false); ?>
+                        <?php submit_button(__('Save Settings', 'eau-system'), 'primary', 'eau_save_settings', false); ?>
                     </div>
                 </div>
             </form>
@@ -210,6 +262,58 @@ class Email_Settings {
             radio.addEventListener('change', function() {
                 this.closest('form').submit();
             });
+        });
+
+        // Logo upload
+        document.getElementById('eau-upload-logo')?.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            var mediaUploader = wp.media({
+                title: '<?php _e('Select Email Logo', 'eau-system'); ?>',
+                button: { text: '<?php _e('Use this logo', 'eau-system'); ?>' },
+                multiple: false,
+                library: { type: 'image' }
+            });
+
+            mediaUploader.on('select', function() {
+                var attachment = mediaUploader.state().get('selection').first().toJSON();
+                document.getElementById('eau-logo-url').value = attachment.url;
+
+                var preview = document.getElementById('eau-logo-preview');
+                preview.innerHTML = '<img src="' + attachment.url + '" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">';
+
+                // Add remove button if not exists
+                var removeBtn = document.getElementById('eau-remove-logo');
+                if (!removeBtn) {
+                    var btnContainer = document.querySelector('#eau-upload-logo').parentNode;
+                    var newBtn = document.createElement('button');
+                    newBtn.type = 'button';
+                    newBtn.id = 'eau-remove-logo';
+                    newBtn.className = 'button';
+                    newBtn.style.color = '#dc2626';
+                    newBtn.textContent = '<?php _e('Remove', 'eau-system'); ?>';
+                    btnContainer.appendChild(newBtn);
+                    attachRemoveHandler(newBtn);
+                }
+            });
+
+            mediaUploader.open();
+        });
+
+        function attachRemoveHandler(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('eau-logo-url').value = '';
+                document.getElementById('eau-logo-preview').innerHTML = '<span style="color: #999; font-size: 12px;"><?php _e('No logo', 'eau-system'); ?></span>';
+                this.remove();
+            });
+        }
+
+        document.getElementById('eau-remove-logo')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('eau-logo-url').value = '';
+            document.getElementById('eau-logo-preview').innerHTML = '<span style="color: #999; font-size: 12px;"><?php _e('No logo', 'eau-system'); ?></span>';
+            this.remove();
         });
         </script>
         <?php
