@@ -127,6 +127,11 @@ class Eau_Event_Registrations_Ajax {
             wp_send_json_error(array('message' => __('Error creating registration.', 'eau-system')));
         }
 
+        // Verificar se evento é gratuito
+        $event_price = floatval(get_post_meta($event_id, 'evt_price_member', true) ?: 0);
+        $is_free_event = ($event_price <= 0);
+        $payment_status = $is_free_event ? 'free' : 'pending';
+
         // Salvar meta dados
         update_post_meta($post_id, $prefix . 'attendee_name', $attendee_name);
         update_post_meta($post_id, $prefix . 'attendee_email', $attendee_email);
@@ -134,6 +139,7 @@ class Eau_Event_Registrations_Ajax {
         update_post_meta($post_id, $prefix . 'registration_date', current_time('Y-m-d\TH:i'));
         update_post_meta($post_id, $prefix . 'member_type', $member_type);
         update_post_meta($post_id, $prefix . 'status', Config\DEFAULT_STATUS);
+        update_post_meta($post_id, $prefix . 'payment_status', $payment_status);
         update_post_meta($post_id, $prefix . 'attended', '0');
         update_post_meta($post_id, $prefix . 'activity_created', '0');
 

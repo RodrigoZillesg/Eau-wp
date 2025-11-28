@@ -174,7 +174,8 @@ class Registrations_Page {
 
         $event_id = $event->ID;
         $start_datetime = get_post_meta($event_id, 'evt_start_datetime', true);
-        $member_price = floatval(get_post_meta($event_id, 'evt_member_price', true) ?: 0);
+        $member_price = floatval(get_post_meta($event_id, 'evt_price_member', true) ?: 0);
+        $is_free = ($member_price <= 0);
 
         return array(
             'id'           => $event_id,
@@ -183,6 +184,7 @@ class Registrations_Page {
             'date'         => self::format_date($start_datetime),
             'type'         => get_post_meta($event_id, 'evt_event_type', true) ?: 'in-person',
             'price'        => $member_price,
+            'is_free'      => $is_free,
             'stats'        => Registrations_Stats::get($event_id, $member_price),
         );
     }

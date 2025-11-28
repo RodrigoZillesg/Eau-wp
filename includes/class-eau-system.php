@@ -98,6 +98,7 @@ class Eau_System {
         // Email Service (v1.44.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-config.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-template.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-settings.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-service.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-events.php';
     }
@@ -112,6 +113,9 @@ class Eau_System {
         // Documentation pages
         add_action('admin_menu', array('EauSystem\Eau_Documentation', 'register_admin_pages'));
         add_action('admin_enqueue_scripts', array('EauSystem\Eau_Documentation', 'enqueue_admin_assets'));
+
+        // Email settings page
+        Email\Email_Settings::register();
 
         // Email preview
         Email\Email_Service::register();

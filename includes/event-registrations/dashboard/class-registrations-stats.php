@@ -58,6 +58,7 @@ class Registrations_Stats {
         return array(
             'total'    => 0,
             'paid'     => 0,
+            'free'     => 0,
             'pending'  => 0,
             'failed'   => 0,
             'refunded' => 0,

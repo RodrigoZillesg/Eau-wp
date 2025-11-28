@@ -36,7 +36,7 @@ class Registrations_Template {
             <?php
             echo self::render_back_link();
             echo self::render_header($data);
-            echo self::render_stats($data['stats']);
+            echo self::render_stats($data['stats'], $data['is_free'] ?? false);
             echo self::render_filters();
             echo self::render_table();
             echo self::render_pagination();
@@ -100,10 +100,14 @@ class Registrations_Template {
      * Renderiza cards de estatísticas
      *
      * @since  1.30.0
-     * @param  array $stats Estatísticas
+     * @param  array $stats   Estatísticas
+     * @param  bool  $is_free Se o evento é gratuito
      * @return string HTML
      */
-    private static function render_stats($stats) {
+    private static function render_stats($stats, $is_free = false) {
+        // Valor do Revenue: "Free" se gratuito, senão valor formatado
+        $revenue_value = $is_free ? 'Free' : '$' . number_format($stats['revenue'], 2);
+
         $cards = array(
             array(
                 'label' => 'Total',
@@ -111,34 +115,47 @@ class Registrations_Template {
                 'icon'  => 'users',
                 'class' => 'eau-icon-primary',
             ),
-            array(
+        );
+
+        // Se evento é free, mostra card Free; senão mostra Paid
+        if ($is_free) {
+            $cards[] = array(
+                'label' => 'Free',
+                'value' => $stats['free'] ?? $stats['total'],
+                'icon'  => 'gift',
+                'class' => 'eau-icon-success',
+                'text'  => 'eau-text-success',
+            );
+        } else {
+            $cards[] = array(
                 'label' => 'Paid',
                 'value' => $stats['paid'],
                 'icon'  => 'check-circle',
                 'class' => 'eau-icon-success',
                 'text'  => 'eau-text-success',
-            ),
-            array(
-                'label' => 'Pending',
-                'value' => $stats['pending'],
-                'icon'  => 'clock',
-                'class' => 'eau-icon-warning',
-                'text'  => 'eau-text-warning',
-            ),
-            array(
-                'label' => 'Failed',
-                'value' => $stats['failed'],
-                'icon'  => 'x-circle',
-                'class' => 'eau-icon-danger',
-                'text'  => 'eau-text-danger',
-            ),
-            array(
-                'label' => 'Revenue',
-                'value' => '$' . number_format($stats['revenue'], 2),
-                'icon'  => 'dollar-sign',
-                'class' => 'eau-icon-revenue',
-                'text'  => 'eau-text-revenue',
-            ),
+            );
+        }
+
+        $cards[] = array(
+            'label' => 'Pending',
+            'value' => $stats['pending'],
+            'icon'  => 'clock',
+            'class' => 'eau-icon-warning',
+            'text'  => 'eau-text-warning',
+        );
+        $cards[] = array(
+            'label' => 'Failed',
+            'value' => $stats['failed'],
+            'icon'  => 'x-circle',
+            'class' => 'eau-icon-danger',
+            'text'  => 'eau-text-danger',
+        );
+        $cards[] = array(
+            'label' => 'Revenue',
+            'value' => $revenue_value,
+            'icon'  => 'dollar-sign',
+            'class' => 'eau-icon-revenue',
+            'text'  => 'eau-text-revenue',
         );
 
         ob_start();

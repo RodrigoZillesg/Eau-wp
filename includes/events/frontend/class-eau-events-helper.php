@@ -223,7 +223,7 @@ class Eau_Events_Helper {
         ob_start();
         ?>
         <article class="eau-event-card <?php echo $type === 'past' ? 'eau-event-card-past' : ''; ?>">
-            <?php if ($type === 'upcoming' && $data['thumbnail']) : ?>
+            <?php if ($data['thumbnail']) : ?>
                 <div class="eau-event-card-image">
                     <a href="<?php echo esc_url($permalink); ?>">
                         <img src="<?php echo esc_url($data['thumbnail']); ?>" alt="<?php echo esc_attr($data['title']); ?>">
