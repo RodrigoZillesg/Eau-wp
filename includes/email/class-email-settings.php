@@ -208,7 +208,7 @@ class Email_Settings {
         <script>
         document.querySelectorAll('input[name="<?php echo self::OPTION_ENV; ?>"]').forEach(function(radio) {
             radio.addEventListener('change', function() {
-                location.reload();
+                this.closest('form').submit();
             });
         });
         </script>
