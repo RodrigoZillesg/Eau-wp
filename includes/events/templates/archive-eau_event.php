@@ -31,10 +31,10 @@ $base_args = array(
 
 if (!empty($search)) $base_args['s'] = $search;
 
-// Upcoming events meta query
+// Upcoming events: end_datetime >= now (evento ainda não terminou)
 $upcoming_meta = array(
     'relation' => 'AND',
-    array('key' => 'evt_start_datetime', 'value' => current_time('Y-m-d\TH:i'), 'compare' => '>=', 'type' => 'DATETIME'),
+    array('key' => 'evt_end_datetime', 'value' => current_time('Y-m-d\TH:i'), 'compare' => '>=', 'type' => 'DATETIME'),
 );
 if ($category > 0) {
     $upcoming_meta[] = array('key' => 'evt_cpd_category', 'value' => (string) $category, 'compare' => '=', 'type' => 'NUMERIC');
@@ -48,10 +48,10 @@ $upcoming_args = array_merge($base_args, array(
     'meta_query' => $upcoming_meta,
 ));
 
-// Past events meta query
+// Past events: end_datetime < now (evento já terminou)
 $past_meta = array(
     'relation' => 'AND',
-    array('key' => 'evt_start_datetime', 'value' => current_time('Y-m-d\TH:i'), 'compare' => '<', 'type' => 'DATETIME'),
+    array('key' => 'evt_end_datetime', 'value' => current_time('Y-m-d\TH:i'), 'compare' => '<', 'type' => 'DATETIME'),
 );
 if ($category > 0) {
     $past_meta[] = array('key' => 'evt_cpd_category', 'value' => (string) $category, 'compare' => '=', 'type' => 'NUMERIC');

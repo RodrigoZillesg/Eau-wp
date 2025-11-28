@@ -64,6 +64,15 @@ class Email_Service {
      * @return bool
      */
     public static function send($to, $subject, $content, $options = []) {
+        // Processa destinatário baseado no ambiente (dev/prod)
+        $original_to = $to;
+        $to = Email_Settings::process_recipient($to);
+
+        // Em modo dev, adiciona info do destinatário original no subject
+        if (Email_Settings::is_dev_mode() && $to !== $original_to) {
+            $subject = '[DEV → ' . $original_to . '] ' . $subject;
+        }
+
         // Renderiza o template completo
         $html = Email_Template::render($subject, $content, $options);
 
@@ -78,16 +87,19 @@ class Email_Service {
             $headers[] = 'Reply-To: ' . $options['reply_to'];
         }
 
-        // CC opcional
-        if (!empty($options['cc'])) {
-            $cc = is_array($options['cc']) ? implode(',', $options['cc']) : $options['cc'];
-            $headers[] = 'Cc: ' . $cc;
-        }
+        // CC e BCC são ignorados em modo dev
+        if (!Email_Settings::is_dev_mode()) {
+            // CC opcional
+            if (!empty($options['cc'])) {
+                $cc = is_array($options['cc']) ? implode(',', $options['cc']) : $options['cc'];
+                $headers[] = 'Cc: ' . $cc;
+            }
 
-        // BCC opcional
-        if (!empty($options['bcc'])) {
-            $bcc = is_array($options['bcc']) ? implode(',', $options['bcc']) : $options['bcc'];
-            $headers[] = 'Bcc: ' . $bcc;
+            // BCC opcional
+            if (!empty($options['bcc'])) {
+                $bcc = is_array($options['bcc']) ? implode(',', $options['bcc']) : $options['bcc'];
+                $headers[] = 'Bcc: ' . $bcc;
+            }
         }
 
         // Attachments opcional
@@ -96,9 +108,9 @@ class Email_Service {
         // Envia usando wp_mail
         $sent = wp_mail($to, $subject, $html, $headers, $attachments);
 
-        // Log opcional
-        if (!empty($options['log']) && $options['log'] === true) {
-            self::log_email($to, $subject, $sent);
+        // Log (sempre em dev, opcional em prod)
+        if (Email_Settings::is_dev_mode() || (!empty($options['log']) && $options['log'] === true)) {
+            self::log_email($original_to, $subject, $sent, $to);
         }
 
         return $sent;
@@ -157,14 +169,22 @@ class Email_Service {
     /**
      * Log de email enviado
      */
-    private static function log_email($to, $subject, $success) {
+    private static function log_email($to, $subject, $success, $actual_to = null) {
         $log = get_option('eau_email_log', []);
-        $log[] = [
+        $entry = [
             'to'      => $to,
             'subject' => $subject,
             'success' => $success,
             'date'    => current_time('mysql'),
         ];
+
+        // Adiciona destinatário real se diferente (modo dev)
+        if ($actual_to && $actual_to !== $to) {
+            $entry['actual_to'] = $actual_to;
+            $entry['env'] = 'dev';
+        }
+
+        $log[] = $entry;
         // Mantém apenas últimos 100 registros
         $log = array_slice($log, -100);
         update_option('eau_email_log', $log);
