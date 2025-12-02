@@ -14,9 +14,11 @@
         perPage: 20,
         searchTerm: '',
         statusFilter: '',
+        paymentFilter: '',
         orderBy: 'registration_date',
         order: 'DESC',
         eventId: null,
+        mediaUploader: null,
 
         /**
          * Initialize
@@ -56,6 +58,13 @@
                 self.loadRegistrations();
             });
 
+            // Payment filter
+            $('#eau-registrations-payment-filter').on('change', function() {
+                self.paymentFilter = $(this).val();
+                self.currentPage = 1;
+                self.loadRegistrations();
+            });
+
             // Sortable columns
             $(document).on('click', '.eau-sortable', function() {
                 const sort = $(this).data('sort');
@@ -83,7 +92,15 @@
                 $('.eau-dropdown-menu').removeClass('active');
             });
 
-            // Status change actions
+            // Manage Payments button - opens modal
+            $(document).on('click', '.eau-manage-payments-btn', function(e) {
+                e.stopPropagation();
+                const regId = $(this).data('id');
+                $('.eau-dropdown-menu').removeClass('active');
+                self.openPaymentModal(regId);
+            });
+
+            // Status change actions (for quick status changes)
             $(document).on('click', '.eau-reg-status-btn', function(e) {
                 e.stopPropagation();
                 const regId = $(this).data('id');
@@ -104,6 +121,45 @@
             // Export CSV
             $('#eau-export-csv').on('click', function() {
                 self.exportCSV();
+            });
+
+            // Payment Modal Events
+            this.bindPaymentModalEvents();
+        },
+
+        /**
+         * Bind payment modal events
+         */
+        bindPaymentModalEvents: function() {
+            const self = this;
+
+            // Close modal
+            $(document).on('click', '#eau-payment-modal-close, #eau-payment-modal-done, #eau-payment-modal .eau-modal-overlay', function() {
+                self.closePaymentModal();
+            });
+
+            // Add payment form submit
+            $(document).on('submit', '#eau-add-payment-form', function(e) {
+                e.preventDefault();
+                self.addPayment();
+            });
+
+            // Delete payment
+            $(document).on('click', '.eau-delete-payment-btn', function() {
+                const paymentId = $(this).data('id');
+                self.deletePayment(paymentId);
+            });
+
+            // Upload receipt
+            $(document).on('click', '#eau-payment-upload-btn', function() {
+                self.openMediaUploader();
+            });
+
+            // Remove receipt
+            $(document).on('click', '#eau-payment-remove-file', function() {
+                $('#eau-payment-receipt-id').val('');
+                $('#eau-payment-file-name').text('');
+                $(this).hide();
             });
         },
 
@@ -127,7 +183,7 @@
                     page: this.currentPage,
                     per_page: this.perPage,
                     search: this.searchTerm,
-                    status: this.statusFilter,
+                    status: this.paymentFilter, // Use payment filter for status
                     orderby: this.orderBy,
                     order: this.order
                 },
@@ -202,18 +258,26 @@
         },
 
         /**
-         * Render status action buttons (dropdown with payment status options)
+         * Render status action buttons (dropdown with payment options)
          */
         renderStatusActions: function(row) {
             let actions = '';
 
             // Dropdown for payment status
             actions += '<div class="eau-dropdown" data-id="' + row.id + '">';
-            actions += '<button class="eau-action-btn eau-action-more" title="Change Payment Status">';
+            actions += '<button class="eau-action-btn eau-action-more" title="Actions">';
             actions += '<i data-lucide="more-vertical"></i>';
             actions += '</button>';
             actions += '<div class="eau-dropdown-menu">';
 
+            // Manage Payments button (opens modal)
+            actions += '<button class="eau-dropdown-item eau-manage-payments-btn" data-id="' + row.id + '">';
+            actions += '<i data-lucide="credit-card"></i> Manage Payments';
+            actions += '</button>';
+
+            actions += '<div class="eau-dropdown-divider"></div>';
+
+            // Quick status change options
             if (row.status !== 'paid') {
                 actions += '<button class="eau-dropdown-item eau-reg-status-btn" data-id="' + row.id + '" data-status="paid">';
                 actions += '<i data-lucide="check-circle"></i> Mark as Paid';
@@ -242,6 +306,298 @@
             actions += '</div>';
 
             return actions;
+        },
+
+        /**
+         * Open payment modal
+         */
+        openPaymentModal: function(registrationId) {
+            const self = this;
+            const $modal = $('#eau-payment-modal');
+
+            // Store registration ID
+            $('#eau-payment-registration-id').val(registrationId);
+
+            // Reset form
+            $('#eau-add-payment-form')[0].reset();
+            $('#eau-payment-date').val(new Date().toISOString().split('T')[0]);
+            $('#eau-payment-receipt-id').val('');
+            $('#eau-payment-file-name').text('');
+            $('#eau-payment-remove-file').hide();
+
+            // Show modal with loading state
+            $modal.addClass('active');
+            $('#eau-payments-list').html('<div class="eau-skeleton-row"></div>');
+
+            // Load payment info
+            $.ajax({
+                url: eauEventRegistrations.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_registration_payment_info',
+                    nonce: eauEventRegistrations.nonce,
+                    registration_id: registrationId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.populatePaymentModal(response.data);
+                    } else {
+                        self.showToast(response.data.message || 'Error loading payment info', 'error');
+                        self.closePaymentModal();
+                    }
+                    lucide.createIcons();
+                },
+                error: function() {
+                    self.showToast('Error loading payment info', 'error');
+                    self.closePaymentModal();
+                }
+            });
+        },
+
+        /**
+         * Populate payment modal with data
+         */
+        populatePaymentModal: function(data) {
+            // Registration info
+            $('#eau-payment-attendee-name').text(data.registration.attendee_name || '-');
+            $('#eau-payment-attendee-email').text(data.registration.attendee_email || '-');
+            $('#eau-payment-event-price').text('$' + parseFloat(data.event.price || 0).toFixed(2));
+
+            // Summary
+            $('#eau-payment-total-paid').text('$' + parseFloat(data.total_paid || 0).toFixed(2));
+            $('#eau-payment-balance').text('$' + parseFloat(data.balance || 0).toFixed(2));
+
+            // Set suggested amount to balance
+            if (data.balance > 0) {
+                $('#eau-payment-amount').val(parseFloat(data.balance).toFixed(2));
+            }
+
+            // Payments list
+            this.renderPaymentsList(data.payments);
+        },
+
+        /**
+         * Render payments list
+         */
+        renderPaymentsList: function(payments) {
+            const self = this;
+            const $list = $('#eau-payments-list');
+
+            if (!payments || payments.length === 0) {
+                $list.html('<div class="eau-empty-payments">No payments recorded yet.</div>');
+                return;
+            }
+
+            let html = '<table class="eau-payments-table">';
+            html += '<thead><tr>';
+            html += '<th>Date</th>';
+            html += '<th>Amount</th>';
+            html += '<th>Method</th>';
+            html += '<th>Receipt</th>';
+            html += '<th></th>';
+            html += '</tr></thead>';
+            html += '<tbody>';
+
+            payments.forEach(function(payment) {
+                const methodLabels = {
+                    'credit_card': 'Credit Card',
+                    'debit_card': 'Debit Card',
+                    'bank_transfer': 'Bank Transfer',
+                    'pix': 'PIX',
+                    'cash': 'Cash',
+                    'invoice': 'Invoice',
+                    'other': 'Other'
+                };
+
+                html += '<tr>';
+                html += '<td>' + self.escapeHtml(payment.payment_date) + '</td>';
+                html += '<td class="eau-text-success">$' + parseFloat(payment.amount).toFixed(2) + '</td>';
+                html += '<td>' + (methodLabels[payment.payment_method] || payment.payment_method) + '</td>';
+                html += '<td>';
+                if (payment.receipt_url) {
+                    html += '<a href="' + payment.receipt_url + '" target="_blank" class="eau-receipt-link">';
+                    html += '<i data-lucide="file-text"></i> View';
+                    html += '</a>';
+                } else {
+                    html += '<span class="eau-text-muted">-</span>';
+                }
+                html += '</td>';
+                html += '<td>';
+                html += '<button type="button" class="eau-btn-icon eau-btn-danger eau-delete-payment-btn" data-id="' + payment.id + '" title="Delete payment">';
+                html += '<i data-lucide="trash-2"></i>';
+                html += '</button>';
+                html += '</td>';
+                html += '</tr>';
+
+                // Show notes if any
+                if (payment.notes) {
+                    html += '<tr class="eau-payment-notes-row">';
+                    html += '<td colspan="5"><small class="eau-text-muted">' + self.escapeHtml(payment.notes) + '</small></td>';
+                    html += '</tr>';
+                }
+            });
+
+            html += '</tbody></table>';
+            $list.html(html);
+            lucide.createIcons();
+        },
+
+        /**
+         * Close payment modal
+         */
+        closePaymentModal: function() {
+            $('#eau-payment-modal').removeClass('active');
+            this.loadRegistrations(); // Refresh table
+        },
+
+        /**
+         * Add payment
+         */
+        addPayment: function() {
+            const self = this;
+            const $btn = $('#eau-add-payment-btn');
+            const originalText = $btn.html();
+
+            // Disable button
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Adding...');
+
+            $.ajax({
+                url: eauEventRegistrations.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_add_payment',
+                    nonce: eauEventRegistrations.nonce,
+                    registration_id: $('#eau-payment-registration-id').val(),
+                    amount: $('#eau-payment-amount').val(),
+                    payment_date: $('#eau-payment-date').val(),
+                    payment_method: $('#eau-payment-method').val(),
+                    receipt_id: $('#eau-payment-receipt-id').val(),
+                    notes: $('#eau-payment-notes').val()
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false).html(originalText);
+                    lucide.createIcons();
+
+                    if (response.success) {
+                        self.showToast(response.data.message, 'success');
+
+                        // Update modal data
+                        $('#eau-payment-total-paid').text('$' + parseFloat(response.data.total_paid || 0).toFixed(2));
+                        $('#eau-payment-balance').text('$' + parseFloat(response.data.balance || 0).toFixed(2));
+                        self.renderPaymentsList(response.data.payments);
+
+                        // Reset form
+                        $('#eau-add-payment-form')[0].reset();
+                        $('#eau-payment-date').val(new Date().toISOString().split('T')[0]);
+                        $('#eau-payment-receipt-id').val('');
+                        $('#eau-payment-file-name').text('');
+                        $('#eau-payment-remove-file').hide();
+
+                        // Update suggested amount
+                        if (response.data.balance > 0) {
+                            $('#eau-payment-amount').val(parseFloat(response.data.balance).toFixed(2));
+                        }
+                    } else {
+                        self.showToast(response.data.message || 'Error adding payment', 'error');
+                    }
+                },
+                error: function() {
+                    $btn.prop('disabled', false).html(originalText);
+                    lucide.createIcons();
+                    self.showToast('Error adding payment', 'error');
+                }
+            });
+        },
+
+        /**
+         * Delete payment
+         */
+        deletePayment: function(paymentId) {
+            const self = this;
+
+            if (typeof EauNotifications !== 'undefined') {
+                EauNotifications.confirm({
+                    title: 'Delete Payment?',
+                    message: 'Are you sure you want to delete this payment? This action cannot be undone.',
+                    type: 'danger',
+                    confirmText: 'Delete',
+                    onConfirm: function() {
+                        self.doDeletePayment(paymentId);
+                    }
+                });
+            } else if (confirm('Are you sure you want to delete this payment?')) {
+                self.doDeletePayment(paymentId);
+            }
+        },
+
+        /**
+         * Execute delete payment
+         */
+        doDeletePayment: function(paymentId) {
+            const self = this;
+
+            $.ajax({
+                url: eauEventRegistrations.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_delete_payment',
+                    nonce: eauEventRegistrations.nonce,
+                    payment_id: paymentId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showToast(response.data.message, 'success');
+
+                        // Update modal data
+                        $('#eau-payment-total-paid').text('$' + parseFloat(response.data.total_paid || 0).toFixed(2));
+                        $('#eau-payment-balance').text('$' + parseFloat(response.data.balance || 0).toFixed(2));
+                        self.renderPaymentsList(response.data.payments);
+
+                        // Update suggested amount
+                        if (response.data.balance > 0) {
+                            $('#eau-payment-amount').val(parseFloat(response.data.balance).toFixed(2));
+                        }
+                    } else {
+                        self.showToast(response.data.message || 'Error deleting payment', 'error');
+                    }
+                },
+                error: function() {
+                    self.showToast('Error deleting payment', 'error');
+                }
+            });
+        },
+
+        /**
+         * Open media uploader for receipt
+         */
+        openMediaUploader: function() {
+            const self = this;
+
+            // If uploader already exists, open it
+            if (this.mediaUploader) {
+                this.mediaUploader.open();
+                return;
+            }
+
+            // Create uploader
+            this.mediaUploader = wp.media({
+                title: 'Select Receipt',
+                button: {
+                    text: 'Use this file'
+                },
+                multiple: false
+            });
+
+            // Handle selection
+            this.mediaUploader.on('select', function() {
+                const attachment = self.mediaUploader.state().get('selection').first().toJSON();
+                $('#eau-payment-receipt-id').val(attachment.id);
+                $('#eau-payment-file-name').text(attachment.filename);
+                $('#eau-payment-remove-file').show();
+                lucide.createIcons();
+            });
+
+            this.mediaUploader.open();
         },
 
         /**
@@ -340,7 +696,7 @@
                     nonce: eauEventRegistrations.nonce,
                     event_id: this.eventId,
                     search: this.searchTerm,
-                    status: this.statusFilter
+                    status: this.paymentFilter
                 },
                 success: function(response) {
                     if (response.success && response.data.csv) {
@@ -370,15 +726,23 @@
          * Show toast notification
          */
         showToast: function(message, type) {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: type || 'info',
-                title: message,
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
+            if (typeof EauNotifications !== 'undefined') {
+                switch (type) {
+                    case 'success':
+                        EauNotifications.success('Success', message);
+                        break;
+                    case 'error':
+                        EauNotifications.error('Error', message);
+                        break;
+                    case 'warning':
+                        EauNotifications.warning('Warning', message);
+                        break;
+                    default:
+                        EauNotifications.info('Info', message);
+                }
+            } else {
+                console.log(type + ': ' + message);
+            }
         },
 
         /**

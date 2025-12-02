@@ -174,7 +174,7 @@ class Registrations_Page {
 
         $event_id = $event->ID;
         $start_datetime = get_post_meta($event_id, 'evt_start_datetime', true);
-        $member_price = floatval(get_post_meta($event_id, 'evt_price_member', true) ?: 0);
+        $member_price = floatval(get_post_meta($event_id, 'evt_member_price', true) ?: 0);
         $is_free = ($member_price <= 0);
 
         return array(

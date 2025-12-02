@@ -150,11 +150,11 @@
             });
 
             // Modal
-            $('#eau-modal-close, #eau-modal-cancel, .eau-modal-overlay').on('click', () => {
+            $(document).on('click', '#eau-modal-close, #eau-modal-cancel, .eau-modal-overlay', () => {
                 this.closeModal();
             });
 
-            $('#eau-modal-save').on('click', () => {
+            $(document).on('click', '#eau-modal-save', () => {
                 this.saveEvent();
             });
 
@@ -181,19 +181,8 @@
                 this.toggleLocationFields(e.target.value);
             });
 
-            // Image upload
-            $('#eau-select-image').on('click', () => {
-                this.openMediaLibrary();
-            });
-
-            // Click on preview also opens media library
-            $(document).on('click', '#eau-image-preview, #eau-image-placeholder', () => {
-                this.openMediaLibrary();
-            });
-
-            $('#eau-remove-image').on('click', () => {
-                this.removeImage();
-            });
+            // Media Upload Component Events
+            this.bindMediaUploadEvents();
 
             // Pagination
             $(document).on('click', '.eau-pagination-btn:not(.disabled)', (e) => {
@@ -369,8 +358,8 @@
             $('#eau-edit-country').val('Australia');
             $('#eau-edit-visibility').val('public');
 
-            // Clear image
-            this.removeImage();
+            // Clear image - using Eau Media Upload component
+            this.clearMediaUpload($('#eau-edit-image_id-wrapper'));
 
             // Clear Quill editor
             if (this.quillEditor) {
@@ -496,11 +485,12 @@
             // Checkboxes
             $('#eau-edit-require_approval').prop('checked', event.require_approval === '1');
 
-            // Image
+            // Image - using Eau Media Upload component
+            const $imageWrapper = $('#eau-edit-image_id-wrapper');
             if (event.image_id && event.image_url) {
-                this.setImage(event.image_id, event.image_url);
+                this.setMediaValue($imageWrapper, event.image_id, 'media', event.image_url.split('/').pop(), event.image_url);
             } else {
-                this.removeImage();
+                this.clearMediaUpload($imageWrapper);
             }
         },
 
@@ -538,50 +528,360 @@
         },
 
         /**
-         * Open WordPress Media Library
+         * Bind Media Upload Component Events
          */
-        openMediaLibrary: function() {
-            // Create media frame if not exists
-            if (!this.mediaFrame) {
-                this.mediaFrame = wp.media({
-                    title: 'Select Event Image',
-                    button: {
-                        text: 'Use this image'
-                    },
-                    multiple: false
-                });
+        bindMediaUploadEvents: function() {
+            const self = this;
 
-                // When image is selected
-                this.mediaFrame.on('select', () => {
-                    const attachment = this.mediaFrame.state().get('selection').first().toJSON();
-                    this.setImage(attachment.id, attachment.url);
-                });
+            // Media upload tabs
+            $(document).on('click', '.eau-media-upload-tab', function() {
+                const tab = $(this).data('tab');
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+
+                wrapper.find('.eau-media-upload-tab').removeClass('eau-media-upload-tab-active');
+                $(this).addClass('eau-media-upload-tab-active');
+
+                wrapper.find('.eau-media-upload-panel').removeClass('active');
+                if (tab === 'url') {
+                    wrapper.find('.eau-media-upload-url-panel').addClass('active');
+                } else if (tab === 'upload') {
+                    wrapper.find('.eau-media-upload-file-panel').addClass('active');
+                } else if (tab === 'myfiles') {
+                    wrapper.find('.eau-media-upload-myfiles-panel').addClass('active');
+                    self.loadUserFiles(wrapper);
+                }
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+
+            // Media upload - URL input
+            $(document).on('input blur', '.eau-media-upload-url-input', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const url = $(this).val().trim();
+
+                if (url) {
+                    self.setMediaValue(wrapper, url, 'url', url.split('/').pop() || url);
+                } else {
+                    self.clearMediaUpload(wrapper);
+                }
+            });
+
+            // Media upload - Browse button (trigger file input)
+            $(document).on('click', '.eau-media-upload-browse-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileInput = wrapper.find('.eau-media-upload-file-input')[0];
+                if (fileInput) {
+                    fileInput.click();
+                }
+            });
+
+            // Media upload - Click on dropzone to trigger file input
+            $(document).on('click', '.eau-media-upload-dropzone', function(e) {
+                if ($(e.target).closest('.eau-media-upload-browse-btn').length ||
+                    $(e.target).is('input[type="file"]')) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileInput = wrapper.find('.eau-media-upload-file-input')[0];
+                if (fileInput) {
+                    fileInput.click();
+                }
+            });
+
+            // Media upload - File input change
+            $(document).on('change', '.eau-media-upload-file-input', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const file = this.files[0];
+
+                if (file) {
+                    self.uploadFile(wrapper, file);
+                }
+
+                $(this).val('');
+            });
+
+            // Media upload - Drag and drop
+            $(document).on('dragover dragenter', '.eau-media-upload-dropzone', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('drag-active');
+            });
+
+            $(document).on('dragleave dragend drop', '.eau-media-upload-dropzone', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('drag-active');
+            });
+
+            $(document).on('drop', '.eau-media-upload-dropzone', function(e) {
+                e.preventDefault();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const files = e.originalEvent.dataTransfer.files;
+
+                if (files.length > 0) {
+                    self.uploadFile(wrapper, files[0]);
+                }
+            });
+
+            // Media upload - Remove button
+            $(document).on('click', '.eau-media-upload-remove', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                self.clearMediaUpload(wrapper);
+            });
+
+            // My Files - Search input
+            $(document).on('input', '.eau-media-upload-myfiles-search-input', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                clearTimeout(wrapper.data('search-timeout'));
+
+                const timeout = setTimeout(function() {
+                    self.loadUserFiles(wrapper);
+                }, 300);
+
+                wrapper.data('search-timeout', timeout);
+            });
+
+            // My Files - Select file
+            $(document).on('click', '.eau-media-upload-file-item', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileId = $(this).data('id');
+                const fileUrl = $(this).data('url');
+                const fileName = $(this).data('filename');
+
+                wrapper.find('.eau-media-upload-file-item').removeClass('selected');
+                $(this).addClass('selected');
+
+                self.setMediaValue(wrapper, fileId, 'media', fileName, fileUrl);
+            });
+        },
+
+        /**
+         * Upload file via AJAX
+         */
+        uploadFile: function(wrapper, file) {
+            const self = this;
+            const maxSize = parseInt(wrapper.data('max-file-size')) || 5242880; // 5MB
+            const allowedExtensions = wrapper.data('allowed-extensions') || '';
+
+            // Validate file size
+            if (file.size > maxSize) {
+                this.showToast('File is too large. Maximum size is ' + this.formatFileSize(maxSize), 'error');
+                return;
             }
 
-            this.mediaFrame.open();
+            // Validate extension
+            if (allowedExtensions) {
+                const allowed = allowedExtensions.toLowerCase().split(',');
+                const ext = file.name.split('.').pop().toLowerCase();
+
+                if (!allowed.includes(ext)) {
+                    this.showToast('File type not allowed. Allowed: ' + allowed.map(e => e.toUpperCase()).join(', '), 'error');
+                    return;
+                }
+            }
+
+            // Show progress
+            const dropzone = wrapper.find('.eau-media-upload-dropzone');
+            const progressContainer = dropzone.find('.eau-media-upload-progress');
+            const progressFill = progressContainer.find('.eau-media-upload-progress-fill');
+            const progressText = progressContainer.find('.eau-media-upload-progress-text');
+            const dropzoneContent = dropzone.find('.eau-media-upload-dropzone-content');
+
+            dropzoneContent.hide();
+            progressContainer.show();
+            progressFill.css('width', '0%');
+            progressText.text('Uploading... 0%');
+
+            // Create FormData
+            const formData = new FormData();
+            formData.append('action', 'eau_upload_file');
+            formData.append('nonce', eauEventsManagement.nonce);
+            formData.append('file', file);
+            formData.append('max_size', maxSize);
+            formData.append('allowed_extensions', allowedExtensions);
+
+            // Upload via AJAX
+            $.ajax({
+                url: eauEventsManagement.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            progressFill.css('width', percent + '%');
+                            progressText.text('Uploading... ' + percent + '%');
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.setMediaValue(wrapper, response.data.id, 'media', response.data.filename, response.data.url);
+                        self.showToast('Image uploaded successfully', 'success');
+                    } else {
+                        self.showToast(response.data.message || 'Upload failed', 'error');
+                    }
+                },
+                error: function() {
+                    self.showToast('Upload failed. Please try again.', 'error');
+                },
+                complete: function() {
+                    progressContainer.hide();
+                    dropzoneContent.show();
+                }
+            });
         },
 
         /**
-         * Set image preview
+         * Load user's files for My Files panel
          */
-        setImage: function(imageId, imageUrl) {
-            $('#eau-edit-image_id').val(imageId);
-            $('#eau-image-preview').html('<img src="' + imageUrl + '" alt="">');
-            $('#eau-remove-image').show();
-        },
+        loadUserFiles: function(wrapper) {
+            const self = this;
+            const list = wrapper.find('.eau-media-upload-myfiles-list');
+            const search = wrapper.find('.eau-media-upload-myfiles-search-input').val() || '';
 
-        /**
-         * Remove image
-         */
-        removeImage: function() {
-            $('#eau-edit-image_id').val('');
-            $('#eau-image-preview').html(
-                '<div class="eau-image-placeholder" id="eau-image-placeholder">' +
-                '<span class="dashicons dashicons-format-image"></span>' +
-                '<p>Click to upload</p>' +
+            list.html(
+                '<div class="eau-media-upload-myfiles-loading">' +
+                '<i data-lucide="loader-2" class="eau-spin"></i>' +
+                '<span>Loading files...</span>' +
                 '</div>'
             );
-            $('#eau-remove-image').hide();
+
+            $.ajax({
+                url: eauEventsManagement.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_user_media',
+                    nonce: eauEventsManagement.nonce,
+                    search: search,
+                    type: 'image'
+                },
+                success: function(response) {
+                    if (response.success && response.data.files.length > 0) {
+                        self.renderUserFiles(wrapper, response.data.files);
+                    } else {
+                        list.html('<div class="eau-media-upload-myfiles-empty">No images found</div>');
+                    }
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                },
+                error: function() {
+                    list.html('<div class="eau-media-upload-myfiles-empty">Error loading files</div>');
+                }
+            });
+        },
+
+        /**
+         * Render user files in My Files panel
+         */
+        renderUserFiles: function(wrapper, files) {
+            const list = wrapper.find('.eau-media-upload-myfiles-list');
+            let html = '<div class="eau-media-upload-myfiles-grid">';
+
+            files.forEach(function(file) {
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.ext.toLowerCase());
+                html += '<div class="eau-media-upload-file-item" data-id="' + file.id + '" data-url="' + file.url + '" data-filename="' + file.filename + '">';
+                if (isImage) {
+                    html += '<div class="eau-media-upload-file-thumb"><img src="' + file.url + '" alt="' + file.filename + '"></div>';
+                } else {
+                    html += '<div class="eau-media-upload-file-thumb"><i data-lucide="file"></i></div>';
+                }
+                html += '<span class="eau-media-upload-file-name">' + file.filename + '</span>';
+                html += '</div>';
+            });
+
+            html += '</div>';
+            list.html(html);
+        },
+
+        /**
+         * Set media value in component
+         */
+        setMediaValue: function(wrapper, value, type, filename, url) {
+            const valueInput = wrapper.find('.eau-media-upload-value');
+            const typeInput = wrapper.find('.eau-media-upload-type');
+            const preview = wrapper.find('.eau-media-upload-preview');
+            const previewName = wrapper.find('.eau-media-upload-preview-name');
+            const previewLink = wrapper.find('.eau-media-upload-preview-link');
+            const thumbnail = wrapper.find('.eau-media-upload-preview-thumbnail');
+            const thumbnailImage = thumbnail.find('.eau-media-upload-preview-image');
+
+            valueInput.val(value);
+            typeInput.val(type);
+            previewName.text(filename);
+            previewLink.attr('href', url || value);
+
+            // Check if file is an image and show preview
+            const fileUrl = url || value;
+            const isImage = this.isImageFile(filename) || this.isImageUrl(fileUrl);
+
+            if (isImage && fileUrl) {
+                thumbnailImage.attr('src', fileUrl).show();
+                thumbnail.addClass('has-image');
+            } else {
+                thumbnailImage.attr('src', '').hide();
+                thumbnail.removeClass('has-image');
+            }
+
+            preview.show();
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Check if filename is an image
+         */
+        isImageFile: function(filename) {
+            if (!filename) return false;
+            const ext = filename.split('.').pop().toLowerCase();
+            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        },
+
+        /**
+         * Check if URL is an image
+         */
+        isImageUrl: function(url) {
+            if (!url) return false;
+            return /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(url);
+        },
+
+        /**
+         * Clear media upload component
+         */
+        clearMediaUpload: function(wrapper) {
+            wrapper.find('.eau-media-upload-value').val('');
+            wrapper.find('.eau-media-upload-type').val('');
+            wrapper.find('.eau-media-upload-url-input').val('');
+            wrapper.find('.eau-media-upload-preview').hide();
+            wrapper.find('.eau-media-upload-file-item').removeClass('selected');
+
+            const thumbnail = wrapper.find('.eau-media-upload-preview-thumbnail');
+            thumbnail.removeClass('has-image');
+            thumbnail.find('.eau-media-upload-preview-image').attr('src', '').hide();
+        },
+
+        /**
+         * Format file size
+         */
+        formatFileSize: function(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
 
         /**
@@ -700,17 +1000,15 @@
          * Delete event
          */
         deleteEvent: function(eventId) {
-            Swal.fire({
+            const self = this;
+
+            EauNotifications.confirm({
                 title: 'Delete Event?',
-                text: 'Are you sure you want to delete this event? This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, delete it',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
+                message: 'Are you sure you want to delete this event? This action cannot be undone.',
+                type: 'danger',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: function() {
                     $.ajax({
                         url: eauEventsManagement.ajaxUrl,
                         type: 'POST',
@@ -721,10 +1019,10 @@
                         },
                         success: (response) => {
                             if (response.success) {
-                                this.showToast(response.data.message, 'success');
-                                this.loadEvents();
+                                self.showToast(response.data.message, 'success');
+                                self.loadEvents();
                             } else {
-                                this.showToast(response.data.message || 'Error', 'error');
+                                self.showToast(response.data.message || 'Error', 'error');
                             }
                         }
                     });
@@ -736,22 +1034,23 @@
          * Show toast notification
          */
         showToast: function(message, type) {
-            const iconMap = {
-                success: 'success',
-                error: 'error',
-                warning: 'warning',
-                info: 'info'
-            };
-
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: iconMap[type] || 'info',
-                title: message,
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
+            if (typeof EauNotifications !== 'undefined') {
+                switch (type) {
+                    case 'success':
+                        EauNotifications.success('Success', message);
+                        break;
+                    case 'error':
+                        EauNotifications.error('Error', message);
+                        break;
+                    case 'warning':
+                        EauNotifications.warning('Warning', message);
+                        break;
+                    default:
+                        EauNotifications.info('Info', message);
+                }
+            } else {
+                console.log(type + ': ' + message);
+            }
         },
 
         /**

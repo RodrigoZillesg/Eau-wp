@@ -172,7 +172,41 @@ class Eau_Events_Management {
                     </button>
                 </div>
                 <div class="eau-modal-body">
-                    <form id="eau-event-edit-form">
+                    <!-- Skeleton Loading -->
+                    <div class="eau-modal-skeleton">
+                        <div class="eau-form-grid">
+                            <div class="eau-skeleton-field eau-form-field-span-2">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-input"></div>
+                            </div>
+                            <div class="eau-skeleton-field eau-form-field-span-2">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-input eau-skeleton-textarea"></div>
+                            </div>
+                            <div class="eau-skeleton-field">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-input"></div>
+                            </div>
+                            <div class="eau-skeleton-field">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-input"></div>
+                            </div>
+                            <div class="eau-skeleton-field">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-input"></div>
+                            </div>
+                            <div class="eau-skeleton-field">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-input"></div>
+                            </div>
+                            <div class="eau-skeleton-field eau-form-field-span-2">
+                                <div class="eau-skeleton-label"></div>
+                                <div class="eau-skeleton-image"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Form -->
+                    <form id="eau-event-edit-form" class="eau-modal-form">
                         <input type="hidden" name="event_id" id="eau-edit-event-id">
                         <input type="hidden" name="mode" id="eau-edit-mode" value="edit">
 
@@ -226,19 +260,19 @@ class Eau_Events_Management {
                                 </div>
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-form-label">Event Image</label>
-                                    <div class="eau-image-upload-wrapper">
-                                        <div class="eau-image-preview" id="eau-image-preview">
-                                            <div class="eau-image-placeholder" id="eau-image-placeholder">
-                                                <span class="dashicons dashicons-format-image"></span>
-                                                <p><?php _e('Click to upload', 'eau-system'); ?></p>
-                                            </div>
-                                        </div>
-                                        <input type="hidden" name="image_id" id="eau-edit-image_id" value="">
-                                        <div class="eau-image-actions">
-                                            <button type="button" class="button eau-upload-image-btn" id="eau-select-image"><?php _e('Choose', 'eau-system'); ?></button>
-                                            <button type="button" class="button eau-remove-image-btn" id="eau-remove-image" style="display: none;"><?php _e('Remove', 'eau-system'); ?></button>
-                                        </div>
-                                    </div>
+                                    <?php
+                                    echo \EauSystem\Components\Eau_Media_Upload::field(
+                                        'eau-edit-image_id',
+                                        'image_id',
+                                        '',
+                                        array(
+                                            'type' => 'media',
+                                            'allowed_types' => 'image/*',
+                                            'allowed_extensions' => 'jpg,jpeg,png,gif,webp',
+                                            'max_file_size' => 5 * 1024 * 1024, // 5MB
+                                        )
+                                    );
+                                    ?>
                                 </div>
                             </div>
                         </div>
@@ -522,7 +556,16 @@ class Eau_Events_Management {
             true
         );
 
-        // SweetAlert2
+        // EauNotifications
+        wp_enqueue_script(
+            'eau-notifications',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-notifications.js',
+            array('jquery'),
+            EAU_SYSTEM_VERSION,
+            true
+        );
+
+        // SweetAlert2 (para confirm dialogs)
         wp_enqueue_style(
             'sweetalert2',
             'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css',
@@ -556,7 +599,7 @@ class Eau_Events_Management {
         wp_enqueue_script(
             'eau-events-management',
             EAU_SYSTEM_PLUGIN_URL . 'includes/events/assets/js/eau-events-management.js',
-            array('jquery', 'lucide', 'quill'),
+            array('jquery', 'lucide', 'quill', 'eau-notifications', 'sweetalert2'),
             EAU_SYSTEM_VERSION,
             true
         );

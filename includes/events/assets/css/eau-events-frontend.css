@@ -1510,3 +1510,124 @@ button.eau-reg-btn-confirm:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ==========================================================================
+   Registration Modal - Additional Fields
+   ========================================================================== */
+
+.eau-reg-additional-info {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--eau-gray-800);
+    margin: 0 0 16px 0;
+}
+
+.eau-reg-field {
+    margin-bottom: 16px;
+}
+
+.eau-reg-field:last-child {
+    margin-bottom: 0;
+}
+
+.eau-reg-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+    margin-bottom: 6px;
+}
+
+.eau-reg-field input,
+.eau-reg-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--eau-gray-800);
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-300);
+    border-radius: var(--eau-border-radius);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.eau-reg-field input:focus,
+.eau-reg-field textarea:focus {
+    outline: none;
+    border-color: var(--eau-primary);
+    box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1);
+}
+
+.eau-reg-field input::placeholder,
+.eau-reg-field textarea::placeholder {
+    color: var(--eau-gray-400);
+}
+
+.eau-reg-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Terms and Conditions */
+.eau-reg-terms {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.eau-reg-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--eau-primary);
+    cursor: pointer;
+}
+
+.eau-reg-checkbox-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+    line-height: 1.4;
+}
+
+.eau-reg-terms-list {
+    margin: 12px 0 0 28px;
+    padding: 0;
+    list-style-type: disc;
+}
+
+.eau-reg-terms-list li {
+    font-size: 12px;
+    color: var(--eau-gray-600);
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+.eau-reg-terms-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Make modal taller to accommodate new fields */
+.eau-reg-modal-container {
+    max-height: 90vh;
+}
+
+.eau-reg-modal-body {
+    max-height: calc(90vh - 160px);
+    overflow-y: auto;
+}

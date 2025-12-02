@@ -1117,54 +1117,111 @@ button.eau-btn-secondary {
 }
 
 /* ==========================================================================
-   Modal Loading State
+   Modal Loading State - Skeleton
    ========================================================================== */
 
 #eau-event-edit-modal .eau-modal-body.eau-modal-loading,
 #eau-event-edit-modal .eau-modal-footer.eau-modal-loading {
-    position: relative !important;
     pointer-events: none !important;
 }
 
-#eau-event-edit-modal .eau-modal-body.eau-modal-loading::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    z-index: 10 !important;
-}
-
-#eau-event-edit-modal .eau-modal-body.eau-modal-loading::after {
-    content: '' !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    margin: -20px 0 0 -20px !important;
-    border: 3px solid #e5e7eb !important;
-    border-top-color: #005eb8 !important;
-    border-radius: 50% !important;
-    animation: eau-modal-spin 0.8s linear infinite !important;
-    z-index: 11 !important;
+#eau-event-edit-modal .eau-modal-body.eau-modal-loading .eau-modal-form {
+    display: none !important;
 }
 
 #eau-event-edit-modal .eau-modal-footer.eau-modal-loading {
     opacity: 0.5 !important;
 }
 
-@keyframes eau-modal-spin {
-    to {
-        transform: rotate(360deg);
-    }
+/* Modal Skeleton Form */
+.eau-modal-skeleton {
+    display: none;
+    padding: 0 !important;
+}
+
+.eau-modal-body.eau-modal-loading .eau-modal-skeleton {
+    display: block !important;
+}
+
+.eau-modal-skeleton .eau-form-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-field.eau-form-field-span-2 {
+    grid-column: span 2 !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-label {
+    height: 14px !important;
+    width: 30% !important;
+    background: #e5e7eb !important;
+    border-radius: 4px !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-input {
+    height: 42px !important;
+    background: #e5e7eb !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-input::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent) !important;
+    animation: eau-skeleton-shimmer 1.5s infinite !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-textarea {
+    height: 100px !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-image {
+    height: 120px !important;
+    background: #e5e7eb !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.eau-modal-skeleton .eau-skeleton-image::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent) !important;
+    animation: eau-skeleton-shimmer 1.5s infinite !important;
+}
+
+@keyframes eau-skeleton-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 /* Spin animation for buttons */
 .eau-spin {
-    animation: eau-modal-spin 1s linear infinite !important;
+    animation: eau-btn-spin 1s linear infinite !important;
+}
+
+@keyframes eau-btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ==========================================================================
@@ -1643,4 +1700,372 @@ button.eau-btn-secondary {
 .eau-cpd-badge svg {
     width: 16px;
     height: 16px;
+}
+
+/* ==========================================================================
+   Dropdown Divider
+   ========================================================================== */
+
+.eau-dropdown-divider {
+    height: 1px;
+    background-color: var(--eau-gray-200);
+    margin: 6px 0;
+}
+
+/* ==========================================================================
+   Payment Modal Styles
+   ========================================================================== */
+
+#eau-payment-modal .eau-modal-container {
+    max-width: 700px !important;
+}
+
+#eau-payment-modal .eau-modal-header {
+    padding: 20px 24px !important;
+    border-bottom: 1px solid var(--eau-gray-200) !important;
+}
+
+#eau-payment-modal .eau-modal-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: var(--eau-gray-900) !important;
+}
+
+#eau-payment-modal .eau-modal-title svg {
+    width: 22px !important;
+    height: 22px !important;
+    color: var(--eau-primary) !important;
+}
+
+#eau-payment-modal .eau-modal-body {
+    padding: 24px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+}
+
+/* Payment Info Section */
+.eau-payment-info-section {
+    background: var(--eau-gray-50);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.eau-payment-info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+}
+
+.eau-payment-info-row:not(:last-child) {
+    border-bottom: 1px solid var(--eau-gray-200);
+}
+
+.eau-payment-info-label {
+    font-size: 13px;
+    color: var(--eau-gray-500);
+    min-width: 100px;
+}
+
+.eau-payment-info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-800);
+}
+
+/* Payment Summary */
+.eau-payment-summary {
+    display: flex;
+    gap: 20px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border: 1px solid #bae6fd;
+}
+
+.eau-payment-summary-item {
+    flex: 1;
+    text-align: center;
+}
+
+.eau-payment-summary-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--eau-gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.eau-payment-summary-value {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* Section Titles */
+.eau-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--eau-gray-800);
+    margin: 0 0 12px 0;
+    padding: 0;
+}
+
+/* Payments List */
+.eau-payments-list-section {
+    margin-bottom: 24px;
+}
+
+.eau-payments-list {
+    min-height: 60px;
+}
+
+.eau-empty-payments {
+    text-align: center;
+    padding: 20px;
+    color: var(--eau-gray-500);
+    font-size: 14px;
+    background: var(--eau-gray-50);
+    border-radius: 8px;
+    border: 1px dashed var(--eau-gray-300);
+}
+
+.eau-payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.eau-payments-table th,
+.eau-payments-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--eau-gray-200);
+}
+
+.eau-payments-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--eau-gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--eau-gray-50);
+}
+
+.eau-payments-table tbody tr:hover {
+    background: var(--eau-gray-50);
+}
+
+.eau-payment-notes-row {
+    background: var(--eau-gray-50);
+}
+
+.eau-payment-notes-row td {
+    padding: 6px 12px !important;
+    border-bottom: 1px solid var(--eau-gray-200);
+}
+
+.eau-receipt-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--eau-primary);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.eau-receipt-link:hover {
+    text-decoration: underline;
+}
+
+.eau-receipt-link svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Add Payment Section */
+.eau-add-payment-section {
+    background: var(--eau-gray-50);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--eau-gray-200);
+}
+
+.eau-add-payment-section .eau-form-grid {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.eau-add-payment-section .eau-form-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.eau-add-payment-section .eau-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.eau-add-payment-section .eau-form-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+}
+
+.eau-add-payment-section input,
+.eau-add-payment-section select,
+.eau-add-payment-section textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--eau-gray-300);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--eau-gray-800);
+    box-sizing: border-box;
+}
+
+.eau-add-payment-section input:focus,
+.eau-add-payment-section select:focus,
+.eau-add-payment-section textarea:focus {
+    outline: none;
+    border-color: var(--eau-primary);
+    box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1);
+}
+
+.eau-add-payment-section textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Input Group (for $ prefix) */
+.eau-input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.eau-input-prefix {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    background: var(--eau-gray-100);
+    border: 1px solid var(--eau-gray-300);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-600);
+}
+
+.eau-input-group input {
+    border-radius: 0 6px 6px 0 !important;
+}
+
+/* File Upload */
+.eau-file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.eau-file-name {
+    font-size: 13px;
+    color: var(--eau-gray-600);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.eau-btn-remove-file {
+    padding: 4px !important;
+    color: var(--eau-error) !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer;
+}
+
+.eau-btn-remove-file:hover {
+    background: #fee2e2 !important;
+    border-radius: 4px;
+}
+
+.eau-btn-remove-file svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Form Actions */
+.eau-add-payment-section .eau-form-actions {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--eau-gray-200);
+}
+
+/* Delete Payment Button */
+.eau-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+.eau-btn-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-btn-icon.eau-btn-danger {
+    color: var(--eau-error);
+}
+
+.eau-btn-icon.eau-btn-danger:hover {
+    background: #fee2e2;
+}
+
+/* Modal Footer */
+#eau-payment-modal .eau-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--eau-gray-200);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Text Muted */
+.eau-text-muted {
+    color: var(--eau-gray-400) !important;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .eau-add-payment-section .eau-form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-payment-summary {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .eau-payment-summary-item {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 }

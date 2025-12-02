@@ -78,14 +78,33 @@
                     const btnText = this.querySelector('.btn-text');
                     const btnLoading = this.querySelector('.btn-loading');
 
+                    // Validate terms checkbox
+                    const termsCheckbox = document.getElementById('eau-reg-terms');
+                    if (termsCheckbox && !termsCheckbox.checked) {
+                        messageEl.className = 'eau-reg-message eau-reg-message-error';
+                        messageEl.innerHTML = 'Please agree to the terms and conditions to continue.';
+                        return;
+                    }
+
                     this.disabled = true;
                     if (btnText) btnText.style.display = 'none';
                     if (btnLoading) btnLoading.style.display = 'inline';
+
+                    // Get additional fields
+                    const dietaryEl = document.getElementById('eau-reg-dietary');
+                    const accessibilityEl = document.getElementById('eau-reg-accessibility');
+                    const notesEl = document.getElementById('eau-reg-notes');
 
                     const formData = new FormData();
                     formData.append('action', 'eau_register_for_event');
                     formData.append('event_id', eventId);
                     formData.append('nonce', nonceEl.value);
+
+                    // Additional fields
+                    if (dietaryEl) formData.append('dietary_requirements', dietaryEl.value);
+                    if (accessibilityEl) formData.append('accessibility_requirements', accessibilityEl.value);
+                    if (notesEl) formData.append('additional_notes', notesEl.value);
+                    formData.append('agree_terms', '1');
 
                     fetch(eauEventsFrontendData.ajaxUrl, {
                         method: 'POST',
