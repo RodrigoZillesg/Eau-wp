@@ -377,18 +377,20 @@ class Registrations_Template {
                                     </select>
                                 </div>
                                 <div class="eau-form-field">
-                                    <label for="eau-payment-receipt"><?php esc_html_e('Receipt/Proof', 'eau-system'); ?></label>
-                                    <div class="eau-file-upload-wrapper" id="eau-payment-receipt-wrapper">
-                                        <input type="hidden" id="eau-payment-receipt-id" name="receipt_id" value="">
-                                        <button type="button" class="eau-btn eau-btn-outline eau-btn-sm" id="eau-payment-upload-btn">
-                                            <i data-lucide="upload"></i>
-                                            <?php esc_html_e('Upload', 'eau-system'); ?>
-                                        </button>
-                                        <span class="eau-file-name" id="eau-payment-file-name"></span>
-                                        <button type="button" class="eau-btn-icon eau-btn-remove-file" id="eau-payment-remove-file" style="display:none;">
-                                            <i data-lucide="x"></i>
-                                        </button>
-                                    </div>
+                                    <label><?php esc_html_e('Receipt/Proof', 'eau-system'); ?></label>
+                                    <?php
+                                    echo \EauSystem\Components\Eau_Media_Upload::field(
+                                        'eau-payment-receipt-id',
+                                        'receipt_id',
+                                        '',
+                                        array(
+                                            'type' => 'media',
+                                            'allowed_types' => 'image/*,application/pdf',
+                                            'allowed_extensions' => 'jpg,jpeg,png,gif,pdf',
+                                            'max_file_size' => 10 * 1024 * 1024, // 10MB
+                                        )
+                                    );
+                                    ?>
                                 </div>
                             </div>
 

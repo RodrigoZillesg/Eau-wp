@@ -18,7 +18,6 @@
         orderBy: 'registration_date',
         order: 'DESC',
         eventId: null,
-        mediaUploader: null,
 
         /**
          * Initialize
@@ -150,17 +149,274 @@
                 self.deletePayment(paymentId);
             });
 
-            // Upload receipt
-            $(document).on('click', '#eau-payment-upload-btn', function() {
-                self.openMediaUploader();
+            // Media Upload Component Events for Receipt
+            this.bindMediaUploadEvents();
+        },
+
+        /**
+         * Bind Media Upload Component Events
+         */
+        bindMediaUploadEvents: function() {
+            const self = this;
+
+            // Media upload tabs
+            $(document).on('click', '#eau-payment-modal .eau-media-upload-tab', function() {
+                const tab = $(this).data('tab');
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+
+                wrapper.find('.eau-media-upload-tab').removeClass('eau-media-upload-tab-active');
+                $(this).addClass('eau-media-upload-tab-active');
+
+                wrapper.find('.eau-media-upload-panel').removeClass('active');
+                if (tab === 'url') {
+                    wrapper.find('.eau-media-upload-url-panel').addClass('active');
+                } else if (tab === 'upload') {
+                    wrapper.find('.eau-media-upload-file-panel').addClass('active');
+                } else if (tab === 'myfiles') {
+                    wrapper.find('.eau-media-upload-myfiles-panel').addClass('active');
+                    self.loadUserFiles(wrapper);
+                }
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
             });
 
-            // Remove receipt
-            $(document).on('click', '#eau-payment-remove-file', function() {
-                $('#eau-payment-receipt-id').val('');
-                $('#eau-payment-file-name').text('');
-                $(this).hide();
+            // Media upload - Browse button
+            $(document).on('click', '#eau-payment-modal .eau-media-upload-browse-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileInput = wrapper.find('.eau-media-upload-file-input')[0];
+                if (fileInput) {
+                    fileInput.click();
+                }
             });
+
+            // Media upload - Click on dropzone
+            $(document).on('click', '#eau-payment-modal .eau-media-upload-dropzone', function(e) {
+                if ($(e.target).closest('.eau-media-upload-browse-btn').length || $(e.target).is('input[type="file"]')) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const fileInput = wrapper.find('.eau-media-upload-file-input')[0];
+                if (fileInput) {
+                    fileInput.click();
+                }
+            });
+
+            // Media upload - File input change
+            $(document).on('change', '#eau-payment-modal .eau-media-upload-file-input', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                const file = this.files[0];
+                if (file) {
+                    self.uploadFile(wrapper, file);
+                }
+                $(this).val('');
+            });
+
+            // Media upload - Remove button
+            $(document).on('click', '#eau-payment-modal .eau-media-upload-remove', function() {
+                const wrapper = $(this).closest('.eau-media-upload-wrapper');
+                self.clearMediaUpload(wrapper);
+            });
+        },
+
+        /**
+         * Upload file via AJAX
+         */
+        uploadFile: function(wrapper, file) {
+            const self = this;
+            const maxSize = parseInt(wrapper.data('max-file-size')) || 10485760;
+            const allowedExtensions = (wrapper.data('allowed-extensions') || '').split(',').filter(e => e);
+
+            // Validate file size
+            if (file.size > maxSize) {
+                if (typeof EauNotifications !== 'undefined') {
+                    EauNotifications.error('Error', 'File is too large. Max size: ' + (maxSize / 1024 / 1024) + 'MB');
+                }
+                return;
+            }
+
+            // Validate extension
+            if (allowedExtensions.length > 0) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(ext)) {
+                    if (typeof EauNotifications !== 'undefined') {
+                        EauNotifications.error('Error', 'File type not allowed. Allowed: ' + allowedExtensions.join(', '));
+                    }
+                    return;
+                }
+            }
+
+            // Show progress
+            const $progress = wrapper.find('.eau-media-upload-progress');
+            const $progressFill = wrapper.find('.eau-media-upload-progress-fill');
+            const $progressText = wrapper.find('.eau-media-upload-progress-text');
+            const $dropzone = wrapper.find('.eau-media-upload-dropzone-content');
+
+            $dropzone.hide();
+            $progress.show();
+
+            const formData = new FormData();
+            formData.append('action', 'eau_upload_media');
+            formData.append('nonce', eauEventRegistrations.nonce);
+            formData.append('file', file);
+
+            $.ajax({
+                url: eauEventRegistrations.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            $progressFill.css('width', percent + '%');
+                            $progressText.text('Uploading... ' + percent + '%');
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    $progress.hide();
+                    $dropzone.show();
+                    $progressFill.css('width', '0%');
+
+                    if (response.success) {
+                        self.setMediaValue(wrapper, response.data.id, 'media', response.data.filename, response.data.url);
+                    } else {
+                        if (typeof EauNotifications !== 'undefined') {
+                            EauNotifications.error('Error', response.data.message || 'Upload failed');
+                        }
+                    }
+                },
+                error: function() {
+                    $progress.hide();
+                    $dropzone.show();
+                    $progressFill.css('width', '0%');
+                    if (typeof EauNotifications !== 'undefined') {
+                        EauNotifications.error('Error', 'Upload failed');
+                    }
+                }
+            });
+        },
+
+        /**
+         * Load user files for My Files tab
+         */
+        loadUserFiles: function(wrapper) {
+            const self = this;
+            const $list = wrapper.find('.eau-media-upload-myfiles-list');
+
+            $list.html('<div class="eau-media-upload-myfiles-loading"><i data-lucide="loader-2" class="eau-spin"></i><span>Loading files...</span></div>');
+            lucide.createIcons();
+
+            $.ajax({
+                url: eauEventRegistrations.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_user_files',
+                    nonce: eauEventRegistrations.nonce
+                },
+                success: function(response) {
+                    if (response.success && response.data.files) {
+                        self.renderUserFiles(wrapper, response.data.files);
+                    } else {
+                        $list.html('<div class="eau-media-upload-myfiles-empty">No files found</div>');
+                    }
+                },
+                error: function() {
+                    $list.html('<div class="eau-media-upload-myfiles-empty">Error loading files</div>');
+                }
+            });
+        },
+
+        /**
+         * Render user files grid
+         */
+        renderUserFiles: function(wrapper, files) {
+            const self = this;
+            const $list = wrapper.find('.eau-media-upload-myfiles-list');
+
+            if (!files || files.length === 0) {
+                $list.html('<div class="eau-media-upload-myfiles-empty">No files found</div>');
+                return;
+            }
+
+            let html = '<div class="eau-media-upload-myfiles-grid">';
+            files.forEach(function(file) {
+                const isImage = file.type && file.type.startsWith('image/');
+                html += '<div class="eau-media-upload-myfile-item" data-id="' + file.id + '" data-url="' + file.url + '" data-filename="' + file.filename + '">';
+                if (isImage && file.thumbnail) {
+                    html += '<img src="' + file.thumbnail + '" alt="' + file.filename + '">';
+                } else {
+                    html += '<div class="eau-media-upload-myfile-icon"><i data-lucide="file"></i></div>';
+                }
+                html += '<span class="eau-media-upload-myfile-name">' + file.filename + '</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+
+            $list.html(html);
+            lucide.createIcons();
+
+            // Bind click on file items
+            $list.find('.eau-media-upload-myfile-item').on('click', function() {
+                const id = $(this).data('id');
+                const url = $(this).data('url');
+                const filename = $(this).data('filename');
+                self.setMediaValue(wrapper, id, 'media', filename, url);
+            });
+        },
+
+        /**
+         * Set media value
+         */
+        setMediaValue: function(wrapper, value, type, filename, url) {
+            wrapper.find('.eau-media-upload-value').val(value);
+            wrapper.find('.eau-media-upload-type').val(type);
+
+            // Show preview
+            const $preview = wrapper.find('.eau-media-upload-preview');
+            const $previewName = wrapper.find('[id$="-preview-name"]');
+            const $previewLink = wrapper.find('[id$="-preview-link"]');
+            const $previewImage = wrapper.find('.eau-media-upload-preview-image');
+            const $previewIcon = wrapper.find('.eau-media-upload-preview-icon');
+
+            $previewName.text(filename || value);
+            if (url) {
+                $previewLink.attr('href', url).show();
+            }
+
+            // Check if image
+            const isImage = url && /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+            if (isImage) {
+                $previewImage.attr('src', url).show();
+                $previewIcon.hide();
+            } else {
+                $previewImage.hide();
+                $previewIcon.show();
+            }
+
+            $preview.show();
+            lucide.createIcons();
+        },
+
+        /**
+         * Clear media upload
+         */
+        clearMediaUpload: function(wrapper) {
+            wrapper.find('.eau-media-upload-value').val('');
+            wrapper.find('.eau-media-upload-type').val('');
+            wrapper.find('.eau-media-upload-url-input').val('');
+            wrapper.find('.eau-media-upload-preview').hide();
+            wrapper.find('.eau-media-upload-preview-image').attr('src', '').hide();
+            wrapper.find('.eau-media-upload-preview-icon').show();
         },
 
         /**
@@ -321,9 +577,10 @@
             // Reset form
             $('#eau-add-payment-form')[0].reset();
             $('#eau-payment-date').val(new Date().toISOString().split('T')[0]);
-            $('#eau-payment-receipt-id').val('');
-            $('#eau-payment-file-name').text('');
-            $('#eau-payment-remove-file').hide();
+
+            // Reset media upload component
+            const $receiptWrapper = $('#eau-payment-receipt-id-wrapper');
+            this.clearMediaUpload($receiptWrapper);
 
             // Show modal with loading state
             $modal.addClass('active');
@@ -489,9 +746,10 @@
                         // Reset form
                         $('#eau-add-payment-form')[0].reset();
                         $('#eau-payment-date').val(new Date().toISOString().split('T')[0]);
-                        $('#eau-payment-receipt-id').val('');
-                        $('#eau-payment-file-name').text('');
-                        $('#eau-payment-remove-file').hide();
+
+                        // Reset media upload component
+                        const $receiptWrapper = $('#eau-payment-receipt-id-wrapper');
+                        self.clearMediaUpload($receiptWrapper);
 
                         // Update suggested amount
                         if (response.data.balance > 0) {
@@ -565,39 +823,6 @@
                     self.showToast('Error deleting payment', 'error');
                 }
             });
-        },
-
-        /**
-         * Open media uploader for receipt
-         */
-        openMediaUploader: function() {
-            const self = this;
-
-            // If uploader already exists, open it
-            if (this.mediaUploader) {
-                this.mediaUploader.open();
-                return;
-            }
-
-            // Create uploader
-            this.mediaUploader = wp.media({
-                title: 'Select Receipt',
-                button: {
-                    text: 'Use this file'
-                },
-                multiple: false
-            });
-
-            // Handle selection
-            this.mediaUploader.on('select', function() {
-                const attachment = self.mediaUploader.state().get('selection').first().toJSON();
-                $('#eau-payment-receipt-id').val(attachment.id);
-                $('#eau-payment-file-name').text(attachment.filename);
-                $('#eau-payment-remove-file').show();
-                lucide.createIcons();
-            });
-
-            this.mediaUploader.open();
         },
 
         /**
