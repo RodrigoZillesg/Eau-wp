@@ -138,7 +138,7 @@ class Eau_Media_Upload {
 
             <!-- Painel de Upload -->
             <?php if ($type === 'media' || $type === 'both'): ?>
-            <div class="eau-media-upload-panel eau-media-upload-file-panel">
+            <div class="eau-media-upload-panel eau-media-upload-file-panel <?php echo ($type === 'media') ? 'active' : ''; ?>">
                 <div class="eau-media-upload-dropzone" id="<?php echo $id; ?>-dropzone">
                     <input
                         type="file"

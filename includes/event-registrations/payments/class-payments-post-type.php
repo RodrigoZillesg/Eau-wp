@@ -26,6 +26,11 @@ class Payments_Post_Type {
     const META_PREFIX = 'pay_';
 
     /**
+     * Versão do módulo para controle de sincronização
+     */
+    const VERSION = '1.45.2';
+
+    /**
      * Inicializa o Post Type
      *
      * @since  1.45.0
@@ -34,6 +39,7 @@ class Payments_Post_Type {
     public static function init() {
         add_action('init', array(__CLASS__, 'register_post_type'));
         add_action('init', array(__CLASS__, 'register_meta_fields'));
+        add_action('init', array(__CLASS__, 'register_to_jet_engine'), 5);
     }
 
     /**
@@ -276,6 +282,152 @@ class Payments_Post_Type {
             'cash'          => __('Cash', 'eau-system'),
             'invoice'       => __('Invoice', 'eau-system'),
             'other'         => __('Other', 'eau-system'),
+        );
+    }
+
+    /**
+     * Registra CPT no JetEngine se disponível
+     *
+     * @since  1.45.2
+     * @return void
+     */
+    public static function register_to_jet_engine() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'jet_post_types';
+
+        // Verifica se tabela JetEngine existe
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return;
+        }
+
+        // Verifica se precisa atualizar baseado na versão
+        $version_key = 'eau_payment_jet_version';
+        $saved_version = get_option($version_key);
+
+        if (self::exists_in_jet_engine()) {
+            // Atualiza se versão mudou
+            if ($saved_version !== self::VERSION) {
+                $wpdb->delete($table, array('slug' => self::POST_TYPE), array('%s'));
+                self::save_to_jet_engine();
+                update_option($version_key, self::VERSION);
+            }
+            return;
+        }
+
+        self::save_to_jet_engine();
+        update_option($version_key, self::VERSION);
+    }
+
+    /**
+     * Verifica se CPT existe na tabela JetEngine
+     *
+     * @since  1.45.2
+     * @return bool
+     */
+    private static function exists_in_jet_engine() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'jet_post_types';
+
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return false;
+        }
+
+        return (bool) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table WHERE slug = %s",
+            self::POST_TYPE
+        ));
+    }
+
+    /**
+     * Salva configuração do CPT na tabela JetEngine
+     *
+     * @since  1.45.2
+     * @return int|false
+     */
+    private static function save_to_jet_engine() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'jet_post_types';
+
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
+            return false;
+        }
+
+        $labels = array(
+            'name'          => 'Payments',
+            'singular_name' => 'Payment',
+            'menu_name'     => 'Payments',
+        );
+
+        $args = array(
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => true,
+            'show_in_menu'        => 'edit.php?post_type=eau_event',
+            'show_in_admin_bar'   => false,
+            'show_in_nav_menus'   => false,
+            'query_var'           => false,
+            'has_archive'         => false,
+            'hierarchical'        => false,
+            'show_in_rest'        => false,
+            'menu_position'       => null,
+            'capability_type'     => 'post',
+            'map_meta_cap'        => true,
+            'supports'            => array('title'),
+            'rewrite'             => false,
+        );
+
+        $meta_fields = self::get_jet_meta_fields();
+
+        $data = array(
+            'slug'        => self::POST_TYPE,
+            'status'      => 'publish',
+            'labels'      => maybe_serialize($labels),
+            'args'        => maybe_serialize($args),
+            'meta_fields' => maybe_serialize($meta_fields),
+        );
+
+        return $wpdb->insert($table, $data, array('%s', '%s', '%s', '%s', '%s'));
+    }
+
+    /**
+     * Retorna configuração de meta fields para JetEngine
+     *
+     * @since  1.45.2
+     * @return array
+     */
+    private static function get_jet_meta_fields() {
+        $p = self::META_PREFIX;
+        $base_id = 95000;
+
+        $payment_methods = array(
+            array('key' => 'credit_card', 'value' => 'Credit Card'),
+            array('key' => 'debit_card', 'value' => 'Debit Card'),
+            array('key' => 'bank_transfer', 'value' => 'Bank Transfer'),
+            array('key' => 'pix', 'value' => 'PIX'),
+            array('key' => 'cash', 'value' => 'Cash'),
+            array('key' => 'invoice', 'value' => 'Invoice'),
+            array('key' => 'other', 'value' => 'Other'),
+        );
+
+        $status_options = array(
+            array('key' => 'confirmed', 'value' => 'Confirmed'),
+            array('key' => 'pending', 'value' => 'Pending'),
+            array('key' => 'refunded', 'value' => 'Refunded'),
+        );
+
+        return array(
+            array('title' => 'Registration ID', 'name' => $p.'registration_id', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'Event ID', 'name' => $p.'event_id', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'User ID', 'name' => $p.'user_id', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'Amount', 'name' => $p.'amount', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'min_value' => 0, 'step_value' => 0.01, 'id' => $base_id++),
+            array('title' => 'Payment Date', 'name' => $p.'payment_date', 'object_type' => 'field', 'type' => 'date', 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'Payment Method', 'name' => $p.'payment_method', 'object_type' => 'field', 'type' => 'select', 'options' => $payment_methods, 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'Transaction ID', 'name' => $p.'transaction_id', 'object_type' => 'field', 'type' => 'text', 'width' => '100%', 'id' => $base_id++),
+            array('title' => 'Receipt URL', 'name' => $p.'receipt_url', 'object_type' => 'field', 'type' => 'text', 'width' => '100%', 'id' => $base_id++),
+            array('title' => 'Receipt File', 'name' => $p.'receipt_id', 'object_type' => 'field', 'type' => 'media', 'value_format' => 'id', 'id' => $base_id++),
+            array('title' => 'Notes', 'name' => $p.'notes', 'object_type' => 'field', 'type' => 'textarea', 'width' => '100%', 'id' => $base_id++),
+            array('title' => 'Created By', 'name' => $p.'created_by', 'object_type' => 'field', 'type' => 'number', 'width' => '50%', 'id' => $base_id++),
+            array('title' => 'Status', 'name' => $p.'status', 'object_type' => 'field', 'type' => 'select', 'options' => $status_options, 'default_value' => 'confirmed', 'width' => '50%', 'id' => $base_id++),
         );
     }
 }
