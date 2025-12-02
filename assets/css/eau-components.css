@@ -980,7 +980,23 @@
    MODAL COMPONENT
    ========================================================================== */
 
-/* Modal Overlay */
+/* Modal Wrapper - Hidden by default */
+.eau-modal {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+}
+
+/* Modal Wrapper - Visible when active */
+.eau-modal.active {
+    display: block !important;
+}
+
+/* Modal Overlay - Dark background */
 .eau-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -988,22 +1004,8 @@
     right: 0 !important;
     bottom: 0 !important;
     background: rgba(0, 0, 0, 0.5) !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 9999 !important;
-    padding: 1rem !important;
+    z-index: 1 !important;
     animation: eauFadeIn 0.2s ease !important;
-}
-
-/* Modal Overlay Hidden (default state) */
-.eau-modal-overlay[style*="display: none"] {
-    display: none !important;
-}
-
-/* Modal Overlay Visible (when opened) */
-.eau-modal-overlay[style*="display: flex"],
-.eau-modal-overlay[style*="display: block"] {
-    display: flex !important;
 }
 
 @keyframes eauFadeIn {
@@ -1015,50 +1017,57 @@
     }
 }
 
-/* Modal Container */
-.eau-modal {
+/* Modal Container - White box */
+.eau-modal-container {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
     background: #ffffff !important;
     border-radius: 8px !important;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-    width: 100% !important;
+    width: calc(100% - 2rem) !important;
     max-width: 600px !important;
-    max-height: 90vh !important;
+    max-height: calc(100vh - 2rem) !important;
     display: flex !important;
     flex-direction: column !important;
+    z-index: 2 !important;
     animation: eauSlideUp 0.2s ease !important;
 }
 
 @keyframes eauSlideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translate(-50%, -50%) translateY(20px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate(-50%, -50%) translateY(0);
     }
 }
 
 /* Modal Sizes */
-.eau-modal-small {
-    width: 100% !important;
+.eau-modal-container.eau-modal-small,
+.eau-modal-small .eau-modal-container {
     max-width: 400px !important;
 }
 
-.eau-modal-medium {
-    width: 100% !important;
+.eau-modal-container.eau-modal-medium,
+.eau-modal-medium .eau-modal-container {
     max-width: 600px !important;
 }
 
-.eau-modal-large {
-    width: 100% !important;
+.eau-modal-container.eau-modal-large,
+.eau-modal-large .eau-modal-container,
+.eau-modal-container.eau-modal-lg,
+.eau-modal-lg .eau-modal-container {
     max-width: 900px !important;
 }
 
-.eau-modal-full {
-    width: 100% !important;
-    max-width: 95vw !important;
-    max-height: 95vh !important;
+.eau-modal-container.eau-modal-full,
+.eau-modal-full .eau-modal-container {
+    max-width: calc(100vw - 2rem) !important;
+    max-height: calc(100vh - 2rem) !important;
 }
 
 /* Modal Header */
@@ -1243,15 +1252,14 @@
 
 /* Responsivo - Modal */
 @media (max-width: 767px) {
-    .eau-modal-overlay {
-        padding: 0 !important;
-    }
-
-    .eau-modal {
+    .eau-modal-container {
         width: 100% !important;
         max-width: 100% !important;
         max-height: 100vh !important;
         border-radius: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
     }
 
     .eau-modal-header {
