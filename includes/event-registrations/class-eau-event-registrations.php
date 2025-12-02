@@ -97,10 +97,6 @@ class Eau_Event_Registrations {
         require_once $base . 'certificate/class-certificate-config.php';
         require_once $base . 'certificate/class-certificate-renderer.php';
         require_once $base . 'certificate/class-certificate-generator.php';
-
-        // Payments System (v1.45.0)
-        require_once $base . 'payments/class-payments-post-type.php';
-        require_once $base . 'payments/class-payments-ajax.php';
     }
 
     /**
@@ -132,10 +128,6 @@ class Eau_Event_Registrations {
 
         // Certificate Generator (preview endpoint)
         Certificate\Certificate_Generator::register();
-
-        // Payments System
-        Payments\Payments_Post_Type::init();
-        Payments\Payments_Ajax::register_handlers();
 
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();

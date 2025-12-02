@@ -105,6 +105,10 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institution-requests-database.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-institution.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-my-institution-ajax.php';
+
+        // Payments System (v1.45.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payments-post-type.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payments-ajax.php';
     }
 
     private function define_admin_hooks() {
@@ -200,6 +204,10 @@ class Eau_System {
 
         // Initialize Event Registrations CPT
         \EauSystem\EventRegistrations\Eau_Event_Registrations::get_instance();
+
+        // Initialize Payments System
+        \EauSystem\Payments\Payments_Post_Type::init();
+        \EauSystem\Payments\Payments_Ajax::register_handlers();
 
         // Garante que tabelas do OpenLearning existem
         if (!Eau_OpenLearning_Database::tables_exist()) {

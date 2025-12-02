@@ -68,14 +68,13 @@ class Eau_Event_Registrations_CPT {
             'public'             => false,
             'publicly_queryable' => false,
             'show_ui'            => true,
-            'show_in_menu'       => true,
+            'show_in_menu'       => 'edit.php?post_type=eau_event', // Submenu de Events
             'query_var'          => true,
             'rewrite'            => false,
             'capability_type'    => 'post',
             'has_archive'        => false,
             'hierarchical'       => false,
-            'menu_position'      => 26,
-            'menu_icon'          => 'dashicons-tickets-alt',
+            'menu_position'      => null,
             'supports'           => array('title'),
             'show_in_rest'       => true,
         ));

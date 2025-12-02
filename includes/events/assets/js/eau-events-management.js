@@ -499,6 +499,10 @@
          */
         closeModal: function() {
             $('#eau-event-edit-modal').removeClass('active');
+            // Reset save button state
+            const $saveBtn = $('#eau-modal-save');
+            $saveBtn.prop('disabled', false).html('<i data-lucide="check"></i> Save Event');
+            lucide.createIcons();
         },
 
         /**

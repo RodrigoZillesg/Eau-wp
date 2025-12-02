@@ -3,11 +3,11 @@
  * Payments AJAX Handlers
  *
  * @package    EauSystem
- * @subpackage EventRegistrations\Payments
+ * @subpackage Payments
  * @since      1.45.0
  */
 
-namespace EauSystem\EventRegistrations\Payments;
+namespace EauSystem\Payments;
 
 if (!defined('WPINC')) {
     die;
@@ -33,6 +33,10 @@ class Payments_Ajax {
         add_action('wp_ajax_eau_get_payments', array(__CLASS__, 'get_payments'));
         add_action('wp_ajax_eau_delete_payment', array(__CLASS__, 'delete_payment'));
         add_action('wp_ajax_eau_get_registration_payment_info', array(__CLASS__, 'get_registration_payment_info'));
+
+        // Generic media upload handlers
+        add_action('wp_ajax_eau_upload_media', array(__CLASS__, 'upload_media'));
+        add_action('wp_ajax_eau_get_user_files', array(__CLASS__, 'get_user_files'));
     }
 
     /**
@@ -308,5 +312,160 @@ class Payments_Ajax {
         }
 
         update_post_meta($registration_id, 'reg_status', $new_status);
+    }
+
+    /**
+     * AJAX: Upload de arquivo para Media Library
+     *
+     * @since  1.45.8
+     * @return void
+     */
+    public static function upload_media() {
+        // Aceita qualquer nonce válido do sistema
+        $nonce_valid = false;
+        $nonces_to_check = array(
+            'eau_events_management_nonce',
+            'eau_event_registrations_nonce',
+            'eau_my_cpds_nonce',
+        );
+
+        foreach ($nonces_to_check as $nonce_action) {
+            if (isset($_POST['nonce']) && wp_verify_nonce($_POST['nonce'], $nonce_action)) {
+                $nonce_valid = true;
+                break;
+            }
+        }
+
+        if (!$nonce_valid) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+        }
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in to upload files'));
+        }
+
+        if (empty($_FILES['file'])) {
+            wp_send_json_error(array('message' => 'No file uploaded'));
+        }
+
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $file = $_FILES['file'];
+
+        // Validação de tamanho (10MB max por padrão)
+        $max_size = isset($_POST['max_size']) ? intval($_POST['max_size']) : 10 * 1024 * 1024;
+        if ($file['size'] > $max_size) {
+            wp_send_json_error(array(
+                'message' => 'File is too large. Maximum size is ' . size_format($max_size)
+            ));
+        }
+
+        // Validação de extensão
+        if (!empty($_POST['allowed_extensions'])) {
+            $allowed = array_map('trim', explode(',', strtolower($_POST['allowed_extensions'])));
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowed)) {
+                wp_send_json_error(array(
+                    'message' => 'File type not allowed. Allowed: ' . implode(', ', array_map('strtoupper', $allowed))
+                ));
+            }
+        }
+
+        // Upload do arquivo
+        $upload = wp_handle_upload($file, array('test_form' => false));
+
+        if (isset($upload['error'])) {
+            wp_send_json_error(array('message' => $upload['error']));
+        }
+
+        // Cria attachment
+        $attachment = array(
+            'post_mime_type' => $upload['type'],
+            'post_title'     => sanitize_file_name(pathinfo($file['name'], PATHINFO_FILENAME)),
+            'post_content'   => '',
+            'post_status'    => 'inherit',
+            'post_author'    => get_current_user_id(),
+        );
+
+        $attachment_id = wp_insert_attachment($attachment, $upload['file']);
+
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(array('message' => 'Failed to create attachment'));
+        }
+
+        // Gera metadata
+        $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+        wp_update_attachment_metadata($attachment_id, $attachment_data);
+
+        wp_send_json_success(array(
+            'id'       => $attachment_id,
+            'url'      => $upload['url'],
+            'filename' => basename($upload['file']),
+            'type'     => $upload['type'],
+            'size'     => $file['size'],
+        ));
+    }
+
+    /**
+     * AJAX: Lista arquivos do usuário
+     *
+     * @since  1.45.8
+     * @return void
+     */
+    public static function get_user_files() {
+        // Aceita qualquer nonce válido do sistema
+        $nonce_valid = false;
+        $nonces_to_check = array(
+            'eau_events_management_nonce',
+            'eau_event_registrations_nonce',
+            'eau_my_cpds_nonce',
+        );
+
+        foreach ($nonces_to_check as $nonce_action) {
+            if (isset($_POST['nonce']) && wp_verify_nonce($_POST['nonce'], $nonce_action)) {
+                $nonce_valid = true;
+                break;
+            }
+        }
+
+        if (!$nonce_valid) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+        }
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in'));
+        }
+
+        $user_id = get_current_user_id();
+
+        $args = array(
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'author'         => $user_id,
+            'posts_per_page' => 50,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        );
+
+        $attachments = get_posts($args);
+        $files = array();
+
+        foreach ($attachments as $attachment) {
+            $url = wp_get_attachment_url($attachment->ID);
+            $thumbnail = wp_get_attachment_image_src($attachment->ID, 'thumbnail');
+
+            $files[] = array(
+                'id'        => $attachment->ID,
+                'filename'  => basename(get_attached_file($attachment->ID)),
+                'url'       => $url,
+                'thumbnail' => $thumbnail ? $thumbnail[0] : null,
+                'type'      => $attachment->post_mime_type,
+            );
+        }
+
+        wp_send_json_success(array('files' => $files));
     }
 }
