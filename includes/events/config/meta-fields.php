@@ -24,7 +24,7 @@ if (!defined('WPINC')) {
 function get_meta_fields() {
     return array(
         'short_description'   => 'string',
-        'full_description'    => 'string',
+        'full_description'    => 'html',
         'start_datetime'      => 'string',
         'end_datetime'        => 'string',
         'timezone'            => 'string',
@@ -116,6 +116,7 @@ function get_sanitize_callback($type) {
         'number'  => __NAMESPACE__ . '\\sanitize_number',
         'boolean' => __NAMESPACE__ . '\\sanitize_boolean',
         'string'  => __NAMESPACE__ . '\\sanitize_string',
+        'html'    => __NAMESPACE__ . '\\sanitize_html',
     );
     return $callbacks[$type] ?? __NAMESPACE__ . '\\sanitize_string';
 }
@@ -162,4 +163,15 @@ function sanitize_boolean($value) {
  */
 function sanitize_string($value) {
     return sanitize_text_field($value);
+}
+
+/**
+ * Sanitiza valor como HTML (permite tags HTML seguras)
+ *
+ * @since  1.46.1
+ * @param  mixed $value Valor a sanitizar
+ * @return string
+ */
+function sanitize_html($value) {
+    return wp_kses_post($value);
 }

@@ -118,7 +118,7 @@ class Registrations_Template {
             ),
         );
 
-        // Se evento é free, mostra card Free; senão mostra Paid
+        // Se evento é free, mostra card Free; senão mostra Paid + Partial
         if ($is_free) {
             $cards[] = array(
                 'label' => 'Free',
@@ -135,6 +135,13 @@ class Registrations_Template {
                 'class' => 'eau-icon-success',
                 'text'  => 'eau-text-success',
             );
+            $cards[] = array(
+                'label' => 'Partial',
+                'value' => $stats['partial'] ?? 0,
+                'icon'  => 'circle-dot',
+                'class' => 'eau-icon-info',
+                'text'  => 'eau-text-info',
+            );
         }
 
         $cards[] = array(
@@ -143,13 +150,6 @@ class Registrations_Template {
             'icon'  => 'clock',
             'class' => 'eau-icon-warning',
             'text'  => 'eau-text-warning',
-        );
-        $cards[] = array(
-            'label' => 'Failed',
-            'value' => $stats['failed'],
-            'icon'  => 'x-circle',
-            'class' => 'eau-icon-danger',
-            'text'  => 'eau-text-danger',
         );
         $cards[] = array(
             'label' => 'Revenue',

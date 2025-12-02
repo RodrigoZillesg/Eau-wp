@@ -1823,135 +1823,152 @@ button.eau-btn-secondary {
 }
 
 .eau-payments-list {
-    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .eau-empty-payments {
     text-align: center;
-    padding: 20px;
-    color: var(--eau-gray-500);
-    font-size: 14px;
-    background: var(--eau-gray-50);
-    border-radius: 8px;
-    border: 1px dashed var(--eau-gray-300);
-}
-
-/* Payments Table - Minimal Design */
-.eau-payments-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    padding: 32px 20px;
+    color: var(--eau-gray-400);
     font-size: 13px;
-    background: #fff;
+    background: var(--eau-gray-50);
     border-radius: 8px;
-    overflow: hidden;
+    border: 1px dashed var(--eau-gray-200);
+}
+
+.eau-empty-payments svg {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+    opacity: 0.4;
+}
+
+/* Payment Card Design */
+.eau-payment-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: #fff;
     border: 1px solid var(--eau-gray-200);
+    border-radius: 10px;
+    transition: all 0.15s ease;
 }
 
-.eau-payments-table thead {
-    background: var(--eau-gray-50);
+.eau-payment-card:hover {
+    border-color: var(--eau-gray-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.eau-payments-table th {
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 11px;
+.eau-payment-card-amount {
+    min-width: 90px;
+    font-size: 18px;
     font-weight: 600;
+    color: var(--eau-success);
+    letter-spacing: -0.02em;
+}
+
+.eau-payment-card-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.eau-payment-card-method {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--eau-gray-800);
+}
+
+.eau-payment-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
     color: var(--eau-gray-500);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--eau-gray-200);
 }
 
-.eau-payments-table th:last-child {
-    text-align: right;
-    width: 40px;
+.eau-payment-card-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
-.eau-payments-table td {
-    padding: 12px 14px;
-    text-align: left;
-    color: var(--eau-gray-700);
-    border-bottom: 1px solid var(--eau-gray-100);
-    vertical-align: middle;
+.eau-payment-card-date svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0.6;
 }
 
-.eau-payments-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.eau-payments-table tbody tr {
-    transition: background 0.15s ease;
-}
-
-.eau-payments-table tbody tr:hover {
-    background: var(--eau-gray-50);
-}
-
-/* Payment notes row */
-.eau-payment-notes-row td {
-    padding: 6px 14px 12px !important;
-    background: var(--eau-gray-50);
-    border-bottom: 1px solid var(--eau-gray-200) !important;
-}
-
-.eau-payment-notes-row small {
+.eau-payment-card-notes {
     font-size: 12px;
     color: var(--eau-gray-500);
     font-style: italic;
+    margin-top: 2px;
+    padding-left: 1px;
+}
+
+.eau-payment-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* Receipt link */
 .eau-receipt-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--eau-primary);
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 3px 8px;
-    background: rgba(37, 99, 235, 0.08);
-    border-radius: 4px;
-    transition: all 0.15s ease;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    color: var(--eau-primary) !important;
+    text-decoration: none !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 6px 10px !important;
+    background: rgba(37, 99, 235, 0.06) !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
 }
 
 .eau-receipt-link:hover {
-    background: rgba(37, 99, 235, 0.15);
+    background: rgba(37, 99, 235, 0.12) !important;
 }
 
 .eau-receipt-link svg {
-    width: 12px;
-    height: 12px;
+    width: 14px !important;
+    height: 14px !important;
 }
 
-/* Delete button in table */
-.eau-payments-table .eau-btn-icon {
-    opacity: 0.4;
-    transition: opacity 0.15s ease;
-}
-
-.eau-payments-table tbody tr:hover .eau-btn-icon {
-    opacity: 1;
-}
-
-.eau-payments-table .eau-btn-danger {
+/* Delete button */
+.eau-payment-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     color: var(--eau-gray-400);
     background: transparent;
     border: none;
-    padding: 5px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0;
 }
 
-.eau-payments-table .eau-btn-danger:hover {
+.eau-payment-card:hover .eau-payment-delete-btn {
+    opacity: 1;
+}
+
+.eau-payment-delete-btn:hover {
     color: var(--eau-danger);
-    background: rgba(220, 38, 38, 0.1);
+    background: rgba(220, 38, 38, 0.08);
 }
 
-.eau-payments-table .eau-btn-danger svg {
-    width: 14px;
-    height: 14px;
+.eau-payment-delete-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Add Payment Section */
