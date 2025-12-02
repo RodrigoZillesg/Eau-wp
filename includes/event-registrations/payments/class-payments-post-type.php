@@ -28,7 +28,7 @@ class Payments_Post_Type {
     /**
      * Versão do módulo para controle de sincronização
      */
-    const VERSION = '1.45.2';
+    const VERSION = '1.45.5';
 
     /**
      * Inicializa o Post Type
@@ -67,13 +67,14 @@ class Payments_Post_Type {
             'public'              => false,
             'publicly_queryable'  => false,
             'show_ui'             => true,
-            'show_in_menu'        => 'edit.php?post_type=eau_event', // Submenu de Events
+            'show_in_menu'        => true,
             'query_var'           => false,
             'rewrite'             => false,
             'capability_type'     => 'post',
             'has_archive'         => false,
             'hierarchical'        => false,
-            'menu_position'       => null,
+            'menu_position'       => 27, // Após Events (25) e Registrations (26)
+            'menu_icon'           => 'dashicons-money-alt',
             'supports'            => array('title'),
             'show_in_rest'        => false,
         );
@@ -362,14 +363,15 @@ class Payments_Post_Type {
             'public'              => false,
             'publicly_queryable'  => false,
             'show_ui'             => true,
-            'show_in_menu'        => 'edit.php?post_type=eau_event',
+            'show_in_menu'        => true,
             'show_in_admin_bar'   => false,
             'show_in_nav_menus'   => false,
             'query_var'           => false,
             'has_archive'         => false,
             'hierarchical'        => false,
             'show_in_rest'        => false,
-            'menu_position'       => null,
+            'menu_position'       => 27,
+            'menu_icon'           => 'dashicons-money-alt',
             'capability_type'     => 'post',
             'map_meta_cap'        => true,
             'supports'            => array('title'),
