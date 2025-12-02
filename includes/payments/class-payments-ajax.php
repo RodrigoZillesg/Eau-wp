@@ -3,11 +3,11 @@
  * Payments AJAX Handlers
  *
  * @package    EauSystem
- * @subpackage EventRegistrations\Payments
+ * @subpackage Payments
  * @since      1.45.0
  */
 
-namespace EauSystem\EventRegistrations\Payments;
+namespace EauSystem\Payments;
 
 if (!defined('WPINC')) {
     die;
