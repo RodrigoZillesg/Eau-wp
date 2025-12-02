@@ -61,7 +61,7 @@ class Payments_Post_Type {
             'public'              => false,
             'publicly_queryable'  => false,
             'show_ui'             => true,
-            'show_in_menu'        => false, // Não mostrar no menu admin
+            'show_in_menu'        => 'edit.php?post_type=eau_event', // Submenu de Events
             'query_var'           => false,
             'rewrite'             => false,
             'capability_type'     => 'post',
