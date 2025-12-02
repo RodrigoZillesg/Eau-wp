@@ -85,7 +85,16 @@ class Registrations_Assets {
             true
         );
 
-        // SweetAlert2
+        // EauNotifications
+        wp_enqueue_script(
+            'eau-notifications',
+            EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-notifications.js',
+            array('jquery'),
+            EAU_SYSTEM_VERSION,
+            true
+        );
+
+        // SweetAlert2 (para confirm dialogs)
         wp_enqueue_script(
             'sweetalert2',
             'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js',
@@ -94,11 +103,14 @@ class Registrations_Assets {
             true
         );
 
+        // WordPress Media Library (for receipt upload)
+        wp_enqueue_media();
+
         // Main JavaScript
         wp_enqueue_script(
             'eau-event-registrations-page',
             EAU_SYSTEM_PLUGIN_URL . 'includes/events/assets/js/eau-event-registrations-page.js',
-            array('jquery', 'lucide'),
+            array('jquery', 'lucide', 'eau-notifications'),
             EAU_SYSTEM_VERSION,
             true
         );

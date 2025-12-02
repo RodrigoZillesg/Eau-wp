@@ -213,9 +213,9 @@ while (have_posts()) : the_post();
                         <div class="eau-event-past-badge"><?php _e('This event has ended', 'eau-system'); ?></div>
                     <?php endif; ?>
 
-                    <!-- CPD Link -->
-                    <?php if ($meta['cpd_points'] && floatval($meta['cpd_points']) > 0) : ?>
-                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
+                    <!-- CPD Link - only show after event ended -->
+                    <?php if ($data['is_past'] && $meta['cpd_points'] && floatval($meta['cpd_points']) > 0) : ?>
+                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/my-activities/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
                             <?php _e('View in My CPD', 'eau-system'); ?>
                         </a>
                     <?php endif; ?>
@@ -273,6 +273,42 @@ while (have_posts()) : the_post();
                     <span class="eau-reg-info-icon">✉️</span>
                     <span class="eau-reg-info-value"><?php echo esc_html($user_email); ?></span>
                 </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="eau-reg-additional-info">
+                <p class="eau-reg-section-title"><?php _e('Additional Information (Optional)', 'eau-system'); ?></p>
+
+                <div class="eau-reg-field">
+                    <label for="eau-reg-dietary"><?php _e('Dietary Requirements', 'eau-system'); ?></label>
+                    <input type="text" id="eau-reg-dietary" name="dietary_requirements" placeholder="<?php esc_attr_e('e.g., Vegetarian, Gluten-free, Halal', 'eau-system'); ?>">
+                </div>
+
+                <div class="eau-reg-field">
+                    <label for="eau-reg-accessibility"><?php _e('Accessibility Requirements', 'eau-system'); ?></label>
+                    <input type="text" id="eau-reg-accessibility" name="accessibility_requirements" placeholder="<?php esc_attr_e('e.g., Wheelchair access, Hearing loop', 'eau-system'); ?>">
+                </div>
+
+                <div class="eau-reg-field">
+                    <label for="eau-reg-notes"><?php _e('Additional Notes', 'eau-system'); ?></label>
+                    <textarea id="eau-reg-notes" name="additional_notes" rows="3" placeholder="<?php esc_attr_e('Any other information we should know?', 'eau-system'); ?>"></textarea>
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="eau-reg-terms">
+                <label class="eau-reg-checkbox-label">
+                    <input type="checkbox" id="eau-reg-terms" name="agree_terms" required>
+                    <span class="eau-reg-checkbox-text">
+                        <?php _e('I agree to the terms and conditions and understand that:', 'eau-system'); ?>
+                    </span>
+                </label>
+                <ul class="eau-reg-terms-list">
+                    <li><?php _e('Registration is subject to availability', 'eau-system'); ?></li>
+                    <li><?php _e('Cancellations must be made 48 hours in advance', 'eau-system'); ?></li>
+                    <li><?php _e('CPD points will be awarded upon attendance', 'eau-system'); ?></li>
+                    <li><?php _e('I will receive email reminders about this event', 'eau-system'); ?></li>
+                </ul>
             </div>
 
             <div class="eau-reg-message" id="eau-registration-message"></div>

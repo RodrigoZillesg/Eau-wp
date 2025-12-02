@@ -128,7 +128,7 @@ class Eau_Event_Registrations_Ajax {
         }
 
         // Verificar se evento é gratuito
-        $event_price = floatval(get_post_meta($event_id, 'evt_price_member', true) ?: 0);
+        $event_price = floatval(get_post_meta($event_id, 'evt_member_price', true) ?: 0);
         $is_free_event = ($event_price <= 0);
         $payment_status = $is_free_event ? 'free' : 'pending';
 
@@ -153,6 +153,21 @@ class Eau_Event_Registrations_Ajax {
             if (!empty($mem_userid)) {
                 update_post_meta($post_id, $prefix . 'mem_userid', $mem_userid);
             }
+        }
+
+        // Salvar campos adicionais (v1.45.0)
+        $dietary = isset($_POST['dietary_requirements']) ? sanitize_text_field($_POST['dietary_requirements']) : '';
+        $accessibility = isset($_POST['accessibility_requirements']) ? sanitize_text_field($_POST['accessibility_requirements']) : '';
+        $notes = isset($_POST['additional_notes']) ? sanitize_textarea_field($_POST['additional_notes']) : '';
+
+        if (!empty($dietary)) {
+            update_post_meta($post_id, $prefix . 'dietary_requirements', $dietary);
+        }
+        if (!empty($accessibility)) {
+            update_post_meta($post_id, $prefix . 'accessibility_requirements', $accessibility);
+        }
+        if (!empty($notes)) {
+            update_post_meta($post_id, $prefix . 'additional_notes', $notes);
         }
 
         // Envia email de confirmação
