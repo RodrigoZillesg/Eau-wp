@@ -144,9 +144,18 @@
             });
 
             // Delete payment
-            $(document).on('click', '.eau-delete-payment-btn', function() {
+            $(document).on('click', '.eau-delete-payment-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const paymentId = $(this).data('id');
-                self.deletePayment(paymentId);
+                if (paymentId) {
+                    self.deletePayment(paymentId);
+                }
+            });
+
+            // Receipt link - prevent modal interference
+            $(document).on('click', '.eau-receipt-link', function(e) {
+                e.stopPropagation();
             });
 
             // Media Upload Component Events for Receipt
@@ -641,60 +650,57 @@
             const $list = $('#eau-payments-list');
 
             if (!payments || payments.length === 0) {
-                $list.html('<div class="eau-empty-payments">No payments recorded yet.</div>');
+                $list.html('<div class="eau-empty-payments"><i data-lucide="receipt"></i><br>No payments recorded yet.</div>');
+                lucide.createIcons();
                 return;
             }
 
-            let html = '<table class="eau-payments-table">';
-            html += '<thead><tr>';
-            html += '<th>Date</th>';
-            html += '<th>Amount</th>';
-            html += '<th>Method</th>';
-            html += '<th>Receipt</th>';
-            html += '<th></th>';
-            html += '</tr></thead>';
-            html += '<tbody>';
+            const methodLabels = {
+                'credit_card': 'Credit Card',
+                'debit_card': 'Debit Card',
+                'bank_transfer': 'Bank Transfer',
+                'pix': 'PIX',
+                'cash': 'Cash',
+                'invoice': 'Invoice',
+                'other': 'Other'
+            };
+
+            let html = '';
 
             payments.forEach(function(payment) {
-                const methodLabels = {
-                    'credit_card': 'Credit Card',
-                    'debit_card': 'Debit Card',
-                    'bank_transfer': 'Bank Transfer',
-                    'pix': 'PIX',
-                    'cash': 'Cash',
-                    'invoice': 'Invoice',
-                    'other': 'Other'
-                };
+                html += '<div class="eau-payment-card">';
 
-                html += '<tr>';
-                html += '<td>' + self.escapeHtml(payment.payment_date) + '</td>';
-                html += '<td class="eau-text-success">$' + parseFloat(payment.amount).toFixed(2) + '</td>';
-                html += '<td>' + (methodLabels[payment.payment_method] || payment.payment_method) + '</td>';
-                html += '<td>';
+                // Amount
+                html += '<div class="eau-payment-card-amount">$' + parseFloat(payment.amount).toFixed(2) + '</div>';
+
+                // Details
+                html += '<div class="eau-payment-card-details">';
+                html += '<div class="eau-payment-card-method">' + (methodLabels[payment.payment_method] || payment.payment_method) + '</div>';
+                html += '<div class="eau-payment-card-meta">';
+                html += '<span class="eau-payment-card-date"><i data-lucide="calendar"></i> ' + self.escapeHtml(payment.payment_date) + '</span>';
+                html += '</div>';
+
+                // Notes if any
+                if (payment.notes) {
+                    html += '<div class="eau-payment-card-notes">' + self.escapeHtml(payment.notes) + '</div>';
+                }
+                html += '</div>';
+
+                // Actions
+                html += '<div class="eau-payment-card-actions">';
                 if (payment.receipt_url) {
                     html += '<a href="' + payment.receipt_url + '" target="_blank" class="eau-receipt-link">';
-                    html += '<i data-lucide="file-text"></i> View';
+                    html += '<i data-lucide="file-text"></i> Receipt';
                     html += '</a>';
-                } else {
-                    html += '<span class="eau-text-muted">-</span>';
                 }
-                html += '</td>';
-                html += '<td>';
-                html += '<button type="button" class="eau-btn-icon eau-btn-danger eau-delete-payment-btn" data-id="' + payment.id + '" title="Delete payment">';
+                html += '<button type="button" class="eau-payment-delete-btn eau-delete-payment-btn" data-id="' + payment.id + '" title="Delete payment">';
                 html += '<i data-lucide="trash-2"></i>';
                 html += '</button>';
-                html += '</td>';
-                html += '</tr>';
+                html += '</div>';
 
-                // Show notes if any
-                if (payment.notes) {
-                    html += '<tr class="eau-payment-notes-row">';
-                    html += '<td colspan="5"><small class="eau-text-muted">' + self.escapeHtml(payment.notes) + '</small></td>';
-                    html += '</tr>';
-                }
+                html += '</div>';
             });
 
-            html += '</tbody></table>';
             $list.html(html);
             lucide.createIcons();
         },

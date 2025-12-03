@@ -91,45 +91,45 @@ class Certificate_Generator {
         $r->draw_corner_shapes();
 
         // Margem esquerda para conteúdo
-        $left = 350;
+        $left = 320;
 
         // Logo no topo
-        $r->draw_logo($left, 100, 154);
+        $r->draw_logo($left, 80, 180);
 
-        // Título
-        $r->draw_text_left('CERTIFICATE OF', 38, 'blue', $left, 320, 'bold');
-        $r->draw_text_left('ATTENDANCE', 38, 'blue', $left, 370, 'bold');
+        // Título - fontes maiores
+        $r->draw_text_left('CERTIFICATE OF', 52, 'blue', $left, 310, 'bold');
+        $r->draw_text_left('ATTENDANCE', 52, 'blue', $left, 375, 'bold');
 
         // Texto introdutório
-        $r->draw_text_left('This certificate is awarded to', 18, 'gray', $left, 440);
+        $r->draw_text_left('This certificate is awarded to', 22, 'gray', $left, 460);
 
-        // Nome do participante
+        // Nome do participante - fonte maior
         $full_name = trim($data['first_name'] . ' ' . ($data['last_name'] ?? ''));
-        $r->draw_text_left($full_name, 36, 'dark', $left, 500, 'bold');
+        $r->draw_text_left($full_name, 48, 'dark', $left, 530, 'bold');
 
         // Evento
-        $r->draw_text_left('For attendance at', 16, 'gray', $left, 570);
-        $r->draw_text_left($data['event_title'], 20, 'blue', $left, 605, 'bold');
+        $r->draw_text_left('For attendance at', 20, 'gray', $left, 610);
+        $r->draw_text_left($data['event_title'], 28, 'blue', $left, 655, 'bold');
 
         // Data e CPD
-        $y = 670;
+        $y = 730;
         if (!empty($data['event_date'])) {
-            $r->draw_text_left('Date', 14, 'gray', $left, $y);
-            $r->draw_text_left($data['event_date'], 16, 'dark', $left, $y + 25);
+            $r->draw_text_left('Date', 18, 'gray', $left, $y);
+            $r->draw_text_left($data['event_date'], 22, 'dark', $left, $y + 30);
         }
 
         if (!empty($data['cpd_points'])) {
-            $r->draw_text_left('CPD Points: ' . $data['cpd_points'], 16, 'dark', $left + 300, $y + 25);
+            $r->draw_text_left('CPD Points: ' . $data['cpd_points'], 22, 'dark', $left + 350, $y + 30);
             if (!empty($data['cpd_category'])) {
-                $r->draw_text_left('(' . $data['cpd_category'] . ')', 14, 'gray', $left + 300, $y + 50);
+                $r->draw_text_left('(' . $data['cpd_category'] . ')', 18, 'gray', $left + 350, $y + 60);
             }
         }
 
         // Assinatura
-        $sig_y = 800;
-        $r->draw_signature($left, $sig_y);
-        $r->draw_text_left(Certificate_Config::SIGNER_NAME, 14, 'dark', $left, $sig_y + 30);
-        $r->draw_text_left(Certificate_Config::SIGNER_TITLE, 12, 'gray', $left, $sig_y + 50);
+        $sig_y = 870;
+        $r->draw_signature($left, $sig_y, 140);
+        $r->draw_text_left(Certificate_Config::SIGNER_NAME, 18, 'dark', $left, $sig_y + 35);
+        $r->draw_text_left(Certificate_Config::SIGNER_TITLE, 16, 'gray', $left, $sig_y + 58);
 
         return $image;
     }

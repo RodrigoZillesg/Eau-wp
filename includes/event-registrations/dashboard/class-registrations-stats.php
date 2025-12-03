@@ -35,15 +35,19 @@ class Registrations_Stats {
         $registration_ids = self::get_registration_ids($event_id);
 
         $stats['total'] = count($registration_ids);
+        $total_revenue = 0;
 
         foreach ($registration_ids as $reg_id) {
-            $payment_status = get_post_meta($reg_id, 'reg_payment_status', true) ?: 'pending';
+            $payment_status = get_post_meta($reg_id, 'reg_status', true) ?: 'pending';
             if (isset($stats[$payment_status])) {
                 $stats[$payment_status]++;
             }
+
+            // Soma os pagamentos reais desta registration
+            $total_revenue += \EauSystem\Payments\Payments_Post_Type::get_total_paid($reg_id);
         }
 
-        $stats['revenue'] = $stats['paid'] * $price;
+        $stats['revenue'] = $total_revenue;
 
         return $stats;
     }
@@ -58,6 +62,7 @@ class Registrations_Stats {
         return array(
             'total'    => 0,
             'paid'     => 0,
+            'partial'  => 0,
             'free'     => 0,
             'pending'  => 0,
             'failed'   => 0,

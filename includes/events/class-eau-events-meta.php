@@ -204,9 +204,16 @@ class Eau_Events_Meta {
     public function register_meta() {
         $fields = Config\get_meta_fields();
 
+        // Map custom types to WordPress types
+        $wp_type_map = array(
+            'html' => 'string',
+        );
+
         foreach ($fields as $field => $type) {
+            $wp_type = isset($wp_type_map[$type]) ? $wp_type_map[$type] : $type;
+
             register_post_meta(Config\POST_TYPE, Config\META_PREFIX . $field, array(
-                'type'              => $type,
+                'type'              => $wp_type,
                 'single'            => true,
                 'show_in_rest'      => true,
                 'sanitize_callback' => Config\get_sanitize_callback($type),
