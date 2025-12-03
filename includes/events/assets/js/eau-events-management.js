@@ -824,10 +824,12 @@
             valueInput.val(value);
             typeInput.val(type);
             previewName.text(filename);
-            previewLink.attr('href', url || value).attr('target', '_blank');
+
+            const fileUrl = url || value;
+            previewLink.attr('href', fileUrl).attr('target', '_blank');
+            thumbnail.attr('href', fileUrl).attr('target', '_blank');
 
             // Check if file is an image and show preview
-            const fileUrl = url || value;
             const isImage = this.isImageFile(filename) || this.isImageUrl(fileUrl);
 
             if (isImage && fileUrl) {

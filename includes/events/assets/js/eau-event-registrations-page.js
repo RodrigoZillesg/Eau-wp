@@ -415,8 +415,11 @@
             const $previewIcon = wrapper.find('.eau-media-upload-preview-icon');
 
             $previewName.text(filename || value);
+
+            const $thumbnail = wrapper.find('.eau-media-upload-preview-thumbnail');
             if (url) {
                 $previewLink.attr('href', url).attr('target', '_blank').show();
+                $thumbnail.attr('href', url).attr('target', '_blank');
             }
 
             // Check if image
