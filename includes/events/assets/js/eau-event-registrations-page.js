@@ -132,9 +132,16 @@
         bindPaymentModalEvents: function() {
             const self = this;
 
-            // Close modal
-            $(document).on('click', '#eau-payment-modal-close, #eau-payment-modal-done, #eau-payment-modal .eau-modal-overlay', function() {
+            // Close modal buttons
+            $(document).on('click', '#eau-payment-modal-close, #eau-payment-modal-done', function() {
                 self.closePaymentModal();
+            });
+
+            // Close modal on overlay click - only if clicking directly on overlay
+            $(document).on('click', '#eau-payment-modal .eau-modal-overlay', function(e) {
+                if ($(e.target).hasClass('eau-modal-overlay')) {
+                    self.closePaymentModal();
+                }
             });
 
             // Add payment form submit

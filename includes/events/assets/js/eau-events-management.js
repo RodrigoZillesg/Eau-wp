@@ -149,9 +149,16 @@
                 this.openCreateModal();
             });
 
-            // Modal
-            $(document).on('click', '#eau-modal-close, #eau-modal-cancel, .eau-modal-overlay', () => {
+            // Modal close buttons
+            $(document).on('click', '#eau-modal-close, #eau-modal-cancel', () => {
                 this.closeModal();
+            });
+
+            // Modal overlay click - only close if clicking directly on overlay, not children
+            $(document).on('click', '.eau-modal-overlay', (e) => {
+                if ($(e.target).hasClass('eau-modal-overlay')) {
+                    this.closeModal();
+                }
             });
 
             $(document).on('click', '#eau-modal-save', () => {

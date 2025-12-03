@@ -1596,26 +1596,9 @@ div.eau-skeleton > .eau-skeleton-shimmer {
    CONFIRM MODAL
    ========================================================================== */
 
-/* Confirm Modal Overlay - needs very high z-index to appear above other modals */
-.eau-modal-overlay:has(.eau-confirm-modal),
-[id^="eau-confirm-modal-"] {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background: rgba(0, 0, 0, 0.5) !important;
-    z-index: 9999999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
 /* Confirm Modal */
 .eau-confirm-modal {
     max-width: 400px !important;
-    position: relative !important;
-    z-index: 1 !important;
 }
 
 .eau-confirm-modal .eau-modal-body {
@@ -1877,11 +1860,13 @@ div.eau-skeleton > .eau-skeleton-shimmer {
     border-radius: 8px !important;
 }
 
-/* Thumbnail container */
+/* Thumbnail container - is a clickable link */
 .eau-media-upload-preview-thumbnail {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
     width: 48px !important;
     height: 48px !important;
     flex-shrink: 0 !important;
