@@ -669,8 +669,8 @@ button.eau-dropdown-item:hover {
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s infinite;
     border-radius: 4px;
-    max-width: 200px;
-    margin: 0 auto;
+    width: 100%;
+    min-width: 300px;
 }
 
 @keyframes skeleton-loading {
@@ -1136,7 +1136,9 @@ button.eau-btn-secondary {
 /* Modal Skeleton Form */
 .eau-modal-skeleton {
     display: none;
-    padding: 0 !important;
+    padding: 24px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .eau-modal-body.eau-modal-loading .eau-modal-skeleton {
@@ -1147,12 +1149,14 @@ button.eau-btn-secondary {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 1rem !important;
+    width: 100% !important;
 }
 
 .eau-modal-skeleton .eau-skeleton-field {
     display: flex !important;
     flex-direction: column !important;
     gap: 0.5rem !important;
+    width: 100% !important;
 }
 
 .eau-modal-skeleton .eau-skeleton-field.eau-form-field-span-2 {
@@ -1161,13 +1165,15 @@ button.eau-btn-secondary {
 
 .eau-modal-skeleton .eau-skeleton-label {
     height: 14px !important;
-    width: 30% !important;
+    width: 100px !important;
     background: #e5e7eb !important;
     border-radius: 4px !important;
 }
 
 .eau-modal-skeleton .eau-skeleton-input {
     height: 42px !important;
+    width: 100% !important;
+    min-width: 100% !important;
     background: #e5e7eb !important;
     border-radius: 8px !important;
     position: relative !important;
@@ -1191,6 +1197,7 @@ button.eau-btn-secondary {
 
 .eau-modal-skeleton .eau-skeleton-image {
     height: 120px !important;
+    width: 100% !important;
     background: #e5e7eb !important;
     border-radius: 8px !important;
     position: relative !important;

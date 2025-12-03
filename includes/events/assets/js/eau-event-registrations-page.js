@@ -144,9 +144,18 @@
             });
 
             // Delete payment
-            $(document).on('click', '.eau-delete-payment-btn', function() {
+            $(document).on('click', '.eau-delete-payment-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const paymentId = $(this).data('id');
-                self.deletePayment(paymentId);
+                if (paymentId) {
+                    self.deletePayment(paymentId);
+                }
+            });
+
+            // Receipt link - prevent modal interference
+            $(document).on('click', '.eau-receipt-link', function(e) {
+                e.stopPropagation();
             });
 
             // Media Upload Component Events for Receipt

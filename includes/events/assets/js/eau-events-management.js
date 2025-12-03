@@ -895,7 +895,9 @@
             // Sync Quill content to hidden input before saving
             if (this.quillEditor) {
                 const html = this.quillEditor.root.innerHTML;
-                $('#eau-edit-full_description').val(html === '<p><br></p>' ? '' : html);
+                const cleanHtml = html === '<p><br></p>' ? '' : html;
+                $('#eau-edit-full_description').val(cleanHtml);
+                console.log('Quill HTML being saved:', cleanHtml);
             }
 
             const $form = $('#eau-event-edit-form');
@@ -924,6 +926,9 @@
                     data[name] = $field.val();
                 }
             });
+
+            console.log('Data being sent:', data);
+            console.log('full_description value:', data.full_description);
 
             // Disable save button
             const $saveBtn = $('#eau-modal-save');
