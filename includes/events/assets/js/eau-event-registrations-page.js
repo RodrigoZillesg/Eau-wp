@@ -165,6 +165,16 @@
                 e.stopPropagation();
             });
 
+            // Force links with eau-no-lightbox class to open in new tab (bypass any lightbox plugins)
+            $(document).on('click', '.eau-no-lightbox', function(e) {
+                e.stopPropagation();
+                const href = $(this).attr('href');
+                if (href && href !== '#') {
+                    window.open(href, '_blank');
+                    e.preventDefault();
+                }
+            });
+
             // Media Upload Component Events for Receipt
             this.bindMediaUploadEvents();
         },

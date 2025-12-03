@@ -191,6 +191,16 @@
             // Media Upload Component Events
             this.bindMediaUploadEvents();
 
+            // Force links with eau-no-lightbox class to open in new tab (bypass any lightbox plugins)
+            $(document).on('click', '.eau-no-lightbox', function(e) {
+                e.stopPropagation();
+                const href = $(this).attr('href');
+                if (href && href !== '#') {
+                    window.open(href, '_blank');
+                    e.preventDefault();
+                }
+            });
+
             // Pagination
             $(document).on('click', '.eau-pagination-btn:not(.disabled)', (e) => {
                 const page = $(e.currentTarget).data('page');
