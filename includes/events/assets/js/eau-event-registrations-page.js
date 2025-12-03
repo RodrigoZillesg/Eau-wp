@@ -300,16 +300,33 @@
                         self.setMediaValue(wrapper, response.data.id, 'media', response.data.filename, response.data.url);
                     } else {
                         if (typeof EauNotifications !== 'undefined') {
-                            EauNotifications.error('Error', response.data.message || 'Upload failed');
+                            let errorMsg = response.data.message || 'Upload failed';
+                            // Debug info
+                            if (response.data.debug) {
+                                console.log('Upload Debug:', response.data.debug);
+                                errorMsg += ' (Check console for debug info)';
+                            }
+                            EauNotifications.error('Error', errorMsg);
                         }
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
                     $progress.hide();
                     $dropzone.show();
                     $progressFill.css('width', '0%');
                     if (typeof EauNotifications !== 'undefined') {
-                        EauNotifications.error('Error', 'Upload failed');
+                        let errorMsg = 'Upload failed: ' + (xhr.status || 'Unknown error');
+                        // Try to get response data
+                        try {
+                            const resp = JSON.parse(xhr.responseText);
+                            if (resp.data && resp.data.message) {
+                                errorMsg = resp.data.message;
+                            }
+                            if (resp.data && resp.data.debug) {
+                                console.log('Upload Debug:', resp.data.debug);
+                            }
+                        } catch(e) {}
+                        EauNotifications.error('Error', errorMsg);
                     }
                 }
             });

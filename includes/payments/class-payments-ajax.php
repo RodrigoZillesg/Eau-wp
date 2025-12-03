@@ -321,31 +321,63 @@ class Payments_Ajax {
      * @return void
      */
     public static function upload_media() {
+        // Verifica login primeiro
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in to upload files'), 401);
+            return;
+        }
+
         // Aceita qualquer nonce válido do sistema
         $nonce_valid = false;
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
+
+        // Se nonce vazio, tenta REQUEST
+        if (empty($nonce)) {
+            $nonce = isset($_REQUEST['nonce']) ? sanitize_text_field($_REQUEST['nonce']) : '';
+        }
+
         $nonces_to_check = array(
             'eau_events_management_nonce',
             'eau_event_registrations_nonce',
             'eau_my_cpds_nonce',
         );
 
+        $nonce_results = array();
         foreach ($nonces_to_check as $nonce_action) {
-            if (isset($_POST['nonce']) && wp_verify_nonce($_POST['nonce'], $nonce_action)) {
+            $result = wp_verify_nonce($nonce, $nonce_action);
+            $nonce_results[$nonce_action] = $result;
+            if ($result) {
                 $nonce_valid = true;
                 break;
             }
         }
 
         if (!$nonce_valid) {
-            wp_send_json_error(array('message' => 'Security check failed'));
+            // Log para debug
+            error_log('EAU Upload Media - Nonce Failed: ' . print_r(array(
+                'nonce' => substr($nonce, 0, 10) . '...',
+                'user_id' => get_current_user_id(),
+                'results' => $nonce_results,
+            ), true));
+
+            wp_send_json_error(array(
+                'message' => 'Security check failed. Please refresh the page and try again.',
+                'debug' => array(
+                    'nonce_received' => !empty($nonce),
+                    'nonce_length' => strlen($nonce),
+                    'user_id' => get_current_user_id(),
+                    'results' => $nonce_results,
+                )
+            ), 403);
+            return;
         }
 
-        if (!is_user_logged_in()) {
-            wp_send_json_error(array('message' => 'You must be logged in to upload files'));
-        }
+        // Permite upload para qualquer usuário logado do sistema
+        $user_id = get_current_user_id();
 
         if (empty($_FILES['file'])) {
-            wp_send_json_error(array('message' => 'No file uploaded'));
+            wp_send_json_error(array('message' => 'No file uploaded'), 400);
+            return;
         }
 
         require_once(ABSPATH . 'wp-admin/includes/file.php');
@@ -354,12 +386,29 @@ class Payments_Ajax {
 
         $file = $_FILES['file'];
 
+        // Verifica erro de upload
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $error_messages = array(
+                UPLOAD_ERR_INI_SIZE   => 'File exceeds server upload limit',
+                UPLOAD_ERR_FORM_SIZE  => 'File exceeds form upload limit',
+                UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE    => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION  => 'File upload stopped by extension',
+            );
+            $error_msg = isset($error_messages[$file['error']]) ? $error_messages[$file['error']] : 'Unknown upload error';
+            wp_send_json_error(array('message' => $error_msg), 400);
+            return;
+        }
+
         // Validação de tamanho (10MB max por padrão)
         $max_size = isset($_POST['max_size']) ? intval($_POST['max_size']) : 10 * 1024 * 1024;
         if ($file['size'] > $max_size) {
             wp_send_json_error(array(
                 'message' => 'File is too large. Maximum size is ' . size_format($max_size)
-            ));
+            ), 400);
+            return;
         }
 
         // Validação de extensão
@@ -370,15 +419,27 @@ class Payments_Ajax {
             if (!in_array($ext, $allowed)) {
                 wp_send_json_error(array(
                     'message' => 'File type not allowed. Allowed: ' . implode(', ', array_map('strtoupper', $allowed))
-                ));
+                ), 400);
+                return;
             }
         }
 
+        // Verifica tipo MIME
+        $filetype = wp_check_filetype($file['name']);
+        if (!$filetype['type']) {
+            wp_send_json_error(array('message' => 'Invalid file type'), 400);
+            return;
+        }
+
         // Upload do arquivo
-        $upload = wp_handle_upload($file, array('test_form' => false));
+        $upload = wp_handle_upload($file, array(
+            'test_form' => false,
+            'mimes'     => null, // Usa mimes padrão do WordPress
+        ));
 
         if (isset($upload['error'])) {
-            wp_send_json_error(array('message' => $upload['error']));
+            wp_send_json_error(array('message' => $upload['error']), 400);
+            return;
         }
 
         // Cria attachment
@@ -387,13 +448,14 @@ class Payments_Ajax {
             'post_title'     => sanitize_file_name(pathinfo($file['name'], PATHINFO_FILENAME)),
             'post_content'   => '',
             'post_status'    => 'inherit',
-            'post_author'    => get_current_user_id(),
+            'post_author'    => $user_id,
         );
 
         $attachment_id = wp_insert_attachment($attachment, $upload['file']);
 
         if (is_wp_error($attachment_id)) {
-            wp_send_json_error(array('message' => 'Failed to create attachment'));
+            wp_send_json_error(array('message' => 'Failed to create attachment: ' . $attachment_id->get_error_message()), 500);
+            return;
         }
 
         // Gera metadata

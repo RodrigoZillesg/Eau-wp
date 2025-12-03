@@ -562,12 +562,32 @@ class Eau_My_Cpds_Ajax {
      * @since 1.38.3
      */
     public static function upload_file() {
-        // Verifica nonce
-        check_ajax_referer('eau_my_cpds_nonce', 'nonce');
-
         // Verifica se está logado
         if (!is_user_logged_in()) {
-            wp_send_json_error(array('message' => 'You must be logged in to upload files.'));
+            wp_send_json_error(array('message' => 'You must be logged in to upload files.'), 401);
+            return;
+        }
+
+        // Aceita múltiplos nonces do sistema
+        $nonce_valid = false;
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
+
+        $nonces_to_check = array(
+            'eau_my_cpds_nonce',
+            'eau_events_management_nonce',
+            'eau_event_registrations_nonce',
+        );
+
+        foreach ($nonces_to_check as $nonce_action) {
+            if ($nonce && wp_verify_nonce($nonce, $nonce_action)) {
+                $nonce_valid = true;
+                break;
+            }
+        }
+
+        if (!$nonce_valid) {
+            wp_send_json_error(array('message' => 'Security check failed. Please refresh the page and try again.'), 403);
+            return;
         }
 
         // Verifica se há arquivo
