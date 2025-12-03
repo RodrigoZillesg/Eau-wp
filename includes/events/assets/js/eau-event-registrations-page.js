@@ -132,9 +132,16 @@
         bindPaymentModalEvents: function() {
             const self = this;
 
-            // Close modal
-            $(document).on('click', '#eau-payment-modal-close, #eau-payment-modal-done, #eau-payment-modal .eau-modal-overlay', function() {
+            // Close modal buttons
+            $(document).on('click', '#eau-payment-modal-close, #eau-payment-modal-done', function() {
                 self.closePaymentModal();
+            });
+
+            // Close modal on overlay click - only if clicking directly on overlay
+            $(document).on('click', '#eau-payment-modal .eau-modal-overlay', function(e) {
+                if ($(e.target).hasClass('eau-modal-overlay')) {
+                    self.closePaymentModal();
+                }
             });
 
             // Add payment form submit
@@ -156,6 +163,16 @@
             // Receipt link - prevent modal interference
             $(document).on('click', '.eau-receipt-link', function(e) {
                 e.stopPropagation();
+            });
+
+            // Force links with eau-no-lightbox class to open in new tab (bypass any lightbox plugins)
+            $(document).on('click', '.eau-no-lightbox', function(e) {
+                e.stopPropagation();
+                const href = $(this).attr('href');
+                if (href && href !== '#') {
+                    window.open(href, '_blank');
+                    e.preventDefault();
+                }
             });
 
             // Media Upload Component Events for Receipt
@@ -415,8 +432,11 @@
             const $previewIcon = wrapper.find('.eau-media-upload-preview-icon');
 
             $previewName.text(filename || value);
+
+            const $thumbnail = wrapper.find('.eau-media-upload-preview-thumbnail');
             if (url) {
                 $previewLink.attr('href', url).attr('target', '_blank').show();
+                $thumbnail.attr('href', url).attr('target', '_blank');
             }
 
             // Check if image
@@ -706,7 +726,7 @@
                 // Actions
                 html += '<div class="eau-payment-card-actions">';
                 if (payment.receipt_url) {
-                    html += '<a href="' + payment.receipt_url + '" target="_blank" class="eau-receipt-link">';
+                    html += '<a href="' + payment.receipt_url + '" target="_blank" rel="noopener noreferrer" data-elementor-open-lightbox="no" class="eau-receipt-link eau-no-lightbox">';
                     html += '<i data-lucide="file-text"></i> Receipt';
                     html += '</a>';
                 }

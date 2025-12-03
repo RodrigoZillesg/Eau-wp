@@ -95,6 +95,79 @@ O Eau System usa um design system consistente baseado em:
 --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 ```
 
+### Z-Index Scale
+
+> ⚠️ **REGRA CRÍTICA - Gerenciamento de Z-Index**
+>
+> O sistema usa uma escala de z-index bem definida. **NUNCA** use valores arbitrários.
+> Sempre consulte esta tabela antes de definir qualquer z-index.
+
+```css
+/* Z-Index Scale - DO NOT use arbitrary values */
+
+/* Base Layer - Conteúdo normal */
+z-index: 1;           /* Elementos dentro de containers */
+z-index: 10;          /* Elementos com leve elevação */
+
+/* Dropdown Layer */
+z-index: 1000;        /* Dropdowns, menus suspensos */
+
+/* Sticky/Fixed Elements */
+z-index: 9999;        /* Headers fixos, sidebars sticky */
+
+/* Modal Layer */
+z-index: 99999;       /* Modais padrão (.eau-modal) */
+
+/* Toast Layer */
+z-index: 99999999;    /* Toast notifications (.eau-toast-container) */
+
+/* Confirm Modal Layer - HIGHEST */
+z-index: 99999999;    /* Confirm modals (EauNotifications.confirm) */
+```
+
+**Hierarquia Visual (do mais baixo para o mais alto):**
+
+1. **Conteúdo normal** (1-10) - Elementos da página
+2. **Dropdowns** (1000) - Menus, autocomplete
+3. **Sticky elements** (9999) - Headers, sidebars
+4. **Modais** (99999) - `.eau-modal` class
+5. **Toasts e Confirms** (99999999) - Sempre visíveis acima de tudo
+
+**Regras Importantes:**
+
+1. **Modais sobre modais**: Se precisar abrir um modal sobre outro (ex: confirm sobre payment modal), o modal superior DEVE usar z-index maior inline, não via CSS class.
+
+2. **Nunca use `!important` em z-index de modais dinâmicos**: O CSS usa `!important` para modais padrão, mas modais criados dinamicamente (como confirm) devem usar inline styles para sobrescrever.
+
+3. **Confirm Modals**: O `EauNotifications.confirm()` usa z-index inline `99999999` para garantir que sempre apareça acima de qualquer outro modal.
+
+4. **Evite conflitos de classe**: A modal de confirmação NÃO usa a classe `.eau-modal` para evitar herdar o z-index `99999 !important` do CSS.
+
+**Exemplo - Modal sobre Modal:**
+
+```javascript
+// ❌ ERRADO - Usar classe .eau-modal que tem z-index fixo
+const $modal = $(`
+    <div class="eau-modal">...</div>
+`);
+
+// ✅ CORRETO - Usar inline style para z-index alto
+const $modal = $(`
+    <div class="eau-confirm-overlay" style="z-index:99999999;">
+        <div class="eau-confirm-modal">...</div>
+    </div>
+`);
+```
+
+**Arquivos que definem z-index:**
+
+| Arquivo | Seletor | Z-Index | Uso |
+|---------|---------|---------|-----|
+| `eau-components.css` | `.eau-modal` | 99999 | Modais padrão |
+| `eau-components.css` | `.eau-toast-container` | 99999999 | Toast notifications |
+| `eau-notifications.js` | `.eau-confirm-overlay` | 99999999 (inline) | Confirm modals |
+| `eau-events-management.css` | `#eau-event-edit-modal` | 999999 | Modal de edição de evento |
+
 ---
 
 ## 🧩 Componentes
@@ -1584,6 +1657,6 @@ Ao criar uma nova página no estilo Members Management:
 
 ---
 
-**Versão**: 1.1.0
-**Última Atualização**: 2025-01-25
+**Versão**: 1.2.0
+**Última Atualização**: 2025-12-03
 **Autor**: Platty / Rodrigo Zillesg

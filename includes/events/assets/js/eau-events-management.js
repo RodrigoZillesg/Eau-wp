@@ -149,9 +149,16 @@
                 this.openCreateModal();
             });
 
-            // Modal
-            $(document).on('click', '#eau-modal-close, #eau-modal-cancel, .eau-modal-overlay', () => {
+            // Modal close buttons
+            $(document).on('click', '#eau-modal-close, #eau-modal-cancel', () => {
                 this.closeModal();
+            });
+
+            // Modal overlay click - only close if clicking directly on overlay, not children
+            $(document).on('click', '.eau-modal-overlay', (e) => {
+                if ($(e.target).hasClass('eau-modal-overlay')) {
+                    this.closeModal();
+                }
             });
 
             $(document).on('click', '#eau-modal-save', () => {
@@ -183,6 +190,16 @@
 
             // Media Upload Component Events
             this.bindMediaUploadEvents();
+
+            // Force links with eau-no-lightbox class to open in new tab (bypass any lightbox plugins)
+            $(document).on('click', '.eau-no-lightbox', function(e) {
+                e.stopPropagation();
+                const href = $(this).attr('href');
+                if (href && href !== '#') {
+                    window.open(href, '_blank');
+                    e.preventDefault();
+                }
+            });
 
             // Pagination
             $(document).on('click', '.eau-pagination-btn:not(.disabled)', (e) => {
@@ -824,10 +841,12 @@
             valueInput.val(value);
             typeInput.val(type);
             previewName.text(filename);
-            previewLink.attr('href', url || value).attr('target', '_blank');
+
+            const fileUrl = url || value;
+            previewLink.attr('href', fileUrl).attr('target', '_blank');
+            thumbnail.attr('href', fileUrl).attr('target', '_blank');
 
             // Check if file is an image and show preview
-            const fileUrl = url || value;
             const isImage = this.isImageFile(filename) || this.isImageUrl(fileUrl);
 
             if (isImage && fileUrl) {

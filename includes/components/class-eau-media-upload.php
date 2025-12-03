@@ -194,17 +194,17 @@ class Eau_Media_Upload {
             <!-- Preview da mídia selecionada -->
             <div class="eau-media-upload-preview" id="<?php echo $id; ?>-preview" style="<?php echo empty($display_value) ? 'display:none;' : ''; ?>">
                 <div class="eau-media-upload-preview-content">
-                    <div class="eau-media-upload-preview-thumbnail" id="<?php echo $id; ?>-thumbnail">
+                    <a href="<?php echo esc_url($display_value); ?>" target="_blank" rel="noopener noreferrer" data-elementor-open-lightbox="no" class="eau-media-upload-preview-thumbnail eau-no-lightbox" id="<?php echo $id; ?>-thumbnail">
                         <i data-lucide="file-check" class="eau-media-upload-preview-icon"></i>
                         <img src="" alt="Preview" class="eau-media-upload-preview-image" style="display: none;">
-                    </div>
+                    </a>
                     <div class="eau-media-upload-preview-info">
                         <span class="eau-media-upload-preview-name" id="<?php echo $id; ?>-preview-name">
                             <?php echo esc_html($file_name); ?>
                         </span>
                     </div>
                     <div class="eau-media-upload-preview-actions">
-                        <a href="<?php echo esc_url($display_value); ?>" target="_blank" class="eau-media-upload-preview-link" id="<?php echo $id; ?>-preview-link" title="Open file">
+                        <a href="<?php echo esc_url($display_value); ?>" target="_blank" rel="noopener noreferrer" data-elementor-open-lightbox="no" class="eau-media-upload-preview-link eau-no-lightbox" id="<?php echo $id; ?>-preview-link" title="Open file">
                             <i data-lucide="external-link"></i>
                         </a>
                         <button type="button" class="eau-media-upload-remove" id="<?php echo $id; ?>-remove" title="Remove file">
