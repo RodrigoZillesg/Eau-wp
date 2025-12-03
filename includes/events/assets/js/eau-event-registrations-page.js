@@ -416,7 +416,7 @@
 
             $previewName.text(filename || value);
             if (url) {
-                $previewLink.attr('href', url).show();
+                $previewLink.attr('href', url).attr('target', '_blank').show();
             }
 
             // Check if image
