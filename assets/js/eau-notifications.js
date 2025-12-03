@@ -140,11 +140,12 @@
             const icon = icons[options.type] || icons.danger;
 
             // Create modal with very high z-index to appear above any other modal
+            // NOTE: Do NOT use eau-modal class here as it has z-index !important that conflicts
             const modalId = 'eau-confirm-modal-' + Date.now();
             const $modal = $(`
                 <div class="eau-confirm-overlay" id="${modalId}-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999999;display:flex;align-items:center;justify-content:center;">
-                    <div class="eau-modal eau-confirm-modal" style="position:relative;z-index:1;background:#fff;border-radius:8px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);">
-                        <div class="eau-modal-body">
+                    <div class="eau-confirm-modal" style="position:relative;z-index:1;background:#fff;border-radius:8px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);max-width:400px;width:90%;">
+                        <div class="eau-confirm-body">
                             <div class="eau-confirm-icon eau-confirm-icon-${options.type}">
                                 <i data-lucide="${icon}"></i>
                             </div>

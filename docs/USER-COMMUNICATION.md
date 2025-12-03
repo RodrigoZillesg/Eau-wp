@@ -334,6 +334,38 @@ EauNotifications.success('Updated!', 'Changes saved');
 - **Toast Close**: Slide out para direita (0.3s)
 - **Modal**: Fade in (0.2s)
 
+### Z-Index (Stacking Order)
+
+> ⚠️ **IMPORTANTE**: O sistema de notificações usa z-index muito alto para garantir visibilidade.
+
+| Componente | Z-Index | Nota |
+|------------|---------|------|
+| Toast Container | 99999999 | Sempre visível acima de modais |
+| Confirm Modal Overlay | 99999999 (inline) | Aparece acima de qualquer modal existente |
+| Modais padrão (.eau-modal) | 99999 | Modais regulares do sistema |
+
+**Por que o Confirm Modal usa z-index inline?**
+
+O confirm modal é criado dinamicamente e precisa aparecer ACIMA de qualquer outro modal que esteja aberto (como um modal de pagamentos ou edição). Por isso:
+
+1. **NÃO usa a classe `.eau-modal`** - Esta classe tem `z-index: 99999 !important` no CSS, que é menor que o necessário
+2. **Usa z-index inline** - O valor `99999999` é aplicado diretamente via style para garantir precedência
+3. **Usa classes próprias** - `.eau-confirm-overlay` e `.eau-confirm-modal` para evitar conflitos
+
+**Estrutura do Confirm Modal:**
+
+```html
+<!-- Overlay com z-index alto inline -->
+<div class="eau-confirm-overlay" style="z-index:99999999;">
+    <!-- Modal sem a classe .eau-modal -->
+    <div class="eau-confirm-modal">
+        <div class="eau-confirm-body">
+            <!-- Conteúdo -->
+        </div>
+    </div>
+</div>
+```
+
 ---
 
 ## 🔄 Fluxo de Exemplo Completo

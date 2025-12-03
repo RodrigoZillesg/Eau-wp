@@ -726,7 +726,7 @@
                 // Actions
                 html += '<div class="eau-payment-card-actions">';
                 if (payment.receipt_url) {
-                    html += '<a href="' + payment.receipt_url + '" target="_blank" class="eau-receipt-link">';
+                    html += '<a href="' + payment.receipt_url + '" target="_blank" rel="noopener noreferrer" data-elementor-open-lightbox="no" class="eau-receipt-link eau-no-lightbox">';
                     html += '<i data-lucide="file-text"></i> Receipt';
                     html += '</a>';
                 }

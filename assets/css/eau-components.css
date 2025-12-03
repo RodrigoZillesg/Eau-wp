@@ -1601,7 +1601,8 @@ div.eau-skeleton > .eau-skeleton-shimmer {
     max-width: 400px !important;
 }
 
-.eau-confirm-modal .eau-modal-body {
+.eau-confirm-modal .eau-modal-body,
+.eau-confirm-body {
     text-align: center !important;
     padding: 2rem !important;
 }
