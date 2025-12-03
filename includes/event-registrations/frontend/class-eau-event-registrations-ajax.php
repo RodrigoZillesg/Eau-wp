@@ -361,4 +361,54 @@ class Eau_Event_Registrations_Ajax {
 
         return !empty(self::get_user_registration($event_id, $user_id));
     }
+
+    /**
+     * Verifica se usuário pode ver o link "View my CPD" para um evento
+     *
+     * Condições:
+     * 1. Usuário está logado
+     * 2. Usuário está registrado no evento
+     * 3. Status do registro é 'paid' ou 'free'
+     * 4. Se evento for online (virtual/hybrid), usuário deve ter 'attended' = true
+     *
+     * @since  1.47.4
+     * @param  int $event_id Event ID
+     * @param  int $user_id  User ID (opcional, usa current user)
+     * @return bool
+     */
+    public static function can_view_cpd($event_id, $user_id = null) {
+        if ($user_id === null) {
+            if (!is_user_logged_in()) {
+                return false;
+            }
+            $user_id = get_current_user_id();
+        }
+
+        // Busca registro do usuário
+        $registration = self::get_user_registration($event_id, $user_id);
+        if (!$registration) {
+            return false;
+        }
+
+        $prefix = Config\META_PREFIX;
+
+        // Verifica status de pagamento
+        $status = get_post_meta($registration->ID, $prefix . 'status', true);
+        if (!in_array($status, array('paid', 'free'))) {
+            return false;
+        }
+
+        // Verifica tipo do evento
+        $event_type = get_post_meta($event_id, 'evt_event_type', true) ?: 'in-person';
+
+        // Se evento é online (virtual ou hybrid), verifica se participou (attended)
+        if (in_array($event_type, array('virtual', 'hybrid'))) {
+            $attended = get_post_meta($registration->ID, $prefix . 'attended', true);
+            if (!$attended) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

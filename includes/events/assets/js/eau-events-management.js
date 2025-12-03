@@ -824,7 +824,7 @@
             valueInput.val(value);
             typeInput.val(type);
             previewName.text(filename);
-            previewLink.attr('href', url || value);
+            previewLink.attr('href', url || value).attr('target', '_blank');
 
             // Check if file is an image and show preview
             const fileUrl = url || value;

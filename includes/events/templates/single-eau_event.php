@@ -213,9 +213,9 @@ while (have_posts()) : the_post();
                         <div class="eau-event-past-badge"><?php _e('This event has ended', 'eau-system'); ?></div>
                     <?php endif; ?>
 
-                    <!-- CPD Link - only show after event ended -->
-                    <?php if ($data['is_past'] && $meta['cpd_points'] && floatval($meta['cpd_points']) > 0) : ?>
-                        <a href="<?php echo is_user_logged_in() ? esc_url(home_url('/dashboard/my-activities/')) : esc_url(wp_login_url(get_permalink())); ?>" class="eau-event-cpd-link">
+                    <!-- CPD Link - only show after event ended for eligible users -->
+                    <?php if ($data['is_past'] && $meta['cpd_points'] && floatval($meta['cpd_points']) > 0 && Eau_Event_Registrations_Ajax::can_view_cpd(get_the_ID())) : ?>
+                        <a href="<?php echo esc_url(home_url('/dashboard/my-activities/')); ?>" class="eau-event-cpd-link">
                             <?php _e('View in My CPD', 'eau-system'); ?>
                         </a>
                     <?php endif; ?>

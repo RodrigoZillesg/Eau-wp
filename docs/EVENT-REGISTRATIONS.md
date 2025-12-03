@@ -133,6 +133,27 @@ $registration = Eau_Event_Registrations_Ajax::get_user_registration($event_id, $
 
 // Contar registros de um evento
 $count = Eau_Event_Registrations_Ajax::count_registrations($event_id);
+
+// Verificar se usuário pode ver link "View my CPD" (v1.47.4)
+$can_view = Eau_Event_Registrations_Ajax::can_view_cpd($event_id);
+```
+
+### can_view_cpd() - Elegibilidade para CPD
+
+A função `can_view_cpd()` verifica se o usuário pode ver o link "View in My CPD" na página do evento. Retorna `true` apenas se TODAS as condições forem atendidas:
+
+1. **Usuário está logado**
+2. **Usuário está registrado no evento** (não cancelado)
+3. **Status do registro é `paid` ou `free`**
+4. **Se evento for online (`virtual` ou `hybrid`):** usuário deve ter `attended = true` (clicou em "Join Online")
+
+Para eventos presenciais (`in-person`), basta estar registrado e com pagamento confirmado.
+
+```php
+// Uso no template single-eau_event.php
+if ($data['is_past'] && $meta['cpd_points'] > 0 && Eau_Event_Registrations_Ajax::can_view_cpd(get_the_ID())) {
+    // Mostra link "View in My CPD"
+}
 ```
 
 ### Eau_Event_Activity_Creator
@@ -230,4 +251,5 @@ Quando uma Activity é criada a partir de um registro:
 - **Introduzido:** v1.29.0
 - **Activity Creator:** v1.30.9
 - **Certificados:** v1.43.9
-- **Última atualização:** v1.44.0
+- **can_view_cpd():** v1.47.4
+- **Última atualização:** v1.47.4
