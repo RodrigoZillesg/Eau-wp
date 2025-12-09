@@ -22,15 +22,20 @@
          * Initialize
          */
         init: function() {
-            this.initQuillEditor();
+            // Quill is now initialized lazily when modal opens
             this.bindEvents();
             this.loadEvents();
         },
 
         /**
-         * Initialize Quill Editor
+         * Initialize Quill Editor (lazy initialization - only when modal opens)
          */
         initQuillEditor: function() {
+            // Skip if already initialized
+            if (this.quillEditor) {
+                return;
+            }
+
             if (typeof Quill === 'undefined') {
                 console.warn('Quill not loaded');
                 return;
@@ -378,6 +383,9 @@
             // Clear image - using Eau Media Upload component
             this.clearMediaUpload($('#eau-edit-image_id-wrapper'));
 
+            // Initialize Quill lazily (only when modal opens)
+            this.initQuillEditor();
+
             // Clear Quill editor
             if (this.quillEditor) {
                 this.quillEditor.setContents([]);
@@ -386,6 +394,10 @@
 
             // Show correct location fields for default type
             this.toggleLocationFields('in-person');
+
+            // Show "Publish immediately" option in create mode
+            $('.eau-publish-immediately-field').show();
+            $('#eau-edit-publish_immediately').prop('checked', false);
 
             // Show modal with loading state
             $modalBody.addClass('eau-modal-loading');
@@ -417,6 +429,12 @@
             $('#eau-edit-mode').val('edit');
             $('#eau-modal-title').text('Edit Event');
             $('#eau-modal-save').html('<i data-lucide="save"></i> Save Changes');
+
+            // Initialize Quill lazily (only when modal opens)
+            this.initQuillEditor();
+
+            // Hide "Publish immediately" option in edit mode
+            $('.eau-publish-immediately-field').hide();
 
             // Show modal with loading state
             $modalBody.addClass('eau-modal-loading');

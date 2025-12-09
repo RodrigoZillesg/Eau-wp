@@ -118,6 +118,9 @@ class Eau_Events {
         Admin\Eau_Events_Management::register_shortcode();
         Admin\Eau_Events_Management_Ajax::register_handlers();
 
+        // Frontend Shortcodes (single e archive)
+        Frontend\Eau_Events_Shortcodes::register();
+
         // Flush rewrite rules se versão mudou
         $this->maybe_flush_rewrite_rules();
     }

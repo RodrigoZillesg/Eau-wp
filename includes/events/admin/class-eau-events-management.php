@@ -405,6 +405,13 @@ class Eau_Events_Management {
                                         Require approval for registrations
                                     </label>
                                 </div>
+
+                                <div class="eau-form-field eau-form-field-span-2 eau-publish-immediately-field" style="display: none;">
+                                    <label class="eau-checkbox-label">
+                                        <input type="checkbox" name="publish_immediately" id="eau-edit-publish_immediately" value="1">
+                                        <strong>Publish immediately</strong> (Event will be visible to users right away)
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </form>

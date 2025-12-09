@@ -177,11 +177,15 @@ class Eau_Events_Management_Ajax {
             wp_send_json_error(array('message' => 'End date and time is required'));
         }
 
+        // Check if should publish immediately
+        $publish_immediately = isset($_POST['publish_immediately']) && $_POST['publish_immediately'] === '1';
+        $post_status = $publish_immediately ? 'publish' : 'draft';
+
         // Create the post
         $event_id = wp_insert_post(array(
             'post_title' => $title,
             'post_type' => Config\POST_TYPE,
-            'post_status' => 'draft',
+            'post_status' => $post_status,
         ));
 
         if (is_wp_error($event_id)) {
@@ -226,9 +230,14 @@ class Eau_Events_Management_Ajax {
             update_post_meta($event_id, $prefix . 'full_description', wp_kses_post($_POST['full_description']));
         }
 
+        $message = $publish_immediately
+            ? 'Event created and published successfully'
+            : 'Event created as draft successfully';
+
         wp_send_json_success(array(
-            'message' => 'Event created successfully',
+            'message' => $message,
             'event_id' => $event_id,
+            'status' => $post_status,
         ));
     }
 

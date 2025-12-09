@@ -927,6 +927,45 @@
         updateRegistrationStatus: function(regId, newStatus) {
             const self = this;
 
+            // For destructive actions, show confirmation dialog
+            const destructiveStatuses = ['refunded', 'failed'];
+
+            if (destructiveStatuses.includes(newStatus) && typeof Swal !== 'undefined') {
+                const statusLabels = {
+                    'refunded': 'Refunded',
+                    'failed': 'Failed'
+                };
+
+                const statusMessages = {
+                    'refunded': 'This will mark the registration as refunded. The attendee will be notified.',
+                    'failed': 'This will mark the registration as failed. The attendee may lose access to the event.'
+                };
+
+                Swal.fire({
+                    title: 'Confirm Status Change',
+                    text: statusMessages[newStatus] || 'Are you sure you want to change the status?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Yes, mark as ' + statusLabels[newStatus],
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        self.executeStatusUpdate(regId, newStatus);
+                    }
+                });
+            } else {
+                self.executeStatusUpdate(regId, newStatus);
+            }
+        },
+
+        /**
+         * Execute the actual status update AJAX call
+         */
+        executeStatusUpdate: function(regId, newStatus) {
+            const self = this;
+
             $.ajax({
                 url: eauEventRegistrations.ajaxUrl,
                 type: 'POST',

@@ -166,18 +166,46 @@ class Eau_Dashboard {
                     </div>
                 </a>
 
-                <!-- Active Events -->
-                <div class="eau-dashboard-card eau-card-purple">
-                    <div class="eau-card-content">
-                        <h3 class="eau-card-title">Active Events</h3>
-                        <div class="eau-card-stats">
-                            <span class="eau-card-number"><?php echo number_format($stats['active_events']); ?></span>
+                <!-- Active Events (link apenas para superAdmin e Admin) -->
+                <?php if (Eau_User_Institution_Helper::has_admin_access()): ?>
+                <a href="/events/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-purple">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">Active Events</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number"><?php echo number_format($stats['active_events']); ?></span>
+                                <?php if (!empty($stats['next_event'])): ?>
+                                    <span class="eau-card-pending eau-card-next-event">
+                                        Next: <?php echo esc_html($stats['next_event']['title']); ?> - <?php echo esc_html($stats['next_event']['date']); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="calendar"></i>
                         </div>
                     </div>
-                    <div class="eau-card-icon">
-                        <i data-lucide="calendar"></i>
+                </a>
+                <?php else: ?>
+                <a href="/events/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-purple">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">Active Events</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number"><?php echo number_format($stats['active_events']); ?></span>
+                                <?php if (!empty($stats['next_event'])): ?>
+                                    <span class="eau-card-pending eau-card-next-event">
+                                        Next: <?php echo esc_html($stats['next_event']['title']); ?> - <?php echo esc_html($stats['next_event']['date']); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="calendar"></i>
+                        </div>
                     </div>
-                </div>
+                </a>
+                <?php endif; ?>
 
                 <!-- Points Awarded -->
                 <div class="eau-dashboard-card eau-card-orange">
@@ -318,6 +346,7 @@ class Eau_Dashboard {
             'cpd_activities' => self::get_cpd_activities(),
             'pending_approval' => self::get_pending_approval(),
             'active_events' => self::get_active_events(),
+            'next_event' => self::get_next_event(),
             'points_awarded' => self::get_points_awarded(),
             'pending_payments' => self::get_pending_payments(),
         );
@@ -508,11 +537,11 @@ class Eau_Dashboard {
     }
 
     /**
-     * Eventos ativos (publicados com event_date >= hoje)
+     * Eventos ativos (publicados com evt_start_datetime >= agora)
      */
     private static function get_active_events() {
         global $wpdb;
-        $today = current_time('Y-m-d');
+        $now = current_time('Y-m-d H:i:s');
 
         $count = $wpdb->get_var(
             $wpdb->prepare(
@@ -523,14 +552,67 @@ class Eau_Dashboard {
                 AND p.post_status = %s
                 AND pm.meta_key = %s
                 AND pm.meta_value >= %s",
-                'events',
+                'eau_event',
                 'publish',
-                'event_date',
-                $today
+                'evt_start_datetime',
+                $now
             )
         );
 
         return intval($count);
+    }
+
+    /**
+     * Retorna o próximo evento agendado
+     *
+     * @return array|null Array com 'title' e 'date' ou null se não houver
+     */
+    private static function get_next_event() {
+        global $wpdb;
+        $now = current_time('Y-m-d H:i:s');
+
+        // Busca o próximo evento publicado com start_datetime >= agora
+        $event = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT p.ID, p.post_title, pm.meta_value as start_datetime
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = %s
+                AND p.post_status = %s
+                AND pm.meta_key = %s
+                AND pm.meta_value >= %s
+                ORDER BY pm.meta_value ASC
+                LIMIT 1",
+                'eau_event',
+                'publish',
+                'evt_start_datetime',
+                $now
+            )
+        );
+
+        if (!$event) {
+            return null;
+        }
+
+        // Formata a data para exibição
+        $date_formatted = '';
+        if (!empty($event->start_datetime)) {
+            $timestamp = strtotime($event->start_datetime);
+            if ($timestamp) {
+                $date_formatted = date_i18n('M j', $timestamp);
+            }
+        }
+
+        // Trunca título se necessário
+        $title = $event->post_title;
+        if (strlen($title) > 25) {
+            $title = substr($title, 0, 25) . '...';
+        }
+
+        return array(
+            'title' => $title,
+            'date' => $date_formatted,
+        );
     }
 
     /**

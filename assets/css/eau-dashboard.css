@@ -83,6 +83,17 @@
     gap: 1.5rem !important; /* Espaçamento maior */
     margin-bottom: 2rem !important;
     margin-top: 0 !important;
+    align-items: stretch !important; /* Todos os cards com mesma altura */
+}
+
+/* Garante que o link wrapper também use toda a altura */
+.eau-dashboard-cards > .eau-dashboard-card-link,
+.eau-dashboard-cards > .eau-dashboard-card {
+    height: 100% !important;
+}
+
+.eau-dashboard-card-link .eau-dashboard-card {
+    height: 100% !important;
 }
 
 /* Card Link - Wrapper para tornar card clicável */
@@ -114,8 +125,10 @@
     gap: 1.25rem !important;
     transition: all 0.2s ease !important;
     min-width: 280px !important;
-    min-height: 146px !important; /* Altura mínima para consistência entre cards */
+    min-height: 130px !important; /* Altura mínima para consistência entre cards */
+    height: 130px !important; /* Altura fixa para garantir consistência */
     margin: 0 !important;
+    overflow: hidden !important; /* Esconde conteúdo que excede */
 }
 
 .eau-dashboard-card:hover,
@@ -183,6 +196,21 @@
     margin-top: 0.25rem !important;
     margin-bottom: 0 !important;
     letter-spacing: 0 !important;
+}
+
+/* Next Event - Força texto em uma única linha com ellipsis */
+.eau-card-stats .eau-card-next-event,
+.eau-card-pending.eau-card-next-event,
+span.eau-card-next-event {
+    display: inline-block !important;
+    max-width: 140px !important; /* Limita largura para forçar truncamento */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: #9333ea !important; /* Purple para combinar com card */
+    font-size: 0.6875rem !important; /* 11px - Menor para caber */
+    line-height: 1.3 !important;
+    vertical-align: top !important;
 }
 
 /* Título do Card */
