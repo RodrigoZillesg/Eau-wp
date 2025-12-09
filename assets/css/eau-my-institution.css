@@ -849,3 +849,110 @@
         gap: 8px;
     }
 }
+
+/* ========================================
+   intl-tel-input Customization
+   ======================================== */
+.iti {
+    width: 100%;
+    --iti-input-padding: 95px;
+}
+
+/* Container do seletor de país */
+.iti .iti__country-container {
+    padding: 1px;
+}
+
+/* Estilo base do input */
+.iti input[type="tel"],
+.iti__tel-input {
+    width: 100% !important;
+    height: auto !important;
+    padding-top: 0.625rem !important;
+    padding-bottom: 0.625rem !important;
+    padding-right: 0.75rem !important;
+    padding-left: var(--iti-input-padding, 95px) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    color: #111827 !important;
+    background-color: #fff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.iti input[type="tel"]:focus,
+.iti__tel-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Ajusta o botão do seletor de país */
+.iti__selected-country {
+    padding: 0 8px 0 10px !important;
+    background: transparent !important;
+}
+
+.iti__selected-dial-code {
+    font-size: 0.875rem;
+    color: #111827;
+    margin-left: 4px;
+}
+
+.iti__arrow {
+    margin-left: 4px;
+}
+
+.iti__country-list {
+    z-index: 10000;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.iti__country {
+    padding: 0.5rem 0.75rem;
+}
+
+.iti__country:hover {
+    background-color: #f3f4f6;
+}
+
+.iti__country--highlight {
+    background-color: #dbeafe;
+}
+
+/* ========================================
+   Form Select Improvements
+   ======================================== */
+.eau-form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* ========================================
+   Edit Modal Form Grid Override
+   ======================================== */
+#eau-edit-institution-modal .eau-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+#eau-edit-institution-modal .eau-form-field-span-2 {
+    grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+    #eau-edit-institution-modal .eau-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #eau-edit-institution-modal .eau-form-field-span-2 {
+        grid-column: span 1;
+    }
+}

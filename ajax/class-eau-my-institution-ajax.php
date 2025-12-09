@@ -3,6 +3,7 @@ namespace EauSystem\Ajax;
 
 use EauSystem\Eau_User_Institution_Helper;
 use EauSystem\Eau_Institution_Requests_Database;
+use EauSystem\Helpers\Eau_Location_Data;
 
 /**
  * AJAX Handlers for My Institution page
@@ -47,6 +48,20 @@ class Eau_My_Institution_Ajax {
 
         // Get institution request history (for institutionAdmin)
         add_action('wp_ajax_eau_get_institution_request_history', array(__CLASS__, 'get_institution_request_history'));
+
+        // Get full institution details for editing (for institutionAdmin)
+        add_action('wp_ajax_eau_get_institution_for_edit', array(__CLASS__, 'get_institution_for_edit'));
+
+        // Update institution (for institutionAdmin)
+        add_action('wp_ajax_eau_update_my_institution', array(__CLASS__, 'update_my_institution'));
+
+        // Location data endpoints
+        add_action('wp_ajax_eau_get_countries', array(__CLASS__, 'get_countries'));
+        add_action('wp_ajax_eau_get_states', array(__CLASS__, 'get_states'));
+        add_action('wp_ajax_eau_get_cities', array(__CLASS__, 'get_cities'));
+
+        // Upload file for institution logo
+        add_action('wp_ajax_eau_upload_institution_file', array(__CLASS__, 'upload_institution_file'));
     }
 
     /**
@@ -108,6 +123,16 @@ class Eau_My_Institution_Ajax {
             return null;
         }
 
+        // Get logo - convert attachment ID to URL
+        $logo_id = get_post_meta($institution_id, 'ins_company_logo', true);
+        $logo_url = '';
+        if (!empty($logo_id) && is_numeric($logo_id)) {
+            $logo_url = wp_get_attachment_url($logo_id);
+        } elseif (!empty($logo_id) && filter_var($logo_id, FILTER_VALIDATE_URL)) {
+            // If it's already a URL, use it directly
+            $logo_url = $logo_id;
+        }
+
         return array(
             'id' => $institution_id,
             'name' => $post->post_title,
@@ -122,7 +147,7 @@ class Eau_My_Institution_Ajax {
             'state' => get_post_meta($institution_id, 'ins_company_state', true),
             'postcode' => get_post_meta($institution_id, 'ins_company_postcode', true),
             'country' => get_post_meta($institution_id, 'ins_company_country', true),
-            'logo' => get_post_meta($institution_id, 'ins_company_logo', true),
+            'logo' => $logo_url,
             'role' => $role,
         );
     }
@@ -748,5 +773,300 @@ class Eau_My_Institution_Ajax {
             'cancelled' => 'secondary',
         );
         return isset($classes[$status]) ? $classes[$status] : 'secondary';
+    }
+
+    /**
+     * AJAX: Get institution details for editing (institutionAdmin only)
+     */
+    public static function get_institution_for_edit() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $institution_id = isset($_POST['institution_id']) ? absint($_POST['institution_id']) : 0;
+
+        if (!$institution_id) {
+            wp_send_json_error(array('message' => 'Invalid institution ID'));
+        }
+
+        $user_id = get_current_user_id();
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+
+        // Only institutionAdmin can edit
+        if ($mem_type !== 'institutionAdmin') {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        // Verify user manages this institution
+        $managed = Eau_User_Institution_Helper::get_user_managed_institutions($user_id);
+        $managed_ids = array_map(function($inst) { return $inst->ID; }, $managed);
+
+        if (!in_array($institution_id, $managed_ids)) {
+            wp_send_json_error(array('message' => 'You do not manage this institution'));
+        }
+
+        // Get institution data
+        $post = get_post($institution_id);
+        if (!$post || $post->post_type !== 'institutions') {
+            wp_send_json_error(array('message' => 'Institution not found'));
+        }
+
+        $logo_id = get_post_meta($institution_id, 'ins_company_logo', true);
+        $logo_url = $logo_id ? wp_get_attachment_url($logo_id) : '';
+
+        $institution = array(
+            'id' => $institution_id,
+            'post_title' => $post->post_title,
+            'ins_company_id' => get_post_meta($institution_id, 'ins_company_id', true),
+            'ins_company_name' => get_post_meta($institution_id, 'ins_company_name', true) ?: $post->post_title,
+            'ins_company_email' => get_post_meta($institution_id, 'ins_company_email', true),
+            'ins_company_company_phone' => get_post_meta($institution_id, 'ins_company_company_phone', true),
+            'ins_company_company_address_line_1' => get_post_meta($institution_id, 'ins_company_company_address_line_1', true),
+            'ins_company_company_suburb' => get_post_meta($institution_id, 'ins_company_company_suburb', true),
+            'ins_company_company_state' => get_post_meta($institution_id, 'ins_company_company_state', true),
+            'ins_company_company_postcode' => get_post_meta($institution_id, 'ins_company_company_postcode', true),
+            'ins_company_company_country' => get_post_meta($institution_id, 'ins_company_company_country', true),
+            'ins_status' => get_post_meta($institution_id, 'ins_status', true) ?: 'active',
+            'ins_company_logo' => $logo_id,
+            'ins_company_logo_url' => $logo_url,
+        );
+
+        wp_send_json_success($institution);
+    }
+
+    /**
+     * AJAX: Update institution (institutionAdmin only)
+     */
+    public static function update_my_institution() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $institution_id = isset($_POST['institution_id']) ? absint($_POST['institution_id']) : 0;
+        $fields = isset($_POST['fields']) ? $_POST['fields'] : array();
+
+        if (!$institution_id) {
+            wp_send_json_error(array('message' => 'Invalid institution ID'));
+        }
+
+        $user_id = get_current_user_id();
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+
+        // Only institutionAdmin can update
+        if ($mem_type !== 'institutionAdmin') {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        // Verify user manages this institution
+        $managed = Eau_User_Institution_Helper::get_user_managed_institutions($user_id);
+        $managed_ids = array_map(function($inst) { return $inst->ID; }, $managed);
+
+        if (!in_array($institution_id, $managed_ids)) {
+            wp_send_json_error(array('message' => 'You do not manage this institution'));
+        }
+
+        // Get institution
+        $post = get_post($institution_id);
+        if (!$post || $post->post_type !== 'institutions') {
+            wp_send_json_error(array('message' => 'Institution not found'));
+        }
+
+        // Allowed fields for institutionAdmin to update
+        $allowed_fields = array(
+            'ins_company_name',
+            'ins_company_email',
+            'ins_company_company_phone',
+            'ins_company_company_address_line_1',
+            'ins_company_company_suburb',
+            'ins_company_company_state',
+            'ins_company_company_postcode',
+            'ins_company_company_country',
+            'ins_company_logo',
+            'ins_status',
+        );
+
+        $updated_count = 0;
+        foreach ($fields as $key => $value) {
+            if (in_array($key, $allowed_fields)) {
+                if ($key === 'ins_company_email') {
+                    $value = sanitize_email($value);
+                } elseif ($key === 'ins_company_logo') {
+                    $value = absint($value);
+                } else {
+                    $value = sanitize_text_field($value);
+                }
+                update_post_meta($institution_id, $key, $value);
+                $updated_count++;
+            }
+        }
+
+        // Update post title if company_name was changed
+        if (isset($fields['ins_company_name']) && !empty($fields['ins_company_name'])) {
+            wp_update_post(array(
+                'ID' => $institution_id,
+                'post_title' => sanitize_text_field($fields['ins_company_name']),
+            ));
+        }
+
+        if ($updated_count > 0) {
+            wp_send_json_success(array('message' => 'Institution updated successfully'));
+        } else {
+            wp_send_json_error(array('message' => 'No valid fields to update'));
+        }
+    }
+
+    /**
+     * AJAX: Get countries list
+     */
+    public static function get_countries() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $countries = Eau_Location_Data::get_countries();
+
+        wp_send_json_success(array('countries' => $countries));
+    }
+
+    /**
+     * AJAX: Get states for a country
+     */
+    public static function get_states() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $country_code = isset($_POST['country']) ? sanitize_text_field($_POST['country']) : '';
+
+        if (empty($country_code)) {
+            wp_send_json_success(array('states' => array()));
+        }
+
+        $states = Eau_Location_Data::get_states($country_code);
+
+        wp_send_json_success(array(
+            'states' => $states,
+            'has_detailed_data' => Eau_Location_Data::has_detailed_data($country_code),
+        ));
+    }
+
+    /**
+     * AJAX: Get cities for a state
+     */
+    public static function get_cities() {
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Not logged in'));
+        }
+
+        $country_code = isset($_POST['country']) ? sanitize_text_field($_POST['country']) : '';
+        $state_code = isset($_POST['state']) ? sanitize_text_field($_POST['state']) : '';
+
+        if (empty($country_code) || empty($state_code)) {
+            wp_send_json_success(array('cities' => array()));
+        }
+
+        $cities = Eau_Location_Data::get_cities($country_code, $state_code);
+
+        wp_send_json_success(array('cities' => $cities));
+    }
+
+    /**
+     * AJAX: Upload file for institution logo
+     *
+     * @since 1.46.3
+     */
+    public static function upload_institution_file() {
+        // Verifica nonce específico da página My Institution
+        check_ajax_referer('eau_my_institution_nonce', 'nonce');
+
+        // Verifica se está logado
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in to upload files.'));
+        }
+
+        // Verifica se é institutionAdmin
+        $user_id = get_current_user_id();
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        if ($mem_type !== 'institutionAdmin') {
+            wp_send_json_error(array('message' => 'Permission denied. Only institution administrators can upload files.'));
+        }
+
+        // Verifica se há arquivo
+        if (empty($_FILES['file'])) {
+            wp_send_json_error(array('message' => 'No file uploaded.'));
+        }
+
+        // Inclui funções necessárias para upload
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $file = $_FILES['file'];
+
+        // Validação de tamanho (10MB max por padrão)
+        $max_size = isset($_POST['max_size']) ? intval($_POST['max_size']) : 10 * 1024 * 1024;
+        if ($file['size'] > $max_size) {
+            wp_send_json_error(array(
+                'message' => 'File is too large. Maximum size is ' . size_format($max_size) . '.'
+            ));
+        }
+
+        // Validação de extensão (se fornecida)
+        if (!empty($_POST['allowed_extensions'])) {
+            $allowed = array_map('trim', explode(',', strtolower($_POST['allowed_extensions'])));
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowed)) {
+                wp_send_json_error(array(
+                    'message' => 'File type not allowed. Allowed types: ' . implode(', ', array_map('strtoupper', $allowed))
+                ));
+            }
+        }
+
+        // Upload do arquivo
+        $upload = wp_handle_upload($file, array('test_form' => false));
+
+        if (isset($upload['error'])) {
+            wp_send_json_error(array('message' => $upload['error']));
+        }
+
+        // Cria attachment na Media Library
+        $attachment = array(
+            'post_mime_type' => $upload['type'],
+            'post_title'     => sanitize_file_name(pathinfo($file['name'], PATHINFO_FILENAME)),
+            'post_content'   => '',
+            'post_status'    => 'inherit',
+            'post_author'    => get_current_user_id(),
+        );
+
+        $attachment_id = wp_insert_attachment($attachment, $upload['file']);
+
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(array('message' => 'Failed to create attachment.'));
+        }
+
+        // Gera metadata para o attachment
+        $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+        wp_update_attachment_metadata($attachment_id, $attachment_data);
+
+        // Retorna dados do arquivo
+        wp_send_json_success(array(
+            'id' => $attachment_id,
+            'url' => $upload['url'],
+            'filename' => basename($upload['file']),
+            'type' => $upload['type'],
+            'size' => $file['size'],
+            'size_formatted' => size_format($file['size']),
+        ));
     }
 }

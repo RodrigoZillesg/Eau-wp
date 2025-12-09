@@ -173,6 +173,9 @@ class Eau_My_Institution {
             <?php echo self::render_respond_modal(); ?>
             <?php echo self::render_leave_modal(); ?>
             <?php echo self::render_view_institution_modal(); ?>
+            <?php if ($is_institution_admin): ?>
+                <?php echo self::render_edit_institution_modal(); ?>
+            <?php endif; ?>
 
         </div>
         <?php
@@ -372,10 +375,156 @@ class Eau_My_Institution {
     }
 
     /**
+     * Render the edit institution modal (for institutionAdmin)
+     *
+     * @return string HTML
+     */
+    private static function render_edit_institution_modal() {
+        // Get countries list for select
+        $countries = \EauSystem\Helpers\Eau_Location_Data::get_countries();
+
+        ob_start();
+        ?>
+        <div class="eau-modal-overlay" id="eau-edit-institution-modal-overlay" style="display: none;">
+            <div class="eau-modal eau-modal-large" id="eau-edit-institution-modal">
+                <div class="eau-modal-header">
+                    <h2 class="eau-modal-title">
+                        <i data-lucide="edit"></i>
+                        <span id="eau-edit-institution-title">Edit Institution</span>
+                    </h2>
+                    <button class="eau-modal-close" type="button" data-action="close">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="eau-modal-body" id="eau-edit-institution-body">
+                    <form id="eau-edit-institution-form">
+                        <input type="hidden" name="institution_id" id="eau-edit-institution-id">
+
+                        <div class="eau-form-grid">
+                            <!-- Institution Logo -->
+                            <div class="eau-form-field eau-form-field-span-2">
+                                <label class="eau-form-label">Institution Logo</label>
+                                <?php
+                                echo \EauSystem\Components\Eau_Media_Upload::field(
+                                    'eau-edit-ins_company_logo',
+                                    'ins_company_logo',
+                                    '',
+                                    array(
+                                        'type' => 'media',
+                                        'allowed_types' => 'image/*',
+                                        'allowed_extensions' => 'jpg,jpeg,png,gif,webp,svg',
+                                        'max_file_size' => 5 * 1024 * 1024, // 5MB
+                                    )
+                                );
+                                ?>
+                            </div>
+
+                            <!-- Institution Name -->
+                            <div class="eau-form-field eau-form-field-span-2">
+                                <label class="eau-form-label" for="eau-edit-ins_company_name">
+                                    Institution Name <span class="eau-required">*</span>
+                                </label>
+                                <input type="text" class="eau-form-input" id="eau-edit-ins_company_name"
+                                       name="ins_company_name" required>
+                            </div>
+
+                            <!-- Company ID (readonly) -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_id">Company ID</label>
+                                <input type="text" class="eau-form-input" id="eau-edit-ins_company_id"
+                                       name="ins_company_id" readonly>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_status">Status</label>
+                                <select class="eau-form-select" id="eau-edit-ins_status" name="ins_status">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_email">Email</label>
+                                <input type="email" class="eau-form-input" id="eau-edit-ins_company_email"
+                                       name="ins_company_email">
+                            </div>
+
+                            <!-- Phone (intl-tel-input) -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_company_phone">Phone</label>
+                                <input type="tel" class="eau-form-input" id="eau-edit-ins_company_company_phone"
+                                       name="ins_company_company_phone">
+                            </div>
+
+                            <!-- Address -->
+                            <div class="eau-form-field eau-form-field-span-2">
+                                <label class="eau-form-label" for="eau-edit-ins_company_company_address_line_1">Address</label>
+                                <input type="text" class="eau-form-input" id="eau-edit-ins_company_company_address_line_1"
+                                       name="ins_company_company_address_line_1">
+                            </div>
+
+                            <!-- Country -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_company_country">Country</label>
+                                <select class="eau-form-select" id="eau-edit-ins_company_company_country" name="ins_company_company_country">
+                                    <option value="">Select country...</option>
+                                    <?php foreach ($countries as $code => $name): ?>
+                                        <option value="<?php echo esc_attr($code); ?>"><?php echo esc_html($name); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <!-- State -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_company_state">State</label>
+                                <select class="eau-form-select" id="eau-edit-ins_company_company_state" name="ins_company_company_state">
+                                    <option value="">Select state...</option>
+                                </select>
+                                <input type="text" class="eau-form-input" id="eau-edit-ins_company_company_state_text"
+                                       name="ins_company_company_state_text" style="display: none;" placeholder="Enter state...">
+                            </div>
+
+                            <!-- City -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_company_suburb">City</label>
+                                <select class="eau-form-select" id="eau-edit-ins_company_company_suburb" name="ins_company_company_suburb">
+                                    <option value="">Select city...</option>
+                                </select>
+                                <input type="text" class="eau-form-input" id="eau-edit-ins_company_company_suburb_text"
+                                       name="ins_company_company_suburb_text" style="display: none;" placeholder="Enter city...">
+                            </div>
+
+                            <!-- Postcode -->
+                            <div class="eau-form-field">
+                                <label class="eau-form-label" for="eau-edit-ins_company_company_postcode">Postcode</label>
+                                <input type="text" class="eau-form-input" id="eau-edit-ins_company_company_postcode"
+                                       name="ins_company_company_postcode">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="eau-modal-footer">
+                    <button type="button" class="eau-btn eau-btn-secondary" data-action="close">
+                        Cancel
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="eau-save-institution-btn">
+                        <i data-lucide="save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
      * Enqueue page assets
      */
     public static function enqueue_assets() {
-        $version = defined('EAU_SYSTEM_VERSION') ? EAU_SYSTEM_VERSION : '1.44.0';
+        $version = defined('EAU_SYSTEM_VERSION') ? EAU_SYSTEM_VERSION : '1.46.0';
         $plugin_url = defined('EAU_SYSTEM_PLUGIN_URL') ? EAU_SYSTEM_PLUGIN_URL : plugin_dir_url(dirname(__FILE__));
 
         // CSS
@@ -386,10 +535,18 @@ class Eau_My_Institution {
             $version
         );
 
+        // intl-tel-input CSS
+        wp_enqueue_style(
+            'intl-tel-input',
+            'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
+            array(),
+            '18.2.1'
+        );
+
         wp_enqueue_style(
             'eau-my-institution',
             $plugin_url . 'assets/css/eau-my-institution.css',
-            array('eau-components'),
+            array('eau-components', 'intl-tel-input'),
             $version
         );
 
@@ -402,11 +559,20 @@ class Eau_My_Institution {
             true
         );
 
+        // intl-tel-input JS
+        wp_enqueue_script(
+            'intl-tel-input',
+            'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
+            array(),
+            '18.2.1',
+            true
+        );
+
         // Main JS
         wp_enqueue_script(
             'eau-my-institution',
             $plugin_url . 'assets/js/eau-my-institution.js',
-            array('jquery', 'eau-notifications'),
+            array('jquery', 'eau-notifications', 'intl-tel-input'),
             $version,
             true
         );
@@ -435,6 +601,12 @@ class Eau_My_Institution {
                 'requestRejected' => 'Request rejected.',
                 'leftInstitution' => 'You have left the institution.',
                 'error' => 'An error occurred. Please try again.',
+                'institutionUpdated' => 'Institution updated successfully!',
+                'loadingInstitution' => 'Loading institution data...',
+                'selectState' => 'Select state...',
+                'selectCity' => 'Select city...',
+                'loadingStates' => 'Loading states...',
+                'loadingCities' => 'Loading cities...',
             ),
         ));
 
@@ -446,5 +618,8 @@ class Eau_My_Institution {
             null,
             true
         );
+
+        // Media Upload Component Assets
+        \EauSystem\Components\Eau_Media_Upload::enqueue_assets();
     }
 }

@@ -30,6 +30,9 @@ class Eau_Institutions_Ajax {
 
         // Export CSV
         add_action('wp_ajax_eau_export_institutions_csv', array(__CLASS__, 'export_institutions_csv'));
+
+        // Upload file for institution logo
+        add_action('wp_ajax_eau_upload_institution_logo', array(__CLASS__, 'upload_institution_logo'));
     }
 
     /**
@@ -434,6 +437,15 @@ class Eau_Institutions_Ajax {
         // Pega todos os meta fields
         $meta_fields = get_post_meta($institution_id);
 
+        // Get logo - convert attachment ID to URL
+        $logo_id = isset($meta_fields['ins_company_logo'][0]) ? $meta_fields['ins_company_logo'][0] : '';
+        $logo_url = '';
+        if (!empty($logo_id) && is_numeric($logo_id)) {
+            $logo_url = wp_get_attachment_url($logo_id);
+        } elseif (!empty($logo_id) && filter_var($logo_id, FILTER_VALIDATE_URL)) {
+            $logo_url = $logo_id;
+        }
+
         // Formata dados
         $institution = array(
             '_ID' => $post->ID,
@@ -448,6 +460,8 @@ class Eau_Institutions_Ajax {
             'ins_company_company_postcode' => isset($meta_fields['ins_company_company_postcode'][0]) ? $meta_fields['ins_company_company_postcode'][0] : '',
             'ins_company_company_country' => isset($meta_fields['ins_company_company_country'][0]) ? $meta_fields['ins_company_company_country'][0] : '',
             'ins_status' => isset($meta_fields['ins_status'][0]) ? $meta_fields['ins_status'][0] : 'active',
+            'ins_company_logo' => $logo_id,
+            'ins_company_logo_url' => $logo_url,
         );
 
         // Adiciona contagem de membros
@@ -492,12 +506,22 @@ class Eau_Institutions_Ajax {
             'ins_company_company_postcode',
             'ins_company_company_country',
             'ins_status',
+            'ins_company_logo',
         );
 
         $updated_count = 0;
         foreach ($fields as $key => $value) {
             if (in_array($key, $allowed_fields)) {
-                update_post_meta($institution_id, $key, sanitize_text_field($value));
+                // Sanitize based on field type
+                if ($key === 'ins_company_email') {
+                    $value = sanitize_email($value);
+                } elseif ($key === 'ins_company_logo') {
+                    // Logo is an attachment ID - must be integer
+                    $value = absint($value);
+                } else {
+                    $value = sanitize_text_field($value);
+                }
+                update_post_meta($institution_id, $key, $value);
                 $updated_count++;
             }
         }
@@ -807,6 +831,89 @@ class Eau_Institutions_Ajax {
             'message' => $message,
             'deleted_count' => $deleted_count,
             'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Upload file for institution logo
+     *
+     * @since 1.46.5
+     */
+    public static function upload_institution_logo() {
+        // Verifica nonce específico da página Institutions Management
+        check_ajax_referer('eau_institutions_nonce', 'nonce');
+
+        // Verifica se está logado e tem permissão
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied. You must be an administrator to upload files.'));
+        }
+
+        // Verifica se há arquivo
+        if (empty($_FILES['file'])) {
+            wp_send_json_error(array('message' => 'No file uploaded.'));
+        }
+
+        // Inclui funções necessárias para upload
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $file = $_FILES['file'];
+
+        // Validação de tamanho (10MB max por padrão)
+        $max_size = isset($_POST['max_size']) ? intval($_POST['max_size']) : 10 * 1024 * 1024;
+        if ($file['size'] > $max_size) {
+            wp_send_json_error(array(
+                'message' => 'File is too large. Maximum size is ' . size_format($max_size) . '.'
+            ));
+        }
+
+        // Validação de extensão (se fornecida)
+        if (!empty($_POST['allowed_extensions'])) {
+            $allowed = array_map('trim', explode(',', strtolower($_POST['allowed_extensions'])));
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowed)) {
+                wp_send_json_error(array(
+                    'message' => 'File type not allowed. Allowed types: ' . implode(', ', array_map('strtoupper', $allowed))
+                ));
+            }
+        }
+
+        // Upload do arquivo
+        $upload = wp_handle_upload($file, array('test_form' => false));
+
+        if (isset($upload['error'])) {
+            wp_send_json_error(array('message' => $upload['error']));
+        }
+
+        // Cria attachment na Media Library
+        $attachment = array(
+            'post_mime_type' => $upload['type'],
+            'post_title'     => sanitize_file_name(pathinfo($file['name'], PATHINFO_FILENAME)),
+            'post_content'   => '',
+            'post_status'    => 'inherit',
+            'post_author'    => get_current_user_id(),
+        );
+
+        $attachment_id = wp_insert_attachment($attachment, $upload['file']);
+
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(array('message' => 'Failed to create attachment.'));
+        }
+
+        // Gera metadata para o attachment
+        $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+        wp_update_attachment_metadata($attachment_id, $attachment_data);
+
+        // Retorna dados do arquivo
+        wp_send_json_success(array(
+            'id' => $attachment_id,
+            'url' => $upload['url'],
+            'filename' => basename($upload['file']),
+            'type' => $upload['type'],
+            'size' => $file['size'],
+            'size_formatted' => size_format($file['size']),
         ));
     }
 }
