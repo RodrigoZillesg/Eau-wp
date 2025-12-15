@@ -179,6 +179,14 @@ class Eau_Members_Management {
             EAU_SYSTEM_VERSION . '-' . time()
         );
 
+        // intl-tel-input CSS
+        wp_enqueue_style(
+            'intl-tel-input',
+            'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
+            array(),
+            '18.2.1'
+        );
+
         // Lucide Icons
         wp_enqueue_script(
             'lucide-icons',
@@ -206,11 +214,20 @@ class Eau_Members_Management {
             true
         );
 
+        // intl-tel-input JS
+        wp_enqueue_script(
+            'intl-tel-input',
+            'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
+            array(),
+            '18.2.1',
+            true
+        );
+
         // JS específico da página
         wp_enqueue_script(
             'eau-members-management',
             EAU_SYSTEM_PLUGIN_URL . 'assets/js/eau-members-management.js',
-            array('jquery', 'eau-components', 'eau-notifications', 'lucide-icons'),
+            array('jquery', 'eau-components', 'eau-notifications', 'lucide-icons', 'intl-tel-input'),
             EAU_SYSTEM_VERSION,
             true
         );
@@ -321,6 +338,13 @@ class Eau_Members_Management {
                     'key' => 'registered_date',
                     'label' => 'Registration Date',
                     'type' => 'date_range',
+                ),
+                array(
+                    'key' => 'membership_type',
+                    'label' => 'Membership Type',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_membership_type_options(),
+                    'placeholder' => 'All Membership Types',
                 ),
             ),
         );

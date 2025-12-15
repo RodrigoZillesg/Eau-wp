@@ -45,6 +45,11 @@ class Eau_My_Cpds {
             return Eau_Access_Denied::not_logged_in();
         }
 
+        // Verifica se membership está ativo (v1.51.46)
+        if (!Eau_User_Institution_Helper::is_membership_active()) {
+            return Eau_Access_Denied::membership_inactive();
+        }
+
         // Carrega assets
         self::enqueue_assets();
 

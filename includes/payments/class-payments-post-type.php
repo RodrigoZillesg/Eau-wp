@@ -28,7 +28,7 @@ class Payments_Post_Type {
     /**
      * Versão do módulo para controle de sincronização
      */
-    const VERSION = '1.45.5';
+    const VERSION = '1.49.9';
 
     /**
      * Inicializa o Post Type
@@ -107,12 +107,13 @@ class Payments_Post_Type {
      * Retorna lista de meta fields
      *
      * @since  1.45.0
+     * @since  1.49.9 Adicionados campos para membership payments
      * @return array
      */
     public static function get_meta_fields() {
         return array(
-            'registration_id' => 'integer',  // ID da registration (eau_event_reg)
-            'event_id'        => 'integer',  // ID do evento
+            // Campos comuns
+            'payment_type'    => 'string',   // 'event' ou 'membership'
             'user_id'         => 'integer',  // ID do usuário que pagou
             'amount'          => 'number',   // Valor do pagamento
             'payment_date'    => 'string',   // Data do pagamento (Y-m-d)
@@ -123,6 +124,16 @@ class Payments_Post_Type {
             'notes'           => 'string',   // Observações
             'created_by'      => 'integer',  // Admin que registrou o pagamento
             'status'          => 'string',   // confirmed, pending, refunded
+
+            // Campos para Event Payments
+            'registration_id' => 'integer',  // ID da registration (eau_event_reg)
+            'event_id'        => 'integer',  // ID do evento
+
+            // Campos para Membership Payments (v1.49.9)
+            'membership_application_id' => 'integer',  // ID da aplicação de membership
+            'membership_type'           => 'string',   // Tipo: full_provider, associate_access, etc.
+            'membership_period_start'   => 'string',   // Data início do período (Y-m-d)
+            'membership_period_end'     => 'string',   // Data fim do período (Y-m-d)
         );
     }
 
@@ -130,12 +141,13 @@ class Payments_Post_Type {
      * Retorna valores padrão dos meta fields
      *
      * @since  1.45.0
+     * @since  1.49.9 Adicionados campos para membership payments
      * @return array
      */
     public static function get_defaults() {
         return array(
-            'registration_id' => 0,
-            'event_id'        => 0,
+            // Campos comuns
+            'payment_type'    => 'event',
             'user_id'         => 0,
             'amount'          => 0,
             'payment_date'    => '',
@@ -146,6 +158,16 @@ class Payments_Post_Type {
             'notes'           => '',
             'created_by'      => 0,
             'status'          => 'confirmed',
+
+            // Event Payments
+            'registration_id' => 0,
+            'event_id'        => 0,
+
+            // Membership Payments
+            'membership_application_id' => 0,
+            'membership_type'           => '',
+            'membership_period_start'   => '',
+            'membership_period_end'     => '',
         );
     }
 
@@ -153,6 +175,7 @@ class Payments_Post_Type {
      * Cria um novo pagamento
      *
      * @since  1.45.0
+     * @since  1.49.9 Suporte para membership payments
      * @param  array $data Dados do pagamento
      * @return int|WP_Error ID do post ou erro
      */
@@ -160,12 +183,20 @@ class Payments_Post_Type {
         $defaults = self::get_defaults();
         $data = wp_parse_args($data, $defaults);
 
-        // Gera título do pagamento
-        $title = sprintf(
-            'Payment #%s - Reg #%d',
-            date('YmdHis'),
-            $data['registration_id']
-        );
+        // Gera título do pagamento baseado no tipo
+        if ($data['payment_type'] === 'membership') {
+            $title = sprintf(
+                'Membership Payment #%s - User #%d',
+                date('YmdHis'),
+                $data['user_id']
+            );
+        } else {
+            $title = sprintf(
+                'Payment #%s - Reg #%d',
+                date('YmdHis'),
+                $data['registration_id']
+            );
+        }
 
         // Cria o post
         $post_id = wp_insert_post(array(
@@ -244,16 +275,17 @@ class Payments_Post_Type {
      * Formata dados de um pagamento
      *
      * @since  1.45.0
+     * @since  1.49.9 Adicionados campos para membership payments
      * @param  WP_Post $payment Post do pagamento
      * @return array Dados formatados
      */
     public static function format_payment($payment) {
         $prefix = self::META_PREFIX;
+        $payment_type = get_post_meta($payment->ID, $prefix . 'payment_type', true) ?: 'event';
 
-        return array(
+        $data = array(
             'id'              => $payment->ID,
-            'registration_id' => intval(get_post_meta($payment->ID, $prefix . 'registration_id', true)),
-            'event_id'        => intval(get_post_meta($payment->ID, $prefix . 'event_id', true)),
+            'payment_type'    => $payment_type,
             'user_id'         => intval(get_post_meta($payment->ID, $prefix . 'user_id', true)),
             'amount'          => floatval(get_post_meta($payment->ID, $prefix . 'amount', true)),
             'payment_date'    => get_post_meta($payment->ID, $prefix . 'payment_date', true),
@@ -266,6 +298,22 @@ class Payments_Post_Type {
             'status'          => get_post_meta($payment->ID, $prefix . 'status', true) ?: 'confirmed',
             'created_at'      => $payment->post_date,
         );
+
+        // Campos específicos de Event Payments
+        if ($payment_type === 'event') {
+            $data['registration_id'] = intval(get_post_meta($payment->ID, $prefix . 'registration_id', true));
+            $data['event_id'] = intval(get_post_meta($payment->ID, $prefix . 'event_id', true));
+        }
+
+        // Campos específicos de Membership Payments
+        if ($payment_type === 'membership') {
+            $data['membership_application_id'] = intval(get_post_meta($payment->ID, $prefix . 'membership_application_id', true));
+            $data['membership_type'] = get_post_meta($payment->ID, $prefix . 'membership_type', true);
+            $data['membership_period_start'] = get_post_meta($payment->ID, $prefix . 'membership_period_start', true);
+            $data['membership_period_end'] = get_post_meta($payment->ID, $prefix . 'membership_period_end', true);
+        }
+
+        return $data;
     }
 
     /**
@@ -283,6 +331,625 @@ class Payments_Post_Type {
             'cash'          => __('Cash', 'eau-system'),
             'invoice'       => __('Invoice', 'eau-system'),
             'other'         => __('Other', 'eau-system'),
+        );
+    }
+
+    // =========================================================================
+    // MEMBERSHIP PAYMENT METHODS (v1.49.9)
+    // =========================================================================
+
+    /**
+     * Cria um novo pagamento de membership
+     *
+     * @since  1.49.9
+     * @param  array $data Dados do pagamento
+     * @return int|WP_Error ID do post ou erro
+     */
+    public static function create_membership_payment($data) {
+        $data['payment_type'] = 'membership';
+        return self::create_payment($data);
+    }
+
+    /**
+     * Obtém pagamentos de membership de um usuário
+     *
+     * @since  1.49.9
+     * @param  int $user_id ID do usuário
+     * @return array Lista de pagamentos
+     */
+    public static function get_payments_by_user_membership($user_id) {
+        $payments = get_posts(array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => self::META_PREFIX . 'payment_type',
+                    'value'   => 'membership',
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => self::META_PREFIX . 'user_id',
+                    'value'   => $user_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $result = array();
+        foreach ($payments as $payment) {
+            $result[] = self::format_payment($payment);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Obtém pagamentos de uma aplicação de membership
+     *
+     * @since  1.49.9
+     * @param  int $application_id ID da aplicação
+     * @return array Lista de pagamentos
+     */
+    public static function get_payments_by_application($application_id) {
+        $payments = get_posts(array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => self::META_PREFIX . 'payment_type',
+                    'value'   => 'membership',
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => self::META_PREFIX . 'membership_application_id',
+                    'value'   => $application_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $result = array();
+        foreach ($payments as $payment) {
+            $result[] = self::format_payment($payment);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Obtém total pago de membership de um usuário (período atual)
+     *
+     * @since  1.49.9
+     * @param  int    $user_id ID do usuário
+     * @param  string $period_start Data início do período (Y-m-d)
+     * @param  string $period_end Data fim do período (Y-m-d)
+     * @return float Total pago
+     */
+    public static function get_membership_total_paid($user_id, $period_start = '', $period_end = '') {
+        $meta_query = array(
+            'relation' => 'AND',
+            array(
+                'key'     => self::META_PREFIX . 'payment_type',
+                'value'   => 'membership',
+                'compare' => '=',
+            ),
+            array(
+                'key'     => self::META_PREFIX . 'user_id',
+                'value'   => $user_id,
+                'compare' => '=',
+                'type'    => 'NUMERIC',
+            ),
+        );
+
+        // Filtra por período se especificado
+        if (!empty($period_start)) {
+            $meta_query[] = array(
+                'key'     => self::META_PREFIX . 'membership_period_start',
+                'value'   => $period_start,
+                'compare' => '>=',
+            );
+        }
+
+        if (!empty($period_end)) {
+            $meta_query[] = array(
+                'key'     => self::META_PREFIX . 'membership_period_end',
+                'value'   => $period_end,
+                'compare' => '<=',
+            );
+        }
+
+        $payments = get_posts(array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => $meta_query,
+        ));
+
+        $total = 0;
+        foreach ($payments as $payment) {
+            $status = get_post_meta($payment->ID, self::META_PREFIX . 'status', true);
+            if ($status === 'confirmed') {
+                $total += floatval(get_post_meta($payment->ID, self::META_PREFIX . 'amount', true));
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Obtém total pago de membership por application_id
+     *
+     * @since  1.51.0
+     * @param  int $application_id ID da membership application
+     * @return float Total pago
+     */
+    public static function get_membership_total_paid_by_application($application_id) {
+        $payments = get_posts(array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => self::META_PREFIX . 'payment_type',
+                    'value'   => 'membership',
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => self::META_PREFIX . 'membership_application_id',
+                    'value'   => $application_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+            ),
+        ));
+
+        $total = 0;
+        foreach ($payments as $payment) {
+            $status = get_post_meta($payment->ID, self::META_PREFIX . 'status', true);
+            if ($status === 'confirmed') {
+                $total += floatval(get_post_meta($payment->ID, self::META_PREFIX . 'amount', true));
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Obtém todos os pagamentos de membership (para listagem admin)
+     *
+     * @since  1.49.9
+     * @param  array $args Argumentos de busca
+     * @return array Lista de pagamentos e total
+     */
+    public static function get_all_membership_payments($args = array()) {
+        $defaults = array(
+            'page'     => 1,
+            'per_page' => 20,
+            'search'   => '',
+            'status'   => '',
+            'membership_type' => '',
+            'order_by' => 'date',
+            'order'    => 'DESC',
+        );
+
+        $args = wp_parse_args($args, $defaults);
+
+        $meta_query = array(
+            array(
+                'key'     => self::META_PREFIX . 'payment_type',
+                'value'   => 'membership',
+                'compare' => '=',
+            ),
+        );
+
+        if (!empty($args['status'])) {
+            $meta_query[] = array(
+                'key'     => self::META_PREFIX . 'status',
+                'value'   => $args['status'],
+                'compare' => '=',
+            );
+        }
+
+        if (!empty($args['membership_type'])) {
+            $meta_query[] = array(
+                'key'     => self::META_PREFIX . 'membership_type',
+                'value'   => $args['membership_type'],
+                'compare' => '=',
+            );
+        }
+
+        $query_args = array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => $args['per_page'],
+            'paged'          => $args['page'],
+            'post_status'    => 'publish',
+            'meta_query'     => $meta_query,
+            'orderby'        => $args['order_by'],
+            'order'          => $args['order'],
+        );
+
+        // Search by user name/email
+        if (!empty($args['search'])) {
+            // Busca usuários que correspondem à pesquisa
+            $user_query = new \WP_User_Query(array(
+                'search'         => '*' . $args['search'] . '*',
+                'search_columns' => array('user_login', 'user_email', 'display_name'),
+                'fields'         => 'ID',
+            ));
+            $user_ids = $user_query->get_results();
+
+            if (!empty($user_ids)) {
+                $meta_query[] = array(
+                    'key'     => self::META_PREFIX . 'user_id',
+                    'value'   => $user_ids,
+                    'compare' => 'IN',
+                    'type'    => 'NUMERIC',
+                );
+                $query_args['meta_query'] = $meta_query;
+            } else {
+                // Se não encontrou usuários, retorna vazio
+                return array(
+                    'payments' => array(),
+                    'total'    => 0,
+                    'pages'    => 0,
+                );
+            }
+        }
+
+        $query = new \WP_Query($query_args);
+        $payments = array();
+
+        foreach ($query->posts as $payment) {
+            $formatted = self::format_payment($payment);
+
+            // Adiciona dados do usuário
+            if ($formatted['user_id']) {
+                $user = get_userdata($formatted['user_id']);
+                if ($user) {
+                    $formatted['user_name'] = $user->display_name;
+                    $formatted['user_email'] = $user->user_email;
+                }
+            }
+
+            // Adiciona label do membership type
+            if (!empty($formatted['membership_type'])) {
+                $type = \EauSystem\Eau_Membership_Types::get_by_key($formatted['membership_type']);
+                $formatted['membership_type_label'] = $type ? $type->type_label : $formatted['membership_type'];
+            }
+
+            $payments[] = $formatted;
+        }
+
+        return array(
+            'payments' => $payments,
+            'total'    => $query->found_posts,
+            'pages'    => $query->max_num_pages,
+        );
+    }
+
+    /**
+     * Obtém estatísticas de pagamentos de membership
+     *
+     * @since  1.49.9
+     * @return array Estatísticas
+     */
+    public static function get_membership_payment_stats() {
+        global $wpdb;
+        $prefix = self::META_PREFIX;
+
+        // Total de pagamentos de membership confirmados
+        $total_received = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(pm_amount.meta_value)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_amount ON p.ID = pm_amount.post_id AND pm_amount.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'membership'
+            AND pm_status.meta_value = 'confirmed'",
+            $prefix . 'payment_type',
+            $prefix . 'amount',
+            $prefix . 'status',
+            self::POST_TYPE
+        ));
+
+        // Total pendente
+        $total_pending = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(pm_amount.meta_value)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_amount ON p.ID = pm_amount.post_id AND pm_amount.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'membership'
+            AND pm_status.meta_value = 'pending'",
+            $prefix . 'payment_type',
+            $prefix . 'amount',
+            $prefix . 'status',
+            self::POST_TYPE
+        ));
+
+        // Contagem de pagamentos por status
+        $count_confirmed = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'membership'
+            AND pm_status.meta_value = 'confirmed'",
+            $prefix . 'payment_type',
+            $prefix . 'status',
+            self::POST_TYPE
+        ));
+
+        $count_pending = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'membership'
+            AND pm_status.meta_value = 'pending'",
+            $prefix . 'payment_type',
+            $prefix . 'status',
+            self::POST_TYPE
+        ));
+
+        // Pagamentos este mês
+        $current_month_start = date('Y-m-01');
+        $payments_this_month = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'membership'
+            AND p.post_date >= %s",
+            $prefix . 'payment_type',
+            self::POST_TYPE,
+            $current_month_start
+        ));
+
+        return array(
+            'total_received'     => floatval($total_received) ?: 0,
+            'total_pending'      => floatval($total_pending) ?: 0,
+            'count_confirmed'    => intval($count_confirmed) ?: 0,
+            'count_pending'      => intval($count_pending) ?: 0,
+            'payments_this_month' => intval($payments_this_month) ?: 0,
+        );
+    }
+
+    // =========================================================================
+    // ALL PAYMENTS METHODS (v1.50.1) - Unified listing for Payments Management
+    // =========================================================================
+
+    /**
+     * Obtém todos os pagamentos (eventos + membership) para listagem unificada
+     *
+     * @since  1.50.1
+     * @param  array $args Argumentos de busca
+     * @return array Lista de pagamentos e total
+     */
+    public static function get_all_payments($args = array()) {
+        $defaults = array(
+            'page'         => 1,
+            'per_page'     => 20,
+            'search'       => '',
+            'status'       => '',
+            'payment_type' => '', // 'event', 'membership', or empty for all
+            'order_by'     => 'date',
+            'order'        => 'DESC',
+        );
+
+        $args = wp_parse_args($args, $defaults);
+
+        $meta_query = array();
+
+        // Filter by payment type
+        if (!empty($args['payment_type'])) {
+            $meta_query[] = array(
+                'key'     => self::META_PREFIX . 'payment_type',
+                'value'   => $args['payment_type'],
+                'compare' => '=',
+            );
+        }
+
+        // Filter by status
+        if (!empty($args['status'])) {
+            $meta_query[] = array(
+                'key'     => self::META_PREFIX . 'status',
+                'value'   => $args['status'],
+                'compare' => '=',
+            );
+        }
+
+        $query_args = array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => $args['per_page'],
+            'paged'          => $args['page'],
+            'post_status'    => 'publish',
+            'orderby'        => $args['order_by'],
+            'order'          => $args['order'],
+        );
+
+        if (!empty($meta_query)) {
+            $query_args['meta_query'] = $meta_query;
+        }
+
+        // Search by user name/email
+        if (!empty($args['search'])) {
+            $user_query = new \WP_User_Query(array(
+                'search'         => '*' . $args['search'] . '*',
+                'search_columns' => array('user_login', 'user_email', 'display_name'),
+                'fields'         => 'ID',
+            ));
+            $user_ids = $user_query->get_results();
+
+            if (!empty($user_ids)) {
+                $query_args['meta_query'][] = array(
+                    'key'     => self::META_PREFIX . 'user_id',
+                    'value'   => $user_ids,
+                    'compare' => 'IN',
+                    'type'    => 'NUMERIC',
+                );
+            } else {
+                return array(
+                    'payments' => array(),
+                    'total'    => 0,
+                    'pages'    => 0,
+                );
+            }
+        }
+
+        $query = new \WP_Query($query_args);
+        $payments = array();
+
+        foreach ($query->posts as $payment) {
+            $formatted = self::format_payment($payment);
+
+            // Add user data
+            if ($formatted['user_id']) {
+                $user = get_userdata($formatted['user_id']);
+                if ($user) {
+                    $formatted['user_name'] = $user->display_name;
+                    $formatted['user_email'] = $user->user_email;
+                }
+            }
+
+            // Add membership type label
+            if ($formatted['payment_type'] === 'membership' && !empty($formatted['membership_type'])) {
+                $type = \EauSystem\Eau_Membership_Types::get_by_key($formatted['membership_type']);
+                $formatted['membership_type_label'] = $type ? $type->type_label : $formatted['membership_type'];
+            }
+
+            // Add event title for event payments
+            if ($formatted['payment_type'] === 'event' && !empty($formatted['event_id'])) {
+                $event = get_post($formatted['event_id']);
+                $formatted['event_title'] = $event ? $event->post_title : 'Unknown Event';
+            }
+
+            $payments[] = $formatted;
+        }
+
+        return array(
+            'payments' => $payments,
+            'total'    => $query->found_posts,
+            'pages'    => $query->max_num_pages,
+        );
+    }
+
+    /**
+     * Obtém estatísticas de todos os pagamentos (eventos + membership)
+     *
+     * @since  1.50.1
+     * @return array Estatísticas
+     */
+    public static function get_all_payment_stats() {
+        global $wpdb;
+        $prefix = self::META_PREFIX;
+
+        // Total received (all types, confirmed)
+        $total_received = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(pm_amount.meta_value)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_amount ON p.ID = pm_amount.post_id AND pm_amount.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_status.meta_value = 'confirmed'",
+            $prefix . 'amount',
+            $prefix . 'status',
+            self::POST_TYPE
+        ));
+
+        // Total pending
+        $total_pending = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(pm_amount.meta_value)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_amount ON p.ID = pm_amount.post_id AND pm_amount.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_status.meta_value = 'pending'",
+            $prefix . 'amount',
+            $prefix . 'status',
+            self::POST_TYPE
+        ));
+
+        // Count by type
+        $count_events = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'event'",
+            $prefix . 'payment_type',
+            self::POST_TYPE
+        ));
+
+        $count_membership = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_type.meta_value = 'membership'",
+            $prefix . 'payment_type',
+            self::POST_TYPE
+        ));
+
+        // Payments this month
+        $current_month_start = date('Y-m-01');
+        $payments_this_month = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND p.post_date >= %s",
+            self::POST_TYPE,
+            $current_month_start
+        ));
+
+        // Revenue this month
+        $revenue_this_month = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(pm_amount.meta_value)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_amount ON p.ID = pm_amount.post_id AND pm_amount.meta_key = %s
+            INNER JOIN {$wpdb->postmeta} pm_status ON p.ID = pm_status.post_id AND pm_status.meta_key = %s
+            WHERE p.post_type = %s
+            AND p.post_status = 'publish'
+            AND pm_status.meta_value = 'confirmed'
+            AND p.post_date >= %s",
+            $prefix . 'amount',
+            $prefix . 'status',
+            self::POST_TYPE,
+            $current_month_start
+        ));
+
+        return array(
+            'total_received'      => floatval($total_received) ?: 0,
+            'total_pending'       => floatval($total_pending) ?: 0,
+            'count_events'        => intval($count_events) ?: 0,
+            'count_membership'    => intval($count_membership) ?: 0,
+            'payments_this_month' => intval($payments_this_month) ?: 0,
+            'revenue_this_month'  => floatval($revenue_this_month) ?: 0,
         );
     }
 

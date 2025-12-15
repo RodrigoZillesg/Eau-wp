@@ -26,9 +26,11 @@ class Payments_Ajax {
      * Registra handlers AJAX
      *
      * @since  1.45.0
+     * @since  1.49.9 Adicionados handlers para membership payments
      * @return void
      */
     public static function register_handlers() {
+        // Event payments
         add_action('wp_ajax_eau_add_payment', array(__CLASS__, 'add_payment'));
         add_action('wp_ajax_eau_get_payments', array(__CLASS__, 'get_payments'));
         add_action('wp_ajax_eau_delete_payment', array(__CLASS__, 'delete_payment'));
@@ -37,6 +39,12 @@ class Payments_Ajax {
         // Generic media upload handlers
         add_action('wp_ajax_eau_upload_media', array(__CLASS__, 'upload_media'));
         add_action('wp_ajax_eau_get_user_files', array(__CLASS__, 'get_user_files'));
+
+        // Membership payments (v1.49.9)
+        add_action('wp_ajax_eau_get_membership_payments', array(__CLASS__, 'get_membership_payments'));
+        add_action('wp_ajax_eau_add_membership_payment', array(__CLASS__, 'add_membership_payment'));
+        add_action('wp_ajax_eau_delete_membership_payment', array(__CLASS__, 'delete_membership_payment'));
+        add_action('wp_ajax_eau_get_membership_payment_stats', array(__CLASS__, 'get_membership_payment_stats'));
     }
 
     /**
@@ -529,5 +537,194 @@ class Payments_Ajax {
         }
 
         wp_send_json_success(array('files' => $files));
+    }
+
+    // =========================================================================
+    // MEMBERSHIP PAYMENT AJAX HANDLERS (v1.49.9)
+    // =========================================================================
+
+    /**
+     * AJAX: Lista pagamentos de membership
+     *
+     * @since  1.49.9
+     * @return void
+     */
+    public static function get_membership_payments() {
+        check_ajax_referer('eau_membership_payments_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $args = array(
+            'page'            => isset($_POST['page']) ? absint($_POST['page']) : 1,
+            'per_page'        => isset($_POST['per_page']) ? absint($_POST['per_page']) : 20,
+            'search'          => isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '',
+            'status'          => isset($_POST['status']) ? sanitize_key($_POST['status']) : '',
+            'membership_type' => isset($_POST['membership_type']) ? sanitize_key($_POST['membership_type']) : '',
+            'order_by'        => isset($_POST['order_by']) ? sanitize_key($_POST['order_by']) : 'date',
+            'order'           => isset($_POST['order']) ? strtoupper(sanitize_key($_POST['order'])) : 'DESC',
+        );
+
+        $result = Payments_Post_Type::get_all_membership_payments($args);
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * AJAX: Adiciona um pagamento de membership
+     *
+     * @since  1.49.9
+     * @return void
+     */
+    public static function add_membership_payment() {
+        check_ajax_referer('eau_membership_payments_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        // Validações
+        $user_id = isset($_POST['user_id']) ? absint($_POST['user_id']) : 0;
+        $amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0;
+        $payment_date = isset($_POST['payment_date']) ? sanitize_text_field($_POST['payment_date']) : '';
+        $payment_method = isset($_POST['payment_method']) ? sanitize_key($_POST['payment_method']) : '';
+        $membership_type = isset($_POST['membership_type']) ? sanitize_key($_POST['membership_type']) : '';
+
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'User ID is required'));
+        }
+
+        if ($amount <= 0) {
+            wp_send_json_error(array('message' => 'Amount must be greater than zero'));
+        }
+
+        if (empty($payment_date)) {
+            wp_send_json_error(array('message' => 'Payment date is required'));
+        }
+
+        if (empty($payment_method)) {
+            wp_send_json_error(array('message' => 'Payment method is required'));
+        }
+
+        // Verifica se usuário existe
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found'));
+        }
+
+        // Dados do pagamento
+        $notes = isset($_POST['notes']) ? sanitize_textarea_field($_POST['notes']) : '';
+        $receipt_id = isset($_POST['receipt_id']) ? absint($_POST['receipt_id']) : 0;
+        $transaction_id = isset($_POST['transaction_id']) ? sanitize_text_field($_POST['transaction_id']) : '';
+        $application_id = isset($_POST['application_id']) ? absint($_POST['application_id']) : 0;
+        $period_start = isset($_POST['period_start']) ? sanitize_text_field($_POST['period_start']) : '';
+        $period_end = isset($_POST['period_end']) ? sanitize_text_field($_POST['period_end']) : '';
+        $status = isset($_POST['status']) ? sanitize_key($_POST['status']) : 'confirmed';
+
+        // Receipt URL
+        $receipt_url = '';
+        if ($receipt_id) {
+            $receipt_url = wp_get_attachment_url($receipt_id);
+        }
+
+        // Se não tiver tipo de membership, pega do usuário
+        if (empty($membership_type)) {
+            $membership_type = get_user_meta($user_id, 'mem_membership_type', true);
+        }
+
+        // Cria o pagamento
+        $payment_id = Payments_Post_Type::create_membership_payment(array(
+            'user_id'                   => $user_id,
+            'amount'                    => $amount,
+            'payment_date'              => $payment_date,
+            'payment_method'            => $payment_method,
+            'transaction_id'            => $transaction_id,
+            'receipt_url'               => $receipt_url,
+            'receipt_id'                => $receipt_id,
+            'notes'                     => $notes,
+            'created_by'                => get_current_user_id(),
+            'status'                    => $status,
+            'membership_application_id' => $application_id,
+            'membership_type'           => $membership_type,
+            'membership_period_start'   => $period_start,
+            'membership_period_end'     => $period_end,
+        ));
+
+        if (is_wp_error($payment_id)) {
+            wp_send_json_error(array('message' => 'Failed to create payment: ' . $payment_id->get_error_message()));
+        }
+
+        // Se pagamento confirmado, atualiza status do membership do usuário
+        if ($status === 'confirmed') {
+            update_user_meta($user_id, 'mem_membership_status', 'active');
+
+            // Atualiza datas se fornecidas
+            if (!empty($period_start)) {
+                update_user_meta($user_id, 'mem_membership_start_date', $period_start);
+            }
+            if (!empty($period_end)) {
+                update_user_meta($user_id, 'mem_membership_expiry_date', $period_end);
+            }
+        }
+
+        wp_send_json_success(array(
+            'message'    => 'Payment added successfully',
+            'payment_id' => $payment_id,
+        ));
+    }
+
+    /**
+     * AJAX: Deleta um pagamento de membership
+     *
+     * @since  1.49.9
+     * @return void
+     */
+    public static function delete_membership_payment() {
+        check_ajax_referer('eau_membership_payments_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $payment_id = isset($_POST['payment_id']) ? absint($_POST['payment_id']) : 0;
+
+        if (!$payment_id) {
+            wp_send_json_error(array('message' => 'Invalid payment ID'));
+        }
+
+        $payment = get_post($payment_id);
+        if (!$payment || $payment->post_type !== Payments_Post_Type::POST_TYPE) {
+            wp_send_json_error(array('message' => 'Payment not found'));
+        }
+
+        // Verifica se é pagamento de membership
+        $payment_type = get_post_meta($payment_id, Payments_Post_Type::META_PREFIX . 'payment_type', true);
+        if ($payment_type !== 'membership') {
+            wp_send_json_error(array('message' => 'This is not a membership payment'));
+        }
+
+        // Deleta o pagamento
+        wp_trash_post($payment_id);
+
+        wp_send_json_success(array('message' => 'Payment deleted successfully'));
+    }
+
+    /**
+     * AJAX: Obtém estatísticas de pagamentos de membership
+     *
+     * @since  1.49.9
+     * @return void
+     */
+    public static function get_membership_payment_stats() {
+        check_ajax_referer('eau_membership_payments_nonce', 'nonce');
+
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $stats = Payments_Post_Type::get_membership_payment_stats();
+
+        wp_send_json_success($stats);
     }
 }

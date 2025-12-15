@@ -3,7 +3,7 @@
  * Plugin Name: Eau System
  * Plugin URI: https://platty.com.br
  * Description: Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
- * Version: 1.48.7
+ * Version: 1.51.64
  * Author: Platty / Rodrigo Zillesg
  * Author URI: https://platty.com.br
  * Text Domain: eau-system
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define constantes do plugin
-define('EAU_SYSTEM_VERSION', '1.48.7');
+define('EAU_SYSTEM_VERSION', '1.51.64');
 define('EAU_SYSTEM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EAU_SYSTEM_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EAU_SYSTEM_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -76,6 +76,9 @@ register_activation_hook(__FILE__, function() {
     // Cria tabelas do OpenLearning
     \EauSystem\Eau_OpenLearning_Database::create_tables();
 
+    // Cria tabelas do Membership System
+    \EauSystem\Eau_Membership_Database::create_tables();
+
     // Cria Post Type OpenLearning no JetEngine
     \EauSystem\Eau_OpenLearning_Post_Type::save_to_jet_engine();
     \EauSystem\Eau_OpenLearning_Post_Type::save_backup();
@@ -87,6 +90,9 @@ register_activation_hook(__FILE__, function() {
     \EauSystem\EventRegistrations\Eau_Event_Activity_Creator::setup_cron();
     // Setup cron para sincronização OpenLearning
     \EauSystem\Eau_OpenLearning_Service::setup_cron();
+
+    // Setup cron para verificação de expiração de membership (v1.50.0)
+    \EauSystem\Eau_Membership_Cron::setup_cron();
 
     // Cria tabelas necessárias se precisar
     flush_rewrite_rules();
@@ -101,6 +107,9 @@ register_deactivation_hook(__FILE__, function() {
     \EauSystem\EventRegistrations\Eau_Event_Activity_Creator::clear_cron();
     // Remove OpenLearning sync cron
     \EauSystem\Eau_OpenLearning_Service::clear_cron();
+
+    // Remove cron de expiração de membership (v1.50.0)
+    \EauSystem\Eau_Membership_Cron::clear_cron();
 
     flush_rewrite_rules();
 });

@@ -110,6 +110,28 @@ class Eau_My_Profile {
                     </div>
                 </div>
 
+                <!-- Membership Details Section -->
+                <div class="eau-profile-section" id="eau-profile-membership">
+                    <div class="eau-profile-section-header">
+                        <h3 class="eau-profile-section-title">
+                            <i data-lucide="id-card"></i>
+                            Membership Details
+                        </h3>
+                        <?php
+                        $membership_type = get_user_meta($user_id, 'mem_membership_type', true);
+                        if (empty($membership_type)):
+                        ?>
+                        <a href="/membership-selection/" class="eau-btn eau-btn-primary eau-btn-sm">
+                            <i data-lucide="plus"></i>
+                            Apply for Membership
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="eau-profile-section-body">
+                        <?php echo self::render_membership_section($user_id); ?>
+                    </div>
+                </div>
+
                 <!-- Security Section -->
                 <div class="eau-profile-section" id="eau-profile-security">
                     <div class="eau-profile-section-header">
@@ -562,5 +584,120 @@ class Eau_My_Profile {
         );
 
         return isset($labels[$mem_type]) ? $labels[$mem_type] : (!empty($mem_type) ? $mem_type : 'Member');
+    }
+
+    /**
+     * Render membership section for My Profile page
+     *
+     * @since 1.49.6
+     * @param int $user_id User ID
+     * @return string HTML output
+     */
+    private static function render_membership_section($user_id) {
+        $membership_type = get_user_meta($user_id, 'mem_membership_type', true);
+        $membership_status = get_user_meta($user_id, 'mem_membership_status', true);
+        $membership_start = get_user_meta($user_id, 'mem_membership_start_date', true);
+        $membership_expiry = get_user_meta($user_id, 'mem_membership_expiry_date', true);
+        $user_email = wp_get_current_user()->user_email;
+
+        ob_start();
+        ?>
+        <div class="eau-profile-grid">
+            <?php if (!empty($membership_type)): ?>
+                <?php
+                $type_data = Eau_Membership_Types::get_by_key($membership_type);
+                $type_label = $type_data ? $type_data->type_label : ucwords(str_replace('_', ' ', $membership_type));
+
+                // Status styling
+                $status_labels = array(
+                    'active' => 'Active',
+                    'pending' => 'Pending Approval',
+                    'expired' => 'Expired',
+                    'suspended' => 'Suspended',
+                );
+                $status_classes = array(
+                    'active' => 'eau-status-badge--approved',
+                    'pending' => 'eau-status-badge--pending',
+                    'expired' => 'eau-status-badge--rejected',
+                    'suspended' => 'eau-status-badge--rejected',
+                );
+                $status_label = isset($status_labels[$membership_status]) ? $status_labels[$membership_status] : 'Unknown';
+                $status_class = isset($status_classes[$membership_status]) ? $status_classes[$membership_status] : 'eau-status-badge--pending';
+                ?>
+                <div class="eau-profile-field">
+                    <span class="eau-profile-field-label">Membership Type</span>
+                    <span class="eau-profile-field-value"><?php echo esc_html($type_label); ?></span>
+                </div>
+                <div class="eau-profile-field">
+                    <span class="eau-profile-field-label">Status</span>
+                    <span class="eau-profile-field-value">
+                        <span class="eau-status-badge <?php echo esc_attr($status_class); ?>">
+                            <?php echo esc_html($status_label); ?>
+                        </span>
+                    </span>
+                </div>
+                <?php if (!empty($membership_start)): ?>
+                <div class="eau-profile-field">
+                    <span class="eau-profile-field-label">Member Since</span>
+                    <span class="eau-profile-field-value"><?php echo esc_html(date_i18n('F j, Y', strtotime($membership_start))); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($membership_expiry)): ?>
+                <div class="eau-profile-field">
+                    <span class="eau-profile-field-label">Expiry Date</span>
+                    <span class="eau-profile-field-value">
+                        <?php
+                        $expiry_timestamp = strtotime($membership_expiry);
+                        $days_until = ($expiry_timestamp - time()) / DAY_IN_SECONDS;
+                        echo esc_html(date_i18n('F j, Y', $expiry_timestamp));
+                        if ($days_until <= 30 && $days_until > 0) {
+                            echo ' <span class="eau-status-badge eau-status-badge--pending">Expiring Soon</span>';
+                        } elseif ($days_until <= 0) {
+                            echo ' <span class="eau-status-badge eau-status-badge--rejected">Expired</span>';
+                        }
+                        ?>
+                    </span>
+                </div>
+                <?php endif; ?>
+            <?php else: ?>
+                <?php
+                // Check for pending application
+                global $wpdb;
+                $table_name = Eau_Membership_Database::get_table_name(Eau_Membership_Database::TABLE_APPLICATIONS);
+                $pending_app = $wpdb->get_row($wpdb->prepare(
+                    "SELECT membership_type, status, submitted_at FROM $table_name WHERE email = %s AND status IN ('pending', 'under_review') ORDER BY submitted_at DESC LIMIT 1",
+                    $user_email
+                ));
+
+                if ($pending_app):
+                    $type_data = Eau_Membership_Types::get_by_key($pending_app->membership_type);
+                    $type_label = $type_data ? $type_data->type_label : 'Membership';
+                    $status_label = ucwords(str_replace('_', ' ', $pending_app->status));
+                ?>
+                <div class="eau-profile-field eau-profile-field-full">
+                    <div class="eau-alert eau-alert-info">
+                        <i data-lucide="clock"></i>
+                        <div class="eau-alert-content">
+                            <strong>Application Pending</strong>
+                            <p>Your application for <strong><?php echo esc_html($type_label); ?></strong> is currently <?php echo esc_html($status_label); ?>.</p>
+                            <small>Submitted on <?php echo esc_html(date_i18n('F j, Y', strtotime($pending_app->submitted_at))); ?></small>
+                        </div>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div class="eau-profile-field eau-profile-field-full">
+                    <div class="eau-alert eau-alert-warning">
+                        <i data-lucide="alert-circle"></i>
+                        <div class="eau-alert-content">
+                            <strong>No Active Membership</strong>
+                            <p>You don't have an active membership yet. Apply now to access exclusive member benefits.</p>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 }

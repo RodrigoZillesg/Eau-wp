@@ -36,6 +36,126 @@
     line-height: 1.5 !important;
 }
 
+/* Membership Alert (v1.51.46) */
+.eau-membership-alert {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    padding: 1rem 1.25rem !important;
+    border-radius: 12px !important;
+    margin-bottom: 1.5rem !important;
+    border: 1px solid !important;
+}
+
+.eau-membership-alert.eau-alert-danger {
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+}
+
+.eau-membership-alert.eau-alert-warning {
+    background: #fffbeb !important;
+    border-color: #fde68a !important;
+}
+
+.eau-membership-alert.eau-alert-info {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+}
+
+.eau-membership-alert-icon {
+    flex-shrink: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+}
+
+.eau-alert-danger .eau-membership-alert-icon {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+}
+
+.eau-alert-warning .eau-membership-alert-icon {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+}
+
+.eau-alert-info .eau-membership-alert-icon {
+    background: #dbeafe !important;
+    color: #2563eb !important;
+}
+
+.eau-membership-alert-icon i,
+.eau-membership-alert-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.eau-membership-alert-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.eau-membership-alert-content h4 {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    margin: 0 0 0.25rem 0 !important;
+    padding: 0 !important;
+}
+
+.eau-alert-danger .eau-membership-alert-content h4 {
+    color: #991b1b !important;
+}
+
+.eau-alert-warning .eau-membership-alert-content h4 {
+    color: #92400e !important;
+}
+
+.eau-alert-info .eau-membership-alert-content h4 {
+    color: #1e40af !important;
+}
+
+.eau-membership-alert-content p {
+    font-size: 0.875rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.4 !important;
+}
+
+.eau-alert-danger .eau-membership-alert-content p {
+    color: #b91c1c !important;
+}
+
+.eau-alert-warning .eau-membership-alert-content p {
+    color: #b45309 !important;
+}
+
+.eau-alert-info .eau-membership-alert-content p {
+    color: #1d4ed8 !important;
+}
+
+.eau-membership-alert .eau-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Membership Alert - Responsive */
+@media (max-width: 640px) {
+    .eau-membership-alert {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        text-align: left !important;
+    }
+
+    .eau-membership-alert .eau-btn {
+        align-self: stretch !important;
+        text-align: center !important;
+        margin-top: 0.5rem !important;
+    }
+}
+
 /* Welcome - Tablet e Desktop */
 @media (min-width: 768px) {
     .eau-welcome-section {
@@ -79,11 +199,19 @@
 
 .eau-dashboard-cards {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important; /* 4 colunas fixas */
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important; /* 4 colunas flexíveis - minmax(0, 1fr) previne overflow */
     gap: 1.5rem !important; /* Espaçamento maior */
     margin-bottom: 2rem !important;
     margin-top: 0 !important;
     align-items: stretch !important; /* Todos os cards com mesma altura */
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 5 columns variant for Membership Applications */
+.eau-dashboard-cards-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
 }
 
 /* Garante que o link wrapper também use toda a altura */
@@ -124,11 +252,12 @@
     justify-content: space-between !important;
     gap: 1.25rem !important;
     transition: all 0.2s ease !important;
-    min-width: 280px !important;
+    min-width: 0 !important; /* Permite que o card encolha para caber no grid */
     min-height: 130px !important; /* Altura mínima para consistência entre cards */
     height: 130px !important; /* Altura fixa para garantir consistência */
     margin: 0 !important;
     overflow: hidden !important; /* Esconde conteúdo que excede */
+    box-sizing: border-box !important;
 }
 
 .eau-dashboard-card:hover,
@@ -289,6 +418,21 @@ span.eau-card-next-event {
     color: #111827 !important;
 }
 
+/* Yellow - Pending Review */
+.eau-card-yellow .eau-card-icon i,
+.eau-card-yellow .eau-card-icon svg {
+    color: #d97706 !important; /* text-amber-600 */
+    stroke: #d97706 !important;
+}
+
+.eau-card-yellow .eau-card-number {
+    color: #111827 !important;
+}
+
+.eau-card-yellow .eau-card-pending {
+    color: #d97706 !important;
+}
+
 /* Indigo - Institutions */
 .eau-card-indigo .eau-card-icon i,
 .eau-card-indigo .eau-card-icon svg {
@@ -313,6 +457,49 @@ span.eau-card-next-event {
 
 .eau-card-teal .eau-card-pending {
     color: #0d9488 !important;
+}
+
+/* Yellow - Membership Applications */
+.eau-card-yellow {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%) !important;
+    border: 1px solid #fde047 !important;
+}
+
+.eau-card-yellow .eau-card-icon i,
+.eau-card-yellow .eau-card-icon svg {
+    color: #ca8a04 !important; /* yellow-600 */
+    stroke: #ca8a04 !important;
+}
+
+.eau-card-yellow .eau-card-number {
+    color: #111827 !important;
+}
+
+.eau-card-yellow .eau-card-pending {
+    color: #ca8a04 !important;
+}
+
+/* Slate - My Profile */
+.eau-card-slate .eau-card-icon i,
+.eau-card-slate .eau-card-icon svg {
+    color: #475569 !important; /* slate-600 */
+    stroke: #475569 !important;
+}
+
+.eau-card-slate .eau-card-number {
+    color: #111827 !important;
+}
+
+.eau-card-slate .eau-card-active {
+    color: #475569 !important;
+}
+
+/* Membership Type Card - Smaller text for type label */
+/* Using combined selector for higher specificity over .eau-card-number */
+.eau-card-number.eau-card-membership-type {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
 }
 
 /* Responsivo Cards - Mobile First */
@@ -352,7 +539,7 @@ span.eau-card-next-event {
 /* Tablet - 2 colunas */
 @media (min-width: 768px) and (max-width: 1023px) {
     .eau-dashboard-cards {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 1.25rem !important;
     }
 
@@ -383,7 +570,7 @@ span.eau-card-next-event {
 /* Desktop Small - 4 colunas */
 @media (min-width: 1024px) and (max-width: 1279px) {
     .eau-dashboard-cards {
-        grid-template-columns: repeat(4, 1fr) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         gap: 1.25rem !important;
     }
 
@@ -409,7 +596,7 @@ span.eau-card-next-event {
 /* Desktop Large - 4 colunas (padrão mantido) */
 @media (min-width: 1280px) {
     .eau-dashboard-cards {
-        grid-template-columns: repeat(4, 1fr) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         gap: 1.5rem !important;
     }
 
@@ -488,5 +675,281 @@ span.eau-card-next-event {
     /* Primeira badge em mobile */
     .eau-institution-badge:first-of-type {
         margin-left: 0 !important;
+    }
+}
+
+/* ============================================
+   Share Registration Section (v1.51.47)
+   ============================================ */
+
+.eau-share-registration-section {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.eau-share-registration-header {
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-share-registration-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 0.25rem 0 !important;
+    padding: 0 !important;
+}
+
+.eau-share-registration-title i,
+.eau-share-registration-title svg {
+    width: 24px !important;
+    height: 24px !important;
+    color: #2563eb !important;
+}
+
+.eau-share-registration-subtitle {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.eau-share-registration-content {
+    display: flex !important;
+    gap: 2rem !important;
+    align-items: flex-start !important;
+}
+
+/* QR Code Container */
+.eau-share-qrcode-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-share-qrcode {
+    width: 160px !important;
+    height: 160px !important;
+    background: #ffffff !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.eau-share-qrcode canvas {
+    border-radius: 8px !important;
+}
+
+/* Share Options Container */
+.eau-share-options-container {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+}
+
+.eau-share-label {
+    display: block !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Link Input Group */
+.eau-share-link-group {
+    position: relative !important;
+}
+
+.eau-share-link-input-group {
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+.eau-share-link-input {
+    flex: 1 !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    background: #f9fafb !important;
+    color: #374151 !important;
+    outline: none !important;
+}
+
+.eau-share-link-input:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Copy Button - Design System Overrides */
+#eau-copy-link.eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    line-height: 1.25 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+#eau-copy-link.eau-btn:hover {
+    background: #1d4ed8 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+#eau-copy-link.eau-btn i,
+#eau-copy-link.eau-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-share-link-copied {
+    position: absolute !important;
+    bottom: -1.5rem !important;
+    left: 0 !important;
+    font-size: 0.75rem !important;
+    color: #059669 !important;
+    opacity: 0 !important;
+    transform: translateY(-5px) !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-share-link-copied.visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Share Buttons */
+.eau-share-buttons {
+    display: flex !important;
+    gap: 0.75rem !important;
+}
+
+.eau-share-btn {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-share-btn svg,
+.eau-share-btn i {
+    width: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+    color: #ffffff !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-share-btn svg path,
+.eau-share-btn svg rect {
+    fill: inherit !important;
+    stroke: inherit !important;
+}
+
+.eau-share-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* WhatsApp */
+.eau-share-whatsapp {
+    background: #25D366 !important;
+    color: #ffffff !important;
+}
+
+.eau-share-whatsapp:hover {
+    background: #20bd5a !important;
+}
+
+/* LinkedIn */
+.eau-share-linkedin {
+    background: #0A66C2 !important;
+    color: #ffffff !important;
+}
+
+.eau-share-linkedin:hover {
+    background: #095196 !important;
+}
+
+/* Twitter/X */
+.eau-share-twitter {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+.eau-share-twitter:hover {
+    background: #333333 !important;
+}
+
+/* Email */
+.eau-share-email {
+    background: #6b7280 !important;
+    color: #ffffff !important;
+}
+
+.eau-share-email:hover {
+    background: #4b5563 !important;
+}
+
+/* Share Section - Responsive */
+@media (max-width: 640px) {
+    .eau-share-registration-content {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    .eau-share-qrcode-container {
+        width: 100% !important;
+    }
+
+    .eau-share-options-container {
+        width: 100% !important;
+    }
+
+    .eau-share-link-input-group {
+        flex-direction: column !important;
+    }
+
+    .eau-share-link-input-group .eau-btn {
+        width: 100% !important;
+    }
+
+    .eau-share-buttons {
+        justify-content: center !important;
     }
 }

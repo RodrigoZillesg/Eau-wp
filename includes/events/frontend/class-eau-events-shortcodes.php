@@ -491,6 +491,11 @@ class Eau_Events_Shortcodes {
      * @return string HTML renderizado
      */
     public static function render_archive($atts) {
+        // Se usuário está logado, verifica se membership está ativo (v1.51.53)
+        if (is_user_logged_in() && !\EauSystem\Eau_User_Institution_Helper::is_membership_active()) {
+            return \EauSystem\Components\Eau_Access_Denied::membership_inactive();
+        }
+
         $atts = shortcode_atts(array(
             'show_filters' => 'true',
             'show_past' => 'true',

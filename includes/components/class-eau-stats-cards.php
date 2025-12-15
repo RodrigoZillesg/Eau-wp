@@ -64,15 +64,17 @@ class Eau_Stats_Cards {
             'subtitle' => '',
             'icon' => 'info',
             'color' => 'blue',
+            'id' => '',
         );
 
         $card = wp_parse_args($card, $defaults);
 
         $color_class = 'eau-stat-card-' . sanitize_html_class($card['color']);
+        $id_attr = !empty($card['id']) ? ' id="' . esc_attr($card['id']) . '"' : '';
 
         ob_start();
         ?>
-        <div class="eau-stat-card <?php echo esc_attr($color_class); ?>">
+        <div class="eau-stat-card <?php echo esc_attr($color_class); ?>"<?php echo $id_attr; ?>>
             <div class="eau-stat-card-icon">
                 <i data-lucide="<?php echo esc_attr($card['icon']); ?>"></i>
             </div>

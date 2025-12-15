@@ -1,0 +1,1313 @@
+/**
+ * Eau Membership Selection Styles
+ *
+ * Styles for the membership selection page with cards and application form.
+ *
+ * @since 1.49.0
+ */
+
+/* ============================================
+   Hide Page Title (WordPress/Theme)
+============================================ */
+
+/* Hide page title when membership selection container is present */
+body:has(.eau-membership-selection) .entry-title,
+body:has(.eau-membership-selection) .page-title,
+body:has(.eau-membership-selection) .elementor-heading-title,
+body:has(.eau-membership-selection) article.page > header,
+body:has(.eau-membership-selection) h1.wp-block-post-title,
+body:has(.eau-membership-selection) .page-header,
+body:has(.eau-membership-selection) header.page-header {
+    display: none !important;
+}
+
+/* Fallback: Hide title via adjacent sibling if :has() not supported */
+.page-header + .eau-membership-selection ~ .page-header,
+.entry-title + .eau-membership-selection ~ .entry-title {
+    display: none !important;
+}
+
+/* ============================================
+   Container
+============================================ */
+
+.eau-membership-selection {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    padding-top: 80px; /* Space for fixed header */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ============================================
+   Header
+============================================ */
+
+.eau-membership-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-membership-header h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.eau-membership-header h1 svg {
+    width: 2rem;
+    height: 2rem;
+    color: #2563eb;
+}
+
+.eau-membership-header p {
+    font-size: 1.125rem;
+    color: #6b7280;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Membership Cards Grid
+============================================ */
+
+.eau-membership-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* ============================================
+   Individual Card
+============================================ */
+
+.eau-membership-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.eau-membership-card:hover {
+    border-color: #2563eb;
+    box-shadow: 0 10px 40px rgba(37, 99, 235, 0.15);
+    transform: translateY(-4px);
+}
+
+/* Card Header */
+.eau-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.eau-card-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eau-card-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.eau-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Card Price */
+.eau-card-price {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.eau-fee-fixed {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.eau-fee-currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.eau-fee-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+.eau-fee-period {
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.eau-fee-gst {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.eau-fee-member-rate {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #e5e7eb;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.eau-fee-member-rate strong {
+    color: #059669;
+}
+
+.eau-fee-variable {
+    text-align: center;
+}
+
+.eau-fee-variable .eau-fee-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.eau-fee-variable .eau-fee-amount {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.eau-fee-variable .eau-fee-note {
+    display: block;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+}
+
+/* Card Description */
+.eau-card-description {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+/* Card Benefits */
+.eau-card-benefits,
+.eau-card-requirements {
+    margin-bottom: 1rem;
+}
+
+.eau-card-benefits h4,
+.eau-card-requirements h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.eau-card-benefits ul,
+.eau-card-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.eau-card-benefits li,
+.eau-card-requirements li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+    padding: 0.375rem 0;
+}
+
+.eau-card-benefits li svg {
+    width: 16px;
+    height: 16px;
+    color: #10b981;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.eau-card-requirements li svg {
+    width: 16px;
+    height: 16px;
+    color: #f59e0b;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.eau-more-benefits {
+    color: #2563eb !important;
+    font-weight: 500;
+}
+
+.eau-more-benefits svg {
+    color: #2563eb !important;
+}
+
+/* Card Actions */
+.eau-card-actions {
+    margin-top: auto;
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.eau-card-actions .eau-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* ============================================
+   Message Boxes
+============================================ */
+
+.eau-message-box {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.eau-message-box > svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.5rem;
+}
+
+.eau-message-box h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 1rem;
+}
+
+.eau-message-box p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0 0 0.5rem;
+    line-height: 1.6;
+}
+
+.eau-message-info > svg {
+    color: #3b82f6;
+}
+
+.eau-message-success > svg {
+    color: #10b981;
+}
+
+.eau-message-warning > svg {
+    color: #f59e0b;
+}
+
+.eau-message-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.eau-expiry-info,
+.eau-submitted-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.eau-expiry-info svg,
+.eau-submitted-info svg {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-application-status {
+    margin: 1rem 0;
+}
+
+.eau-status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.eau-status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.eau-status-under_review {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.eau-note {
+    font-size: 0.875rem;
+    font-style: italic;
+    color: #9ca3af !important;
+    margin-top: 1rem !important;
+}
+
+/* ============================================
+   Modal Styles (Design System Compliant)
+============================================ */
+
+.eau-membership-selection .eau-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+    /* display is controlled by JavaScript (none/flex) */
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+}
+
+.eau-membership-selection .eau-modal-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 1 !important;
+}
+
+.eau-membership-selection .eau-modal-container {
+    position: relative !important;
+    background: white !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    max-width: 600px !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    z-index: 2 !important;
+}
+
+.eau-membership-selection .eau-modal-lg {
+    max-width: 800px !important;
+}
+
+.eau-membership-selection .eau-modal-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 1rem 1.5rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: white !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.eau-membership-selection .eau-modal-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    line-height: 1.4 !important;
+}
+
+.eau-membership-selection .eau-modal-title svg {
+    width: 20px !important;
+    height: 20px !important;
+    color: #2563eb !important;
+    flex-shrink: 0 !important;
+}
+
+/* Close Button - Design System */
+.eau-membership-selection .eau-modal-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    background: #f3f4f6 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    color: #6b7280 !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-membership-selection .eau-modal-close:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.eau-membership-selection .eau-modal-close:active,
+.eau-membership-selection .eau-modal-close:focus {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2) !important;
+}
+
+.eau-membership-selection .eau-modal-close svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.eau-membership-selection .eau-modal-body {
+    padding: 1.5rem !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
+}
+
+.eau-membership-selection .eau-modal-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.75rem !important;
+    padding: 1rem 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+/* ============================================
+   Application Steps Indicator
+============================================ */
+
+.eau-application-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.eau-app-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.eau-app-step::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: calc(50% + 20px);
+    width: calc(100% - 40px);
+    height: 2px;
+    background: #e5e7eb;
+}
+
+.eau-app-step:last-child::after {
+    display: none;
+}
+
+.eau-app-step.active::after,
+.eau-app-step.completed::after {
+    background: #2563eb;
+}
+
+.eau-step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+}
+
+.eau-app-step.active .eau-step-number {
+    background: #2563eb;
+    color: white;
+}
+
+.eau-app-step.completed .eau-step-number {
+    background: #10b981;
+    color: white;
+}
+
+.eau-step-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-align: center;
+}
+
+.eau-app-step.active .eau-step-label {
+    color: #2563eb;
+    font-weight: 500;
+}
+
+.eau-app-step.completed .eau-step-label {
+    color: #10b981;
+}
+
+/* ============================================
+   Application Form Steps
+============================================ */
+
+.eau-application-step h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.5rem;
+}
+
+.eau-step-description {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    margin: 0 0 1.5rem;
+}
+
+/* Form Grid */
+.eau-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.eau-form-field-full {
+    grid-column: 1 / -1;
+}
+
+/* Form Fields (Design System Compliant) */
+.eau-membership-selection .eau-form-field {
+    margin-bottom: 0 !important;
+}
+
+.eau-membership-selection .eau-form-field label {
+    display: block !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 0.375rem !important;
+}
+
+.eau-membership-selection .eau-form-field label .required {
+    color: #dc2626 !important;
+}
+
+.eau-membership-selection .eau-form-input,
+.eau-membership-selection .eau-form-select,
+.eau-membership-selection .eau-form-textarea {
+    width: 100% !important;
+    padding: 0.625rem 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    font-size: 0.9375rem !important;
+    color: #111827 !important;
+    background: white !important;
+    transition: all 0.2s !important;
+    box-sizing: border-box !important;
+}
+
+.eau-membership-selection .eau-form-input:focus,
+.eau-membership-selection .eau-form-select:focus,
+.eau-membership-selection .eau-form-textarea:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-membership-selection .eau-form-input[readonly] {
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+}
+
+.eau-membership-selection .eau-form-input.error,
+.eau-membership-selection .eau-form-select.error {
+    border-color: #dc2626 !important;
+}
+
+.eau-membership-selection .eau-form-hint {
+    font-size: 0.75rem !important;
+    color: #9ca3af !important;
+    margin-top: 0.25rem !important;
+    display: block !important;
+}
+
+.eau-membership-selection .eau-form-error {
+    display: none !important;
+    font-size: 0.75rem !important;
+    color: #dc2626 !important;
+    margin-top: 0.25rem !important;
+}
+
+.eau-membership-selection .eau-form-error.visible {
+    display: block !important;
+}
+
+/* ============================================
+   Phone Input with intl-tel-input (DDI Selector)
+============================================ */
+
+.eau-membership-selection .eau-phone-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti {
+    width: 100%;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__flag-container {
+    padding: 0 !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__selected-flag {
+    padding: 0 0.75rem !important;
+    background: #f9fafb !important;
+    border-right: 1px solid #d1d5db !important;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__selected-flag:hover,
+.eau-membership-selection .eau-phone-input-wrapper .iti__selected-flag:focus {
+    background: #f3f4f6 !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti--separate-dial-code .iti__selected-dial-code {
+    font-size: 0.875rem !important;
+    color: #374151 !important;
+    margin-left: 0.5rem !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__country-list {
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
+    max-height: 250px !important;
+    z-index: 100001 !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__country {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__country:hover,
+.eau-membership-selection .eau-phone-input-wrapper .iti__country--highlight {
+    background: #f3f4f6 !important;
+}
+
+.eau-membership-selection .eau-phone-input-wrapper .iti__dial-code {
+    color: #6b7280 !important;
+}
+
+/* Adjust input padding for DDI selector */
+.eau-membership-selection .eau-phone-input-wrapper input.eau-phone-input {
+    padding-left: 90px !important;
+}
+
+/* ============================================
+   Documents Upload
+============================================ */
+
+.eau-documents-list {
+    margin-bottom: 1.5rem;
+}
+
+.eau-document-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.eau-document-item label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.eau-document-item .eau-required-badge {
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+}
+
+.eau-upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.eau-upload-area:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+}
+
+.eau-upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.eau-upload-placeholder svg {
+    width: 40px;
+    height: 40px;
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+}
+
+.eau-upload-placeholder p {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    margin: 0 0 0.25rem;
+}
+
+.eau-upload-placeholder span {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* File Preview (after selection) */
+.eau-uploaded-file-preview {
+    margin-top: 0.75rem;
+}
+
+.eau-file-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    border-radius: 6px;
+}
+
+.eau-file-preview svg {
+    width: 18px;
+    height: 18px;
+    color: #10b981;
+    flex-shrink: 0;
+}
+
+.eau-file-preview .eau-file-name {
+    font-size: 0.875rem;
+    color: #374151;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.eau-file-preview .eau-file-size {
+    font-size: 0.75rem;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.eau-remove-required-file {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: #6b7280;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eau-remove-required-file:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.eau-remove-required-file svg {
+    width: 16px;
+    height: 16px;
+    color: inherit;
+}
+
+.eau-uploaded-files {
+    margin-top: 1rem;
+}
+
+.eau-uploaded-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #f3f4f6;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.eau-uploaded-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-uploaded-file-info svg {
+    width: 16px;
+    height: 16px;
+    color: #6b7280;
+}
+
+.eau-uploaded-file-name {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.eau-uploaded-file-size {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.eau-remove-file {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: #6b7280;
+    border-radius: 4px;
+}
+
+.eau-remove-file:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ============================================
+   Review Section
+============================================ */
+
+.eau-review-section {
+    display: grid;
+    gap: 1rem;
+}
+
+.eau-review-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.eau-review-card h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-review-card h4 svg {
+    width: 18px;
+    height: 18px;
+    color: #2563eb;
+}
+
+.eau-review-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.eau-review-fee {
+    font-size: 0.875rem;
+    color: #2563eb;
+    margin-top: 0.25rem;
+}
+
+.eau-review-details {
+    font-size: 0.9375rem;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.eau-review-details p {
+    margin: 0 0 0.25rem;
+}
+
+.eau-review-details strong {
+    color: #111827;
+}
+
+/* Checkbox (Design System Compliant) */
+.eau-membership-selection .eau-checkbox-label {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    cursor: pointer !important;
+    margin-top: 1.5rem !important;
+}
+
+.eau-membership-selection .eau-checkbox-label input[type="checkbox"] {
+    display: none !important;
+}
+
+.eau-membership-selection .eau-checkbox-custom {
+    width: 20px !important;
+    height: 20px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s !important;
+    background: white !important;
+}
+
+/* Support both i and svg (Lucide converts i to svg) */
+.eau-membership-selection .eau-checkbox-custom svg,
+.eau-membership-selection .eau-checkbox-custom i {
+    width: 14px !important;
+    height: 14px !important;
+    color: white !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s !important;
+}
+
+.eau-membership-selection .eau-checkbox-label input[type="checkbox"]:checked + .eau-checkbox-custom {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+.eau-membership-selection .eau-checkbox-label input[type="checkbox"]:checked + .eau-checkbox-custom svg,
+.eau-membership-selection .eau-checkbox-label input[type="checkbox"]:checked + .eau-checkbox-custom i {
+    opacity: 1 !important;
+}
+
+/* ============================================
+   Buttons (Design System Compliant)
+============================================ */
+
+.eau-membership-selection .eau-btn {
+    /* Note: display without !important to allow inline style="display:none" to work */
+    display: inline-flex;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.625rem 1.25rem !important;
+    font-size: 0.9375rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    border: none !important;
+    text-decoration: none !important;
+}
+
+.eau-membership-selection .eau-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Primary Button */
+.eau-membership-selection .eau-btn-primary {
+    background: #2563eb !important;
+    color: white !important;
+}
+
+.eau-membership-selection .eau-btn-primary:hover {
+    background: #1d4ed8 !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
+}
+
+.eau-membership-selection .eau-btn-primary:active,
+.eau-membership-selection .eau-btn-primary:focus,
+.eau-membership-selection .eau-btn-primary:visited {
+    background: #1d4ed8 !important;
+    color: white !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Secondary Button */
+.eau-membership-selection .eau-btn-secondary {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.eau-membership-selection .eau-btn-secondary:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.eau-membership-selection .eau-btn-secondary:active,
+.eau-membership-selection .eau-btn-secondary:focus,
+.eau-membership-selection .eau-btn-secondary:visited {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2) !important;
+}
+
+/* Ghost Button (More Details) */
+.eau-membership-selection .eau-btn-ghost {
+    background: transparent !important;
+    color: #2563eb !important;
+    border: 1px solid #2563eb !important;
+}
+
+.eau-membership-selection .eau-btn-ghost:hover {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+}
+
+.eau-membership-selection .eau-btn-ghost:active,
+.eau-membership-selection .eau-btn-ghost:focus,
+.eau-membership-selection .eau-btn-ghost:visited {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+}
+
+.eau-membership-selection .eau-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+/* ============================================
+   Spinner
+============================================ */
+
+.eau-spin {
+    animation: eau-spin 1s linear infinite;
+}
+
+@keyframes eau-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Details Modal Content (Design System)
+============================================ */
+
+.eau-membership-selection #details-modal .eau-modal-body {
+    padding: 1.5rem !important;
+}
+
+.eau-membership-selection #details-modal-content {
+    padding: 0 !important;
+}
+
+/* Details Modal Title Override */
+.eau-membership-selection #details-modal .eau-modal-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+}
+
+.eau-membership-selection .eau-details-section {
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-membership-selection .eau-details-section:last-child {
+    margin-bottom: 0 !important;
+}
+
+.eau-membership-selection .eau-details-section h4 {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin: 0 0 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+.eau-membership-selection .eau-details-section h4 svg {
+    width: 16px !important;
+    height: 16px !important;
+    color: #2563eb !important;
+}
+
+.eau-membership-selection .eau-details-section ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.eau-membership-selection .eau-details-section li {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 0 !important;
+    font-size: 0.875rem !important;
+    color: #4b5563 !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    line-height: 1.5 !important;
+}
+
+.eau-membership-selection .eau-details-section li:last-child {
+    border-bottom: none !important;
+}
+
+.eau-membership-selection .eau-details-section li svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
+    margin-top: 2px !important;
+}
+
+.eau-membership-selection .eau-details-benefits li svg {
+    color: #10b981 !important;
+}
+
+.eau-membership-selection .eau-details-requirements li svg {
+    color: #f59e0b !important;
+}
+
+.eau-membership-selection .eau-details-documents li svg {
+    color: #3b82f6 !important;
+}
+
+/* ============================================
+   Responsive
+============================================ */
+
+@media (max-width: 768px) {
+    .eau-membership-selection {
+        padding: 1rem;
+    }
+
+    .eau-membership-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .eau-membership-header p {
+        font-size: 1rem;
+    }
+
+    .eau-membership-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-application-steps {
+        padding: 0;
+    }
+
+    .eau-step-label {
+        display: none;
+    }
+
+    .eau-modal-container {
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .eau-modal-lg {
+        max-width: 100%;
+    }
+
+    .eau-modal-footer {
+        flex-wrap: wrap;
+    }
+
+    .eau-modal-footer .eau-btn {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .eau-message-actions {
+        flex-direction: column;
+    }
+
+    .eau-message-actions .eau-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .eau-card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .eau-card-icon {
+        margin: 0 auto;
+    }
+
+    .eau-fee-amount {
+        font-size: 2rem;
+    }
+}

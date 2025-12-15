@@ -35,10 +35,13 @@ class Eau_Events_Helper {
         $meta = Config\get_event_meta($post_id);
         $post = get_post($post_id);
 
-        // Image
-        $thumbnail = get_the_post_thumbnail_url($post_id, 'large');
-        if (!$thumbnail && $meta['image_id']) {
+        // Image - Prioriza Event Image do modal, fallback para Featured Image
+        $thumbnail = '';
+        if (!empty($meta['image_id'])) {
             $thumbnail = wp_get_attachment_image_url($meta['image_id'], 'large');
+        }
+        if (!$thumbnail) {
+            $thumbnail = get_the_post_thumbnail_url($post_id, 'large');
         }
 
         // Dates
@@ -219,10 +222,12 @@ class Eau_Events_Helper {
         $date = self::format_date($data['start_obj']);
         $time = self::format_time($data['start_obj']);
         $cpd = $data['meta']['cpd_points'] ? intval($data['meta']['cpd_points']) . ' CPD' : '';
+        $is_admin = self::is_admin();
+        $edit_url = site_url('dashboard/events/?edit=' . $post_id);
 
         ob_start();
         ?>
-        <article class="eau-event-card <?php echo $type === 'past' ? 'eau-event-card-past' : ''; ?>">
+        <article class="eau-event-card">
             <?php if ($data['thumbnail']) : ?>
                 <div class="eau-event-card-image">
                     <a href="<?php echo esc_url($permalink); ?>">
@@ -243,7 +248,7 @@ class Eau_Events_Helper {
                             <span><?php echo esc_html($date); ?></span>
                         </div>
                     <?php endif; ?>
-                    <?php if ($time && $type === 'upcoming') : ?>
+                    <?php if ($time) : ?>
                         <div class="eau-event-card-meta-item">
                             <?php echo self::icon('clock', 14); ?>
                             <span><?php echo esc_html($time); ?></span>
@@ -251,31 +256,35 @@ class Eau_Events_Helper {
                     <?php endif; ?>
                 </div>
 
-                <?php if ($type === 'upcoming') : ?>
-                    <div class="eau-event-card-location">
-                        <?php echo self::icon('map-pin', 14); ?>
-                        <span><?php echo esc_html($data['location']['short']); ?></span>
-                    </div>
-                    <div class="eau-event-card-footer">
-                        <div class="eau-event-card-info">
-                            <span class="eau-event-card-price">
-                                <?php echo self::icon('dollar', 14); ?>
-                                <?php echo esc_html($data['price']['display']); ?>
+                <div class="eau-event-card-location">
+                    <?php echo self::icon('map-pin', 14); ?>
+                    <span><?php echo esc_html($data['location']['short']); ?></span>
+                </div>
+
+                <div class="eau-event-card-footer">
+                    <div class="eau-event-card-info">
+                        <span class="eau-event-card-price">
+                            <?php echo self::icon('dollar', 14); ?>
+                            <?php echo esc_html($data['price']['display']); ?>
+                        </span>
+                        <?php if ($cpd) : ?>
+                            <span class="eau-event-card-cpd">
+                                <?php echo self::icon('graduation', 14); ?>
+                                <?php echo esc_html($cpd); ?>
                             </span>
-                            <?php if ($cpd) : ?>
-                                <span class="eau-event-card-cpd">
-                                    <?php echo self::icon('graduation', 14); ?>
-                                    <?php echo esc_html($cpd); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="eau-event-card-actions">
+                        <?php if ($is_admin && $type === 'upcoming') : ?>
+                            <a href="<?php echo esc_url($edit_url); ?>" class="eau-event-card-link eau-event-card-edit">
+                                <?php _e('Edit', 'eau-system'); ?>
+                            </a>
+                        <?php endif; ?>
                         <a href="<?php echo esc_url($permalink); ?>" class="eau-event-card-link">
                             <?php _e('Open', 'eau-system'); ?>
                         </a>
                     </div>
-                <?php else : ?>
-                    <div class="eau-event-card-status"><?php _e('Event Completed', 'eau-system'); ?></div>
-                <?php endif; ?>
+                </div>
             </div>
         </article>
         <?php

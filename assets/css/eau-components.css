@@ -132,6 +132,16 @@
     stroke: #dc2626 !important;
 }
 
+.eau-stat-card-yellow .eau-stat-card-icon {
+    background: #fef3c7 !important;
+}
+
+.eau-stat-card-yellow .eau-stat-card-icon i,
+.eau-stat-card-yellow .eau-stat-card-icon svg {
+    color: #d97706 !important;
+    stroke: #d97706 !important;
+}
+
 /* Responsivo - Stats Cards */
 @media (max-width: 767px) {
     .eau-stats-cards {
@@ -190,6 +200,7 @@
     stroke-width: 2 !important;
 }
 
+/* Primary Button */
 .eau-btn-primary {
     background: #2563eb !important;
     color: #ffffff !important;
@@ -199,6 +210,16 @@
     background: #1d4ed8 !important;
 }
 
+.eau-btn-primary:active,
+.eau-btn-primary:focus,
+.eau-btn-primary:visited {
+    background: #1d4ed8 !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Secondary Button */
 .eau-btn-secondary {
     background: #ffffff !important;
     color: #374151 !important;
@@ -209,6 +230,54 @@
     background: #f9fafb !important;
 }
 
+.eau-btn-secondary:active,
+.eau-btn-secondary:focus,
+.eau-btn-secondary:visited {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2) !important;
+}
+
+/* Success Button */
+.eau-btn-success {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.eau-btn-success:hover {
+    background: #059669 !important;
+}
+
+.eau-btn-success:active,
+.eau-btn-success:focus,
+.eau-btn-success:visited {
+    background: #059669 !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Warning Button */
+.eau-btn-warning {
+    background: #f59e0b !important;
+    color: #ffffff !important;
+}
+
+.eau-btn-warning:hover {
+    background: #d97706 !important;
+}
+
+.eau-btn-warning:active,
+.eau-btn-warning:focus,
+.eau-btn-warning:visited {
+    background: #d97706 !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Danger Button */
 .eau-btn-danger {
     background: #dc2626 !important;
     color: #ffffff !important;
@@ -216,6 +285,15 @@
 
 .eau-btn-danger:hover {
     background: #b91c1c !important;
+}
+
+.eau-btn-danger:active,
+.eau-btn-danger:focus,
+.eau-btn-danger:visited {
+    background: #b91c1c !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.3) !important;
 }
 
 /* ==========================================================================
@@ -980,7 +1058,7 @@
    MODAL COMPONENT
    ========================================================================== */
 
-/* Modal Wrapper - Hidden by default */
+/* Modal Wrapper - Hidden by default (standalone usage) */
 .eau-modal {
     display: none !important;
     position: fixed !important;
@@ -994,6 +1072,24 @@
 /* Modal Wrapper - Visible when active */
 .eau-modal.active {
     display: block !important;
+}
+
+/* Modal Container inside Overlay - Always visible when parent overlay is shown */
+.eau-modal-overlay > .eau-modal {
+    display: flex !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    width: calc(100% - 2rem) !important;
+    max-width: 600px !important;
+    max-height: calc(100vh - 2rem) !important;
+    flex-direction: column !important;
+    z-index: 2 !important;
+    animation: eauSlideUp 0.2s ease !important;
 }
 
 /* Modal Overlay - Dark background */
@@ -1048,24 +1144,29 @@
 
 /* Modal Sizes */
 .eau-modal-container.eau-modal-small,
-.eau-modal-small .eau-modal-container {
+.eau-modal-small .eau-modal-container,
+.eau-modal-overlay > .eau-modal.eau-modal-small {
     max-width: 400px !important;
 }
 
 .eau-modal-container.eau-modal-medium,
-.eau-modal-medium .eau-modal-container {
+.eau-modal-medium .eau-modal-container,
+.eau-modal-overlay > .eau-modal.eau-modal-medium {
     max-width: 600px !important;
 }
 
 .eau-modal-container.eau-modal-large,
 .eau-modal-large .eau-modal-container,
 .eau-modal-container.eau-modal-lg,
-.eau-modal-lg .eau-modal-container {
+.eau-modal-lg .eau-modal-container,
+.eau-modal-overlay > .eau-modal.eau-modal-large,
+.eau-modal-overlay > .eau-modal.eau-modal-lg {
     max-width: 900px !important;
 }
 
 .eau-modal-container.eau-modal-full,
-.eau-modal-full .eau-modal-container {
+.eau-modal-full .eau-modal-container,
+.eau-modal-overlay > .eau-modal.eau-modal-full {
     max-width: calc(100vw - 2rem) !important;
     max-height: calc(100vh - 2rem) !important;
 }
@@ -2254,4 +2355,66 @@ div.eau-skeleton > .eau-skeleton-shimmer {
 .flatpickr-months .flatpickr-prev-month:hover svg,
 .flatpickr-months .flatpickr-next-month:hover svg {
     fill: #2563eb !important;
+}
+
+/* ==========================================================================
+   PHONE INPUT WITH INTL-TEL-INPUT (DDI SELECTOR)
+   ========================================================================== */
+
+.eau-phone-input-wrapper {
+    position: relative !important;
+    width: 100% !important;
+}
+
+.eau-phone-input-wrapper .iti {
+    width: 100% !important;
+}
+
+.eau-phone-input-wrapper .iti__flag-container {
+    padding: 0 !important;
+}
+
+.eau-phone-input-wrapper .iti__selected-flag {
+    padding: 0 0.75rem !important;
+    background: #f9fafb !important;
+    border-right: 1px solid #d1d5db !important;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.eau-phone-input-wrapper .iti__selected-flag:hover,
+.eau-phone-input-wrapper .iti__selected-flag:focus {
+    background: #f3f4f6 !important;
+}
+
+.eau-phone-input-wrapper .iti--separate-dial-code .iti__selected-dial-code {
+    font-size: 0.875rem !important;
+    color: #374151 !important;
+    margin-left: 0.5rem !important;
+}
+
+.eau-phone-input-wrapper .iti__country-list {
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
+    max-height: 250px !important;
+    z-index: 100001 !important;
+}
+
+.eau-phone-input-wrapper .iti__country {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-phone-input-wrapper .iti__country:hover,
+.eau-phone-input-wrapper .iti__country--highlight {
+    background: #f3f4f6 !important;
+}
+
+.eau-phone-input-wrapper .iti__dial-code {
+    color: #6b7280 !important;
+}
+
+/* Adjust input padding for DDI selector */
+.eau-phone-input-wrapper input.eau-phone-input {
+    padding-left: 90px !important;
 }

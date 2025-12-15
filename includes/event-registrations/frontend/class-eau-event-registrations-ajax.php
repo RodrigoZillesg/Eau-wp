@@ -67,6 +67,19 @@ class Eau_Event_Registrations_Ajax {
             if (empty($attendee_email)) {
                 $attendee_email = $current_user->user_email;
             }
+
+            // Verificar se membership está ativo (v1.51.46)
+            // Membros com membership cancelado/expirado/suspenso não podem se inscrever
+            if (\EauSystem\Eau_User_Institution_Helper::is_membership_inactive()) {
+                $status = \EauSystem\Eau_User_Institution_Helper::get_membership_status();
+                $messages = array(
+                    'cancelled' => __('Your membership has been cancelled. You cannot register for events.', 'eau-system'),
+                    'expired' => __('Your membership has expired. Please renew to register for events.', 'eau-system'),
+                    'suspended' => __('Your membership is suspended. Please contact support.', 'eau-system'),
+                );
+                $message = isset($messages[$status]) ? $messages[$status] : __('You need an active membership to register for events.', 'eau-system');
+                wp_send_json_error(array('message' => $message));
+            }
         }
 
         // Validações

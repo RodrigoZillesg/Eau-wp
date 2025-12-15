@@ -93,8 +93,9 @@ class Eau_Modal {
                                 type="button"
                                 class="eau-btn <?php echo esc_attr($button['class']); ?>"
                                 data-modal-action="<?php echo esc_attr($button['action']); ?>"
+                                <?php if (!empty($button['id'])) : ?>id="<?php echo esc_attr($button['id']); ?>"<?php endif; ?>
                             >
-                                <?php echo esc_html($button['label']); ?>
+                                <?php echo wp_kses_post($button['label']); ?>
                             </button>
                         <?php endforeach; ?>
                     </div>

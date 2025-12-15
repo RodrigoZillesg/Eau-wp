@@ -375,6 +375,13 @@ class Eau_Institutions_Management {
                     'placeholder' => 'All Status',
                 ),
                 array(
+                    'key' => 'membership_type',
+                    'label' => 'Membership Type',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_membership_type_options(),
+                    'placeholder' => 'All Membership Types',
+                ),
+                array(
                     'key' => 'created_date',
                     'label' => 'Creation Date',
                     'type' => 'date_range',

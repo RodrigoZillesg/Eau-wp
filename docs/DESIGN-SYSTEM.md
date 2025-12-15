@@ -9,6 +9,9 @@
 1. [Visão Geral](#visão-geral)
 2. [Design Tokens](#design-tokens)
 3. [Componentes](#componentes)
+   - ⚠️ [**Referência Rápida - Classes CSS**](#️-referência-rápida---classes-css-dos-componentes)
+   - ⚠️ [**Botões - Estados CSS**](#️-regra-obrigatória---botões-estados-css)
+   - ⚠️ [**Modais - Design System**](#️-regra-obrigatória---modais-design-system)
 4. [Layout Patterns](#layout-patterns)
 5. [Comunicação com Usuário](#comunicação-com-usuário)
 6. [JavaScript Patterns](#javascript-patterns)
@@ -171,6 +174,217 @@ const $modal = $(`
 ---
 
 ## 🧩 Componentes
+
+### ⚠️ REFERÊNCIA RÁPIDA - Classes CSS dos Componentes
+
+> **REGRA OBRIGATÓRIA**: Antes de escrever CSS para qualquer componente, consulte esta tabela para usar o seletor correto.
+
+| Componente PHP | Classe CSS Principal | Seletores para Override |
+|----------------|---------------------|------------------------|
+| `Eau_Data_Table` | `.eau-table` | `.container .eau-table th`, `.container .eau-table td` |
+| `Eau_Stats_Cards` | `.eau-stats-grid` | `.container .eau-stat-card` |
+| `Eau_Pagination` | `.eau-pagination` | `.container .eau-pagination-wrapper` |
+| `Eau_Filters` | `.eau-filters-panel` | `.container .eau-filter-item` |
+| `Eau_Modal` | `.eau-modal` | `.container .eau-modal-content` |
+| `Eau_Media_Upload` | `.eau-media-upload` | `.container .eau-media-upload-dropzone` |
+| `Eau_Wysiwyg` | `.eau-wysiwyg-container` | `.container .ql-editor` |
+| `Eau_Skeleton` | `.eau-skeleton` | `.container .eau-skeleton-shimmer` |
+| Dashboard Cards | `.eau-dashboard-cards` | `.container .eau-dashboard-card` |
+
+**Exemplo de Override Correto:**
+
+```css
+/* ❌ ERRADO - Classe errada */
+.minha-pagina .eau-data-table td {
+    border: none;
+}
+
+/* ✅ CORRETO - Classe real do componente */
+.minha-pagina .eau-table td {
+    border: none !important;
+}
+```
+
+**Wrappers dos Componentes:**
+
+| Componente | Wrapper | Interno |
+|------------|---------|---------|
+| Data Table | `.eau-data-table-wrapper` | `.eau-table-container` → `.eau-table` |
+| Stats Cards | `.eau-stats-grid` | `.eau-stat-card` |
+| Pagination | `.eau-pagination-wrapper` | `.eau-pagination-nav` |
+| Filters | `.eau-filters-panel` | `.eau-filter-group` |
+| Modal | `.eau-modal-overlay` | `.eau-modal-content` |
+
+---
+
+### ⚠️ REGRA OBRIGATÓRIA - Botões (Estados CSS)
+
+> **PROBLEMA COMUM**: O tema WordPress aplica cor rosa nos estados `:active`, `:focus`, `:visited` dos botões.
+> **SOLUÇÃO**: SEMPRE definir TODOS os estados ao criar/estilizar botões.
+
+**Classes de Botões Disponíveis:**
+
+| Classe | Cor | Uso |
+|--------|-----|-----|
+| `.eau-btn-primary` | Azul (#2563eb) | Ação principal |
+| `.eau-btn-secondary` | Branco/Cinza | Ação secundária |
+| `.eau-btn-success` | Verde (#10b981) | Confirmação, aprovar |
+| `.eau-btn-warning` | Amarelo (#f59e0b) | Alerta, atenção |
+| `.eau-btn-danger` | Vermelho (#dc2626) | Deletar, rejeitar |
+
+**Estados que DEVEM ser definidos:**
+
+```css
+/* ❌ ERRADO - Faltam estados, tema vai sobrescrever */
+.meu-btn {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.meu-btn:hover {
+    background: #059669;
+}
+
+/* ✅ CORRETO - Todos os estados definidos */
+.meu-btn {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.meu-btn:hover {
+    background: #059669 !important;
+}
+
+.meu-btn:active,
+.meu-btn:focus,
+.meu-btn:visited {
+    background: #059669 !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+}
+```
+
+**Checklist para Novos Botões:**
+
+- [ ] Definiu estado normal (background, color)
+- [ ] Definiu `:hover`
+- [ ] Definiu `:active`
+- [ ] Definiu `:focus`
+- [ ] Definiu `:visited`
+- [ ] Usou `!important` em todas as propriedades
+
+---
+
+### ⚠️ REGRA OBRIGATÓRIA - Modais (Design System)
+
+> **PROBLEMA COMUM**: Modais herdam estilos do tema WordPress, resultando em botões de fechar feios, títulos enormes, e sem padding.
+> **SOLUÇÃO**: SEMPRE seguir o padrão abaixo ao criar modais.
+
+**Estrutura HTML do Modal:**
+```html
+<div class="eau-modal" id="meu-modal" style="display: none;">
+    <div class="eau-modal-overlay"></div>
+    <div class="eau-modal-container">
+        <div class="eau-modal-header">
+            <h2 class="eau-modal-title">
+                <i data-lucide="icon-name"></i>
+                <span>Título do Modal</span>
+            </h2>
+            <button type="button" class="eau-modal-close" aria-label="Fechar">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="eau-modal-body">
+            <!-- Conteúdo do modal -->
+        </div>
+        <div class="eau-modal-footer">
+            <button type="button" class="eau-btn eau-btn-secondary eau-modal-close-btn">Cancelar</button>
+            <button type="button" class="eau-btn eau-btn-primary">Confirmar</button>
+        </div>
+    </div>
+</div>
+```
+
+**CSS Obrigatório para Modais:**
+```css
+/* Container do Modal */
+.container .eau-modal-container {
+    border-radius: 12px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Header */
+.container .eau-modal-header {
+    padding: 1rem 1.5rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Título - IMPORTANTE: tamanho controlado */
+.container .eau-modal-title {
+    font-size: 1.125rem !important;  /* NÃO use tamanhos maiores */
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+}
+
+/* Botão de Fechar - DESIGN SYSTEM */
+.container .eau-modal-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    background: #f3f4f6 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    color: #6b7280 !important;
+}
+
+.container .eau-modal-close:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.container .eau-modal-close:active,
+.container .eau-modal-close:focus {
+    background: #e5e7eb !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2) !important;
+}
+
+.container .eau-modal-close svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Body - SEMPRE com padding */
+.container .eau-modal-body {
+    padding: 1.5rem !important;
+}
+
+/* Footer */
+.container .eau-modal-footer {
+    padding: 1rem 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+    border-radius: 0 0 12px 12px !important;
+}
+```
+
+**Checklist para Novos Modais:**
+
+- [ ] Estrutura HTML segue o padrão (overlay, container, header, body, footer)
+- [ ] Botão de fechar é um quadrado 32x32px com fundo cinza
+- [ ] Título usa `font-size: 1.125rem` (nunca maior)
+- [ ] Body tem `padding: 1.5rem`
+- [ ] Footer tem fundo cinza (#f9fafb)
+- [ ] Usou `!important` em todas as propriedades
+- [ ] Testou estados :hover, :active, :focus do botão de fechar
+
+---
 
 ### 1. Stats Cards
 
@@ -432,6 +646,128 @@ EauMembersManagement.closeModal('eau-modal-edit');
 - Campo largo usa `.eau-form-field-span-2`
 - Campos obrigatórios têm `<span class="eau-form-required">*</span>`
 - Readonly usa atributo `readonly`
+
+---
+
+#### 7.1. Phone Input com Seletor de DDI (intl-tel-input)
+
+> ⚠️ **REGRA OBRIGATÓRIA**
+>
+> Para campos de telefone que precisam de seletor de código de país (DDI), **SEMPRE** use o componente `intl-tel-input`.
+
+**Assets Necessários (PHP - enqueue)**:
+```php
+// CSS
+wp_enqueue_style(
+    'intl-tel-input',
+    'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
+    array(),
+    '18.2.1'
+);
+
+// JS
+wp_enqueue_script(
+    'intl-tel-input',
+    'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
+    array(),
+    '18.2.1',
+    true
+);
+```
+
+**HTML Structure**:
+```html
+<div class="eau-form-field">
+    <label class="eau-form-label">Phone</label>
+    <div class="eau-phone-input-wrapper">
+        <input type="tel"
+               class="eau-form-input eau-phone-input"
+               id="edit-phone"
+               autocomplete="tel"
+               placeholder="Enter phone number">
+        <input type="hidden" name="mem_phone" id="edit-phone-full" value="">
+    </div>
+</div>
+```
+
+**JavaScript Initialization**:
+```javascript
+// State (dentro do seu controller)
+phoneIti: null, // intl-tel-input instance
+
+// Função de inicialização
+initPhoneInput: function(initialValue) {
+    const self = this;
+    const phoneInput = document.querySelector('#edit-phone');
+
+    if (phoneInput && typeof intlTelInput !== 'undefined') {
+        // Destroy previous instance if exists
+        if (this.phoneIti) {
+            this.phoneIti.destroy();
+            this.phoneIti = null;
+        }
+
+        // Initialize intl-tel-input
+        this.phoneIti = intlTelInput(phoneInput, {
+            initialCountry: 'au',
+            preferredCountries: ['au', 'nz', 'gb', 'us'],
+            separateDialCode: true,
+            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+        });
+
+        // Set initial value if exists
+        if (initialValue) {
+            this.phoneIti.setNumber(initialValue);
+        }
+
+        // Update hidden field when phone changes
+        phoneInput.addEventListener('change', function() {
+            if (self.phoneIti) {
+                $('#edit-phone-full').val(self.phoneIti.getNumber());
+            }
+        });
+
+        // Also update on blur and countrychange
+        phoneInput.addEventListener('blur', function() {
+            if (self.phoneIti) {
+                $('#edit-phone-full').val(self.phoneIti.getNumber());
+            }
+        });
+
+        phoneInput.addEventListener('countrychange', function() {
+            if (self.phoneIti) {
+                $('#edit-phone-full').val(self.phoneIti.getNumber());
+            }
+        });
+    }
+},
+
+// Antes de salvar o formulário
+saveForm: function() {
+    // Update phone hidden field with full number before saving
+    if (this.phoneIti) {
+        $('#edit-phone-full').val(this.phoneIti.getNumber());
+    }
+
+    // Continue with form validation and submission...
+}
+```
+
+**CSS (já incluído em eau-components.css)**:
+- `.eau-phone-input-wrapper` - Container wrapper
+- `.iti` - Classes do intl-tel-input são estilizadas automaticamente
+
+**Páginas que usam este componente**:
+- `/dashboard/profile/` - Edit Personal Information modal
+- `/dashboard/members/` - Edit Member modal
+- `/membership-selection/` - Application modal
+- `/register/` - Registration form
+
+**Regras Importantes**:
+1. Sempre use um `<input type="hidden">` para armazenar o número completo com DDI
+2. Chame `phoneIti.getNumber()` antes de enviar o formulário
+3. Use `separateDialCode: true` para melhor UX
+4. Destrua a instância anterior antes de criar uma nova
 
 ---
 
@@ -1458,6 +1794,125 @@ class Eau_Items_Ajax {
        'message' => 'User-friendly error message'
    ));
    ```
+
+6. **⚠️ NUNCA usar `(bool)` para converter $_POST para boolean**
+   ```php
+   // ❌ ERRADO - (bool) "false" = true em PHP!
+   $send_email = isset($_POST['send_email']) ? (bool) $_POST['send_email'] : true;
+
+   // ✅ CORRETO - filter_var converte strings corretamente
+   $send_email = isset($_POST['send_email']) ? filter_var($_POST['send_email'], FILTER_VALIDATE_BOOLEAN) : true;
+   ```
+   **Explicação**: JavaScript envia `false` como STRING `"false"`. Em PHP, `(bool) "false"` = `true` porque qualquer string não-vazia é convertida para true.
+
+---
+
+## 📧 Email Patterns
+
+### ⚠️ REGRA CRÍTICA - Email Service
+
+**NUNCA** envie emails usando `wp_mail()` diretamente. **SEMPRE** use o `Email_Service`.
+
+```php
+// ❌ ERRADO - Não respeita configurações de dev/prod
+wp_mail($email, $subject, $message);
+
+// ✅ CORRETO - Respeita configurações de ambiente
+use EauSystem\Email\Email_Service;
+Email_Service::send($email, $subject, $html_content);
+```
+
+### Sistema de Email
+
+O sistema de email possui as seguintes classes:
+
+| Classe | Localização | Uso |
+|--------|-------------|-----|
+| `Email_Service` | `/includes/email/class-email-service.php` | Envio genérico de emails |
+| `Email_Membership` | `/includes/email/class-email-membership.php` | Emails de membership |
+| `Email_Settings` | `/includes/email/class-email-settings.php` | Configurações dev/prod |
+| `Email_Config` | `/includes/email/class-email-config.php` | From name, from email |
+| `Email_Template` | `/includes/email/class-email-template.php` | Componentes de template |
+
+### Configurações de Ambiente
+
+Página: `?page=eau-email-settings`
+
+- **Dev Mode**: Todos os emails são redirecionados para os dev recipients configurados
+- **Production Mode**: Emails são enviados para os destinatários reais
+
+### Email_Service::send()
+
+```php
+use EauSystem\Email\Email_Service;
+
+// Envio simples
+Email_Service::send(
+    $to,        // Email do destinatário (será processado conforme ambiente)
+    $subject,   // Assunto
+    $content    // Conteúdo HTML (será inserido no template padrão)
+);
+
+// Envio com opções
+Email_Service::send($to, $subject, $content, array(
+    'reply_to'    => 'reply@example.com',
+    'cc'          => 'cc@example.com',      // Ignorado em dev mode
+    'bcc'         => 'bcc@example.com',     // Ignorado em dev mode
+    'attachments' => array('/path/to/file'),
+    'log'         => true,
+));
+```
+
+### Email_Membership - Templates Prontos
+
+```php
+use EauSystem\Email\Email_Membership;
+
+// Email de aplicação recebida (para o usuário)
+Email_Membership::send_application_received($application_id);
+
+// Notificação de nova aplicação (para admin)
+Email_Membership::send_application_notification_to_admin($application_id);
+
+// Email de aprovação
+Email_Membership::send_application_approved($application_id, $admin_message);
+
+// Email de rejeição
+Email_Membership::send_application_rejected($application_id, $rejection_reason);
+
+// Lembrete de expiração (60_days, 30_days, 7_days, expired)
+Email_Membership::send_expiry_reminder($user_id, '30_days');
+```
+
+### Email_Template - Componentes
+
+```php
+use EauSystem\Email\Email_Template;
+
+// Info box (tabela de dados)
+Email_Template::info_box('Event Details', array(
+    'Date' => 'December 20, 2025',
+    'Location' => 'Sydney',
+    'CPD Points' => '5',
+));
+
+// Botão de ação
+Email_Template::button('View Dashboard', home_url('/dashboard/'));
+
+// Info box com HTML customizado
+Email_Template::info_box_html('<h3>Title</h3><p>Custom HTML content</p>');
+```
+
+### Checklist para Funcionalidades com Email
+
+Antes de implementar envio de emails, verifique:
+
+- [ ] Está usando `Email_Service::send()` (não `wp_mail()`)?
+- [ ] Adicionou `use EauSystem\Email\Email_Service;`?
+- [ ] Checkboxes "enviar email" usam `filter_var(..., FILTER_VALIDATE_BOOLEAN)`?
+- [ ] Testou em modo Dev para confirmar redirecionamento?
+- [ ] Verificou se já existe template em `Email_Membership`?
+- [ ] O conteúdo é HTML (o template já adiciona wrapper)?
 
 ---
 

@@ -142,6 +142,7 @@ $past = new WP_Query($past_args);
                 <p><?php _e('Check back later for upcoming events.', 'eau-system'); ?></p>
             </div>
         <?php endif; ?>
+
     </div>
 </div>
 

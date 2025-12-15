@@ -47,6 +47,7 @@ class Eau_Institutions_Ajax {
         $per_page = isset($_POST['per_page']) ? absint($_POST['per_page']) : 20;
         $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
         $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
+        $membership_type = isset($_POST['membership_type']) ? sanitize_text_field($_POST['membership_type']) : '';
         $created_date_from = isset($_POST['created_date_from']) ? sanitize_text_field($_POST['created_date_from']) : '';
         $created_date_to = isset($_POST['created_date_to']) ? sanitize_text_field($_POST['created_date_to']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'title';
@@ -58,6 +59,7 @@ class Eau_Institutions_Ajax {
             'paged' => $page,
             'search' => $search,
             'status' => $status,
+            'membership_type' => $membership_type,
             'created_date_from' => $created_date_from,
             'created_date_to' => $created_date_to,
             'orderby' => $orderby,
@@ -92,6 +94,7 @@ class Eau_Institutions_Ajax {
             'paged' => 1,
             'search' => '',
             'status' => '',
+            'membership_type' => '',
             'created_date_from' => '',
             'created_date_to' => '',
             'orderby' => 'title',
@@ -150,6 +153,31 @@ class Eau_Institutions_Ajax {
                 $meta_query[] = array(
                     'key' => 'ins_status',
                     'value' => $args['status'],
+                    'compare' => '=',
+                );
+            }
+        }
+
+        // Filtro de membership_type (ins_type)
+        if (!empty($args['membership_type'])) {
+            if ($args['membership_type'] === 'none') {
+                // Instituições sem membership type definido
+                $meta_query[] = array(
+                    'relation' => 'OR',
+                    array(
+                        'key' => 'ins_type',
+                        'compare' => 'NOT EXISTS',
+                    ),
+                    array(
+                        'key' => 'ins_type',
+                        'value' => '',
+                        'compare' => '=',
+                    ),
+                );
+            } else {
+                $meta_query[] = array(
+                    'key' => 'ins_type',
+                    'value' => $args['membership_type'],
                     'compare' => '=',
                 );
             }

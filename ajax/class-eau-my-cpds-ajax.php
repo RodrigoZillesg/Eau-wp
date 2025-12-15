@@ -576,6 +576,7 @@ class Eau_My_Cpds_Ajax {
             'eau_my_cpds_nonce',
             'eau_events_management_nonce',
             'eau_event_registrations_nonce',
+            'eau_payments_management_nonce',
         );
 
         foreach ($nonces_to_check as $nonce_action) {
@@ -665,12 +666,33 @@ class Eau_My_Cpds_Ajax {
      * @since 1.38.3
      */
     public static function get_user_files() {
-        // Verifica nonce
-        check_ajax_referer('eau_my_cpds_nonce', 'nonce');
-
         // Verifica se está logado
         if (!is_user_logged_in()) {
-            wp_send_json_error(array('message' => 'You must be logged in.'));
+            wp_send_json_error(array('message' => 'You must be logged in.'), 401);
+            return;
+        }
+
+        // Aceita múltiplos nonces do sistema
+        $nonce_valid = false;
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
+
+        $nonces_to_check = array(
+            'eau_my_cpds_nonce',
+            'eau_events_management_nonce',
+            'eau_event_registrations_nonce',
+            'eau_payments_management_nonce',
+        );
+
+        foreach ($nonces_to_check as $nonce_action) {
+            if ($nonce && wp_verify_nonce($nonce, $nonce_action)) {
+                $nonce_valid = true;
+                break;
+            }
+        }
+
+        if (!$nonce_valid) {
+            wp_send_json_error(array('message' => 'Security check failed. Please refresh the page and try again.'), 403);
+            return;
         }
 
         $user_id = get_current_user_id();

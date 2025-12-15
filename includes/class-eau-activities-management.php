@@ -78,10 +78,6 @@ class Eau_Activities_Management {
                         <i data-lucide="download"></i>
                         Export CSV
                     </button>
-                    <button class="eau-btn eau-btn-primary" id="eau-add-activity">
-                        <i data-lucide="plus"></i>
-                        Add Activity
-                    </button>
                 </div>
             </div>
 

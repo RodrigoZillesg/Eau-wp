@@ -25,6 +25,25 @@
             // Quill is now initialized lazily when modal opens
             this.bindEvents();
             this.loadEvents();
+            this.checkUrlParams();
+        },
+
+        /**
+         * Check URL params for auto-open modals
+         */
+        checkUrlParams: function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+
+            if (editId) {
+                // Wait for events to load, then open edit modal
+                setTimeout(() => {
+                    this.openEditModal(parseInt(editId, 10));
+                    // Clean URL without reloading
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }, 500);
+            }
         },
 
         /**

@@ -37,6 +37,11 @@ class Eau_My_Institution {
             return Eau_Access_Denied::not_logged_in();
         }
 
+        // Verifica se membership está ativo (v1.51.53)
+        if (!Eau_User_Institution_Helper::is_membership_active()) {
+            return Eau_Access_Denied::membership_inactive();
+        }
+
         // Enqueue assets
         self::enqueue_assets();
 

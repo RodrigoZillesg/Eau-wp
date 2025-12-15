@@ -88,6 +88,137 @@ class Eau_User_Institution_Helper {
         return self::is_super_admin($user_id) || self::is_admin($user_id);
     }
 
+    // =========================================================================
+    // MEMBERSHIP STATUS HELPERS (v1.51.46)
+    // =========================================================================
+
+    /**
+     * Verifica se o membership do usuário está ativo
+     *
+     * Retorna true APENAS se mem_membership_status === 'active'
+     * Admins (superAdmin, Admin) sempre têm acesso, independente do status
+     *
+     * @since 1.51.46
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se membership ativo ou se for admin
+     */
+    public static function is_membership_active($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        // Admins sempre têm acesso
+        if (self::has_admin_access($user_id)) {
+            return true;
+        }
+
+        $membership_status = get_user_meta($user_id, 'mem_membership_status', true);
+        return $membership_status === 'active';
+    }
+
+    /**
+     * Verifica se o membership está cancelado, expirado ou suspenso
+     *
+     * @since 1.51.46
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se membership cancelado, expirado ou suspenso
+     */
+    public static function is_membership_inactive($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        // Admins nunca são considerados inativos
+        if (self::has_admin_access($user_id)) {
+            return false;
+        }
+
+        $membership_status = get_user_meta($user_id, 'mem_membership_status', true);
+        $inactive_statuses = array('cancelled', 'expired', 'suspended');
+
+        return in_array($membership_status, $inactive_statuses, true);
+    }
+
+    /**
+     * Obtém o status de membership do usuário
+     *
+     * @since 1.51.46
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return string Status: active, pending, expired, suspended, cancelled, ou vazio
+     */
+    public static function get_membership_status($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        return get_user_meta($user_id, 'mem_membership_status', true);
+    }
+
+    /**
+     * Obtém o label amigável do status de membership
+     *
+     * @since 1.51.46
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return array Array com 'label' e 'class' para exibição
+     */
+    public static function get_membership_status_display($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        $status = self::get_membership_status($user_id);
+
+        $displays = array(
+            'active' => array(
+                'label' => 'Active',
+                'class' => 'eau-badge-success',
+            ),
+            'pending' => array(
+                'label' => 'Pending Approval',
+                'class' => 'eau-badge-warning',
+            ),
+            'expired' => array(
+                'label' => 'Expired',
+                'class' => 'eau-badge-danger',
+            ),
+            'suspended' => array(
+                'label' => 'Suspended',
+                'class' => 'eau-badge-danger',
+            ),
+            'cancelled' => array(
+                'label' => 'Cancelled',
+                'class' => 'eau-badge-danger',
+            ),
+        );
+
+        if (isset($displays[$status])) {
+            return $displays[$status];
+        }
+
+        // Default para status vazio ou desconhecido
+        return array(
+            'label' => 'No Membership',
+            'class' => 'eau-badge-secondary',
+        );
+    }
+
+    /**
+     * Verifica se o usuário pode acessar funcionalidades de membro
+     *
+     * Combina verificação de login + membership ativo
+     *
+     * @since 1.51.46
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se pode acessar
+     */
+    public static function can_access_member_features($user_id = null) {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+
+        return self::is_membership_active($user_id);
+    }
+
     /**
      * Pega TODAS as instituições que o usuário administra
      *
@@ -228,12 +359,25 @@ class Eau_User_Institution_Helper {
     }
 
     /**
-     * Pega o tipo de membership do usuário (ins_type da instituição)
+     * Pega o tipo de membership do usuário
      *
+     * Primeiro busca no user meta (mem_membership_type) para o novo sistema.
+     * Se não encontrar, faz fallback para ins_type da instituição (legado).
+     *
+     * @since 1.49.6 - Adicionado suporte a mem_membership_type
      * @param int $user_id ID do usuário
      * @return string|null Tipo de membership ou null
      */
     public static function get_user_membership_type($user_id) {
+        // Primeiro, busca no user meta (novo sistema)
+        $mem_membership_type = get_user_meta($user_id, 'mem_membership_type', true);
+        if (!empty($mem_membership_type)) {
+            // Retorna o label formatado
+            $type_data = \EauSystem\Eau_Membership_Types::get_by_key($mem_membership_type);
+            return $type_data ? $type_data->type_label : ucwords(str_replace('_', ' ', $mem_membership_type));
+        }
+
+        // Fallback: busca ins_type da instituição (sistema legado)
         $institution = self::get_user_institution($user_id);
 
         if (!$institution) {
@@ -242,7 +386,13 @@ class Eau_User_Institution_Helper {
 
         $ins_type = get_post_meta($institution->ID, 'ins_type', true);
 
-        return !empty($ins_type) ? $ins_type : null;
+        if (!empty($ins_type)) {
+            // Tenta buscar label no novo sistema
+            $type_data = \EauSystem\Eau_Membership_Types::get_by_key($ins_type);
+            return $type_data ? $type_data->type_label : ucwords(str_replace('_', ' ', $ins_type));
+        }
+
+        return null;
     }
 
     /**
@@ -262,13 +412,19 @@ class Eau_User_Institution_Helper {
     }
 
     /**
-     * Pega o status do usuário (do metadado mem_status)
+     * Pega o status do usuário (do metadado mem_membership_status)
      *
      * @param int $user_id ID do usuário
-     * @return string Status do usuário (active, inactive, etc)
+     * @return string Status do usuário (active, pending, expired, suspended, cancelled)
      */
     public static function get_user_status($user_id) {
-        $status = get_user_meta($user_id, 'mem_status', true);
+        // Primeiro tenta mem_membership_status (novo campo)
+        $status = get_user_meta($user_id, 'mem_membership_status', true);
+
+        // Fallback para mem_status se mem_membership_status estiver vazio
+        if (empty($status)) {
+            $status = get_user_meta($user_id, 'mem_status', true);
+        }
 
         return !empty($status) ? $status : 'unknown';
     }
@@ -333,9 +489,9 @@ class Eau_User_Institution_Helper {
             );
         }
 
-        // Filtro por status (mem_status)
+        // Filtro por status (mem_membership_status) - v1.51.52
         if (!empty($args['status'])) {
-            $join[] = "INNER JOIN {$wpdb->usermeta} um_status ON u.ID = um_status.user_id AND um_status.meta_key = 'mem_status'";
+            $join[] = "INNER JOIN {$wpdb->usermeta} um_status ON u.ID = um_status.user_id AND um_status.meta_key = 'mem_membership_status'";
             $where[] = $wpdb->prepare("um_status.meta_value = %s", $args['status']);
         }
 
@@ -361,13 +517,23 @@ class Eau_User_Institution_Helper {
             $where[] = $wpdb->prepare("um_company.meta_value IN ($placeholders)", ...$company_ids);
         }
 
-        // Filtro por membership type (ins_type)
+        // Filtro por membership type (novo sistema: mem_membership_type OU legado: ins_type)
         if (!empty($args['membership_type'])) {
-            // Precisa fazer JOIN com posts (institutions) via postmeta
-            $join[] = "INNER JOIN {$wpdb->usermeta} um_mtype_comp ON u.ID = um_mtype_comp.user_id AND um_mtype_comp.meta_key = 'mem_membercompanyname'";
-            $join[] = "INNER JOIN {$wpdb->postmeta} pm_comp_id ON pm_comp_id.meta_key = 'ins_company_id' AND pm_comp_id.meta_value = um_mtype_comp.meta_value";
-            $join[] = "INNER JOIN {$wpdb->postmeta} pm_ins_type ON pm_ins_type.post_id = pm_comp_id.post_id AND pm_ins_type.meta_key = 'ins_type'";
-            $where[] = $wpdb->prepare("pm_ins_type.meta_value = %s", $args['membership_type']);
+            if ($args['membership_type'] === 'none') {
+                // Usuários SEM membership - não tem mem_membership_type E não tem ins_type via instituição
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_mtype ON u.ID = um_mtype.user_id AND um_mtype.meta_key = 'mem_membership_type'";
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_mtype_comp ON u.ID = um_mtype_comp.user_id AND um_mtype_comp.meta_key = 'mem_membercompanyname'";
+                $join[] = "LEFT JOIN {$wpdb->postmeta} pm_comp_id ON pm_comp_id.meta_key = 'ins_company_id' AND pm_comp_id.meta_value = um_mtype_comp.meta_value";
+                $join[] = "LEFT JOIN {$wpdb->postmeta} pm_ins_type ON pm_ins_type.post_id = pm_comp_id.post_id AND pm_ins_type.meta_key = 'ins_type'";
+                $where[] = "(um_mtype.meta_value IS NULL OR um_mtype.meta_value = '') AND (pm_ins_type.meta_value IS NULL OR pm_ins_type.meta_value = '')";
+            } else {
+                // Busca por tipo específico - primeiro no user meta (novo sistema), depois no ins_type (legado)
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_mtype ON u.ID = um_mtype.user_id AND um_mtype.meta_key = 'mem_membership_type'";
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_mtype_comp ON u.ID = um_mtype_comp.user_id AND um_mtype_comp.meta_key = 'mem_membercompanyname'";
+                $join[] = "LEFT JOIN {$wpdb->postmeta} pm_comp_id ON pm_comp_id.meta_key = 'ins_company_id' AND pm_comp_id.meta_value = um_mtype_comp.meta_value";
+                $join[] = "LEFT JOIN {$wpdb->postmeta} pm_ins_type ON pm_ins_type.post_id = pm_comp_id.post_id AND pm_ins_type.meta_key = 'ins_type'";
+                $where[] = $wpdb->prepare("(um_mtype.meta_value = %s OR pm_ins_type.meta_value = %s)", $args['membership_type'], $args['membership_type']);
+            }
         }
 
         // Filtro por data de registro (from)

@@ -1,0 +1,973 @@
+/**
+ * Eau Public Registration Styles
+ *
+ * @since 1.49.0
+ * Updated: 1.51.21 - Design System compliance
+ */
+
+/* ==========================================================================
+   Hide Page Title - The blue card already serves as the title
+   ========================================================================== */
+
+body:has(.eau-public-registration-container) .entry-title,
+body:has(.eau-public-registration-container) .page-title,
+body:has(.eau-public-registration-container) .elementor-heading-title,
+body:has(.eau-public-registration-container) article.page > header,
+body:has(.eau-public-registration-container) h1.wp-block-post-title {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Container
+   ========================================================================== */
+
+.eau-public-registration-container {
+    max-width: 720px !important;
+    margin: 2rem auto !important;
+    padding: 0 1rem !important;
+    padding-top: 80px !important; /* Space for fixed header */
+}
+
+/* ==========================================================================
+   Registration Header
+   ========================================================================== */
+
+.eau-registration-header {
+    text-align: center !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-registration-header-content {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    padding: 2rem !important;
+    border-radius: 12px !important;
+}
+
+.eau-registration-title {
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    margin: 0 0 0.75rem 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    color: #ffffff !important;
+}
+
+.eau-registration-title i {
+    width: 32px !important;
+    height: 32px !important;
+    color: #ffffff !important;
+}
+
+.eau-registration-subtitle {
+    font-size: 1rem !important;
+    opacity: 0.9 !important;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+    color: #ffffff !important;
+}
+
+/* Step Indicator */
+.eau-registration-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.eau-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.eau-step.active .eau-step-number,
+.eau-step.completed .eau-step-number {
+    background: #2563eb;
+    color: white;
+}
+
+.eau-step.completed .eau-step-number {
+    background: #10b981;
+}
+
+.eau-step-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.eau-step.active .eau-step-label {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.eau-step.completed .eau-step-label {
+    color: #10b981;
+}
+
+.eau-step-connector {
+    flex: 1;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 60px;
+}
+
+/* Registration Form */
+.eau-registration-form {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+/* Step Content */
+.eau-registration-step {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.eau-step-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-step-title i {
+    width: 24px;
+    height: 24px;
+    color: #2563eb;
+}
+
+.eau-step-description {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0 0 1.5rem 0;
+}
+
+/* Form Grid */
+.eau-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.eau-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.eau-form-field-span-2 {
+    grid-column: span 2;
+}
+
+.eau-form-label {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 0.25rem !important;
+    display: block !important;
+}
+
+.eau-form-required {
+    color: #ef4444 !important;
+    margin-left: 2px !important;
+}
+
+.eau-form-input,
+.eau-form-select {
+    padding: 0.75rem 1rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+    font-family: inherit !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    line-height: 1.5 !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+.eau-form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.75rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.25rem !important;
+    padding-right: 2.5rem !important;
+}
+
+.eau-form-input:focus,
+.eau-form-select:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-form-input::placeholder {
+    color: #9ca3af !important;
+}
+
+.eau-form-input.error,
+.eau-form-select.error {
+    border-color: #ef4444 !important;
+}
+
+.eau-form-input.error:focus,
+.eau-form-select.error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.eau-form-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.eau-form-error {
+    font-size: 0.75rem;
+    color: #ef4444;
+    display: none;
+}
+
+.eau-form-error.visible {
+    display: block;
+}
+
+/* Institution Search Dropdown */
+.eau-select-search-wrapper {
+    position: relative;
+}
+
+.eau-institution-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.eau-institution-dropdown.active {
+    display: block;
+}
+
+.eau-institution-dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s ease;
+}
+
+.eau-institution-dropdown-item:hover,
+.eau-institution-dropdown-item.highlighted {
+    background: #f3f4f6;
+}
+
+.eau-institution-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.eau-institution-dropdown-item.add-new {
+    color: #2563eb;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-institution-dropdown-item.add-new i {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-institution-dropdown-loading,
+.eau-institution-dropdown-empty {
+    padding: 1rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* ==========================================================================
+   Phone Input with intl-tel-input (DDI Selector)
+   ========================================================================== */
+
+.eau-phone-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.eau-phone-input-wrapper .iti {
+    width: 100%;
+}
+
+.eau-phone-input-wrapper .iti__flag-container {
+    padding: 0 !important;
+}
+
+.eau-phone-input-wrapper .iti__selected-flag {
+    padding: 0 0.75rem !important;
+    background: #f9fafb !important;
+    border-right: 1px solid #d1d5db !important;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.eau-phone-input-wrapper .iti__selected-flag:hover,
+.eau-phone-input-wrapper .iti__selected-flag:focus {
+    background: #f3f4f6 !important;
+}
+
+.eau-phone-input-wrapper .iti--separate-dial-code .iti__selected-dial-code {
+    font-size: 0.875rem !important;
+    color: #374151 !important;
+    margin-left: 0.5rem !important;
+}
+
+.eau-phone-input-wrapper .iti__country-list {
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
+    max-height: 250px !important;
+    z-index: 1001 !important;
+}
+
+.eau-phone-input-wrapper .iti__country {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-phone-input-wrapper .iti__country:hover,
+.eau-phone-input-wrapper .iti__country--highlight {
+    background: #f3f4f6 !important;
+}
+
+.eau-phone-input-wrapper .iti__dial-code {
+    color: #6b7280 !important;
+}
+
+/* Adjust input padding for DDI selector */
+.eau-phone-input-wrapper input.eau-phone-input {
+    padding-left: 90px !important;
+}
+
+/* ==========================================================================
+   Password Field
+   ========================================================================== */
+
+.eau-password-wrapper {
+    position: relative;
+}
+
+.eau-password-wrapper .eau-form-input {
+    padding-right: 3rem !important;
+}
+
+/* Hide WordPress default password toggle button */
+.eau-password-wrapper input[type="password"]::-ms-reveal,
+.eau-password-wrapper input[type="password"]::-ms-clear,
+.eau-password-wrapper input[type="text"]::-ms-reveal,
+.eau-password-wrapper input[type="text"]::-ms-clear {
+    display: none !important;
+}
+
+.eau-password-wrapper .wp-pwd,
+.eau-password-wrapper .wp-hide-pw,
+.eau-password-wrapper .button.wp-hide-pw,
+.eau-password-wrapper button.wp-hide-pw,
+.eau-password-wrapper .dashicons-visibility,
+.eau-password-wrapper .dashicons-hidden {
+    display: none !important;
+}
+
+/* Hide any auto-generated toggle by browser or WP */
+.eau-public-registration-container input[type="password"] + button:not(.eau-password-toggle),
+.eau-public-registration-container input[type="text"] + button:not(.eau-password-toggle) {
+    display: none !important;
+}
+
+.eau-password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none !important;
+    border: none !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    padding: 0.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+}
+
+.eau-password-toggle:hover {
+    color: #374151 !important;
+    background: none !important;
+}
+
+.eau-password-toggle:active,
+.eau-password-toggle:focus {
+    outline: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+.eau-password-toggle i {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Password Strength */
+.eau-password-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.eau-strength-bar {
+    flex: 1;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.eau-strength-bar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+.eau-password-strength.weak .eau-strength-bar::after {
+    width: 25%;
+    background: #ef4444;
+}
+
+.eau-password-strength.fair .eau-strength-bar::after {
+    width: 50%;
+    background: #f59e0b;
+}
+
+.eau-password-strength.good .eau-strength-bar::after {
+    width: 75%;
+    background: #10b981;
+}
+
+.eau-password-strength.strong .eau-strength-bar::after {
+    width: 100%;
+    background: #059669;
+}
+
+.eau-strength-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    min-width: 50px;
+}
+
+.eau-password-strength.weak .eau-strength-text { color: #ef4444; }
+.eau-password-strength.fair .eau-strength-text { color: #f59e0b; }
+.eau-password-strength.good .eau-strength-text { color: #10b981; }
+.eau-password-strength.strong .eau-strength-text { color: #059669; }
+
+/* Newsletter Section */
+.eau-newsletters-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.eau-newsletters-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-newsletters-title i {
+    width: 20px;
+    height: 20px;
+    color: #2563eb;
+}
+
+.eau-newsletters-description {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+}
+
+.eau-newsletters-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.eau-newsletter-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.eau-newsletter-option:hover {
+    border-color: #2563eb;
+    background: #f0f7ff;
+}
+
+.eau-newsletter-option input[type="checkbox"] {
+    display: none;
+}
+
+.eau-newsletter-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.eau-newsletter-checkbox svg,
+.eau-newsletter-checkbox i {
+    width: 14px !important;
+    height: 14px !important;
+    color: white !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.eau-newsletter-option input:checked + .eau-newsletter-checkbox {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+.eau-newsletter-option input:checked + .eau-newsletter-checkbox svg,
+.eau-newsletter-option input:checked + .eau-newsletter-checkbox i {
+    opacity: 1 !important;
+}
+
+.eau-newsletter-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.eau-newsletter-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.eau-newsletter-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.eau-newsletters-note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: #fef3c7;
+    border-radius: 6px;
+}
+
+.eau-newsletters-note i {
+    width: 16px;
+    height: 16px;
+    color: #d97706;
+    flex-shrink: 0;
+}
+
+/* Terms Section */
+.eau-terms-section {
+    margin-top: 1.5rem;
+}
+
+.eau-terms-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.eau-terms-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.eau-checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    margin-top: 2px;
+}
+
+.eau-checkbox-custom svg,
+.eau-checkbox-custom i {
+    width: 14px !important;
+    height: 14px !important;
+    color: white !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.eau-terms-checkbox input:checked + .eau-checkbox-custom {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+.eau-terms-checkbox input:checked + .eau-checkbox-custom svg,
+.eau-terms-checkbox input:checked + .eau-checkbox-custom i {
+    opacity: 1 !important;
+}
+
+.eau-terms-text {
+    font-size: 0.875rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.eau-terms-text a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.eau-terms-text a:hover {
+    text-decoration: underline;
+}
+
+/* Navigation */
+.eau-registration-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ==========================================================================
+   Buttons - Following Design System with all states
+   ========================================================================== */
+
+.eau-public-registration-container .eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    font-family: inherit !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid transparent !important;
+    text-decoration: none !important;
+    line-height: 1.5 !important;
+}
+
+.eau-public-registration-container .eau-btn i {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Primary Button */
+.eau-public-registration-container .eau-btn-primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.eau-public-registration-container .eau-btn-primary:hover {
+    background: #1d4ed8 !important;
+}
+
+.eau-public-registration-container .eau-btn-primary:active,
+.eau-public-registration-container .eau-btn-primary:focus,
+.eau-public-registration-container .eau-btn-primary:visited {
+    background: #1d4ed8 !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
+}
+
+.eau-public-registration-container .eau-btn-primary:disabled {
+    background: #93c5fd !important;
+    cursor: not-allowed !important;
+}
+
+/* Secondary Button */
+.eau-public-registration-container .eau-btn-secondary {
+    background: #ffffff !important;
+    color: #374151 !important;
+    border-color: #d1d5db !important;
+}
+
+.eau-public-registration-container .eau-btn-secondary:hover {
+    background: #f9fafb !important;
+}
+
+.eau-public-registration-container .eau-btn-secondary:active,
+.eau-public-registration-container .eau-btn-secondary:focus,
+.eau-public-registration-container .eau-btn-secondary:visited {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2) !important;
+}
+
+/* Large Button */
+.eau-public-registration-container .eau-btn-lg {
+    padding: 0.875rem 1.5rem !important;
+    font-size: 1rem !important;
+}
+
+.eau-public-registration-container .eau-btn-lg i {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Success Message */
+.eau-registration-success {
+    text-align: center;
+    padding: 2rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.eau-success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: #d1fae5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eau-success-icon i {
+    width: 48px;
+    height: 48px;
+    color: #10b981;
+}
+
+.eau-success-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.75rem 0;
+}
+
+.eau-success-message {
+    color: #6b7280;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+}
+
+.eau-success-next {
+    background: #fef3c7;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #92400e;
+    margin-bottom: 1.5rem;
+}
+
+.eau-success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.eau-success-actions .eau-btn {
+    width: 100%;
+}
+
+/* Already Logged In */
+.eau-already-logged-in {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    max-width: 480px;
+    margin: 2rem auto;
+}
+
+.eau-already-logged-in-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+    background: #dbeafe;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eau-already-logged-in-icon i {
+    width: 32px;
+    height: 32px;
+    color: #2563eb;
+}
+
+.eau-already-logged-in h2 {
+    font-size: 1.25rem;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.eau-already-logged-in p {
+    color: #6b7280;
+    margin: 0 0 1.5rem 0;
+}
+
+.eau-already-logged-in-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Registration Footer */
+.eau-registration-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.eau-registration-footer a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.eau-registration-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .eau-public-registration-container {
+        margin: 1rem auto;
+    }
+
+    .eau-registration-header-content {
+        padding: 1.5rem;
+    }
+
+    .eau-registration-title {
+        font-size: 1.5rem;
+    }
+
+    .eau-registration-form {
+        padding: 1.5rem;
+    }
+
+    .eau-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-form-field-span-2 {
+        grid-column: span 1;
+    }
+
+    .eau-registration-steps {
+        padding: 0;
+    }
+
+    .eau-step-label {
+        font-size: 0.65rem;
+    }
+
+    .eau-step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+    }
+
+    .eau-registration-nav {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .eau-registration-nav .eau-btn {
+        width: 100%;
+    }
+
+    .eau-success-actions {
+        flex-direction: column;
+    }
+}

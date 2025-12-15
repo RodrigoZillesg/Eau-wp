@@ -235,14 +235,17 @@ class Eau_Filters {
     }
 
     /**
-     * Obtém as opções para o filtro de Status
+     * Obtém as opções para o filtro de Status (membership status)
      *
      * @return array Array de opções [value => label]
      */
     public static function get_status_options() {
         return array(
             'active' => 'Active',
-            'inactive' => 'Inactive',
+            'pending' => 'Pending Approval',
+            'expired' => 'Expired',
+            'suspended' => 'Suspended',
+            'cancelled' => 'Cancelled',
         );
     }
 
@@ -298,34 +301,6 @@ class Eau_Filters {
     }
 
     /**
-     * Obtém as opções para o filtro de Membership Type
-     *
-     * @return array Array de opções [value => label]
-     */
-    public static function get_membership_type_options() {
-        global $wpdb;
-
-        // Busca todos os valores únicos de ins_type
-        $results = $wpdb->get_col("
-            SELECT DISTINCT pm.meta_value
-            FROM {$wpdb->postmeta} pm
-            INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-            WHERE pm.meta_key = 'ins_type'
-            AND p.post_type = 'institutions'
-            AND p.post_status = 'publish'
-            AND pm.meta_value != ''
-            ORDER BY pm.meta_value ASC
-        ");
-
-        $options = array();
-        foreach ($results as $type) {
-            $options[$type] = $type;
-        }
-
-        return $options;
-    }
-
-    /**
      * Obtém as opções para o filtro de Institution
      *
      * CORRETO: Institution Admin vê TODAS as suas instituições
@@ -364,5 +339,43 @@ class Eau_Filters {
         }
 
         return $options;
+    }
+
+    /**
+     * Get membership type options for filter dropdown
+     *
+     * @since 1.49.6
+     * @return array Associative array of membership_type => label
+     */
+    public static function get_membership_type_options() {
+        $types = \EauSystem\Eau_Membership_Types::get_all();
+
+        $options = array();
+        if (!empty($types)) {
+            foreach ($types as $type) {
+                $options[$type->type_key] = $type->type_label;
+            }
+        }
+
+        // Add option for users without membership
+        $options['none'] = 'No Membership';
+
+        return $options;
+    }
+
+    /**
+     * Get membership status options for filter dropdown
+     *
+     * @since 1.49.6
+     * @return array Associative array of status => label
+     */
+    public static function get_membership_status_options() {
+        return array(
+            'active' => 'Active',
+            'pending' => 'Pending',
+            'expired' => 'Expired',
+            'suspended' => 'Suspended',
+            'none' => 'No Membership',
+        );
     }
 }

@@ -1,0 +1,1038 @@
+/**
+ * Eau Payments Management Styles
+ *
+ * @package EauSystem
+ * @since 1.50.1
+ */
+
+/* ==========================================================================
+   Container - Base styles matching Members page
+   ========================================================================== */
+
+.eau-payments-management-container {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 2rem 1rem !important;
+}
+
+/* ==========================================================================
+   Page Header - Must override theme/Elementor styles
+   ========================================================================== */
+
+.eau-payments-management-container .eau-page-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 2rem !important;
+}
+
+.eau-payments-management-container .eau-page-header-title h1 {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+    line-height: 1.2 !important;
+}
+
+.eau-payments-management-container .eau-page-header-subtitle {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+.eau-payments-management-container .eau-page-header-actions {
+    display: flex !important;
+    gap: 0.75rem !important;
+}
+
+/* ==========================================================================
+   Search and Filters Bar
+   ========================================================================== */
+
+.eau-payments-management-container .eau-search-filters-bar {
+    display: flex !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* ==========================================================================
+   Filters Panel
+   ========================================================================== */
+
+.eau-payments-management-container .eau-filters-panel {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* ==========================================================================
+   Data Table Overrides
+   ========================================================================== */
+
+.eau-payments-management-container .eau-data-table-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    min-height: 400px !important;
+}
+
+.eau-payments-management-container .eau-data-table,
+.eau-payments-management-container .eau-table {
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+}
+
+.eau-payments-management-container .eau-data-table th,
+.eau-payments-management-container .eau-table th,
+.eau-payments-management-container .eau-table-th {
+    background: #f9fafb !important;
+    border: none !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    text-align: left !important;
+}
+
+.eau-payments-management-container .eau-data-table td,
+.eau-payments-management-container .eau-table td,
+.eau-payments-management-container .eau-table-td {
+    border: none !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    color: #111827 !important;
+    vertical-align: middle !important;
+    background: #ffffff !important;
+}
+
+.eau-payments-management-container .eau-data-table tbody tr,
+.eau-payments-management-container .eau-table tbody tr,
+.eau-payments-management-container .eau-table-row {
+    background: #ffffff !important;
+    border: none !important;
+}
+
+.eau-payments-management-container .eau-data-table tbody tr:hover,
+.eau-payments-management-container .eau-table tbody tr:hover,
+.eau-payments-management-container .eau-table-row:hover {
+    background-color: #f9fafb !important;
+}
+
+.eau-payments-management-container .eau-data-table tbody tr:last-child td,
+.eau-payments-management-container .eau-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* ==========================================================================
+   Member Cell
+   ========================================================================== */
+
+.eau-member-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.eau-member-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.eau-member-email {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+/* ==========================================================================
+   Amount Cell
+   ========================================================================== */
+
+.eau-amount-cell {
+    font-weight: 600;
+    color: #059669;
+}
+
+/* ==========================================================================
+   Badge/Tag Styles - Matching Members page
+   ========================================================================== */
+
+.eau-payments-management-container .eau-badge,
+.eau-payments-management-container .eau-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.25rem 0.625rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 9999px !important;
+    white-space: nowrap !important;
+}
+
+/* Status badges */
+.eau-payments-management-container .eau-badge-success,
+.eau-payments-management-container .eau-tag-success {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+.eau-payments-management-container .eau-badge-warning,
+.eau-payments-management-container .eau-tag-warning {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.eau-payments-management-container .eau-badge-danger,
+.eau-payments-management-container .eau-tag-danger {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.eau-payments-management-container .eau-badge-info,
+.eau-payments-management-container .eau-tag-info {
+    background-color: #dbeafe !important;
+    color: #1d4ed8 !important;
+}
+
+.eau-payments-management-container .eau-badge-purple,
+.eau-payments-management-container .eau-tag-purple {
+    background-color: #f3e8ff !important;
+    color: #7c3aed !important;
+}
+
+.eau-payments-management-container .eau-badge-gray,
+.eau-payments-management-container .eau-tag-gray {
+    background-color: #f3f4f6 !important;
+    color: #4b5563 !important;
+}
+
+/* ==========================================================================
+   Payment Details View
+   ========================================================================== */
+
+.eau-payment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.eau-payment-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .eau-payment-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.eau-payment-info-section {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.eau-payment-info-section h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.eau-info-row:last-child {
+    border-bottom: none;
+}
+
+.eau-info-label {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.eau-info-value {
+    font-size: 0.875rem;
+    color: #1f2937;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+}
+
+/* ==========================================================================
+   Payment Modal - Professional UI/UX Design v1.51.4
+   ========================================================================== */
+
+/* Modal Base */
+#eau-payment-modal {
+    max-width: 700px !important;
+}
+
+#eau-payment-modal .eau-modal-body {
+    padding: 1.5rem !important;
+    background: #f8fafc !important;
+}
+
+/* Modal Title */
+#eau-payment-modal .eau-modal-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.625rem !important;
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+#eau-payment-modal .eau-modal-title i,
+#eau-payment-modal .eau-modal-title svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    color: #3b82f6 !important;
+}
+
+/* ===== Member Card ===== */
+.eau-pm-member-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.eau-pm-member-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eau-pm-member-avatar i,
+.eau-pm-member-avatar svg {
+    width: 24px;
+    height: 24px;
+    color: #ffffff;
+}
+
+.eau-pm-member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-pm-member-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.125rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eau-pm-member-email {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eau-pm-member-badge {
+    flex-shrink: 0;
+}
+
+.eau-pm-member-badge .eau-badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+}
+
+/* ===== Reference Card ===== */
+.eau-pm-reference-card {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.eau-pm-reference-icon {
+    width: 36px;
+    height: 36px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eau-pm-reference-icon i,
+.eau-pm-reference-icon svg {
+    width: 18px;
+    height: 18px;
+    color: #64748b;
+}
+
+.eau-pm-reference-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-pm-reference-label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.125rem;
+}
+
+.eau-pm-reference-value {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== Summary Cards Grid ===== */
+.eau-pm-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 560px) {
+    .eau-pm-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.eau-pm-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid;
+}
+
+.eau-pm-summary-card.eau-pm-summary-due {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #bfdbfe;
+}
+
+.eau-pm-summary-card.eau-pm-summary-paid {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-color: #bbf7d0;
+}
+
+.eau-pm-summary-card.eau-pm-summary-balance {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    border-color: #fde047;
+}
+
+.eau-pm-summary-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eau-pm-summary-due .eau-pm-summary-icon {
+    background: #3b82f6;
+}
+
+.eau-pm-summary-paid .eau-pm-summary-icon {
+    background: #22c55e;
+}
+
+.eau-pm-summary-balance .eau-pm-summary-icon {
+    background: #eab308;
+}
+
+.eau-pm-summary-icon i,
+.eau-pm-summary-icon svg {
+    width: 20px;
+    height: 20px;
+    color: #ffffff;
+}
+
+.eau-pm-summary-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-pm-summary-label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.125rem;
+}
+
+.eau-pm-summary-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.eau-pm-summary-due .eau-pm-summary-value {
+    color: #1d4ed8;
+}
+
+.eau-pm-summary-paid .eau-pm-summary-value {
+    color: #15803d;
+}
+
+.eau-pm-summary-balance .eau-pm-summary-value {
+    color: #a16207;
+}
+
+/* ===== Sections ===== */
+.eau-pm-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.eau-pm-section-header {
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.eau-pm-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0;
+}
+
+.eau-pm-section-title i,
+.eau-pm-section-title svg {
+    width: 16px;
+    height: 16px;
+    color: #64748b;
+}
+
+/* ===== Payment History List ===== */
+.eau-pm-payments-list {
+    min-height: 60px;
+}
+
+.eau-pm-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #94a3b8;
+}
+
+.eau-pm-empty-state i,
+.eau-pm-empty-state svg {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.eau-pm-empty-state p {
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* Payment Items (populated by JS) */
+#eau-payment-modal .eau-payment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    transition: background 0.15s ease;
+}
+
+#eau-payment-modal .eau-payment-item:hover {
+    background: #f8fafc;
+}
+
+#eau-payment-modal .eau-payment-item:last-child {
+    border-bottom: none;
+}
+
+#eau-payment-modal .eau-payment-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+#eau-payment-modal .eau-payment-item-amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #15803d;
+}
+
+#eau-payment-modal .eau-payment-item-details {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+#eau-payment-modal .eau-view-receipt {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+#eau-payment-modal .eau-view-receipt:hover {
+    text-decoration: underline;
+}
+
+#eau-payment-modal .eau-delete-payment-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: #ffffff;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #dc2626;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#eau-payment-modal .eau-delete-payment-btn:hover {
+    background: #fef2f2;
+    border-color: #f87171;
+}
+
+#eau-payment-modal .eau-delete-payment-btn i,
+#eau-payment-modal .eau-delete-payment-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===== Add Payment Section ===== */
+.eau-pm-add-section {
+    border-color: #bbf7d0 !important;
+}
+
+.eau-pm-add-section .eau-pm-section-header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-bottom-color: #bbf7d0;
+}
+
+.eau-pm-add-section .eau-pm-section-title {
+    color: #166534;
+}
+
+.eau-pm-add-section .eau-pm-section-title i,
+.eau-pm-add-section .eau-pm-section-title svg {
+    color: #22c55e;
+}
+
+/* ===== Form Styles ===== */
+.eau-pm-form {
+    padding: 1rem;
+}
+
+.eau-pm-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 560px) {
+    .eau-pm-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.eau-pm-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.eau-pm-form-group.eau-pm-form-full {
+    grid-column: 1 / -1;
+}
+
+.eau-pm-form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.eau-pm-form-group label i,
+.eau-pm-form-group label svg {
+    width: 14px;
+    height: 14px;
+    color: #94a3b8;
+}
+
+.eau-pm-form-group label .required {
+    color: #ef4444;
+}
+
+.eau-pm-form-group input[type="text"],
+.eau-pm-form-group input[type="number"],
+.eau-pm-form-group input[type="date"],
+.eau-pm-form-group select,
+.eau-pm-form-group textarea {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.eau-pm-form-group input:focus,
+.eau-pm-form-group select:focus,
+.eau-pm-form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.eau-pm-form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Input with Prefix */
+.eau-pm-input-with-prefix {
+    display: flex;
+    align-items: stretch;
+}
+
+.eau-pm-input-prefix {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+}
+
+.eau-pm-input-with-prefix input {
+    border-radius: 0 8px 8px 0 !important;
+    flex: 1;
+}
+
+/* Form Actions */
+.eau-pm-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+}
+
+.eau-pm-form-actions .eau-btn-success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border: none;
+    color: #ffffff;
+    padding: 0.625rem 1.25rem;
+    font-weight: 600;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
+}
+
+.eau-pm-form-actions .eau-btn-success:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(22, 163, 74, 0.25);
+}
+
+.eau-pm-form-actions .eau-btn-success i,
+.eau-pm-form-actions .eau-btn-success svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Media Upload inside form */
+.eau-pm-form-group .eau-media-upload-dropzone {
+    min-height: 70px;
+    border-radius: 8px;
+}
+
+/* Text color utilities */
+.eau-text-success { color: #15803d !important; }
+.eau-text-warning { color: #a16207 !important; }
+.eau-text-danger { color: #dc2626 !important; }
+
+/* Form Actions */
+#eau-payment-modal .eau-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* Modal Title Icon */
+#eau-payment-modal .eau-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#eau-payment-modal .eau-modal-title i,
+#eau-payment-modal .eau-modal-title svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #2563eb;
+}
+
+/* Form Grid (legacy support) */
+.eau-form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .eau-form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Select2 styling inside modal */
+.eau-modal .select2-container {
+    width: 100% !important;
+}
+
+.eau-modal .select2-container--default .select2-selection--single {
+    height: 42px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0 12px;
+}
+
+.eau-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px;
+    padding-left: 0;
+    color: #1f2937;
+}
+
+.eau-modal .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+}
+
+.eau-modal .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #9ca3af;
+}
+
+.select2-dropdown {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.select2-results__option--highlighted[aria-selected] {
+    background-color: #2563eb !important;
+}
+
+/* Input Group */
+.eau-input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.eau-input-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.eau-input-group input {
+    border-radius: 0 6px 6px 0 !important;
+    flex: 1;
+}
+
+/* ==========================================================================
+   Skeleton Loading
+   ========================================================================== */
+
+.eau-skeleton-row td {
+    padding: 1rem 0.75rem;
+}
+
+.eau-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: eau-skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+.eau-skeleton-text {
+    height: 16px;
+    width: 80%;
+}
+
+@keyframes eau-skeleton-pulse {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ==========================================================================
+   Spin Animation
+   ========================================================================== */
+
+.eau-spin {
+    animation: eau-spin 1s linear infinite;
+}
+
+@keyframes eau-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 767px) {
+    .eau-payments-management-container {
+        padding: 1rem !important;
+    }
+
+    .eau-payments-management-container .eau-page-header {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    .eau-payments-management-container .eau-page-header-title h1 {
+        font-size: 1.5rem !important;
+    }
+
+    .eau-payments-management-container .eau-page-header-actions {
+        width: 100% !important;
+        flex-direction: column !important;
+    }
+
+    .eau-payments-management-container .eau-page-header-actions .eau-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .eau-payments-management-container .eau-search-filters-bar {
+        flex-direction: column !important;
+    }
+
+    .eau-payments-management-container .eau-search-wrapper {
+        width: 100% !important;
+    }
+
+    .eau-payments-management-container .eau-filters-toggle {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Hide some columns on mobile */
+    .eau-payments-management-container .eau-data-table th:nth-child(5),
+    .eau-payments-management-container .eau-data-table td:nth-child(5) {
+        display: none !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .eau-payments-management-container {
+        padding: 1.5rem !important;
+    }
+
+    .eau-payments-management-container .eau-page-header-title h1 {
+        font-size: 1.75rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Hide more columns on very small screens */
+    .eau-payments-management-container .eau-data-table th:nth-child(4),
+    .eau-payments-management-container .eau-data-table td:nth-child(4) {
+        display: none !important;
+    }
+}

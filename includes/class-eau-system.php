@@ -101,6 +101,7 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-settings.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-service.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-events.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-membership.php';
         // My Institution (v1.44.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institution-requests-database.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-institution.php';
@@ -109,6 +110,32 @@ class Eau_System {
         // Payments System (v1.45.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payments-post-type.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payments-ajax.php';
+
+        // Membership System (v1.49.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-membership-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-membership-types.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-newsletters.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-public-registration.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-public-registration-ajax.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-membership-selection.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-membership-selection-ajax.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-membership-applications-management.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-membership-applications-ajax.php';
+
+        // Membership Cron Jobs (v1.50.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-membership-cron.php';
+
+        // Payments Management (v1.50.1)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-payments-management.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-payments-management-ajax.php';
+
+        // Ensure membership tables exist (for updates without reactivation)
+        if (!Eau_Membership_Database::tables_exist()) {
+            Eau_Membership_Database::create_tables();
+        }
+
+        // Upgrade existing tables if needed
+        Eau_Membership_Database::maybe_upgrade_tables();
     }
 
     private function define_admin_hooks() {
@@ -155,6 +182,13 @@ class Eau_System {
             null,
             true
         );
+
+        // Version console.log for debugging
+        wp_add_inline_script(
+            'lucide-icons',
+            'console.log("%c Eau System v' . EAU_SYSTEM_VERSION . ' ", "background: #005EB8; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;");',
+            'after'
+        );
     }
 
     public function run() {
@@ -171,6 +205,10 @@ class Eau_System {
         Eau_OpenLearning_Courses::register_shortcode();
         Eau_OpenLearning_Management::register_shortcode();
         Eau_My_Institution::register_shortcode();
+        Eau_Public_Registration::register_shortcode();
+        Eau_Membership_Selection::register_shortcode();
+        Eau_Membership_Applications_Management::register_shortcode();
+        Eau_Payments_Management::init();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();
@@ -184,6 +222,10 @@ class Eau_System {
         \EauSystem\Ajax\Eau_OpenLearning_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_OpenLearning_Management_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_My_Institution_Ajax::register_handlers();
+        Eau_Public_Registration_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_Membership_Selection_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_Membership_Applications_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_Payments_Management_Ajax::init();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
         Eau_Duplicate_Scanner::register_hooks();
@@ -224,6 +266,9 @@ class Eau_System {
         if (!Eau_Institution_Requests_Database::table_exists()) {
             Eau_Institution_Requests_Database::create_table();
         }
+
+        // Registra hooks do Membership Cron (v1.50.0)
+        Eau_Membership_Cron::register_hooks();
     }
 
     public function get_plugin_name() {

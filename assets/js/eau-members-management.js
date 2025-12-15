@@ -21,6 +21,7 @@
         institutions: [], // Lista de instituições para select
         orderBy: 'display_name', // Campo de ordenação
         order: 'ASC', // Direção: ASC ou DESC
+        phoneIti: null, // intl-tel-input instance
 
         /**
          * Inicializa
@@ -29,7 +30,47 @@
             this.loadEditableFields(); // Carrega campos configurados
             this.loadInstitutions(); // Carrega instituições
             this.bindEvents();
+            this.checkUrlParams(); // Check for URL parameters BEFORE loading members
             this.loadMembers();
+        },
+
+        /**
+         * Check URL parameters for direct actions
+         */
+        checkUrlParams: function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+            const statusFilter = urlParams.get('status');
+
+            // Apply status filter from URL
+            if (statusFilter) {
+                // Set the filter value
+                this.filters.status = statusFilter;
+
+                // Update the select element
+                $('#eau-filter-status').val(statusFilter);
+
+                // Show the filters panel
+                $('#eau-filters-panel').addClass('active');
+
+                // Remove the parameter from URL to avoid re-applying on refresh
+                const url = new URL(window.location);
+                url.searchParams.delete('status');
+                window.history.replaceState({}, document.title, url);
+
+                // Reset to first page
+                this.currentPage = 1;
+            }
+
+            if (editId) {
+                // Remove the parameter from URL to avoid reopening on refresh
+                const url = new URL(window.location);
+                url.searchParams.delete('edit');
+                window.history.replaceState({}, document.title, url);
+
+                // Open edit modal for the specified user
+                this.editMember(parseInt(editId, 10));
+            }
         },
 
         /**
@@ -812,6 +853,62 @@
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+
+            // Initialize phone input with intl-tel-input (only for edit/add modes)
+            if (!isView) {
+                this.initPhoneInput(userData);
+            }
+        },
+
+        /**
+         * Initialize intl-tel-input for phone field
+         */
+        initPhoneInput: function(userData) {
+            const self = this;
+            const phoneInput = document.querySelector('#eau-member-phone');
+
+            if (phoneInput && typeof intlTelInput !== 'undefined') {
+                // Destroy previous instance if exists
+                if (this.phoneIti) {
+                    this.phoneIti.destroy();
+                    this.phoneIti = null;
+                }
+
+                // Initialize intl-tel-input
+                this.phoneIti = intlTelInput(phoneInput, {
+                    initialCountry: 'au',
+                    preferredCountries: ['au', 'nz', 'gb', 'us'],
+                    separateDialCode: true,
+                    utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+                });
+
+                // Set initial value if exists
+                const phoneValue = userData && userData.meta ? (userData.meta.mem_phone || userData.meta.mem_mobile || '') : '';
+                if (phoneValue) {
+                    this.phoneIti.setNumber(phoneValue);
+                }
+
+                // Update hidden field when phone changes
+                phoneInput.addEventListener('change', function() {
+                    if (self.phoneIti) {
+                        $('#eau-member-phone-full').val(self.phoneIti.getNumber());
+                    }
+                });
+
+                // Also update on blur
+                phoneInput.addEventListener('blur', function() {
+                    if (self.phoneIti) {
+                        $('#eau-member-phone-full').val(self.phoneIti.getNumber());
+                    }
+                });
+
+                // Also update on countrychange
+                phoneInput.addEventListener('countrychange', function() {
+                    if (self.phoneIti) {
+                        $('#eau-member-phone-full').val(self.phoneIti.getNumber());
+                    }
+                });
+            }
         },
 
         /**
@@ -916,8 +1013,21 @@
                 fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
                 fieldHTML += `<textarea class="eau-form-input" name="${fieldName}" rows="3" ${readonly} ${requiredAttr}>${value}</textarea>`;
                 fieldHTML += `</div>`;
+            } else if (inputType === 'tel' || fieldName === 'mem_phone' || fieldName === 'mem_mobile') {
+                // Phone input with intl-tel-input DDI selector
+                fieldHTML += `<div class="eau-form-field">`;
+                fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
+                if (!isView) {
+                    fieldHTML += `<div class="eau-phone-input-wrapper">`;
+                    fieldHTML += `<input type="tel" class="eau-form-input eau-phone-input" id="eau-member-phone" autocomplete="tel" placeholder="Enter phone number" ${requiredAttr}>`;
+                    fieldHTML += `<input type="hidden" name="${fieldName}" id="eau-member-phone-full" value="${value}">`;
+                    fieldHTML += `</div>`;
+                } else {
+                    fieldHTML += `<input type="text" class="eau-form-input" value="${value}" readonly>`;
+                }
+                fieldHTML += `</div>`;
             } else {
-                // Input text, email, tel, etc
+                // Input text, email, etc
                 fieldHTML += `<div class="eau-form-field">`;
                 fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
                 fieldHTML += `<input type="${inputType}" class="eau-form-input" name="${fieldName}" value="${value}" ${readonly} ${requiredAttr}>`;
@@ -947,6 +1057,11 @@
         saveMember: function(modalId) {
             const self = this;
             const $form = $('#eau-member-form');
+
+            // Update phone hidden field with full number before saving
+            if (this.phoneIti) {
+                $('#eau-member-phone-full').val(this.phoneIti.getNumber());
+            }
 
             // Valida form
             if (!$form[0].checkValidity()) {
@@ -996,6 +1111,11 @@
         createMember: function() {
             const self = this;
             const $form = $('#eau-member-form');
+
+            // Update phone hidden field with full number before saving
+            if (this.phoneIti) {
+                $('#eau-member-phone-full').val(this.phoneIti.getNumber());
+            }
 
             // Valida form
             if (!$form[0].checkValidity()) {
