@@ -1,0 +1,921 @@
+/**
+ * EAU System Presentation - Public Presentation Page
+ * Shortcode: [eau_system_presentation]
+ */
+
+/* ===================== VARIABLES ===================== */
+:root {
+    --eau-pres-primary: #2563eb;
+    --eau-pres-primary-light: #dbeafe;
+    --eau-pres-primary-dark: #1d4ed8;
+    --eau-pres-success: #10b981;
+    --eau-pres-success-light: #d1fae5;
+    --eau-pres-warning: #f59e0b;
+    --eau-pres-warning-light: #fef3c7;
+    --eau-pres-danger: #dc2626;
+    --eau-pres-danger-light: #fee2e2;
+    --eau-pres-dark: #1f2937;
+    --eau-pres-gray: #6b7280;
+    --eau-pres-gray-light: #9ca3af;
+    --eau-pres-border: #e5e7eb;
+    --eau-pres-bg: #f9fafb;
+    --eau-pres-white: #ffffff;
+    --eau-pres-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --eau-pres-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+    --eau-pres-radius: 8px;
+    --eau-pres-radius-lg: 12px;
+}
+
+/* ===================== CONTAINER ===================== */
+.eau-presentation {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--eau-pres-dark);
+    line-height: 1.6;
+}
+
+/* ===================== HEADER ===================== */
+.eau-pres-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--eau-pres-border);
+}
+
+.eau-pres-logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--eau-pres-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.eau-pres-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--eau-pres-dark);
+    margin-bottom: 0.5rem;
+}
+
+.eau-pres-version {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--eau-pres-primary-light);
+    color: var(--eau-pres-primary);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ===================== LANGUAGE TABS ===================== */
+.eau-pres-lang-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    position: sticky;
+    top: 0;
+    background: var(--eau-pres-white);
+    padding: 1rem 0;
+    z-index: 100;
+}
+
+.eau-pres-lang-tabs-inner {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.eau-presentation .eau-pres-lang-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.625rem 1.25rem !important;
+    border: 1px solid #d1d5db !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border-radius: 6px !important;
+    font-family: inherit !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: unset !important;
+    min-height: unset !important;
+}
+
+.eau-presentation .eau-pres-lang-tab i {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.eau-presentation .eau-pres-lang-tab:hover {
+    background: #f9fafb !important;
+    border-color: #9ca3af !important;
+    color: #374151 !important;
+}
+
+.eau-presentation .eau-pres-lang-tab.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+.eau-presentation .eau-pres-lang-tab.active:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+
+/* ===================== CONTENT CONTAINERS ===================== */
+.eau-pres-content {
+    display: none;
+}
+
+.eau-pres-content.active {
+    display: block;
+}
+
+/* ===================== SECTIONS ===================== */
+.eau-pres-section {
+    margin-bottom: 3rem;
+    scroll-margin-top: 80px;
+}
+
+.eau-pres-section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--eau-pres-dark);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--eau-pres-primary);
+    display: inline-block;
+}
+
+.eau-pres-section-subtitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--eau-pres-dark);
+    margin: 2rem 0 1rem 0;
+}
+
+.eau-pres-text {
+    font-size: 1rem;
+    color: var(--eau-pres-gray);
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+/* ===================== FEATURE LIST ===================== */
+.eau-pres-features {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
+
+.eau-pres-feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--eau-pres-bg);
+    border-radius: var(--eau-pres-radius);
+    border-left: 3px solid var(--eau-pres-primary);
+}
+
+.eau-pres-feature-item i {
+    color: var(--eau-pres-success);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ===================== STATS GRID ===================== */
+.eau-pres-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.eau-pres-stat-card {
+    background: var(--eau-pres-white);
+    border: 1px solid var(--eau-pres-border);
+    border-radius: var(--eau-pres-radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.eau-pres-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--eau-pres-shadow);
+}
+
+.eau-pres-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--eau-pres-primary);
+    margin-bottom: 0.25rem;
+}
+
+.eau-pres-stat-label {
+    font-size: 0.875rem;
+    color: var(--eau-pres-gray);
+}
+
+/* ===================== TABLES ===================== */
+.eau-pres-table-wrapper {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border-radius: var(--eau-pres-radius-lg);
+    border: 1px solid var(--eau-pres-border);
+}
+
+.eau-pres-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.eau-pres-table th,
+.eau-pres-table td {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--eau-pres-border);
+}
+
+.eau-pres-table th {
+    background: var(--eau-pres-bg);
+    font-weight: 600;
+    color: var(--eau-pres-dark);
+    white-space: nowrap;
+}
+
+.eau-pres-table tr:last-child td {
+    border-bottom: none;
+}
+
+.eau-pres-table tr:hover td {
+    background: var(--eau-pres-bg);
+}
+
+.eau-pres-table td:not(:first-child) {
+    text-align: center;
+}
+
+.eau-pres-check {
+    color: var(--eau-pres-success);
+    font-weight: bold;
+}
+
+.eau-pres-dash {
+    color: var(--eau-pres-gray-light);
+}
+
+/* ===================== FEATURE DETAILS ===================== */
+.eau-pres-feature-detail {
+    background: var(--eau-pres-white);
+    border: 1px solid var(--eau-pres-border);
+    border-radius: var(--eau-pres-radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.eau-pres-feature-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.eau-pres-feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+}
+
+.eau-pres-feature-icon i {
+    width: 28px;
+    height: 28px;
+}
+
+.eau-pres-feature-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--eau-pres-dark);
+    margin: 0;
+}
+
+.eau-pres-feature-detail .eau-pres-text {
+    margin-bottom: 1.5rem;
+}
+
+.eau-pres-feature-detail .eau-pres-capabilities {
+    margin-bottom: 2rem;
+}
+
+/* ===================== USER TYPE CARDS ===================== */
+.eau-pres-user-section {
+    background: var(--eau-pres-white);
+    border: 1px solid var(--eau-pres-border);
+    border-radius: var(--eau-pres-radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.eau-pres-user-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.eau-pres-user-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eau-pres-user-icon.super-admin {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+}
+
+.eau-pres-user-icon.admin {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+}
+
+.eau-pres-user-icon.institution-admin {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+}
+
+.eau-pres-user-icon.member {
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+    color: white;
+}
+
+.eau-pres-user-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--eau-pres-dark);
+    margin: 0;
+}
+
+.eau-pres-capabilities {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 1.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.eau-pres-capability {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--eau-pres-primary-light);
+    color: var(--eau-pres-primary);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.eau-pres-capability i {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===================== PAGE SCREENSHOTS ===================== */
+.eau-pres-pages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.eau-pres-page-card {
+    background: var(--eau-pres-bg);
+    border-radius: var(--eau-pres-radius-lg);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.eau-pres-page-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--eau-pres-shadow);
+}
+
+.eau-pres-page-image-wrapper {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.eau-pres-page-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.eau-pres-page-card:hover .eau-pres-page-image {
+    transform: scale(1.02);
+}
+
+.eau-pres-page-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.eau-pres-page-card:hover .eau-pres-page-overlay {
+    opacity: 1;
+}
+
+.eau-pres-page-overlay i {
+    color: white;
+    width: 32px;
+    height: 32px;
+}
+
+.eau-pres-page-content {
+    padding: 1rem;
+}
+
+.eau-pres-page-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--eau-pres-dark);
+    margin-bottom: 0.5rem;
+}
+
+.eau-pres-page-description {
+    font-size: 0.875rem;
+    color: var(--eau-pres-gray);
+    line-height: 1.5;
+}
+
+/* ===================== PENDING ITEMS ===================== */
+.eau-pres-pending-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+.eau-pres-pending-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--eau-pres-warning-light);
+    border-left: 4px solid var(--eau-pres-warning);
+    border-radius: 0 var(--eau-pres-radius) var(--eau-pres-radius) 0;
+    margin-bottom: 0.75rem;
+}
+
+.eau-pres-pending-item i {
+    color: var(--eau-pres-warning);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.eau-pres-pending-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--eau-pres-warning);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.eau-pres-pending-text {
+    color: var(--eau-pres-dark);
+    font-size: 0.9rem;
+}
+
+/* ===================== ACCESS CARD ===================== */
+.eau-pres-access-card {
+    background: linear-gradient(135deg, var(--eau-pres-primary), var(--eau-pres-primary-dark));
+    border-radius: var(--eau-pres-radius-lg);
+    padding: 2rem;
+    color: white;
+    margin: 1.5rem 0;
+}
+
+.eau-pres-access-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.eau-pres-access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.eau-pres-access-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--eau-pres-radius);
+    padding: 1rem;
+}
+
+.eau-pres-access-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+    margin-bottom: 0.25rem;
+}
+
+.eau-pres-access-value {
+    font-size: 1rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.eau-pres-access-note {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.875rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ===================== FOOTER ===================== */
+.eau-pres-footer {
+    text-align: center;
+    padding-top: 2rem;
+    margin-top: 2rem;
+    border-top: 2px solid var(--eau-pres-border);
+    color: var(--eau-pres-gray);
+    font-size: 0.875rem;
+}
+
+.eau-pres-footer-version {
+    font-weight: 600;
+    color: var(--eau-pres-dark);
+}
+
+/* ===================== SCROLL TO TOP ===================== */
+.eau-presentation .eau-pres-scroll-top {
+    position: fixed !important;
+    bottom: 2rem !important;
+    right: 2rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    max-width: 44px !important;
+    max-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.2s ease !important;
+    z-index: 99 !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+    font-family: inherit !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+}
+
+.eau-presentation .eau-pres-scroll-top.visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+}
+
+.eau-presentation .eau-pres-scroll-top:hover {
+    background: #1d4ed8 !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+    color: #ffffff !important;
+}
+
+.eau-presentation .eau-pres-scroll-top:active {
+    transform: scale(0.95) !important;
+}
+
+.eau-presentation .eau-pres-scroll-top i,
+.eau-presentation .eau-pres-scroll-top svg {
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 2.5 !important;
+    color: inherit !important;
+}
+
+/* ===================== LIGHTBOX ===================== */
+.eau-pres-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+}
+
+.eau-pres-lightbox.active {
+    display: block;
+}
+
+.eau-pres-lightbox-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    cursor: pointer;
+}
+
+.eau-pres-lightbox-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.eau-pres-lightbox .eau-pres-lightbox-close {
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 50% !important;
+    color: #1f2937 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    z-index: 10 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+}
+
+.eau-pres-lightbox .eau-pres-lightbox-close:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    transform: scale(1.05) !important;
+}
+
+.eau-pres-lightbox .eau-pres-lightbox-close i,
+.eau-pres-lightbox .eau-pres-lightbox-close svg {
+    width: 20px !important;
+    height: 20px !important;
+    color: inherit !important;
+    stroke-width: 2.5 !important;
+}
+
+.eau-pres-lightbox-scroll {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3rem 1rem 1rem 1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.eau-pres-lightbox-image {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    border-radius: var(--eau-pres-radius);
+    box-shadow: var(--eau-pres-shadow-lg);
+    cursor: default;
+}
+
+.eau-pres-lightbox-caption {
+    color: var(--eau-pres-white);
+    text-align: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: var(--eau-pres-radius);
+    margin: 0.5rem auto 0;
+    max-width: fit-content;
+}
+
+/* ===================== TABLE OF CONTENTS ===================== */
+.eau-pres-toc {
+    background: var(--eau-pres-bg);
+    border-radius: var(--eau-pres-radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.eau-pres-toc-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--eau-pres-dark);
+    margin-bottom: 1rem;
+}
+
+.eau-pres-toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+}
+
+.eau-pres-toc-item {
+    display: block;
+}
+
+.eau-pres-toc-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--eau-pres-gray);
+    text-decoration: none;
+    border-radius: var(--eau-pres-radius);
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.eau-pres-toc-link:hover {
+    background: var(--eau-pres-primary-light);
+    color: var(--eau-pres-primary);
+}
+
+.eau-pres-toc-link i {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 768px) {
+    .eau-presentation {
+        padding: 1rem 0.75rem;
+    }
+
+    .eau-pres-logo {
+        font-size: 1.75rem;
+    }
+
+    .eau-pres-title {
+        font-size: 1.25rem;
+    }
+
+    .eau-pres-section-title {
+        font-size: 1.5rem;
+    }
+
+    .eau-pres-lang-tabs-inner {
+        padding: 3px;
+    }
+
+    .eau-pres-lang-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .eau-pres-feature-detail {
+        padding: 1.25rem;
+    }
+
+    .eau-pres-feature-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .eau-pres-feature-title {
+        font-size: 1.25rem;
+    }
+
+    .eau-pres-user-section {
+        padding: 1.25rem;
+    }
+
+    .eau-pres-user-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .eau-pres-user-title {
+        font-size: 1.25rem;
+    }
+
+    .eau-pres-pages-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-pres-page-image {
+        height: 180px;
+    }
+
+    .eau-pres-access-card {
+        padding: 1.25rem;
+    }
+
+    .eau-pres-features {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-pres-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .eau-pres-toc-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .eau-pres-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-pres-stat-value {
+        font-size: 1.5rem;
+    }
+
+    .eau-pres-capabilities {
+        justify-content: center;
+    }
+
+    .eau-pres-table {
+        font-size: 0.8rem;
+    }
+
+    .eau-pres-table th,
+    .eau-pres-table td {
+        padding: 0.5rem;
+    }
+}
+
+/* ===================== PRINT STYLES ===================== */
+@media print {
+    .eau-pres-lang-tabs,
+    .eau-pres-lightbox,
+    .eau-pres-page-overlay {
+        display: none !important;
+    }
+
+    .eau-presentation {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .eau-pres-section {
+        page-break-inside: avoid;
+    }
+
+    .eau-pres-page-image {
+        height: auto;
+        max-height: 300px;
+    }
+}

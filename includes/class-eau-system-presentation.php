@@ -25,7 +25,7 @@ class Eau_System_Presentation {
     /**
      * System version
      */
-    private static $version = '1.52.5';
+    private static $version = '1.52.6';
 
     /**
      * Register shortcode
@@ -80,6 +80,7 @@ class Eau_System_Presentation {
                     'title' => 'Navegação Rápida',
                     'items' => array(
                         'overview' => 'Visão Geral',
+                        'features' => 'Funcionalidades',
                         'user-types' => 'Tipos de Usuários',
                         'super-admin' => 'Super Admin',
                         'admin' => 'Admin',
@@ -92,6 +93,7 @@ class Eau_System_Presentation {
                 ),
                 'sections' => array(
                     'overview' => 'Visão Geral do Sistema',
+                    'featuresDetails' => 'Funcionalidades Detalhadas',
                     'userTypes' => 'Tipos de Usuários',
                     'permissions' => 'Matriz de Permissões',
                     'pendingItems' => 'Próximos Passos',
@@ -116,6 +118,49 @@ class Eau_System_Presentation {
                         array('value' => '16.333', 'label' => 'Atividades CPD'),
                         array('value' => '55', 'label' => 'Cursos OpenLearning'),
                         array('value' => '9', 'label' => 'Eventos Ativos'),
+                    ),
+                ),
+                'featuresIntro' => 'Conheça em detalhes as principais funcionalidades do sistema:',
+                'featuresDetails' => array(
+                    'tags' => array(
+                        'title' => 'Sistema de Tags para Membros',
+                        'icon' => 'tags',
+                        'description' => 'O sistema de tags permite categorizar e segmentar membros de forma flexível, facilitando a organização, busca e comunicação direcionada.',
+                        'capabilities' => array(
+                            'Criar tags personalizadas com cores distintas',
+                            'Aplicar múltiplas tags por membro',
+                            'Quick Tags: gerenciar tags diretamente na tabela de membros',
+                            'Bulk Tags: adicionar ou remover tags em massa para múltiplos membros',
+                            'Filtrar membros por tag nas listagens',
+                            'Remover todas as tags de uma vez com "Remove All"',
+                        ),
+                        'screenshots' => array(
+                            array(
+                                'file' => 'tags-01-members-table.png',
+                                'title' => 'Tabela de Membros',
+                                'description' => 'Visualização das tags na tabela de membros com botão de Quick Tags em cada linha.',
+                            ),
+                            array(
+                                'file' => 'tags-02-quick-tags-popover.png',
+                                'title' => 'Quick Tags Popover',
+                                'description' => 'Popover para adicionar ou remover tags de um membro individual diretamente na tabela.',
+                            ),
+                            array(
+                                'file' => 'tags-03-members-selected.png',
+                                'title' => 'Seleção de Membros',
+                                'description' => 'Seleção múltipla de membros com botão "Manage Tags" visível para operações em massa.',
+                            ),
+                            array(
+                                'file' => 'tags-04-bulk-modal-add.png',
+                                'title' => 'Bulk Tags - Adicionar',
+                                'description' => 'Modal para adicionar tags em massa aos membros selecionados.',
+                            ),
+                            array(
+                                'file' => 'tags-05-bulk-modal-remove.png',
+                                'title' => 'Bulk Tags - Remover',
+                                'description' => 'Modal para remover tags em massa, incluindo opção "Remove ALL tags".',
+                            ),
+                        ),
                     ),
                 ),
                 'userTypesIntro' => 'O sistema implementa uma hierarquia de permissões com 4 níveis de acesso distintos:',
@@ -248,6 +293,7 @@ class Eau_System_Presentation {
                     'title' => 'Quick Navigation',
                     'items' => array(
                         'overview' => 'Overview',
+                        'features' => 'Features',
                         'user-types' => 'User Types',
                         'super-admin' => 'Super Admin',
                         'admin' => 'Admin',
@@ -260,6 +306,7 @@ class Eau_System_Presentation {
                 ),
                 'sections' => array(
                     'overview' => 'System Overview',
+                    'featuresDetails' => 'Detailed Features',
                     'userTypes' => 'User Types',
                     'permissions' => 'Permissions Matrix',
                     'pendingItems' => 'Next Steps',
@@ -284,6 +331,49 @@ class Eau_System_Presentation {
                         array('value' => '16,333', 'label' => 'CPD Activities'),
                         array('value' => '55', 'label' => 'OpenLearning Courses'),
                         array('value' => '9', 'label' => 'Active Events'),
+                    ),
+                ),
+                'featuresIntro' => 'Learn about the main system features in detail:',
+                'featuresDetails' => array(
+                    'tags' => array(
+                        'title' => 'Member Tag System',
+                        'icon' => 'tags',
+                        'description' => 'The tag system allows flexible categorization and segmentation of members, facilitating organization, search, and targeted communication.',
+                        'capabilities' => array(
+                            'Create custom tags with distinct colors',
+                            'Apply multiple tags per member',
+                            'Quick Tags: manage tags directly in the members table',
+                            'Bulk Tags: add or remove tags in bulk for multiple members',
+                            'Filter members by tag in listings',
+                            'Remove all tags at once with "Remove All"',
+                        ),
+                        'screenshots' => array(
+                            array(
+                                'file' => 'tags-01-members-table.png',
+                                'title' => 'Members Table',
+                                'description' => 'View tags in the members table with Quick Tags button in each row.',
+                            ),
+                            array(
+                                'file' => 'tags-02-quick-tags-popover.png',
+                                'title' => 'Quick Tags Popover',
+                                'description' => 'Popover for adding or removing tags from an individual member directly in the table.',
+                            ),
+                            array(
+                                'file' => 'tags-03-members-selected.png',
+                                'title' => 'Member Selection',
+                                'description' => 'Multiple member selection with visible "Manage Tags" button for bulk operations.',
+                            ),
+                            array(
+                                'file' => 'tags-04-bulk-modal-add.png',
+                                'title' => 'Bulk Tags - Add',
+                                'description' => 'Modal for adding tags in bulk to selected members.',
+                            ),
+                            array(
+                                'file' => 'tags-05-bulk-modal-remove.png',
+                                'title' => 'Bulk Tags - Remove',
+                                'description' => 'Modal for removing tags in bulk, including "Remove ALL tags" option.',
+                            ),
+                        ),
                     ),
                 ),
                 'userTypesIntro' => 'The system implements a permission hierarchy with 4 distinct access levels:',
@@ -589,6 +679,56 @@ class Eau_System_Presentation {
                         </div>
                         <?php endforeach; ?>
                     </div>
+                </section>
+
+                <!-- Features Details Section -->
+                <section id="<?php echo esc_attr($lang); ?>-features" class="eau-pres-section">
+                    <h2 class="eau-pres-section-title"><?php echo esc_html($c['sections']['featuresDetails']); ?></h2>
+                    <p class="eau-pres-text"><?php echo esc_html($c['featuresIntro']); ?></p>
+
+                    <?php foreach ($c['featuresDetails'] as $feature_key => $feature) : ?>
+                    <div class="eau-pres-feature-detail">
+                        <div class="eau-pres-feature-header">
+                            <div class="eau-pres-feature-icon">
+                                <i data-lucide="<?php echo esc_attr($feature['icon']); ?>" width="28" height="28"></i>
+                            </div>
+                            <h3 class="eau-pres-feature-title"><?php echo esc_html($feature['title']); ?></h3>
+                        </div>
+
+                        <p class="eau-pres-text"><?php echo esc_html($feature['description']); ?></p>
+
+                        <ul class="eau-pres-capabilities">
+                            <?php foreach ($feature['capabilities'] as $cap) : ?>
+                            <li class="eau-pres-capability">
+                                <i data-lucide="check" width="14" height="14"></i>
+                                <?php echo esc_html($cap); ?>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="eau-pres-pages-grid">
+                            <?php foreach ($feature['screenshots'] as $screenshot) :
+                                $image_url = self::$screenshots_url . 'features/' . $screenshot['file'];
+                            ?>
+                            <div class="eau-pres-page-card">
+                                <div class="eau-pres-page-image-wrapper">
+                                    <img src="<?php echo esc_url($image_url); ?>"
+                                         alt="<?php echo esc_attr($screenshot['title']); ?>"
+                                         class="eau-pres-page-image"
+                                         loading="lazy">
+                                    <div class="eau-pres-page-overlay">
+                                        <i data-lucide="maximize-2" width="32" height="32"></i>
+                                    </div>
+                                </div>
+                                <div class="eau-pres-page-content">
+                                    <h4 class="eau-pres-page-title"><?php echo esc_html($screenshot['title']); ?></h4>
+                                    <p class="eau-pres-page-description"><?php echo esc_html($screenshot['description']); ?></p>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </section>
 
                 <!-- User Types Section -->
