@@ -8,9 +8,16 @@
  * - Dados da tabela sejam carregados
  *
  * Delays recomendados:
- * - Após navegação: 4-5 segundos (páginas com tabelas AJAX)
+ * - Após navegação: 5-6 segundos (páginas com tabelas AJAX)
  * - Após abrir modal: 2-3 segundos
  * - Após clicar em botões/tabs: 1 segundo
+ *
+ * URLs CORRETAS (verificadas):
+ * - Members: /admin/members/ ou /dashboard/manage-members/
+ * - Institutions: /dashboard/manage-institutions/ (NÃO /admin/institutions/)
+ * - Activities: /dashboard/manage-activities/ (NÃO /admin/activities/)
+ * - Categories: /dashboard/manage-categories/ (NÃO /admin/categories/)
+ * - My Profile: /profile/ (redireciona para /dashboard/profile/)
  */
 
 const { chromium } = require('playwright');
@@ -19,11 +26,11 @@ const fs = require('fs');
 
 // Configuração de delays (em ms)
 const DELAYS = {
-    afterNavigation: 5000,      // Após navegar para nova página
-    afterTableLoad: 3000,       // Após tabela AJAX carregar
+    afterNavigation: 6000,      // Após navegar para nova página
+    afterTableLoad: 4000,       // Após tabela AJAX carregar
     afterModalOpen: 2500,       // Após abrir modal
     afterTabClick: 1000,        // Após clicar em tab/botão
-    afterLogin: 3000,           // Após fazer login
+    afterLogin: 4000,           // Após fazer login
 };
 
 (async () => {
@@ -51,7 +58,7 @@ const DELAYS = {
             // Espera skeleton desaparecer se existir
             await page.waitForSelector('.eau-skeleton', { state: 'hidden', timeout: 10000 }).catch(() => {});
             // Espera tabela aparecer
-            await page.waitForSelector('.eau-data-table tbody tr, .eau-table tbody tr', { timeout: 10000 }).catch(() => {});
+            await page.waitForSelector('.eau-data-table tbody tr, .eau-table tbody tr, table tbody tr', { timeout: 10000 }).catch(() => {});
         } catch (e) {
             // Se não encontrar, apenas espera
         }
@@ -74,8 +81,13 @@ const DELAYS = {
     // Helper para navegar com espera
     async function navigateTo(url, description) {
         console.log(`\n>>> Navegando para: ${description}`);
-        await page.goto(url, { waitUntil: 'domcontentloaded' });
+        await page.goto(url, { waitUntil: 'networkidle' });
         await waitForPageLoad();
+        // Log da URL final para debug
+        const finalUrl = page.url();
+        if (!finalUrl.includes(url.split('/').slice(-2, -1)[0])) {
+            console.log(`   AVISO: Redirecionou para ${finalUrl}`);
+        }
     }
 
     try {
@@ -87,7 +99,7 @@ const DELAYS = {
         console.log('='.repeat(50));
 
         console.log('\n1. Fazendo login como SuperAdmin...');
-        await page.goto('http://eau-site.local/login/', { waitUntil: 'domcontentloaded' });
+        await page.goto('http://eau-site.local/login/', { waitUntil: 'networkidle' });
         await page.waitForTimeout(2000);
 
         await page.fill('input[name="log"], input#user_login', 'rrzillesg@gmail.com');
@@ -101,7 +113,7 @@ const DELAYS = {
         // DASHBOARD
         // ============================================
         await navigateTo('http://eau-site.local/dashboard/', 'Dashboard');
-        await page.waitForTimeout(2000); // Extra para cards carregarem
+        await page.waitForTimeout(3000);
         await safeScreenshot('dashboard-01-main.png', 'Dashboard principal');
 
         // ============================================
@@ -118,30 +130,28 @@ const DELAYS = {
             await memberViewBtn.click();
             await page.waitForTimeout(DELAYS.afterModalOpen);
             await safeScreenshot('members-03-view-modal.png', 'Modal de visualização de membro');
-
-            // Fechar modal
             await page.keyboard.press('Escape');
             await page.waitForTimeout(DELAYS.afterTabClick);
         }
 
         // ============================================
-        // INSTITUTIONS MANAGEMENT
+        // INSTITUTIONS MANAGEMENT (URL CORRETA!)
         // ============================================
-        await navigateTo('http://eau-site.local/admin/institutions/', 'Institutions Management');
+        await navigateTo('http://eau-site.local/dashboard/manage-institutions/', 'Institutions Management');
         await waitForTableLoad();
         await safeScreenshot('institutions-01-table.png', 'Tabela de instituições');
 
         // ============================================
-        // ACTIVITIES MANAGEMENT
+        // ACTIVITIES MANAGEMENT (URL CORRETA!)
         // ============================================
-        await navigateTo('http://eau-site.local/admin/activities/', 'Activities Management');
+        await navigateTo('http://eau-site.local/dashboard/manage-activities/', 'Activities Management');
         await waitForTableLoad();
         await safeScreenshot('activities-01-table.png', 'Tabela de atividades');
 
         // ============================================
-        // CATEGORIES MANAGEMENT
+        // CATEGORIES MANAGEMENT (URL CORRETA!)
         // ============================================
-        await navigateTo('http://eau-site.local/admin/categories/', 'Categories Management');
+        await navigateTo('http://eau-site.local/dashboard/manage-categories/', 'Categories Management');
         await waitForTableLoad();
         await safeScreenshot('categories-01-table.png', 'Tabela de categorias');
 
@@ -184,14 +194,14 @@ const DELAYS = {
         // SETTINGS
         // ============================================
         await navigateTo('http://eau-site.local/dashboard/settings/', 'Settings');
-        await page.waitForTimeout(3000); // Settings tem seções collapsíveis
+        await page.waitForTimeout(4000);
         await safeScreenshot('settings-01-main.png', 'Configurações');
 
         // ============================================
-        // MY PROFILE
+        // MY PROFILE (URL CORRETA!)
         // ============================================
-        await navigateTo('http://eau-site.local/dashboard/my-profile/', 'My Profile');
-        await page.waitForTimeout(3000); // Profile tem seções collapsíveis
+        await navigateTo('http://eau-site.local/profile/', 'My Profile');
+        await page.waitForTimeout(4000);
         await safeScreenshot('my-profile-01-main.png', 'Perfil pessoal');
 
         // ============================================
@@ -205,28 +215,28 @@ const DELAYS = {
         // MY INSTITUTION
         // ============================================
         await navigateTo('http://eau-site.local/dashboard/my-institution/', 'My Institution');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(4000);
         await safeScreenshot('my-institution-01-main.png', 'Minha instituição');
 
         // ============================================
         // OPENLEARNING COURSES
         // ============================================
         await navigateTo('http://eau-site.local/dashboard/courses/', 'OpenLearning Courses');
-        await page.waitForTimeout(4000); // Cursos podem demorar
+        await page.waitForTimeout(5000);
         await safeScreenshot('openlearning-courses-01-main.png', 'Cursos OpenLearning');
 
         // ============================================
         // EVENTS FRONTEND (Public)
         // ============================================
         await navigateTo('http://eau-site.local/events/', 'Events Frontend');
-        await page.waitForTimeout(4000); // Cards de eventos
+        await page.waitForTimeout(5000);
         await safeScreenshot('events-frontend-01-list.png', 'Lista pública de eventos');
 
         // ============================================
         // MEMBERSHIP SELECTION
         // ============================================
         await navigateTo('http://eau-site.local/membership-selection/', 'Membership Selection');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(4000);
         await safeScreenshot('membership-selection-01-types.png', 'Seleção de membership');
 
         // ============================================
@@ -234,7 +244,7 @@ const DELAYS = {
         // ============================================
         console.log('\n>>> Fazendo logout para capturar página de registro...');
         await page.goto('http://eau-site.local/wp-login.php?action=logout', { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(2000);
 
         try {
             const logoutLink = page.locator('a:has-text("log out")');
@@ -247,7 +257,7 @@ const DELAYS = {
         }
 
         await navigateTo('http://eau-site.local/register/', 'Public Registration');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(4000);
         await safeScreenshot('registration-01-form.png', 'Formulário de registro');
 
         // ============================================
