@@ -24,12 +24,19 @@
          * @param {string} type - success, error, warning, info
          * @param {string} title - Toast title
          * @param {string} message - Toast message
-         * @param {number} duration - Duration in ms (default: 5000)
+         * @param {object|number} options - Options object { duration: ms } or duration in ms (default: 5000)
+         * @returns {jQuery} Toast element (for update/close)
          */
-        toast: function(type, title, message, duration) {
+        toast: function(type, title, message, options) {
             this.init();
 
-            duration = duration || 5000;
+            // Support both old signature (duration as number) and new (options object)
+            let duration = 5000;
+            if (typeof options === 'number') {
+                duration = options;
+            } else if (typeof options === 'object' && options !== null) {
+                duration = options.duration !== undefined ? options.duration : 5000;
+            }
 
             const icons = {
                 success: 'check-circle',
@@ -39,9 +46,10 @@
             };
 
             const icon = icons[type] || icons.info;
+            const toastId = 'eau-toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
             const $toast = $(`
-                <div class="eau-toast eau-toast-${type}">
+                <div class="eau-toast eau-toast-${type}" id="${toastId}">
                     <div class="eau-toast-icon">
                         <i data-lucide="${icon}"></i>
                     </div>
@@ -67,12 +75,49 @@
                 EauNotifications.closeToast($toast);
             });
 
-            // Auto close
+            // Auto close (only if duration > 0)
             if (duration > 0) {
-                setTimeout(function() {
+                $toast.data('autoCloseTimer', setTimeout(function() {
                     EauNotifications.closeToast($toast);
-                }, duration);
+                }, duration));
             }
+
+            // Return toast element for update/close
+            return $toast;
+        },
+
+        /**
+         * Update an existing toast
+         *
+         * @param {jQuery} $toast - Toast element returned from toast()
+         * @param {object} options - { title, message }
+         */
+        update: function($toast, options) {
+            if (!$toast || !$toast.length) return;
+
+            if (options.title) {
+                $toast.find('.eau-toast-title').text(options.title);
+            }
+            if (options.message) {
+                $toast.find('.eau-toast-message').text(options.message);
+            }
+        },
+
+        /**
+         * Close a specific toast
+         *
+         * @param {jQuery} $toast - Toast element to close
+         */
+        close: function($toast) {
+            if (!$toast || !$toast.length) return;
+
+            // Clear auto-close timer if exists
+            const timer = $toast.data('autoCloseTimer');
+            if (timer) {
+                clearTimeout(timer);
+            }
+
+            this.closeToast($toast);
         },
 
         /**
@@ -87,30 +132,34 @@
 
         /**
          * Show success toast
+         * @returns {jQuery} Toast element
          */
-        success: function(title, message, duration) {
-            this.toast('success', title, message, duration);
+        success: function(title, message, options) {
+            return this.toast('success', title, message, options);
         },
 
         /**
          * Show error toast
+         * @returns {jQuery} Toast element
          */
-        error: function(title, message, duration) {
-            this.toast('error', title, message, duration);
+        error: function(title, message, options) {
+            return this.toast('error', title, message, options);
         },
 
         /**
          * Show warning toast
+         * @returns {jQuery} Toast element
          */
-        warning: function(title, message, duration) {
-            this.toast('warning', title, message, duration);
+        warning: function(title, message, options) {
+            return this.toast('warning', title, message, options);
         },
 
         /**
          * Show info toast
+         * @returns {jQuery} Toast element
          */
-        info: function(title, message, duration) {
-            this.toast('info', title, message, duration);
+        info: function(title, message, options) {
+            return this.toast('info', title, message, options);
         },
 
         /**

@@ -1,6 +1,6 @@
 /**
  * EAU System - Members Management JS
- * Versão: 1.9.2
+ * Versão: 1.10.4
  */
 
 (function($) {
@@ -19,6 +19,7 @@
         selectedIds: [],
         editableFields: {}, // Campos configurados no settings
         institutions: [], // Lista de instituições para select
+        availableTags: [], // Lista de tags disponíveis para membros
         orderBy: 'display_name', // Campo de ordenação
         order: 'ASC', // Direção: ASC ou DESC
         phoneIti: null, // intl-tel-input instance
@@ -29,6 +30,7 @@
         init: function() {
             this.loadEditableFields(); // Carrega campos configurados
             this.loadInstitutions(); // Carrega instituições
+            this.loadAvailableTags(); // Carrega tags disponíveis
             this.bindEvents();
             this.checkUrlParams(); // Check for URL parameters BEFORE loading members
             this.loadMembers();
@@ -124,6 +126,31 @@
         },
 
         /**
+         * Carrega lista de tags disponíveis
+         */
+        loadAvailableTags: function() {
+            const self = this;
+
+            $.ajax({
+                url: eauMembersData.ajaxUrl,
+                type: 'POST',
+                async: false, // Sincrono para garantir que carregue antes de renderizar forms
+                data: {
+                    action: 'eau_get_member_tags',
+                    nonce: eauMembersData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.availableTags = response.data.tags || [];
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load available tags');
+                }
+            });
+        },
+
+        /**
          * Vincula eventos
          */
         bindEvents: function() {
@@ -176,6 +203,41 @@
                 self.deleteMember(userId);
             });
 
+            // Tags Quick Edit
+            $(document).on('click', '.eau-action-tags', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const userId = $(this).data('id');
+                const currentTags = $(this).data('tags') || '';
+                self.openTagsPopover($(this), userId, currentTags);
+            });
+
+            // Close tags popover when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.eau-tags-popover, .eau-action-tags').length) {
+                    self.closeTagsPopover();
+                }
+            });
+
+            // Tags popover events (delegated)
+            $(document).on('click', '.eau-popover-tag-remove', function(e) {
+                e.preventDefault();
+                const slug = $(this).data('slug');
+                const userId = $(this).closest('.eau-tags-popover').data('user-id');
+                self.removeTagFromMember(userId, slug);
+            });
+
+            $(document).on('click', '.eau-popover-tag-add', function(e) {
+                e.preventDefault();
+                const slug = $(this).data('slug');
+                const userId = $(this).closest('.eau-tags-popover').data('user-id');
+                self.addTagToMember(userId, slug);
+            });
+
+            $(document).on('input', '.eau-popover-tag-search', function() {
+                self.filterPopoverTags($(this).val());
+            });
+
             // Table Sorting
             $(document).on('click', '.eau-sortable', function() {
                 const columnKey = $(this).data('key');
@@ -197,6 +259,21 @@
                 $('#eau-bulk-delete-members').on('click', this.handleBulkDelete.bind(this));
                 $('#eau-delete-all-filtered-members').on('click', this.handleDeleteAllFiltered.bind(this));
             }
+
+            // Bulk Manage Tags (Admin ou superAdmin)
+            if (eauMembersData.canManageTags) {
+                $('#eau-bulk-manage-tags').on('click', this.openBulkTagsModal.bind(this));
+            }
+
+            // Popover: Criar nova tag inline
+            $(document).on('click', '.eau-popover-create-btn', function(e) {
+                e.preventDefault();
+                const tagName = $('.eau-popover-tag-search').val().trim();
+                const userId = $('.eau-tags-popover').data('user-id');
+                if (tagName && userId) {
+                    self.createTagInPopover(tagName, userId);
+                }
+            });
         },
 
         /**
@@ -268,6 +345,11 @@
                         <td class="eau-table-td" data-label="STATUS">${row.status}</td>
                         <td class="eau-table-td eau-table-td-actions">
                             <div class="eau-table-actions">
+                                ${eauMembersData.canManageTags ? `
+                                <button class="eau-action-btn eau-action-tags" data-action="tags" data-id="${row.ID}" data-tags="${row.member_tags || ''}" title="Manage Tags">
+                                    <i data-lucide="tags"></i>
+                                </button>
+                                ` : ''}
                                 <button class="eau-action-btn eau-action-view" data-action="view" data-id="${row.ID}" title="View">
                                     <i data-lucide="eye"></i>
                                 </button>
@@ -376,6 +458,15 @@
                     $('#eau-bulk-delete-members').show();
                 } else {
                     $('#eau-bulk-delete-members').hide();
+                }
+            }
+
+            // Mostrar/ocultar botão de bulk manage tags (Admin ou superAdmin)
+            if (eauMembersData.canManageTags) {
+                if (this.selectedIds.length > 0) {
+                    $('#eau-bulk-manage-tags').show();
+                } else {
+                    $('#eau-bulk-manage-tags').hide();
                 }
             }
         },
@@ -857,6 +948,7 @@
             // Initialize phone input with intl-tel-input (only for edit/add modes)
             if (!isView) {
                 this.initPhoneInput(userData);
+                this.initTagsField();
             }
         },
 
@@ -1025,6 +1117,53 @@
                 } else {
                     fieldHTML += `<input type="text" class="eau-form-input" value="${value}" readonly>`;
                 }
+                fieldHTML += `</div>`;
+            } else if (inputType === 'tags') {
+                // Tags field - multi-select with chips and inline creation
+                const memberTags = Array.isArray(value) ? value : (value ? value.split(',') : []);
+
+                fieldHTML += `<div class="eau-form-field eau-form-field-span-2">`;
+                fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
+                fieldHTML += `<div class="eau-tags-field" id="eau-member-tags-field">`;
+
+                // Selected tags as chips
+                fieldHTML += `<div class="eau-selected-tags" id="eau-member-selected-tags">`;
+                memberTags.forEach(tagSlug => {
+                    const tag = this.availableTags.find(t => t.slug === tagSlug);
+                    if (tag) {
+                        if (isView) {
+                            fieldHTML += `<span class="eau-tag-chip" style="background-color: ${tag.color}; color: white;">${this.escapeHtml(tag.name)}</span>`;
+                        } else {
+                            fieldHTML += `<span class="eau-tag-chip" style="background-color: ${tag.color}; color: white;" data-slug="${tag.slug}">
+                                ${this.escapeHtml(tag.name)}
+                                <button type="button" class="eau-tag-remove" data-slug="${tag.slug}">&times;</button>
+                            </span>`;
+                        }
+                    }
+                });
+                fieldHTML += `</div>`;
+
+                if (!isView) {
+                    // Tag input for adding
+                    fieldHTML += `<div class="eau-tags-input-wrapper">`;
+                    fieldHTML += `<div class="eau-tags-dropdown-container">`;
+                    fieldHTML += `<input type="text" class="eau-form-input eau-tag-search" id="eau-tag-search" placeholder="Type to search or add tags..." autocomplete="off">`;
+                    fieldHTML += `<div class="eau-tags-dropdown" id="eau-tags-dropdown" style="display: none;">`;
+                    fieldHTML += `<div class="eau-tags-dropdown-list" id="eau-tags-dropdown-list"></div>`;
+                    fieldHTML += `<div class="eau-tags-dropdown-create" id="eau-tags-dropdown-create" style="display: none;">`;
+                    fieldHTML += `<button type="button" class="eau-btn eau-btn-sm eau-btn-secondary" id="eau-create-tag-inline">`;
+                    fieldHTML += `<i data-lucide="plus"></i> Create "<span id="eau-new-tag-name"></span>"`;
+                    fieldHTML += `</button>`;
+                    fieldHTML += `</div>`;
+                    fieldHTML += `</div>`;
+                    fieldHTML += `</div>`;
+                    fieldHTML += `</div>`;
+
+                    // Hidden field to store selected tag slugs
+                    fieldHTML += `<input type="hidden" name="${fieldName}" id="eau-member-tags-hidden" value="${memberTags.join(',')}">`;
+                }
+
+                fieldHTML += `</div>`;
                 fieldHTML += `</div>`;
             } else {
                 // Input text, email, etc
@@ -1343,6 +1482,909 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        },
+
+        /**
+         * Escape HTML helper
+         */
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        /**
+         * Initialize tags field events
+         */
+        initTagsField: function() {
+            const self = this;
+
+            // Tag search input
+            $(document).off('focus', '#eau-tag-search').on('focus', '#eau-tag-search', function() {
+                self.showTagsDropdown();
+            });
+
+            $(document).off('input', '#eau-tag-search').on('input', '#eau-tag-search', function() {
+                self.filterTagsDropdown($(this).val());
+            });
+
+            // Close dropdown when clicking outside
+            $(document).off('click.tagsdropdown').on('click.tagsdropdown', function(e) {
+                if (!$(e.target).closest('.eau-tags-dropdown-container').length) {
+                    $('#eau-tags-dropdown').hide();
+                }
+            });
+
+            // Remove tag
+            $(document).off('click', '.eau-tag-remove').on('click', '.eau-tag-remove', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const slug = $(this).data('slug');
+                self.removeMemberTag(slug);
+            });
+
+            // Add tag from dropdown
+            $(document).off('click', '.eau-tag-dropdown-item').on('click', '.eau-tag-dropdown-item', function(e) {
+                e.preventDefault();
+                const slug = $(this).data('slug');
+                self.addMemberTag(slug);
+                $('#eau-tag-search').val('');
+                $('#eau-tags-dropdown').hide();
+            });
+
+            // Create tag inline
+            $(document).off('click', '#eau-create-tag-inline').on('click', '#eau-create-tag-inline', function(e) {
+                e.preventDefault();
+                const tagName = $('#eau-tag-search').val().trim();
+                if (tagName) {
+                    self.createTagInline(tagName);
+                }
+            });
+        },
+
+        /**
+         * Show tags dropdown with available tags
+         */
+        showTagsDropdown: function() {
+            this.filterTagsDropdown($('#eau-tag-search').val());
+            $('#eau-tags-dropdown').show();
+        },
+
+        /**
+         * Filter tags dropdown based on search
+         */
+        filterTagsDropdown: function(search) {
+            const self = this;
+            const $list = $('#eau-tags-dropdown-list');
+            const $createSection = $('#eau-tags-dropdown-create');
+            const selectedSlugs = this.getSelectedTagSlugs();
+
+            search = (search || '').toLowerCase().trim();
+
+            // Filter available tags
+            let filteredTags = this.availableTags.filter(tag => {
+                // Exclude already selected tags
+                if (selectedSlugs.includes(tag.slug)) return false;
+                // Filter by search
+                if (search && !tag.name.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            // Render filtered tags
+            let html = '';
+            filteredTags.forEach(tag => {
+                html += `<div class="eau-tag-dropdown-item" data-slug="${tag.slug}">
+                    <span class="eau-tag-color" style="background-color: ${tag.color}"></span>
+                    <span class="eau-tag-name">${this.escapeHtml(tag.name)}</span>
+                </div>`;
+            });
+
+            if (filteredTags.length === 0 && !search) {
+                html = '<div class="eau-tags-dropdown-empty">No tags available</div>';
+            } else if (filteredTags.length === 0 && search) {
+                html = '<div class="eau-tags-dropdown-empty">No matching tags</div>';
+            }
+
+            $list.html(html);
+
+            // Show create option if search doesn't match any tag exactly
+            const exactMatch = this.availableTags.some(tag => tag.name.toLowerCase() === search);
+            if (search && !exactMatch) {
+                $('#eau-new-tag-name').text(search);
+                $createSection.show();
+            } else {
+                $createSection.hide();
+            }
+        },
+
+        /**
+         * Get selected tag slugs from hidden input
+         */
+        getSelectedTagSlugs: function() {
+            const value = $('#eau-member-tags-hidden').val();
+            return value ? value.split(',').filter(s => s) : [];
+        },
+
+        /**
+         * Add tag to member
+         */
+        addMemberTag: function(slug) {
+            const tag = this.availableTags.find(t => t.slug === slug);
+            if (!tag) return;
+
+            const slugs = this.getSelectedTagSlugs();
+            if (slugs.includes(slug)) return;
+
+            // Add to hidden input
+            slugs.push(slug);
+            $('#eau-member-tags-hidden').val(slugs.join(','));
+
+            // Add chip
+            const chip = `<span class="eau-tag-chip" style="background-color: ${tag.color}; color: white;" data-slug="${tag.slug}">
+                ${this.escapeHtml(tag.name)}
+                <button type="button" class="eau-tag-remove" data-slug="${tag.slug}">&times;</button>
+            </span>`;
+            $('#eau-member-selected-tags').append(chip);
+        },
+
+        /**
+         * Remove tag from member
+         */
+        removeMemberTag: function(slug) {
+            let slugs = this.getSelectedTagSlugs();
+            slugs = slugs.filter(s => s !== slug);
+            $('#eau-member-tags-hidden').val(slugs.join(','));
+
+            // Remove chip
+            $(`.eau-tag-chip[data-slug="${slug}"]`).remove();
+        },
+
+        /**
+         * Create tag inline and add to member
+         */
+        createTagInline: function(tagName) {
+            const self = this;
+
+            $.ajax({
+                url: eauMembersData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_add_member_tag',
+                    nonce: eauMembersData.nonce,
+                    name: tagName
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const newTag = response.data.tag;
+                        self.availableTags.push(newTag);
+                        self.addMemberTag(newTag.slug);
+                        $('#eau-tag-search').val('');
+                        $('#eau-tags-dropdown').hide();
+                        EauNotifications.success('Tag Created', `Tag "${newTag.name}" created and added.`);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to create tag.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Failed to create tag.');
+                }
+            });
+        },
+
+        // ======================================
+        // QUICK TAGS POPOVER (Inline na Tabela)
+        // ======================================
+
+        /**
+         * Abre o popover de tags para um membro específico
+         */
+        openTagsPopover: function($button, userId, currentTagsStr) {
+            const self = this;
+
+            // Fecha qualquer popover aberto
+            this.closeTagsPopover();
+
+            // Parse das tags atuais
+            const currentTags = currentTagsStr ? currentTagsStr.split(',').filter(s => s.trim()) : [];
+
+            // Cria HTML do popover
+            let html = `
+                <div class="eau-tags-popover" data-user-id="${userId}">
+                    <div class="eau-tags-popover-header">
+                        <span class="eau-tags-popover-title">Quick Tags</span>
+                        <button type="button" class="eau-tags-popover-close">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="eau-tags-popover-body">
+                        <div class="eau-popover-current-tags">
+                            ${this.renderPopoverCurrentTags(currentTags)}
+                        </div>
+                        <div class="eau-popover-divider"></div>
+                        <div class="eau-popover-search">
+                            <input type="text" class="eau-popover-tag-search" placeholder="Search or create tags...">
+                        </div>
+                        <div class="eau-popover-available-tags">
+                            ${this.renderPopoverAvailableTags(currentTags)}
+                        </div>
+                        <div class="eau-popover-create-tag" id="eau-popover-create-tag" style="display: none;">
+                            <button type="button" class="eau-btn eau-btn-sm eau-btn-secondary eau-popover-create-btn">
+                                <i data-lucide="plus"></i>
+                                <span>Create "<span class="eau-popover-new-tag-name"></span>"</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Adiciona popover ao body
+            $('body').append(html);
+
+            // Posiciona popover próximo ao botão usando getBoundingClientRect para posição relativa à viewport
+            const $popover = $('.eau-tags-popover');
+            const buttonRect = $button[0].getBoundingClientRect();
+            const popoverWidth = 280;
+            const popoverHeight = 380;
+
+            // Posição inicial: abaixo do botão, relativo à viewport
+            let top = buttonRect.bottom + 5;
+            let left = buttonRect.left - (popoverWidth / 2) + (buttonRect.width / 2);
+
+            // Ajusta se ultrapassar a tela horizontalmente
+            const windowWidth = $(window).width();
+            if (left + popoverWidth > windowWidth - 10) {
+                left = windowWidth - popoverWidth - 10;
+            }
+            if (left < 10) {
+                left = 10;
+            }
+
+            // Ajusta se ultrapassar a tela verticalmente (abre acima se não couber abaixo)
+            const windowHeight = $(window).height();
+            if (top + popoverHeight > windowHeight - 10) {
+                // Tenta abrir acima do botão
+                top = buttonRect.top - popoverHeight - 5;
+                // Se ainda não couber acima, abre abaixo mesmo e deixa rolar
+                if (top < 10) {
+                    top = Math.max(10, windowHeight - popoverHeight - 10);
+                }
+            }
+
+            $popover.css({
+                position: 'fixed',
+                top: top + 'px',
+                left: left + 'px'
+            });
+
+            // Bind evento de fechar
+            $popover.find('.eau-tags-popover-close').on('click', function() {
+                self.closeTagsPopover();
+            });
+
+            // Re-inicializa Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Renderiza as tags atuais do membro no popover
+         */
+        renderPopoverCurrentTags: function(currentTags) {
+            if (currentTags.length === 0) {
+                return '<span class="eau-popover-no-tags">No tags assigned</span>';
+            }
+
+            let html = '';
+            currentTags.forEach(slug => {
+                const tag = this.availableTags.find(t => t.slug === slug);
+                if (tag) {
+                    html += `
+                        <span class="eau-popover-tag-chip" style="background-color: ${tag.color}; color: white;">
+                            ${this.escapeHtml(tag.name)}
+                            <button type="button" class="eau-popover-tag-remove" data-slug="${slug}">&times;</button>
+                        </span>
+                    `;
+                }
+            });
+            return html;
+        },
+
+        /**
+         * Renderiza as tags disponíveis para adicionar no popover
+         */
+        renderPopoverAvailableTags: function(currentTags, filter = '') {
+            let availableTags = this.availableTags.filter(tag => {
+                // Exclui tags já selecionadas
+                if (currentTags.includes(tag.slug)) return false;
+                // Filtra por busca
+                if (filter && !tag.name.toLowerCase().includes(filter.toLowerCase())) return false;
+                return true;
+            });
+
+            if (availableTags.length === 0) {
+                return '<span class="eau-popover-no-tags">No tags available</span>';
+            }
+
+            let html = '';
+            availableTags.forEach(tag => {
+                html += `
+                    <div class="eau-popover-tag-add" data-slug="${tag.slug}">
+                        <span class="eau-popover-tag-color" style="background-color: ${tag.color}"></span>
+                        <span class="eau-popover-tag-name">${this.escapeHtml(tag.name)}</span>
+                        <i data-lucide="plus" class="eau-popover-tag-plus"></i>
+                    </div>
+                `;
+            });
+            return html;
+        },
+
+        /**
+         * Fecha o popover de tags
+         */
+        closeTagsPopover: function() {
+            $('.eau-tags-popover').remove();
+        },
+
+        /**
+         * Atualiza os badges de tags na célula MEMBER da tabela
+         */
+        updateMemberTagsBadges: function(userId, tagSlugs) {
+            const self = this;
+            const $row = $(`.eau-table-row[data-id="${userId}"]`);
+            const $memberCell = $row.find('td[data-label="MEMBER"] .eau-member-cell');
+
+            if (!$memberCell.length) return;
+
+            // Remove badges antigos
+            $memberCell.find('.eau-member-tags-badges').remove();
+
+            // Se não tem tags, não adiciona nada
+            if (!tagSlugs || tagSlugs.length === 0) return;
+
+            // Gera HTML dos novos badges
+            let badgesHtml = '<div class="eau-member-tags-badges">';
+            tagSlugs.forEach(slug => {
+                const tag = self.availableTags.find(t => t.slug === slug);
+                if (tag) {
+                    badgesHtml += `<span class="eau-member-tag-badge" style="background-color: ${tag.color}">${self.escapeHtml(tag.name)}</span>`;
+                }
+            });
+            badgesHtml += '</div>';
+
+            // Adiciona após o nome
+            $memberCell.append(badgesHtml);
+        },
+
+        /**
+         * Filtra as tags no popover
+         */
+        filterPopoverTags: function(searchTerm) {
+            const $popover = $('.eau-tags-popover');
+            if (!$popover.length) return;
+
+            const userId = $popover.data('user-id');
+
+            // Pega tags atuais da row
+            const $row = $(`.eau-table-row[data-id="${userId}"]`);
+            const currentTagsStr = $row.find('.eau-action-tags').data('tags') || '';
+            const currentTags = currentTagsStr ? currentTagsStr.toString().split(',').filter(s => s.trim()) : [];
+
+            // Re-renderiza tags disponíveis com filtro
+            const availableHtml = this.renderPopoverAvailableTags(currentTags, searchTerm);
+            $popover.find('.eau-popover-available-tags').html(availableHtml);
+
+            // Mostra/oculta botão de criar nova tag
+            const $createSection = $popover.find('#eau-popover-create-tag');
+            const trimmedSearch = (searchTerm || '').trim();
+
+            if (trimmedSearch) {
+                // Verifica se existe tag com esse nome exato
+                const exactMatch = this.availableTags.some(tag =>
+                    tag.name.toLowerCase() === trimmedSearch.toLowerCase()
+                );
+
+                if (!exactMatch) {
+                    $popover.find('.eau-popover-new-tag-name').text(trimmedSearch);
+                    $createSection.show();
+                } else {
+                    $createSection.hide();
+                }
+            } else {
+                $createSection.hide();
+            }
+
+            // Re-inicializa Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Adiciona uma tag a um membro (via AJAX)
+         */
+        addTagToMember: function(userId, slug) {
+            const self = this;
+            const $popover = $('.eau-tags-popover');
+            const $row = $(`.eau-table-row[data-id="${userId}"]`);
+            const $tagsBtn = $row.find('.eau-action-tags');
+
+            // Pega tags atuais
+            const currentTagsStr = $tagsBtn.data('tags') || '';
+            let currentTags = currentTagsStr ? currentTagsStr.toString().split(',').filter(s => s.trim()) : [];
+
+            // Adiciona nova tag
+            if (!currentTags.includes(slug)) {
+                currentTags.push(slug);
+            }
+
+            // Atualiza via AJAX
+            $.ajax({
+                url: eauMembersData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_update_member_tags',
+                    nonce: eauMembersData.nonce,
+                    user_id: userId,
+                    tags: currentTags
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Atualiza data-tags no botão
+                        $tagsBtn.data('tags', currentTags.join(','));
+
+                        // Atualiza badges na tabela
+                        self.updateMemberTagsBadges(userId, currentTags);
+
+                        // Atualiza popover
+                        $popover.find('.eau-popover-current-tags').html(
+                            self.renderPopoverCurrentTags(currentTags)
+                        );
+                        $popover.find('.eau-popover-available-tags').html(
+                            self.renderPopoverAvailableTags(currentTags, $popover.find('.eau-popover-tag-search').val())
+                        );
+
+                        // Re-inicializa Lucide
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+
+                        EauNotifications.success('Tag Added', 'Tag added to member.');
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to add tag.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Failed to add tag.');
+                }
+            });
+        },
+
+        /**
+         * Cria uma nova tag no popover e adiciona ao membro
+         */
+        createTagInPopover: function(tagName, userId) {
+            const self = this;
+            const $popover = $('.eau-tags-popover');
+            const $row = $(`.eau-table-row[data-id="${userId}"]`);
+            const $tagsBtn = $row.find('.eau-action-tags');
+
+            // Desabilita o botão enquanto processa
+            $popover.find('.eau-popover-create-btn').prop('disabled', true);
+
+            $.ajax({
+                url: eauMembersData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_add_member_tag',
+                    nonce: eauMembersData.nonce,
+                    name: tagName
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const newTag = response.data.tag;
+
+                        // Adiciona à lista de tags disponíveis (para uso futuro)
+                        self.availableTags.push(newTag);
+
+                        // Pega tags atuais do membro
+                        const currentTagsStr = $tagsBtn.data('tags') || '';
+                        let currentTags = currentTagsStr ? currentTagsStr.toString().split(',').filter(s => s.trim()) : [];
+
+                        // Adiciona a nova tag à lista do membro
+                        if (!currentTags.includes(newTag.slug)) {
+                            currentTags.push(newTag.slug);
+                        }
+
+                        // Atualiza via AJAX
+                        $.ajax({
+                            url: eauMembersData.ajaxUrl,
+                            type: 'POST',
+                            data: {
+                                action: 'eau_update_member_tags',
+                                nonce: eauMembersData.nonce,
+                                user_id: userId,
+                                tags: currentTags
+                            },
+                            success: function(updateResponse) {
+                                if (updateResponse.success) {
+                                    // Atualiza data-tags no botão
+                                    $tagsBtn.data('tags', currentTags.join(','));
+
+                                    // Atualiza badges na tabela
+                                    self.updateMemberTagsBadges(userId, currentTags);
+
+                                    // Limpa o campo de busca
+                                    $popover.find('.eau-popover-tag-search').val('');
+                                    $popover.find('#eau-popover-create-tag').hide();
+
+                                    // Atualiza popover - current tags e available tags
+                                    $popover.find('.eau-popover-current-tags').html(
+                                        self.renderPopoverCurrentTags(currentTags)
+                                    );
+                                    $popover.find('.eau-popover-available-tags').html(
+                                        self.renderPopoverAvailableTags(currentTags, '')
+                                    );
+
+                                    // Re-inicializa Lucide
+                                    if (typeof lucide !== 'undefined') {
+                                        lucide.createIcons();
+                                    }
+
+                                    EauNotifications.success('Tag Created', `Tag "${newTag.name}" created and added.`);
+                                }
+                            }
+                        });
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to create tag.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Failed to create tag.');
+                },
+                complete: function() {
+                    $popover.find('.eau-popover-create-btn').prop('disabled', false);
+                }
+            });
+        },
+
+        /**
+         * Remove uma tag de um membro (via AJAX)
+         */
+        removeTagFromMember: function(userId, slug) {
+            const self = this;
+            const $popover = $('.eau-tags-popover');
+            const $row = $(`.eau-table-row[data-id="${userId}"]`);
+            const $tagsBtn = $row.find('.eau-action-tags');
+
+            // Pega tags atuais
+            const currentTagsStr = $tagsBtn.data('tags') || '';
+            let currentTags = currentTagsStr ? currentTagsStr.toString().split(',').filter(s => s.trim()) : [];
+
+            // Remove a tag
+            currentTags = currentTags.filter(t => t !== slug);
+
+            // Atualiza via AJAX
+            $.ajax({
+                url: eauMembersData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_update_member_tags',
+                    nonce: eauMembersData.nonce,
+                    user_id: userId,
+                    tags: currentTags
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Atualiza data-tags no botão
+                        $tagsBtn.data('tags', currentTags.join(','));
+
+                        // Atualiza badges na tabela
+                        self.updateMemberTagsBadges(userId, currentTags);
+
+                        // Atualiza popover
+                        $popover.find('.eau-popover-current-tags').html(
+                            self.renderPopoverCurrentTags(currentTags)
+                        );
+                        $popover.find('.eau-popover-available-tags').html(
+                            self.renderPopoverAvailableTags(currentTags, $popover.find('.eau-popover-tag-search').val())
+                        );
+
+                        // Re-inicializa Lucide
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+
+                        EauNotifications.success('Tag Removed', 'Tag removed from member.');
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to remove tag.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Failed to remove tag.');
+                }
+            });
+        },
+
+        // ======================================
+        // BULK TAGS MODAL
+        // ======================================
+
+        /**
+         * Abre o modal de gerenciamento de tags em massa
+         */
+        openBulkTagsModal: function() {
+            const self = this;
+            const count = this.selectedIds.length;
+
+            if (count === 0) {
+                EauNotifications.warning('No Selection', 'Please select members first.');
+                return;
+            }
+
+            // Remove modal existente se houver
+            $('#eau-bulk-tags-modal-overlay').remove();
+
+            // Cria HTML do modal
+            let html = `
+                <div class="eau-bulk-tags-modal-overlay" id="eau-bulk-tags-modal-overlay">
+                    <div class="eau-bulk-tags-modal">
+                        <div class="eau-bulk-tags-modal-header">
+                            <h3>Manage Tags for ${count} Member${count > 1 ? 's' : ''}</h3>
+                            <button type="button" class="eau-bulk-tags-modal-close" id="eau-bulk-tags-close-btn">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="eau-bulk-tags-modal-body">
+                            <div class="eau-bulk-tags-tabs">
+                                <button type="button" class="eau-bulk-tags-tab active" data-tab="add">
+                                    <i data-lucide="plus-circle"></i> Add Tags
+                                </button>
+                                <button type="button" class="eau-bulk-tags-tab" data-tab="remove">
+                                    <i data-lucide="minus-circle"></i> Remove Tags
+                                </button>
+                            </div>
+                            <div class="eau-bulk-tags-tab-content" id="eau-bulk-tags-tab-add">
+                                <p class="eau-bulk-tags-description">Select tags to add to all selected members:</p>
+                                <div class="eau-bulk-tags-list">
+                                    ${this.renderBulkTagsCheckboxes()}
+                                </div>
+                            </div>
+                            <div class="eau-bulk-tags-tab-content" id="eau-bulk-tags-tab-remove" style="display: none;">
+                                <p class="eau-bulk-tags-description">Select tags to remove from all selected members:</p>
+                                <div class="eau-bulk-tags-remove-all-option">
+                                    <label class="eau-bulk-tag-checkbox eau-bulk-tag-remove-all">
+                                        <input type="checkbox" id="eau-bulk-remove-all-tags">
+                                        <span class="eau-bulk-tag-color" style="background-color: #dc2626"></span>
+                                        <span class="eau-bulk-tag-name"><strong>Remove ALL tags</strong></span>
+                                    </label>
+                                </div>
+                                <div class="eau-bulk-tags-divider"></div>
+                                <div class="eau-bulk-tags-list">
+                                    ${this.renderBulkTagsCheckboxes()}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="eau-bulk-tags-modal-footer">
+                            <button type="button" class="eau-btn eau-btn-secondary" id="eau-bulk-tags-cancel-btn">
+                                Cancel
+                            </button>
+                            <button type="button" class="eau-btn eau-btn-primary" id="eau-bulk-tags-apply-btn">
+                                <i data-lucide="check"></i>
+                                Apply Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Adiciona modal ao body
+            $('body').append(html);
+
+            // Referência ao modal
+            const $overlay = $('#eau-bulk-tags-modal-overlay');
+            const $modal = $overlay.find('.eau-bulk-tags-modal');
+
+            // Bind eventos diretamente nos elementos do modal
+            // Tabs
+            $modal.find('.eau-bulk-tags-tab').on('click', function() {
+                const tab = $(this).data('tab');
+                $modal.find('.eau-bulk-tags-tab').removeClass('active');
+                $(this).addClass('active');
+                $modal.find('.eau-bulk-tags-tab-content').hide();
+                $modal.find(`#eau-bulk-tags-tab-${tab}`).show();
+            });
+
+            // Botão Apply
+            $('#eau-bulk-tags-apply-btn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.applyBulkTags();
+            });
+
+            // Botão Cancel
+            $('#eau-bulk-tags-cancel-btn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.closeBulkTagsModal();
+            });
+
+            // Botão Close (X)
+            $('#eau-bulk-tags-close-btn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.closeBulkTagsModal();
+            });
+
+            // Fechar ao clicar no overlay
+            $overlay.on('click', function(e) {
+                if ($(e.target).is($overlay)) {
+                    self.closeBulkTagsModal();
+                }
+            });
+
+            // "Remove All" checkbox - seleciona/deseleciona todas as tags
+            $('#eau-bulk-remove-all-tags').on('change', function() {
+                const isChecked = $(this).is(':checked');
+                $('#eau-bulk-tags-tab-remove .eau-bulk-tags-list input[type="checkbox"]').prop('checked', isChecked);
+            });
+
+            // Anima entrada
+            setTimeout(function() {
+                $overlay.addClass('active');
+            }, 10);
+
+            // Re-inicializa Lucide
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Renderiza checkboxes de tags para bulk modal
+         */
+        renderBulkTagsCheckboxes: function() {
+            if (this.availableTags.length === 0) {
+                return '<span class="eau-bulk-tags-empty">No tags available</span>';
+            }
+
+            let html = '';
+            this.availableTags.forEach(tag => {
+                html += `
+                    <label class="eau-bulk-tag-checkbox">
+                        <input type="checkbox" name="bulk_tags[]" value="${tag.slug}">
+                        <span class="eau-bulk-tag-color" style="background-color: ${tag.color}"></span>
+                        <span class="eau-bulk-tag-name">${this.escapeHtml(tag.name)}</span>
+                    </label>
+                `;
+            });
+            return html;
+        },
+
+        /**
+         * Fecha o modal de bulk tags
+         */
+        closeBulkTagsModal: function() {
+            const $overlay = $('#eau-bulk-tags-modal-overlay');
+            $overlay.removeClass('active');
+            setTimeout(function() {
+                $overlay.remove();
+            }, 200);
+        },
+
+        /**
+         * Aplica as tags em massa
+         */
+        applyBulkTags: function() {
+            const self = this;
+            const $modal = $('#eau-bulk-tags-modal-overlay .eau-bulk-tags-modal');
+
+            // Determina se é Add ou Remove baseado na tab ativa
+            const isRemove = $modal.find('.eau-bulk-tags-tab[data-tab="remove"]').hasClass('active');
+
+            // Verifica se "Remove All" está marcado
+            const removeAll = isRemove && $('#eau-bulk-remove-all-tags').is(':checked');
+
+            // Pega tags selecionadas da tab ativa
+            const activeTabId = isRemove ? '#eau-bulk-tags-tab-remove' : '#eau-bulk-tags-tab-add';
+            const selectedTags = [];
+            $modal.find(`${activeTabId} .eau-bulk-tags-list input[name="bulk_tags[]"]:checked`).each(function() {
+                selectedTags.push($(this).val());
+            });
+
+            // Se não é removeAll e não tem tags selecionadas, mostra warning
+            if (!removeAll && selectedTags.length === 0) {
+                EauNotifications.warning('No Tags Selected', 'Please select at least one tag.');
+                return;
+            }
+
+            // Define ação baseado em removeAll ou isRemove
+            const action = removeAll ? 'eau_bulk_remove_all_tags' : (isRemove ? 'eau_bulk_remove_tags' : 'eau_bulk_add_tags');
+
+            const memberIds = this.selectedIds;
+            const totalCount = memberIds.length;
+            const batchSize = 50;
+            let processedCount = 0;
+            let successCount = 0;
+            let failedCount = 0;
+
+            // Fecha modal
+            this.closeBulkTagsModal();
+
+            // Cria notificação de progresso
+            const actionText = isRemove ? 'Removing tags' : 'Adding tags';
+            const progressNotification = EauNotifications.info(
+                `${actionText}...`,
+                `Processing 0 of ${totalCount} members...`,
+                { duration: 0 }
+            );
+
+            // Função para processar próximo lote
+            function processNextBatch() {
+                if (processedCount >= totalCount) {
+                    // Finalizado
+                    EauNotifications.close(progressNotification);
+
+                    const doneText = isRemove ? 'removed from' : 'added to';
+                    let message = `Tags ${doneText} ${successCount} member${successCount !== 1 ? 's' : ''}.`;
+                    if (failedCount > 0) {
+                        message += ` ${failedCount} failed.`;
+                    }
+
+                    EauNotifications.success('Completed!', message);
+
+                    // Limpa seleção e recarrega tabela
+                    self.selectedIds = [];
+                    $('#members-table-select-all').prop('checked', false);
+                    self.loadMembers();
+                    return;
+                }
+
+                // Pega próximo lote
+                const batch = memberIds.slice(processedCount, processedCount + batchSize);
+
+                $.ajax({
+                    url: eauMembersData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: action,
+                        nonce: eauMembersData.nonce,
+                        member_ids: batch,
+                        tags: selectedTags
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            successCount += response.data.updated_count || batch.length;
+                            failedCount += response.data.failed_count || 0;
+                        } else {
+                            failedCount += batch.length;
+                            // Log error for debugging
+                            console.error('Bulk tags error:', response.data ? response.data.message : 'Unknown error');
+                        }
+
+                        processedCount += batch.length;
+
+                        // Atualiza progresso
+                        const percentage = Math.round((processedCount / totalCount) * 100);
+                        EauNotifications.update(progressNotification, {
+                            message: `Processing ${processedCount} of ${totalCount} members... (${percentage}%)`
+                        });
+
+                        // Processa próximo lote
+                        processNextBatch();
+                    },
+                    error: function(xhr, status, error) {
+                        failedCount += batch.length;
+                        processedCount += batch.length;
+                        console.error('AJAX error:', status, error);
+                        processNextBatch();
+                    }
+                });
+            }
+
+            // Inicia processamento
+            processNextBatch();
         }
     };
 

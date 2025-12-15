@@ -1,6 +1,6 @@
 /**
  * EAU System - Members Management Page
- * Versão: 1.9.0
+ * Versão: 1.10.3
  */
 
 .eau-members-management-container {
@@ -97,5 +97,738 @@
 
     .eau-page-header-title h1 {
         font-size: 1.75rem !important;
+    }
+}
+
+/* ==========================================================================
+   Tags Field Styles
+   ========================================================================== */
+
+.eau-tags-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Selected Tags Container */
+.eau-selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 32px;
+}
+
+/* Tag Chip */
+.eau-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 6px;
+    line-height: 1;
+}
+
+.eau-tag-chip .eau-tag-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    margin: 0;
+    margin-left: 0.25rem;
+    border: none;
+    background: rgba(255, 255, 255, 0.3);
+    color: inherit;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.875rem;
+    line-height: 1;
+    transition: background 0.2s ease;
+}
+
+.eau-tag-chip .eau-tag-remove:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Tags Input Wrapper */
+.eau-tags-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.eau-tags-dropdown-container {
+    flex: 1;
+    position: relative;
+}
+
+.eau-tag-search {
+    width: 100%;
+}
+
+/* Tags Dropdown */
+.eau-tags-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.eau-tags-dropdown-list {
+    padding: 0.5rem 0;
+}
+
+/* Dropdown Item */
+.eau-tag-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.eau-tag-dropdown-item:hover {
+    background: #f3f4f6;
+}
+
+.eau-tag-dropdown-item .eau-tag-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.eau-tag-dropdown-item .eau-tag-name {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+/* Empty State */
+.eau-tags-dropdown-empty {
+    padding: 1rem;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Create Tag Section */
+.eau-tags-dropdown-create {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.eau-tags-dropdown-create .eau-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.eau-tags-dropdown-create .eau-btn i,
+.eau-tags-dropdown-create .eau-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Member Tags in Table */
+.eau-member-tags-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.eau-member-tag-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    border-radius: 4px;
+    color: white;
+    line-height: 1.4;
+}
+
+/* ==========================================================================
+   Quick Tags Popover (Inline na Tabela)
+   ========================================================================== */
+
+.eau-tags-popover {
+    position: fixed;
+    z-index: 10000;
+    width: 280px;
+    max-height: 380px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    animation: eau-popover-fade-in 0.15s ease;
+}
+
+@keyframes eau-popover-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.eau-tags-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.eau-tags-popover-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.eau-tags-popover-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-tags-popover-close i,
+.eau-tags-popover-close svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.eau-tags-popover-close:hover {
+    background: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+.eau-tags-popover-body {
+    padding: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.eau-popover-current-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 28px;
+}
+
+.eau-popover-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+
+.eau-popover-tag-chip .eau-popover-tag-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    margin: 0;
+    margin-left: 0.125rem;
+    border: none;
+    background: rgba(255, 255, 255, 0.3);
+    color: inherit;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    transition: background 0.15s ease;
+}
+
+.eau-popover-tag-chip .eau-popover-tag-remove:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.eau-popover-no-tags {
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.eau-popover-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 0.875rem 0;
+}
+
+.eau-popover-search {
+    margin-bottom: 0.75rem;
+}
+
+.eau-popover-tag-search {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eau-popover-tag-search:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.eau-popover-available-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.eau-popover-tag-add {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 0.625rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.eau-popover-tag-add:hover {
+    background: #f3f4f6;
+}
+
+.eau-popover-tag-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.eau-popover-tag-name {
+    flex: 1;
+    font-size: 0.8125rem;
+    color: #374151;
+}
+
+.eau-popover-tag-plus {
+    width: 14px;
+    height: 14px;
+    color: #9ca3af;
+    transition: color 0.15s ease;
+}
+
+.eau-popover-tag-add:hover .eau-popover-tag-plus {
+    color: #2563eb;
+}
+
+/* Criar Tag no Popover */
+.eau-popover-create-tag {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.eau-popover-create-btn {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-popover-create-btn i,
+.eau-popover-create-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+.eau-popover-create-btn:hover {
+    background: #e5e7eb !important;
+    border-color: #9ca3af !important;
+}
+
+.eau-popover-create-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.eau-popover-new-tag-name {
+    font-weight: 600;
+    color: #2563eb;
+}
+
+/* ==========================================================================
+   Bulk Tags Modal
+   ========================================================================== */
+
+.eau-bulk-tags-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.eau-bulk-tags-modal-overlay.active {
+    opacity: 1;
+}
+
+.eau-bulk-tags-modal {
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+}
+
+.eau-bulk-tags-modal-overlay.active .eau-bulk-tags-modal {
+    transform: translateY(0);
+}
+
+.eau-bulk-tags-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-bulk-tags-modal-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.eau-bulk-tags-modal-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-bulk-tags-modal-close i,
+.eau-bulk-tags-modal-close svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.eau-bulk-tags-modal-close:hover {
+    background: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+.eau-bulk-tags-modal-body {
+    padding: 1.5rem;
+}
+
+/* Tabs */
+.eau-bulk-tags-tabs {
+    display: flex !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.eau-bulk-tags-tab {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+    border: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    text-decoration: none !important;
+    line-height: 1.4 !important;
+}
+
+.eau-bulk-tags-tab i,
+.eau-bulk-tags-tab svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.eau-bulk-tags-tab:hover {
+    border-color: #d1d5db !important;
+    color: #374151 !important;
+    background: #f3f4f6 !important;
+}
+
+.eau-bulk-tags-tab.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.eau-bulk-tags-tab.active:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+/* Tab Content */
+.eau-bulk-tags-tab-content {
+    animation: eau-tab-fade-in 0.15s ease;
+}
+
+@keyframes eau-tab-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.eau-bulk-tags-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 1rem 0;
+}
+
+.eau-bulk-tags-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.eau-bulk-tags-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+/* Checkbox Tag Item */
+.eau-bulk-tag-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.eau-bulk-tag-checkbox:hover {
+    border-color: #d1d5db;
+    background: #f3f4f6;
+}
+
+.eau-bulk-tag-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #2563eb;
+}
+
+.eau-bulk-tag-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.eau-bulk-tag-name {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+/* Modal Footer */
+.eau-bulk-tags-modal-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.75rem !important;
+    padding: 1.25rem 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+}
+
+/* Botões do Modal Bulk Tags - Forçar design system */
+.eau-bulk-tags-modal-footer .eau-btn,
+.eau-bulk-tags-modal-footer button.eau-btn,
+#eau-bulk-tags-cancel-btn,
+#eau-bulk-tags-apply-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.625rem 1.25rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    text-decoration: none !important;
+    border: 1px solid transparent !important;
+    line-height: 1.4 !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.eau-bulk-tags-modal-footer .eau-btn i,
+.eau-bulk-tags-modal-footer .eau-btn svg,
+#eau-bulk-tags-cancel-btn i,
+#eau-bulk-tags-cancel-btn svg,
+#eau-bulk-tags-apply-btn i,
+#eau-bulk-tags-apply-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.eau-bulk-tags-modal-footer .eau-btn-secondary,
+#eau-bulk-tags-cancel-btn {
+    background: #ffffff !important;
+    color: #374151 !important;
+    border-color: #d1d5db !important;
+}
+
+.eau-bulk-tags-modal-footer .eau-btn-secondary:hover,
+#eau-bulk-tags-cancel-btn:hover {
+    background: #f9fafb !important;
+    border-color: #9ca3af !important;
+    color: #111827 !important;
+}
+
+.eau-bulk-tags-modal-footer .eau-btn-primary,
+#eau-bulk-tags-apply-btn {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+.eau-bulk-tags-modal-footer .eau-btn-primary:hover,
+#eau-bulk-tags-apply-btn:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+
+.eau-bulk-tags-modal-footer .eau-btn:focus,
+#eau-bulk-tags-cancel-btn:focus,
+#eau-bulk-tags-apply-btn:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Remove All Option */
+.eau-bulk-tags-remove-all-option {
+    margin-bottom: 0.75rem;
+}
+
+.eau-bulk-tag-remove-all {
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+}
+
+.eau-bulk-tag-remove-all:hover {
+    background: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+}
+
+.eau-bulk-tags-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 0.75rem 0;
+}
+
+/* Action Tags Button Styling */
+.eau-action-tags {
+    color: #6b7280 !important;
+}
+
+.eau-action-tags:hover {
+    color: #2563eb !important;
+    background: #eff6ff !important;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .eau-tags-popover {
+        width: calc(100vw - 2rem);
+        left: 1rem !important;
+        right: 1rem !important;
+    }
+
+    .eau-bulk-tags-modal {
+        max-height: calc(100vh - 2rem);
+    }
+
+    .eau-bulk-tags-tabs {
+        flex-direction: column;
     }
 }

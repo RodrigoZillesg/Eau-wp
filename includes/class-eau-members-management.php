@@ -70,14 +70,22 @@ class Eau_Members_Management {
                             Delete All Filtered
                         </button>
                     <?php endif; ?>
+                    <?php if (Eau_User_Institution_Helper::is_super_admin() || Eau_User_Institution_Helper::is_admin()): ?>
+                        <button class="eau-btn eau-btn-secondary" id="eau-bulk-manage-tags" style="display: none;">
+                            <i data-lucide="tags"></i>
+                            Manage Tags
+                        </button>
+                    <?php endif; ?>
                     <button class="eau-btn eau-btn-secondary" id="eau-export-csv">
                         <i data-lucide="download"></i>
                         Export CSV
                     </button>
+                    <?php if (Eau_User_Institution_Helper::is_super_admin() || Eau_User_Institution_Helper::is_admin()): ?>
                     <a href="/dashboard/merge-members/" class="eau-btn eau-btn-secondary">
                         <i data-lucide="users-2"></i>
                         Merge Duplicates
                     </a>
+                    <?php endif; ?>
                     <button class="eau-btn eau-btn-primary" id="eau-add-member">
                         <i data-lucide="user-plus"></i>
                         Add Member
@@ -237,6 +245,8 @@ class Eau_Members_Management {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('eau_members_nonce'),
             'isSuperAdmin' => Eau_User_Institution_Helper::is_super_admin(),
+            'isAdmin' => Eau_User_Institution_Helper::is_admin(),
+            'canManageTags' => Eau_User_Institution_Helper::is_super_admin() || Eau_User_Institution_Helper::is_admin(),
         ));
     }
 
@@ -345,6 +355,13 @@ class Eau_Members_Management {
                     'type' => 'select',
                     'options' => Eau_Filters::get_membership_type_options(),
                     'placeholder' => 'All Membership Types',
+                ),
+                array(
+                    'key' => 'tag',
+                    'label' => 'Tag',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_member_tag_options(),
+                    'placeholder' => 'All Tags',
                 ),
             ),
         );

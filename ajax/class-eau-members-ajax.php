@@ -44,6 +44,24 @@ class Eau_Members_Ajax {
 
         // Export CSV
         add_action('wp_ajax_eau_export_members_csv', array(__CLASS__, 'export_members_csv'));
+
+        // Get member tags (para uso no Members Management)
+        add_action('wp_ajax_eau_get_member_tags', array(__CLASS__, 'get_member_tags'));
+
+        // Add member tag inline (para uso no Members Management)
+        add_action('wp_ajax_eau_add_member_tag', array(__CLASS__, 'add_member_tag'));
+
+        // Update member tags (quick edit from table)
+        add_action('wp_ajax_eau_update_member_tags', array(__CLASS__, 'update_member_tags'));
+
+        // Bulk add tags to members
+        add_action('wp_ajax_eau_bulk_add_tags', array(__CLASS__, 'bulk_add_tags'));
+
+        // Bulk remove tags from members
+        add_action('wp_ajax_eau_bulk_remove_tags', array(__CLASS__, 'bulk_remove_tags'));
+
+        // Bulk remove ALL tags from members
+        add_action('wp_ajax_eau_bulk_remove_all_tags', array(__CLASS__, 'bulk_remove_all_tags'));
     }
 
     /**
@@ -61,6 +79,7 @@ class Eau_Members_Ajax {
         $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
         $institution_id = isset($_POST['institution']) ? absint($_POST['institution']) : '';
         $membership_type = isset($_POST['membership_type']) ? sanitize_text_field($_POST['membership_type']) : '';
+        $tag = isset($_POST['tag']) ? sanitize_text_field($_POST['tag']) : '';
         $registered_date_from = isset($_POST['registered_date_from']) ? sanitize_text_field($_POST['registered_date_from']) : '';
         $registered_date_to = isset($_POST['registered_date_to']) ? sanitize_text_field($_POST['registered_date_to']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'display_name';
@@ -78,6 +97,7 @@ class Eau_Members_Ajax {
             'status' => $status,
             'institution_id' => $institution_id,
             'membership_type' => $membership_type,
+            'tag' => $tag,
             'registered_date_from' => $registered_date_from,
             'registered_date_to' => $registered_date_to,
             'orderby' => $orderby,
@@ -113,9 +133,31 @@ class Eau_Members_Ajax {
             $full_name = $user['display_name'];
         }
 
+        // Busca tags do membro
+        $member_tags = get_user_meta($user['ID'], 'mem_tags', true);
+        $member_tags = is_array($member_tags) ? $member_tags : array();
+
+        // Gera HTML das tags como badges
+        $tags_badges_html = '';
+        if (!empty($member_tags)) {
+            $tags_badges_html = '<div class="eau-member-tags-badges">';
+            foreach ($member_tags as $tag_slug) {
+                $tag = \EauSystem\Eau_Settings::get_tag_by_slug($tag_slug);
+                if ($tag) {
+                    $tags_badges_html .= sprintf(
+                        '<span class="eau-member-tag-badge" style="background-color: %s">%s</span>',
+                        esc_attr($tag['color']),
+                        esc_html($tag['name'])
+                    );
+                }
+            }
+            $tags_badges_html .= '</div>';
+        }
+
         $member_html = sprintf(
-            '<div class="eau-member-cell"><strong>%s</strong></div>',
-            esc_html($full_name)
+            '<div class="eau-member-cell"><strong>%s</strong>%s</div>',
+            esc_html($full_name),
+            $tags_badges_html
         );
 
         // Contact (email)
@@ -167,6 +209,7 @@ class Eau_Members_Ajax {
             'user_type' => $user_type_html,
             'status' => $status_html,
             'actions' => $actions_html,
+            'member_tags' => implode(',', $member_tags), // Slugs das tags separadas por vírgula
         );
     }
 
@@ -389,7 +432,17 @@ class Eau_Members_Ajax {
                 $userdata[$key] = sanitize_text_field($value);
             } else {
                 // É um meta field
-                update_user_meta($user_id, sanitize_key($key), sanitize_text_field($value));
+                $sanitized_key = sanitize_key($key);
+
+                // Tratamento especial para mem_tags (array de slugs)
+                if ($sanitized_key === 'mem_tags') {
+                    // Converte string separada por vírgulas em array
+                    $tags_array = array_filter(array_map('trim', explode(',', $value)));
+                    $tags_array = array_map('sanitize_text_field', $tags_array);
+                    update_user_meta($user_id, $sanitized_key, $tags_array);
+                } else {
+                    update_user_meta($user_id, $sanitized_key, sanitize_text_field($value));
+                }
             }
         }
 
@@ -825,6 +878,315 @@ class Eau_Members_Ajax {
             'deleted_count' => $deleted_count,
             'failed_count' => $failed_count,
             'failed_members' => $failed_members,
+        ));
+    }
+
+    /**
+     * AJAX: Get Member Tags
+     * Retorna todas as tags disponíveis para membros
+     */
+    public static function get_member_tags() {
+        // Aceita ambos os nonces (settings e members)
+        $valid_nonce = false;
+
+        if (isset($_POST['nonce'])) {
+            if (wp_verify_nonce($_POST['nonce'], 'eau_members_nonce')) {
+                $valid_nonce = true;
+            } elseif (wp_verify_nonce($_POST['nonce'], 'eau_settings_nonce')) {
+                $valid_nonce = true;
+            }
+        }
+
+        if (!$valid_nonce) {
+            wp_send_json_error(array('message' => 'Invalid nonce.'));
+        }
+
+        $tags = \EauSystem\Eau_Settings::get_member_tags();
+
+        wp_send_json_success(array(
+            'tags' => $tags,
+        ));
+    }
+
+    /**
+     * AJAX: Add Member Tag
+     * Cria uma nova tag (para uso inline no Members Management)
+     */
+    public static function add_member_tag() {
+        // Aceita ambos os nonces (settings e members)
+        $valid_nonce = false;
+
+        if (isset($_POST['nonce'])) {
+            if (wp_verify_nonce($_POST['nonce'], 'eau_members_nonce')) {
+                $valid_nonce = true;
+            } elseif (wp_verify_nonce($_POST['nonce'], 'eau_settings_nonce')) {
+                $valid_nonce = true;
+            }
+        }
+
+        if (!$valid_nonce) {
+            wp_send_json_error(array('message' => 'Invalid nonce.'));
+        }
+
+        // Verifica permissão (superAdmin ou Admin)
+        if (!Eau_User_Institution_Helper::is_super_admin() && !Eau_User_Institution_Helper::is_admin()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
+        $color = isset($_POST['color']) ? sanitize_hex_color($_POST['color']) : null;
+
+        if (empty($name)) {
+            wp_send_json_error(array('message' => 'Tag name is required.'));
+        }
+
+        $result = \EauSystem\Eau_Settings::add_member_tag($name, $color);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Tag created successfully.',
+            'tag' => $result,
+        ));
+    }
+
+    /**
+     * AJAX: Update Member Tags (quick edit from table)
+     * Permite atualizar tags de um membro diretamente da tabela
+     */
+    public static function update_member_tags() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica permissão (Admin ou superAdmin)
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::is_super_admin($current_user_id) &&
+            !Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        // Pega parâmetros
+        $user_id = isset($_POST['user_id']) ? absint($_POST['user_id']) : 0;
+        $tags = isset($_POST['tags']) ? $_POST['tags'] : array();
+
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'User ID is required.'));
+        }
+
+        // Verifica se usuário existe
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found.'));
+        }
+
+        // Sanitiza tags (array de slugs)
+        if (is_string($tags)) {
+            $tags = array_filter(array_map('trim', explode(',', $tags)));
+        }
+        $tags = array_map('sanitize_text_field', $tags);
+
+        // Atualiza meta do usuário
+        update_user_meta($user_id, 'mem_tags', $tags);
+
+        // Retorna tags atualizadas com informações completas
+        $tags_data = array();
+        foreach ($tags as $slug) {
+            $tag = \EauSystem\Eau_Settings::get_tag_by_slug($slug);
+            if ($tag) {
+                $tags_data[] = $tag;
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Tags updated successfully.',
+            'tags' => $tags_data,
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Add Tags to Members
+     * Adiciona tags a múltiplos membros de uma vez
+     */
+    public static function bulk_add_tags() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica permissão (Admin ou superAdmin)
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::is_super_admin($current_user_id) &&
+            !Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            wp_send_json_error(array('message' => 'Permission denied. Only admins can perform bulk tag operations.'));
+        }
+
+        // Pega parâmetros
+        $member_ids = isset($_POST['member_ids']) ? array_map('absint', $_POST['member_ids']) : array();
+        $tags_to_add = isset($_POST['tags']) ? $_POST['tags'] : array();
+
+        if (empty($member_ids)) {
+            wp_send_json_error(array('message' => 'No members selected.'));
+        }
+
+        if (empty($tags_to_add)) {
+            wp_send_json_error(array('message' => 'No tags selected.'));
+        }
+
+        // Sanitiza tags
+        if (is_string($tags_to_add)) {
+            $tags_to_add = array_filter(array_map('trim', explode(',', $tags_to_add)));
+        }
+        $tags_to_add = array_map('sanitize_text_field', $tags_to_add);
+
+        // Processa em lotes de 50
+        $batch_size = 50;
+        $member_ids = array_slice($member_ids, 0, $batch_size);
+
+        $updated_count = 0;
+        $failed_count = 0;
+
+        foreach ($member_ids as $user_id) {
+            // Pega tags atuais do usuário
+            $current_tags = get_user_meta($user_id, 'mem_tags', true);
+            if (!is_array($current_tags)) {
+                $current_tags = array();
+            }
+
+            // Merge com novas tags (sem duplicatas)
+            $new_tags = array_unique(array_merge($current_tags, $tags_to_add));
+
+            // Atualiza
+            $result = update_user_meta($user_id, 'mem_tags', $new_tags);
+            if ($result !== false) {
+                $updated_count++;
+            } else {
+                $failed_count++;
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf('%d member(s) updated successfully.', $updated_count),
+            'updated_count' => $updated_count,
+            'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Remove Tags from Members
+     * Remove tags de múltiplos membros de uma vez
+     */
+    public static function bulk_remove_tags() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica permissão (Admin ou superAdmin)
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::is_super_admin($current_user_id) &&
+            !Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            wp_send_json_error(array('message' => 'Permission denied. Only admins can perform bulk tag operations.'));
+        }
+
+        // Pega parâmetros
+        $member_ids = isset($_POST['member_ids']) ? array_map('absint', $_POST['member_ids']) : array();
+        $tags_to_remove = isset($_POST['tags']) ? $_POST['tags'] : array();
+
+        if (empty($member_ids)) {
+            wp_send_json_error(array('message' => 'No members selected.'));
+        }
+
+        if (empty($tags_to_remove)) {
+            wp_send_json_error(array('message' => 'No tags selected.'));
+        }
+
+        // Sanitiza tags
+        if (is_string($tags_to_remove)) {
+            $tags_to_remove = array_filter(array_map('trim', explode(',', $tags_to_remove)));
+        }
+        $tags_to_remove = array_map('sanitize_text_field', $tags_to_remove);
+
+        // Processa em lotes de 50
+        $batch_size = 50;
+        $member_ids = array_slice($member_ids, 0, $batch_size);
+
+        $updated_count = 0;
+        $failed_count = 0;
+
+        foreach ($member_ids as $user_id) {
+            // Pega tags atuais do usuário
+            $current_tags = get_user_meta($user_id, 'mem_tags', true);
+            if (!is_array($current_tags)) {
+                $current_tags = array();
+            }
+
+            // Remove as tags especificadas
+            $new_tags = array_values(array_diff($current_tags, $tags_to_remove));
+
+            // Atualiza
+            $result = update_user_meta($user_id, 'mem_tags', $new_tags);
+            if ($result !== false) {
+                $updated_count++;
+            } else {
+                $failed_count++;
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf('%d member(s) updated successfully.', $updated_count),
+            'updated_count' => $updated_count,
+            'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Remove ALL Tags from Members
+     * Remove TODAS as tags de múltiplos membros de uma vez
+     */
+    public static function bulk_remove_all_tags() {
+        // Verifica nonce
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verifica permissão (Admin ou superAdmin)
+        $current_user_id = get_current_user_id();
+        if (!Eau_User_Institution_Helper::is_super_admin($current_user_id) &&
+            !Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            wp_send_json_error(array('message' => 'Permission denied. Only admins can perform bulk tag operations.'));
+        }
+
+        // Pega parâmetros
+        $member_ids = isset($_POST['member_ids']) ? array_map('absint', $_POST['member_ids']) : array();
+
+        if (empty($member_ids)) {
+            wp_send_json_error(array('message' => 'No members selected.'));
+        }
+
+        // Processa em lotes de 50
+        $batch_size = 50;
+        $member_ids = array_slice($member_ids, 0, $batch_size);
+
+        $updated_count = 0;
+        $failed_count = 0;
+
+        foreach ($member_ids as $user_id) {
+            // Remove todas as tags (seta como array vazio)
+            $result = update_user_meta($user_id, 'mem_tags', array());
+            if ($result !== false) {
+                $updated_count++;
+            } else {
+                // update_user_meta retorna false quando o valor não mudou
+                // Verifica se já estava vazio
+                $current = get_user_meta($user_id, 'mem_tags', true);
+                if (empty($current) || $current === array()) {
+                    $updated_count++; // Já estava vazio, considera sucesso
+                } else {
+                    $failed_count++;
+                }
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf('All tags removed from %d member(s).', $updated_count),
+            'updated_count' => $updated_count,
+            'failed_count' => $failed_count,
         ));
     }
 }
