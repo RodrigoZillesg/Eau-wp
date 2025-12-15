@@ -108,6 +108,7 @@ class Eau_System_Presentation {
                         'Módulo financeiro com gestão de pagamentos e faturas',
                         'Dashboard personalizado por tipo de usuário',
                         'Relatórios e exportação de dados em CSV',
+                        'Sistema de tags para segmentação de membros com gestão em massa',
                     ),
                     'stats' => array(
                         array('value' => '6.188', 'label' => 'Membros Cadastrados'),
@@ -275,6 +276,7 @@ class Eau_System_Presentation {
                         'Financial module with payment and invoice management',
                         'Customized dashboard by user type',
                         'Reports and CSV data export',
+                        'Tag system for member segmentation with bulk management',
                     ),
                     'stats' => array(
                         array('value' => '6,188', 'label' => 'Registered Members'),
