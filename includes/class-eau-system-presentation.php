@@ -25,7 +25,7 @@ class Eau_System_Presentation {
     /**
      * System version
      */
-    private static $version = '1.52.7';
+    private static $version = '1.52.8';
 
     /**
      * Register shortcode
