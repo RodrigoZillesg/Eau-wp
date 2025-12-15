@@ -351,10 +351,10 @@ class Eau_Members_Settings {
                 'label' => $meta_field['label'],
                 'meta_key' => $meta_key,
                 'field_type' => $meta_field['field_type'],
-                'enabled' => false,
-                'required' => false,
-                'readonly' => false,
-                'order' => 100 + count($fields),
+                'enabled' => isset($meta_field['enabled']) ? $meta_field['enabled'] : false,
+                'required' => isset($meta_field['required']) ? $meta_field['required'] : false,
+                'readonly' => isset($meta_field['readonly']) ? $meta_field['readonly'] : false,
+                'order' => isset($meta_field['order']) ? $meta_field['order'] : (100 + count($fields)),
             );
         }
 
@@ -401,6 +401,14 @@ class Eau_Members_Settings {
                 'label' => 'Country',
                 'field_type' => 'text',
             ),
+            'mem_tags' => array(
+                'label' => 'Tags',
+                'field_type' => 'tags',
+                'enabled' => true,
+                'required' => false,
+                'readonly' => false,
+                'order' => 99,
+            ),
         );
 
         foreach ($known_meta as $key => $field) {
@@ -417,6 +425,12 @@ class Eau_Members_Settings {
     }
 
     /**
+     * Campos que devem estar sempre habilitados por padrão
+     * (mesmo se não existem nas configurações salvas)
+     */
+    const FORCE_ENABLED_FIELDS = array('mem_tags');
+
+    /**
      * Retorna as configurações salvas
      */
     public static function get_editable_fields() {
@@ -426,8 +440,18 @@ class Eau_Members_Settings {
         $editable_fields = array();
 
         foreach ($available_fields as $key => $field) {
-            // Merge com configurações salvas
-            $config = isset($saved_settings[$key]) ? array_merge($field, $saved_settings[$key]) : $field;
+            // Se não tem configuração salva para este campo, usa o padrão
+            if (!isset($saved_settings[$key])) {
+                $config = $field;
+            } else {
+                // Merge com configurações salvas
+                $config = array_merge($field, $saved_settings[$key]);
+            }
+
+            // Força enabled para campos que devem estar sempre habilitados
+            if (in_array($key, self::FORCE_ENABLED_FIELDS)) {
+                $config['enabled'] = true;
+            }
 
             // Só retorna se estiver enabled
             if (isset($config['enabled']) && $config['enabled']) {

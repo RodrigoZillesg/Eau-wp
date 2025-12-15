@@ -313,6 +313,24 @@ class Eau_Dashboard {
                 </a>
                 <?php endif; ?>
 
+                <!-- Institution Members (institutionAdmin only) -->
+                <?php if (Eau_User_Institution_Helper::is_institution_admin() && !Eau_User_Institution_Helper::has_admin_access()): ?>
+                <a href="/dashboard/my-institution/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-blue">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">Institution Members</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number"><?php echo number_format($stats['total_members']); ?></span>
+                                <span class="eau-card-active"><?php echo number_format($stats['active_members']); ?> Active</span>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="users"></i>
+                        </div>
+                    </div>
+                </a>
+                <?php endif; ?>
+
                 <!-- Total Institutions (apenas para superAdmin e Admin) -->
                 <?php if (Eau_User_Institution_Helper::has_admin_access()): ?>
                 <a href="/dashboard/manage-institutions/" class="eau-dashboard-card-link">
@@ -332,7 +350,7 @@ class Eau_Dashboard {
 
                 <!-- Pending Member Requests (apenas para institutionAdmin) -->
                 <?php if (Eau_User_Institution_Helper::is_institution_admin()): ?>
-                <a href="/dashboard/my-instituion/" class="eau-dashboard-card-link">
+                <a href="/dashboard/my-institution/" class="eau-dashboard-card-link">
                     <div class="eau-dashboard-card eau-card-teal">
                         <div class="eau-card-content">
                             <h3 class="eau-card-title">Member Requests</h3>

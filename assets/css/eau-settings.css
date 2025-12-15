@@ -287,3 +287,326 @@
         gap: 0.75rem;
     }
 }
+
+/* ==========================================================================
+   Member Tags Manager
+   ========================================================================== */
+
+.eau-tags-manager {
+    margin-top: 1rem;
+}
+
+/* Tags List */
+.eau-tags-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.eau-tags-loading .eau-skeleton {
+    border-radius: 8px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: eau-skeleton-loading 1.5s infinite;
+}
+
+@keyframes eau-skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.eau-tags-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+}
+
+.eau-tags-empty i,
+.eau-tags-empty svg {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: 0.5rem;
+    color: #9ca3af;
+}
+
+/* Tag Item */
+.eau-tag-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.eau-tag-item:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.eau-tag-item.editing {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+/* Tag Color Indicator */
+.eau-tag-color {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Tag Info */
+.eau-tag-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.eau-tag-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.eau-tag-slug {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-family: monospace;
+}
+
+.eau-tag-description {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* Tag Actions */
+.eau-tag-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Button icon style for tag actions */
+.eau-btn-icon {
+    padding: 0.5rem !important;
+    min-width: auto !important;
+}
+
+.eau-btn-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.eau-btn-danger-ghost {
+    background: transparent !important;
+    border: 1px solid #e5e7eb !important;
+    color: #6b7280 !important;
+}
+
+.eau-btn-danger-ghost:hover {
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+    color: #dc2626 !important;
+}
+
+/* Primary icon button (Save) */
+.eau-btn-primary-icon {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #fff !important;
+}
+
+.eau-btn-primary-icon:hover {
+    background: #059669 !important;
+    border-color: #059669 !important;
+}
+
+.eau-btn-primary-icon svg {
+    stroke: #fff;
+}
+
+/* Legacy action buttons (for backwards compatibility) */
+.eau-tag-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s ease;
+}
+
+.eau-tag-action-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.eau-tag-action-btn.edit:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+.eau-tag-action-btn.delete:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.eau-tag-action-btn i,
+.eau-tag-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Tag Edit Mode */
+.eau-tag-edit-inputs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.eau-tag-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.eau-tag-edit-row .eau-form-input {
+    flex: 1;
+}
+
+.eau-tag-edit-inputs .eau-form-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.eau-tag-edit-inputs .eau-form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.eau-tag-edit-inputs .eau-color-picker {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+}
+
+/* Add Tag Form */
+.eau-add-tag-form {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    align-items: flex-end;
+}
+
+.eau-add-tag-inputs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.eau-add-tag-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.eau-add-tag-inputs .eau-form-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: #fff;
+}
+
+.eau-add-tag-inputs .eau-form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Color Picker */
+.eau-color-picker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+.eau-color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.eau-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+.eau-color-picker::-moz-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+.eau-color-picker:hover {
+    border-color: #d1d5db;
+}
+
+.eau-color-picker:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .eau-add-tag-form {
+        flex-direction: column;
+    }
+
+    .eau-add-tag-form .eau-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .eau-tag-item {
+        flex-wrap: wrap;
+    }
+
+    .eau-tag-edit-inputs {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+}

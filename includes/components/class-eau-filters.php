@@ -378,4 +378,21 @@ class Eau_Filters {
             'none' => 'No Membership',
         );
     }
+
+    /**
+     * Get member tags options for filter dropdown
+     *
+     * @since 1.51.75
+     * @return array Associative array of tag_slug => tag_name
+     */
+    public static function get_member_tag_options() {
+        $tags = \EauSystem\Eau_Settings::get_member_tags();
+
+        $options = array();
+        foreach ($tags as $tag) {
+            $options[$tag['slug']] = $tag['name'];
+        }
+
+        return $options;
+    }
 }

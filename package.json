@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "playwright": "^1.57.0"
+  },
+  "devDependencies": {
+    "docx": "^9.5.1",
+    "image-size": "^2.0.2"
   }
 }

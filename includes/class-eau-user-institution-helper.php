@@ -96,19 +96,19 @@ class Eau_User_Institution_Helper {
      * Verifica se o membership do usuário está ativo
      *
      * Retorna true APENAS se mem_membership_status === 'active'
-     * Admins (superAdmin, Admin) sempre têm acesso, independente do status
+     * Admins (superAdmin, Admin) e institutionAdmin sempre têm acesso, independente do status
      *
      * @since 1.51.46
      * @param int|null $user_id ID do usuário (null = usuário atual)
-     * @return bool True se membership ativo ou se for admin
+     * @return bool True se membership ativo ou se for admin/institutionAdmin
      */
     public static function is_membership_active($user_id = null) {
         if (!$user_id) {
             $user_id = get_current_user_id();
         }
 
-        // Admins sempre têm acesso
-        if (self::has_admin_access($user_id)) {
+        // Admins e institutionAdmin sempre têm acesso
+        if (self::has_admin_access($user_id) || self::is_institution_admin($user_id)) {
             return true;
         }
 
@@ -128,8 +128,8 @@ class Eau_User_Institution_Helper {
             $user_id = get_current_user_id();
         }
 
-        // Admins nunca são considerados inativos
-        if (self::has_admin_access($user_id)) {
+        // Admins e institutionAdmin nunca são considerados inativos
+        if (self::has_admin_access($user_id) || self::is_institution_admin($user_id)) {
             return false;
         }
 
@@ -448,6 +448,7 @@ class Eau_User_Institution_Helper {
             'status' => '',
             'institution_id' => '',
             'membership_type' => '',
+            'tag' => '',
             'registered_date_from' => '',
             'registered_date_to' => '',
             'orderby' => 'display_name',
@@ -544,6 +545,14 @@ class Eau_User_Institution_Helper {
         // Filtro por data de registro (to)
         if (!empty($args['registered_date_to'])) {
             $where[] = $wpdb->prepare("u.user_registered <= %s", $args['registered_date_to'] . ' 23:59:59');
+        }
+
+        // Filtro por tag (mem_tags é um array serializado)
+        if (!empty($args['tag'])) {
+            // mem_tags é armazenado como array serializado, então usamos LIKE para buscar o slug
+            $join[] = "INNER JOIN {$wpdb->usermeta} um_tags ON u.ID = um_tags.user_id AND um_tags.meta_key = 'mem_tags'";
+            // O valor é serializado como a:N:{i:0;s:X:"slug";...}, então buscamos pela string do slug
+            $where[] = $wpdb->prepare("um_tags.meta_value LIKE %s", '%"' . $wpdb->esc_like($args['tag']) . '"%');
         }
 
         // Monta query de contagem

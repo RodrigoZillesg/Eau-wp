@@ -735,6 +735,7 @@ class Eau_Activities_Ajax {
 
     /**
      * AJAX: Export Activities CSV
+     * Processa em lotes para evitar estouro de memória
      */
     public static function export_activities_csv() {
         check_ajax_referer('eau_activities_nonce', 'nonce');
@@ -744,33 +745,27 @@ class Eau_Activities_Ajax {
             wp_die('You do not have permission to export activities.');
         }
 
+        // Aumenta limites para exportação
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
         // Pega parâmetros
         $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : 'all';
         $selected_ids = isset($_POST['selected_ids']) ? array_map('absint', $_POST['selected_ids']) : array();
 
-        // Busca activities
-        $query_args = array(
-            'post_type' => 'activitie',
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'orderby' => 'date',
-            'order' => 'DESC',
-        );
-
-        if ($export_type === 'selected' && !empty($selected_ids)) {
-            $query_args['post__in'] = $selected_ids;
-        }
-
-        $query = new \WP_Query($query_args);
-        $activities = $query->posts;
-
         // Gera CSV
         $filename = 'activities-export-' . date('Y-m-d-H-i-s') . '.csv';
 
+        // Headers para download
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename=' . $filename);
+        header('Pragma: no-cache');
+        header('Expires: 0');
 
         $output = fopen('php://output', 'w');
+
+        // BOM para UTF-8 (Excel compatibility)
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         // Header
         fputcsv($output, array(
@@ -784,31 +779,102 @@ class Eau_Activities_Ajax {
             'Created',
         ));
 
-        // Rows
-        foreach ($activities as $post) {
-            $author = get_userdata($post->post_author);
-            $member_name = '-';
-            $member_email = '-';
-            if ($author) {
-                $full_name = trim($author->first_name . ' ' . $author->last_name);
-                $member_name = !empty($full_name) ? $full_name : $author->display_name;
-                $member_email = $author->user_email;
+        // Cache de instituições para evitar queries repetidas
+        $institution_cache = array();
+
+        // Processa em lotes de 500
+        $batch_size = 500;
+        $page = 1;
+        $has_more = true;
+
+        while ($has_more) {
+            // Query args para este lote
+            $query_args = array(
+                'post_type' => 'activitie',
+                'post_status' => 'publish',
+                'posts_per_page' => $batch_size,
+                'paged' => $page,
+                'orderby' => 'ID',
+                'order' => 'ASC',
+                'fields' => 'ids', // Apenas IDs para economizar memória
+            );
+
+            if ($export_type === 'selected' && !empty($selected_ids)) {
+                $query_args['post__in'] = $selected_ids;
+                // Se selecionados, não precisa paginar
+                $query_args['posts_per_page'] = -1;
+                $has_more = false;
             }
 
-            $institution = Eau_User_Institution_Helper::get_user_institution_name($post->post_author);
-            $hours = get_post_meta($post->ID, 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5', true);
-            $verified = get_post_meta($post->ID, 'act_verified', true);
+            $query = new \WP_Query($query_args);
+            $post_ids = $query->posts;
 
-            fputcsv($output, array(
-                $post->ID,
-                $post->post_title,
-                $member_name,
-                $member_email,
-                $institution ?: '-',
-                $hours ?: '0',
-                ($verified === '1' ? 'Yes' : 'No'),
-                get_the_date('Y-m-d H:i:s', $post->ID),
-            ));
+            if (empty($post_ids)) {
+                $has_more = false;
+                break;
+            }
+
+            // Processa cada post do lote
+            foreach ($post_ids as $post_id) {
+                $post = get_post($post_id);
+                if (!$post) continue;
+
+                $author_id = $post->post_author;
+                $author = get_userdata($author_id);
+                $member_name = '-';
+                $member_email = '-';
+
+                if ($author) {
+                    $full_name = trim($author->first_name . ' ' . $author->last_name);
+                    $member_name = !empty($full_name) ? $full_name : $author->display_name;
+                    $member_email = $author->user_email;
+                }
+
+                // Usa cache de instituições
+                if (!isset($institution_cache[$author_id])) {
+                    $institution_cache[$author_id] = Eau_User_Institution_Helper::get_user_institution_name($author_id);
+                }
+                $institution = $institution_cache[$author_id];
+
+                $hours = get_post_meta($post_id, 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5', true);
+                $verified = get_post_meta($post_id, 'act_verified', true);
+
+                fputcsv($output, array(
+                    $post_id,
+                    $post->post_title,
+                    $member_name,
+                    $member_email,
+                    $institution ?: '-',
+                    $hours ?: '0',
+                    ($verified === '1' ? 'Yes' : 'No'),
+                    get_the_date('Y-m-d H:i:s', $post_id),
+                ));
+
+                // Limpa cache do post para liberar memória
+                clean_post_cache($post_id);
+            }
+
+            // Verifica se há mais páginas antes de limpar
+            $posts_count = count($post_ids);
+
+            // Libera memória
+            wp_reset_postdata();
+            unset($post_ids, $query);
+
+            // Verifica se há mais páginas
+            if ($export_type !== 'selected') {
+                if ($posts_count < $batch_size) {
+                    $has_more = false;
+                } else {
+                    $page++;
+                }
+            }
+
+            // Flush output buffer
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+            flush();
         }
 
         fclose($output);

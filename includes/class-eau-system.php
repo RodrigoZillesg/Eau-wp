@@ -129,6 +129,9 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-payments-management.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-payments-management-ajax.php';
 
+        // System Presentation - Public (v1.51.65)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-system-presentation.php';
+
         // Ensure membership tables exist (for updates without reactivation)
         if (!Eau_Membership_Database::tables_exist()) {
             Eau_Membership_Database::create_tables();
@@ -208,6 +211,7 @@ class Eau_System {
         Eau_Public_Registration::register_shortcode();
         Eau_Membership_Selection::register_shortcode();
         Eau_Membership_Applications_Management::register_shortcode();
+        Eau_System_Presentation::register_shortcode();
         Eau_Payments_Management::init();
 
         // Registra AJAX handlers

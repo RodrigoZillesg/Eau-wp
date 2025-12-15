@@ -1,0 +1,19 @@
+{
+  "superAdmin": {
+    "email": "rrzillesg@gmail.com",
+    "password": "Pl@ttyPl@tty",
+    "name": "Rodrigo Zillesg"
+  },
+  "Admin": {
+    "name": "Rachel Winton",
+    "email": "rachelwinton@englishaustralia.com.au"
+  },
+  "institutionAdmin": {
+    "name": "Abdul Jamal",
+    "email": "a.jamal@c2cglobal.com.au"
+  },
+  "Member": {
+    "name": "aakanksha mishra",
+    "email": "aakanksha.mishra@sydney.edu.au"
+  }
+}
