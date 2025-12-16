@@ -115,6 +115,59 @@
                 const modalId = $(this).closest('.eau-modal').attr('id');
                 self.saveActivity(modalId);
             });
+
+            // View proof text (modal)
+            $(document).on('click', '.eau-action-proof-text', function(e) {
+                e.preventDefault();
+                const proofText = $(this).data('proof-text');
+                self.showProofTextModal(proofText);
+            });
+        },
+
+        /**
+         * Show modal with proof text
+         */
+        showProofTextModal: function(text) {
+            // Remove modal existente
+            $('#eau-proof-text-modal').remove();
+
+            // Cria o modal
+            const modalHtml = `
+                <div id="eau-proof-text-modal" class="eau-modal active">
+                    <div class="eau-modal-overlay"></div>
+                    <div class="eau-modal-container" style="max-width: 600px;">
+                        <div class="eau-modal-header">
+                            <h3 class="eau-modal-title">
+                                <i data-lucide="file-text"></i>
+                                Proof/Evidence
+                            </h3>
+                            <button type="button" class="eau-modal-close" data-modal-close>
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="eau-modal-body">
+                            <div class="eau-proof-text-content" style="padding: 1rem; background: #f8fafc; border-radius: 0.5rem; white-space: pre-wrap; word-break: break-word;">
+                                ${$('<div>').text(text).html()}
+                            </div>
+                        </div>
+                        <div class="eau-modal-footer">
+                            <button type="button" class="eau-btn eau-btn-secondary" data-modal-close>Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(modalHtml);
+
+            // Re-initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Bind close events
+            $('#eau-proof-text-modal').on('click', '[data-modal-close], .eau-modal-overlay', function() {
+                $('#eau-proof-text-modal').remove();
+            });
         },
 
         /**
@@ -212,6 +265,16 @@
 
             let html = '';
             data.rows.forEach(function(row) {
+                // Monta botão de prova baseado no tipo
+                let proofButton = '';
+                if (row.proof_type === 'url' && row.proof_url) {
+                    proofButton = `<a href="${row.proof_url}" target="_blank" class="eau-action-btn eau-action-proof" title="View proof/evidence"><i data-lucide="external-link"></i></a>`;
+                } else if (row.proof_type === 'text' && row.proof_text) {
+                    // Escapa aspas para uso no atributo data
+                    const escapedText = row.proof_text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    proofButton = `<button type="button" class="eau-action-btn eau-action-proof-text" data-proof-text="${escapedText}" title="View proof/evidence"><i data-lucide="file-text"></i></button>`;
+                }
+
                 html += `
                     <tr class="eau-table-tr">
                         <td class="eau-table-td eau-table-td-checkbox">
@@ -227,6 +290,7 @@
                         <td class="eau-table-td">${row.date}</td>
                         <td class="eau-table-td eau-table-td-actions">
                             <div class="eau-table-actions">
+                                ${proofButton}
                                 <button class="eau-action-btn eau-action-view" data-action="view" data-id="${row._id}" title="View">
                                     <i data-lucide="eye"></i>
                                 </button>
@@ -1065,14 +1129,15 @@
         },
 
         /**
-         * Debounce helper
+         * Debounce helper - preserves 'this' context
          */
         debounce: function(func, wait) {
             let timeout;
             return function executedFunction(...args) {
+                const context = this;
                 const later = () => {
                     clearTimeout(timeout);
-                    func(...args);
+                    func.apply(context, args);
                 };
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);

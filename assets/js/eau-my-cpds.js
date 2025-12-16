@@ -147,6 +147,13 @@
                 self.confirmDeleteActivity(activityId);
             });
 
+            // View proof text (modal)
+            $(document).on('click', '.eau-action-proof-text', function(e) {
+                e.preventDefault();
+                const proofText = $(this).data('proof-text');
+                self.showProofTextModal(proofText);
+            });
+
             // Media upload tabs
             $(document).on('click', '.eau-media-upload-tab', function() {
                 const tab = $(this).data('tab');
@@ -1258,6 +1265,52 @@
                 error: function() {
                     EauNotifications.error('Network Error', 'Please try again.');
                 }
+            });
+        },
+
+        /**
+         * Show modal with proof text
+         */
+        showProofTextModal: function(text) {
+            // Remove modal existente
+            $('#eau-proof-text-modal').remove();
+
+            // Cria o modal
+            const modalHtml = `
+                <div id="eau-proof-text-modal" class="eau-modal active">
+                    <div class="eau-modal-overlay"></div>
+                    <div class="eau-modal-container" style="max-width: 600px;">
+                        <div class="eau-modal-header">
+                            <h3 class="eau-modal-title">
+                                <i data-lucide="file-text"></i>
+                                Proof/Evidence
+                            </h3>
+                            <button type="button" class="eau-modal-close" data-modal-close>
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="eau-modal-body">
+                            <div class="eau-proof-text-content" style="padding: 1rem; background: #f8fafc; border-radius: 0.5rem; white-space: pre-wrap; word-break: break-word;">
+                                ${$('<div>').text(text).html()}
+                            </div>
+                        </div>
+                        <div class="eau-modal-footer">
+                            <button type="button" class="eau-btn eau-btn-secondary" data-modal-close>Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(modalHtml);
+
+            // Re-initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Bind close events
+            $('#eau-proof-text-modal').on('click', '[data-modal-close], .eau-modal-overlay', function() {
+                $('#eau-proof-text-modal').remove();
             });
         },
 

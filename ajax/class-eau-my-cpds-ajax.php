@@ -415,6 +415,56 @@ class Eau_My_Cpds_Ajax {
     }
 
     /**
+     * Processa o valor do comprovante e determina seu tipo
+     *
+     * @param string $proof_value Valor do campo act_event_website_where_possible
+     * @return array Array com 'type' (url|text|null), 'url' e 'text'
+     */
+    private static function process_proof_value($proof_value) {
+        $result = array(
+            'type' => null,
+            'url' => '',
+            'text' => '',
+        );
+
+        if (empty($proof_value)) {
+            return $result;
+        }
+
+        // Domínio base para URLs relativas
+        $base_domain = 'https://www.englishaustralia.com.au';
+
+        // 1. Verifica se é um attachment ID (número)
+        if (is_numeric($proof_value)) {
+            $attachment_url = wp_get_attachment_url($proof_value);
+            if ($attachment_url) {
+                $result['type'] = 'url';
+                $result['url'] = $attachment_url;
+                return $result;
+            }
+        }
+
+        // 2. Verifica se é uma URL absoluta (começa com http:// ou https://)
+        if (filter_var($proof_value, FILTER_VALIDATE_URL)) {
+            $result['type'] = 'url';
+            $result['url'] = $proof_value;
+            return $result;
+        }
+
+        // 3. Verifica se é uma URL relativa (começa com /)
+        if (strpos($proof_value, '/') === 0) {
+            $result['type'] = 'url';
+            $result['url'] = $base_domain . $proof_value;
+            return $result;
+        }
+
+        // 4. Se não é nenhum dos anteriores, é texto
+        $result['type'] = 'text';
+        $result['text'] = $proof_value;
+        return $result;
+    }
+
+    /**
      * Formata os dados da activity para a tabela
      *
      * @param \WP_Post $post Post da activity
@@ -505,28 +555,23 @@ class Eau_My_Cpds_Ajax {
             esc_html($date)
         );
 
-        // Proof/Evidence - act_event_website_where_possible pode ser URL ou attachment ID
+        // Proof/Evidence - act_event_website_where_possible pode ser URL, attachment ID ou texto
         $proof_value = get_post_meta($post->ID, 'act_event_website_where_possible', true);
-        $proof_url = '';
-
-        if (!empty($proof_value)) {
-            // Verifica se é uma URL ou um attachment ID
-            if (filter_var($proof_value, FILTER_VALIDATE_URL)) {
-                $proof_url = $proof_value;
-            } elseif (is_numeric($proof_value)) {
-                // É um attachment ID - pega a URL
-                $proof_url = wp_get_attachment_url($proof_value);
-            }
-        }
+        $proof_data = self::process_proof_value($proof_value);
 
         // Action column - Botões de ação
         $action_html = '<div class="eau-activity-actions">';
 
         // Ver prova (se existir)
-        if (!empty($proof_url)) {
+        if ($proof_data['type'] === 'url' && !empty($proof_data['url'])) {
             $action_html .= sprintf(
                 '<a href="%s" target="_blank" class="eau-action-btn eau-action-proof" title="View proof/evidence"><i data-lucide="external-link"></i></a>',
-                esc_url($proof_url)
+                esc_url($proof_data['url'])
+            );
+        } elseif ($proof_data['type'] === 'text' && !empty($proof_data['text'])) {
+            $action_html .= sprintf(
+                '<button type="button" class="eau-action-btn eau-action-proof-text" data-proof-text="%s" title="View proof/evidence"><i data-lucide="file-text"></i></button>',
+                esc_attr($proof_data['text'])
             );
         }
 

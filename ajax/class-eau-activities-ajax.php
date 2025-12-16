@@ -120,6 +120,70 @@ class Eau_Activities_Ajax {
         $manual_sort_fields = array('member_name', 'institution_name', 'hours');
         $needs_manual_sort = in_array($args['orderby'], $manual_sort_fields);
 
+        // Se há busca por membro, precisamos de processamento manual
+        $search_member_ids = array();
+        $has_member_search = false;
+
+        if (!empty($args['search'])) {
+            // Busca usuários pelo nome ou email
+            $search_term = $args['search'];
+
+            // Divide o termo de busca em palavras para busca mais flexível
+            $search_words = preg_split('/\s+/', trim($search_term));
+
+            $found_user_ids = array();
+
+            foreach ($search_words as $word) {
+                if (strlen($word) < 2) continue; // Ignora palavras muito curtas
+
+                // Busca por nome (display_name, email, etc)
+                $user_query_args = array(
+                    'search' => '*' . $word . '*',
+                    'search_columns' => array('user_login', 'user_email', 'user_nicename', 'display_name'),
+                    'fields' => 'ID',
+                    'number' => -1,
+                );
+                $users_by_search = get_users($user_query_args);
+
+                // Busca também por first_name e last_name via meta
+                $users_by_meta = get_users(array(
+                    'fields' => 'ID',
+                    'number' => -1,
+                    'meta_query' => array(
+                        'relation' => 'OR',
+                        array(
+                            'key' => 'first_name',
+                            'value' => $word,
+                            'compare' => 'LIKE',
+                        ),
+                        array(
+                            'key' => 'last_name',
+                            'value' => $word,
+                            'compare' => 'LIKE',
+                        ),
+                    ),
+                ));
+
+                // Combina resultados
+                $found_user_ids = array_merge($found_user_ids, $users_by_search, $users_by_meta);
+            }
+
+            // Remove duplicatas
+            $found_user_ids = array_unique($found_user_ids);
+
+            // Pega os mem_userid desses usuários
+            if (!empty($found_user_ids)) {
+                foreach ($found_user_ids as $uid) {
+                    $mem_userid = get_user_meta($uid, 'mem_userid', true);
+                    if (!empty($mem_userid)) {
+                        $search_member_ids[] = $mem_userid;
+                    }
+                }
+                $search_member_ids = array_unique($search_member_ids);
+                $has_member_search = !empty($search_member_ids);
+            }
+        }
+
         // Build WP_Query arguments
         $query_args = array(
             'post_type' => 'activitie',
@@ -127,7 +191,7 @@ class Eau_Activities_Ajax {
             'order' => strtoupper($args['order']),
         );
 
-        // Se precisa ordenação manual, busca TODOS os registros
+        // Se precisa ordenação manual, busca todos os registros
         if ($needs_manual_sort) {
             $query_args['posts_per_page'] = -1;
             $query_args['nopaging'] = true;
@@ -138,9 +202,19 @@ class Eau_Activities_Ajax {
             $query_args['orderby'] = $args['orderby'];
         }
 
-        // Search - busca no título
+        // Se há busca, usamos duas abordagens:
+        // 1. Se encontramos member_ids, filtramos por act_user_id
+        // 2. Se não, buscamos no título
+        // Como WP_Query não suporta facilmente OR entre meta e título,
+        // vamos fazer duas queries separadas e combinar os resultados
+        $use_combined_search = false;
         if (!empty($args['search'])) {
-            $query_args['s'] = $args['search'];
+            if ($has_member_search) {
+                $use_combined_search = true;
+            } else {
+                // Se não encontrou membros, busca apenas no título
+                $query_args['s'] = $args['search'];
+            }
         }
 
         // Inicializa meta_query
@@ -322,11 +396,60 @@ class Eau_Activities_Ajax {
             $query_args['date_query'] = array($date_query);
         }
 
-        // Execute query
-        $query = new \WP_Query($query_args);
+        // Se precisa busca combinada (título OU membro), fazemos duas queries
+        if ($use_combined_search) {
+            // Query 1: Busca por título
+            $query_title = $query_args;
+            $query_title['s'] = $args['search'];
+            $query_title['posts_per_page'] = -1;
+            $query_title['nopaging'] = true;
+            $query_title['fields'] = 'ids';
 
-        $activities = $query->posts;
-        $total = $query->found_posts;
+            $title_query = new \WP_Query($query_title);
+            $title_ids = $title_query->posts;
+
+            // Query 2: Busca por member_ids
+            $query_member = $query_args;
+            $query_member['posts_per_page'] = -1;
+            $query_member['nopaging'] = true;
+            $query_member['fields'] = 'ids';
+            $query_member['meta_query'][] = array(
+                'key' => 'act_user_id',
+                'value' => $search_member_ids,
+                'compare' => 'IN',
+            );
+
+            $member_query = new \WP_Query($query_member);
+            $member_ids = $member_query->posts;
+
+            // Combina e remove duplicatas
+            $all_ids = array_unique(array_merge($title_ids, $member_ids));
+            $total = count($all_ids);
+
+            // Aplica paginação manual
+            $total_pages = ceil($total / $args['posts_per_page']);
+            $offset = ($args['paged'] - 1) * $args['posts_per_page'];
+            $page_ids = array_slice($all_ids, $offset, $args['posts_per_page']);
+
+            if (empty($page_ids)) {
+                $activities = array();
+            } else {
+                // Busca os posts completos apenas para a página atual
+                $final_query = new \WP_Query(array(
+                    'post_type' => 'activitie',
+                    'post__in' => $page_ids,
+                    'posts_per_page' => count($page_ids),
+                    'orderby' => 'post__in',
+                ));
+                $activities = $final_query->posts;
+            }
+        } else {
+            // Execute query normal
+            $query = new \WP_Query($query_args);
+            $activities = $query->posts;
+            $total = $query->found_posts;
+            $total_pages = isset($total_pages) ? $total_pages : $query->max_num_pages;
+        }
 
         // Se precisa ordenação manual (meta fields ou calculados)
         if ($needs_manual_sort) {
@@ -362,14 +485,17 @@ class Eau_Activities_Ajax {
 
                 return $args['order'] === 'DESC' ? -$comparison : $comparison;
             });
+        }
 
-            // Paginação manual
+        // Paginação manual (apenas quando precisa ordenação manual e não usou busca combinada)
+        // Se usamos busca combinada, a paginação já foi feita acima
+        if ($needs_manual_sort && !$use_combined_search) {
             $total = count($activities);
             $total_pages = ceil($total / $args['posts_per_page']);
             $offset = ($args['paged'] - 1) * $args['posts_per_page'];
             $activities = array_slice($activities, $offset, $args['posts_per_page']);
-        } else {
-            $total_pages = $query->max_num_pages;
+        } elseif (!$use_combined_search && !isset($total_pages)) {
+            $total_pages = isset($query) ? $query->max_num_pages : 1;
         }
 
         return array(
@@ -506,6 +632,10 @@ class Eau_Activities_Ajax {
             esc_html($date)
         );
 
+        // Proof/Evidence - act_event_website_where_possible pode ser URL, attachment ID ou texto
+        $proof_value = get_post_meta($post->ID, 'act_event_website_where_possible', true);
+        $proof_data = self::process_proof_value($proof_value);
+
         return array(
             '_id' => $post->ID,
             'activity' => $activity_html,
@@ -516,7 +646,60 @@ class Eau_Activities_Ajax {
             'points' => $points_html,
             'status' => $status_html,
             'date' => $date_html,
+            'proof_type' => $proof_data['type'],
+            'proof_url' => $proof_data['url'],
+            'proof_text' => $proof_data['text'],
         );
+    }
+
+    /**
+     * Processa o valor do comprovante e determina seu tipo
+     *
+     * @param string $proof_value Valor do campo act_event_website_where_possible
+     * @return array Array com 'type' (url|text|null), 'url' e 'text'
+     */
+    private static function process_proof_value($proof_value) {
+        $result = array(
+            'type' => null,
+            'url' => '',
+            'text' => '',
+        );
+
+        if (empty($proof_value)) {
+            return $result;
+        }
+
+        // Domínio base para URLs relativas
+        $base_domain = 'https://www.englishaustralia.com.au';
+
+        // 1. Verifica se é um attachment ID (número)
+        if (is_numeric($proof_value)) {
+            $attachment_url = wp_get_attachment_url($proof_value);
+            if ($attachment_url) {
+                $result['type'] = 'url';
+                $result['url'] = $attachment_url;
+                return $result;
+            }
+        }
+
+        // 2. Verifica se é uma URL absoluta (começa com http:// ou https://)
+        if (filter_var($proof_value, FILTER_VALIDATE_URL)) {
+            $result['type'] = 'url';
+            $result['url'] = $proof_value;
+            return $result;
+        }
+
+        // 3. Verifica se é uma URL relativa (começa com /)
+        if (strpos($proof_value, '/') === 0) {
+            $result['type'] = 'url';
+            $result['url'] = $base_domain . $proof_value;
+            return $result;
+        }
+
+        // 4. Se não é nenhum dos anteriores, é texto
+        $result['type'] = 'text';
+        $result['text'] = $proof_value;
+        return $result;
     }
 
     /**
