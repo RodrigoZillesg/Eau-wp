@@ -179,7 +179,7 @@ const DELAYS = {
         // ============================================
         // OPENLEARNING MANAGEMENT
         // ============================================
-        await navigateTo('http://eau-site.local/dashboard/openlearning-management/', 'OpenLearning Management');
+        await navigateTo('http://eau-site.local/dashboard/open-learning-management/', 'OpenLearning Management');
         await waitForTableLoad();
         await safeScreenshot('openlearning-mgmt-01-table.png', 'Gestão OpenLearning');
 
