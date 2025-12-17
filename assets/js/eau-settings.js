@@ -443,4 +443,382 @@
         EauSettingsController.init();
     });
 
+    // ============================================
+    // Membership Import Controller (v1.55.0)
+    // ============================================
+
+    const EauMembershipImportController = {
+        // State
+        csvFilename: '',
+        rowCount: 0,
+        totalUpdated: 0,
+        totalCreated: 0,
+        totalSkipped: 0,
+
+        /**
+         * Initialize controller
+         */
+        init: function() {
+            this.bindEvents();
+        },
+
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+
+            // Open modal button
+            $('#eau-import-membership-btn').on('click', function() {
+                self.openModal();
+            });
+
+            // Close modal
+            $(document).on('click', '.eau-modal-close-membership, #eau-membership-close-modal', function() {
+                self.closeModal();
+            });
+
+            // Close on overlay click
+            $(document).on('click', '#eau-import-membership-modal .eau-modal-overlay', function() {
+                self.closeModal();
+            });
+
+            // Upload form submit
+            $('#eau-import-membership-upload-form').on('submit', function(e) {
+                e.preventDefault();
+                self.uploadCSV();
+            });
+
+            // Back to step 1
+            $('#eau-membership-back-to-step1').on('click', function() {
+                self.showStep(1);
+            });
+
+            // Start import
+            $('#eau-membership-start-import').on('click', function() {
+                self.startImport();
+            });
+        },
+
+        /**
+         * Open modal
+         */
+        openModal: function() {
+            this.resetState();
+            $('#eau-import-membership-modal').addClass('active');
+            this.showStep(1);
+
+            // Initialize Lucide icons in modal
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Close modal
+         */
+        closeModal: function() {
+            $('#eau-import-membership-modal').removeClass('active');
+            this.resetState();
+        },
+
+        /**
+         * Reset state
+         */
+        resetState: function() {
+            this.csvFilename = '';
+            this.rowCount = 0;
+            this.totalUpdated = 0;
+            this.totalCreated = 0;
+            this.totalSkipped = 0;
+
+            // Reset form
+            $('#eau-import-membership-upload-form')[0].reset();
+
+            // Clear preview
+            $('#eau-membership-preview-stats').html('');
+            $('#eau-membership-preview-table tbody').html('');
+
+            // Clear log
+            $('#eau-membership-import-log').html('');
+
+            // Reset progress
+            $('#eau-membership-progress-fill').css('width', '0%');
+            $('#eau-membership-progress-text').text('Preparing...');
+
+            // Clear summary
+            $('#eau-membership-import-summary').html('');
+        },
+
+        /**
+         * Show specific step
+         */
+        showStep: function(step) {
+            $('.eau-import-step').hide();
+            $(`#eau-import-membership-step-${step}`).show();
+        },
+
+        /**
+         * Upload CSV for analysis
+         */
+        uploadCSV: function() {
+            const self = this;
+            const fileInput = $('#membership_csv_file')[0];
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                EauNotifications.warning('Warning', 'Please select a CSV file.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                EauNotifications.error('Invalid File', 'Please select a CSV file.');
+                return;
+            }
+
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                EauNotifications.error('File Too Large', 'Maximum file size is 10MB.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'eau_import_membership_analyze_csv');
+            formData.append('nonce', eauSettingsData.nonce);
+            formData.append('csv_file', file);
+
+            const $btn = $('#eau-import-membership-upload-form button[type="submit"]');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Analyzing...');
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        self.csvFilename = response.data.filename;
+                        self.rowCount = response.data.row_count;
+                        self.showPreview(response.data);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to analyze CSV.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Failed to upload CSV file.');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+        },
+
+        /**
+         * Show preview (Step 2)
+         */
+        showPreview: function(data) {
+            const self = this;
+
+            // Build stats HTML
+            const statsHtml = `
+                <div class="eau-stat-box total">
+                    <div class="eau-stat-number">${data.row_count}</div>
+                    <div class="eau-stat-label">Total Rows</div>
+                </div>
+                <div class="eau-stat-box update">
+                    <div class="eau-stat-number">${data.existing_count}</div>
+                    <div class="eau-stat-label">Will Update</div>
+                </div>
+                <div class="eau-stat-box create">
+                    <div class="eau-stat-number">${data.new_count}</div>
+                    <div class="eau-stat-label">Will Create</div>
+                </div>
+            `;
+            $('#eau-membership-preview-stats').html(statsHtml);
+
+            // Build preview table
+            let tableHtml = '';
+            if (data.preview && data.preview.length > 0) {
+                data.preview.forEach(function(row) {
+                    const actionClass = row.action === 'update' ? 'update' : 'create';
+                    const actionLabel = row.action === 'update' ? 'UPDATE' : 'CREATE';
+                    tableHtml += `
+                        <tr>
+                            <td>${self.escapeHtml(row.email)}</td>
+                            <td>${self.escapeHtml(row.name)}</td>
+                            <td>${self.escapeHtml(row.type)}</td>
+                            <td>${self.escapeHtml(row.status)}</td>
+                            <td>${self.escapeHtml(row.expiry)}</td>
+                            <td><span class="eau-action-badge ${actionClass}">${actionLabel}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+            $('#eau-membership-preview-table tbody').html(tableHtml);
+
+            this.showStep(2);
+
+            // Re-initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Start import process
+         */
+        startImport: function() {
+            this.showStep(3);
+            this.totalUpdated = 0;
+            this.totalCreated = 0;
+            this.totalSkipped = 0;
+            $('#eau-membership-import-log').html('');
+
+            this.logMessage('info', 'Starting import...');
+            this.processBatch(0);
+        },
+
+        /**
+         * Process batch
+         */
+        processBatch: function(offset, retryCount) {
+            const self = this;
+            retryCount = retryCount || 0;
+            const maxRetries = 3;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                timeout: 60000, // 60 seconds timeout
+                data: {
+                    action: 'eau_import_membership_batch',
+                    nonce: eauSettingsData.nonce,
+                    filename: this.csvFilename,
+                    offset: offset,
+                    limit: 10 // Reduced batch size to avoid timeout
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        self.totalUpdated += data.updated || 0;
+                        self.totalCreated += data.created || 0;
+                        self.totalSkipped += data.skipped || 0;
+
+                        // Update progress
+                        const progress = Math.round((data.processed / data.total) * 100);
+                        $('#eau-membership-progress-fill').css('width', progress + '%');
+                        $('#eau-membership-progress-text').text(
+                            `Processed ${data.processed} of ${data.total} (${progress}%)`
+                        );
+
+                        // Log results
+                        if (data.updated > 0) {
+                            self.logMessage('success', `Batch: ${data.updated} updated`);
+                        }
+                        if (data.created > 0) {
+                            self.logMessage('warning', `Batch: ${data.created} created`);
+                        }
+                        if (data.skipped > 0) {
+                            self.logMessage('error', `Batch: ${data.skipped} skipped`);
+                        }
+
+                        // Log errors
+                        if (data.errors && data.errors.length > 0) {
+                            data.errors.forEach(function(error) {
+                                self.logMessage('error', error);
+                            });
+                        }
+
+                        // Continue or finish
+                        if (data.has_more) {
+                            self.processBatch(data.processed);
+                        } else {
+                            self.showComplete(data);
+                        }
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Import failed.');
+                        self.logMessage('error', response.data.message || 'Import failed.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    if (retryCount < maxRetries) {
+                        self.logMessage('warning', `Network error. Retrying (${retryCount + 1}/${maxRetries})...`);
+                        // Wait 2 seconds before retry
+                        setTimeout(function() {
+                            self.processBatch(offset, retryCount + 1);
+                        }, 2000);
+                    } else {
+                        EauNotifications.error('Network Error', 'Import interrupted after multiple retries.');
+                        self.logMessage('error', 'Network error - import interrupted after ' + maxRetries + ' retries.');
+                        self.logMessage('info', 'You can try again from the beginning.');
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show import complete (Step 4)
+         */
+        showComplete: function(data) {
+            this.logMessage('success', 'Import complete!');
+
+            const summaryHtml = `
+                <div class="eau-summary-grid">
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number updated">${this.totalUpdated}</div>
+                        <div class="eau-summary-label">Members Updated</div>
+                    </div>
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number created">${this.totalCreated}</div>
+                        <div class="eau-summary-label">Members Created</div>
+                    </div>
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number skipped">${this.totalSkipped}</div>
+                        <div class="eau-summary-label">Rows Skipped</div>
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 15px;">
+                    <strong>Total processed:</strong> ${data.total} rows
+                </p>
+            `;
+            $('#eau-membership-import-summary').html(summaryHtml);
+
+            this.showStep(4);
+            EauNotifications.success('Import Complete', `Successfully processed ${data.total} rows.`);
+        },
+
+        /**
+         * Log message
+         */
+        logMessage: function(type, message) {
+            const $log = $('#eau-membership-import-log');
+            const timestamp = new Date().toLocaleTimeString();
+            $log.append(`<p class="eau-log-${type}">[${timestamp}] ${this.escapeHtml(message)}</p>`);
+            $log.scrollTop($log[0].scrollHeight);
+        },
+
+        /**
+         * Escape HTML
+         */
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    };
+
+    // Initialize Membership Import Controller
+    $(document).ready(function() {
+        // Only initialize if the import button exists
+        if ($('#eau-import-membership-btn').length > 0) {
+            EauMembershipImportController.init();
+        }
+    });
+
 })(jQuery);

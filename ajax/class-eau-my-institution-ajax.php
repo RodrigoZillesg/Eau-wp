@@ -3,6 +3,7 @@ namespace EauSystem\Ajax;
 
 use EauSystem\Eau_User_Institution_Helper;
 use EauSystem\Eau_Institution_Requests_Database;
+use EauSystem\Eau_Member_Institution_Service;
 use EauSystem\Helpers\Eau_Location_Data;
 
 /**
@@ -564,6 +565,12 @@ class Eau_My_Institution_Ajax {
 
     /**
      * AJAX: Leave current institution
+     *
+     * Uses centralized Eau_Member_Institution_Service for proper unlinking
+     * with validation and history tracking.
+     *
+     * @since 1.44.0
+     * @since 1.53.0 Uses centralized service with validation
      */
     public static function leave_institution() {
         check_ajax_referer('eau_my_institution_nonce', 'nonce');
@@ -579,16 +586,6 @@ class Eau_My_Institution_Ajax {
         }
 
         $user_id = get_current_user_id();
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-
-        // institutionAdmin cannot leave via this method (needs to be removed as admin)
-        if ($mem_type === 'institutionAdmin') {
-            // Check if this is their member institution, not admin
-            $current_institution = Eau_User_Institution_Helper::get_user_institution($user_id);
-            if (!$current_institution || $current_institution->ID != $institution_id) {
-                wp_send_json_error(array('message' => 'Institution admins must be removed by a super admin'));
-            }
-        }
 
         // Get current institution
         $current_institution = Eau_User_Institution_Helper::get_user_institution($user_id);
@@ -596,8 +593,26 @@ class Eau_My_Institution_Ajax {
             wp_send_json_error(array('message' => 'You are not a member of this institution'));
         }
 
-        // Clear the mem_membercompanyname
-        delete_user_meta($user_id, 'mem_membercompanyname');
+        // Check if member can be unlinked (validates if only admin)
+        $can_unlink = Eau_Member_Institution_Service::can_unlink_member($user_id);
+        if (is_wp_error($can_unlink)) {
+            wp_send_json_error(array(
+                'message' => $can_unlink->get_error_message(),
+                'error_code' => $can_unlink->get_error_code(),
+            ));
+        }
+
+        // Use centralized service to unlink member
+        $result = Eau_Member_Institution_Service::unlink_member($user_id, array(
+            'reason' => 'Member left institution voluntarily',
+        ));
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array(
+                'message' => $result->get_error_message(),
+                'error_code' => $result->get_error_code(),
+            ));
+        }
 
         wp_send_json_success(array('message' => 'You have left the institution'));
     }

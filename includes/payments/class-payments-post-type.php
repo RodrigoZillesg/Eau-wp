@@ -108,17 +108,18 @@ class Payments_Post_Type {
      *
      * @since  1.45.0
      * @since  1.49.9 Adicionados campos para membership payments
+     * @since  1.53.0 Adicionados campos para importação de CSV legado
      * @return array
      */
     public static function get_meta_fields() {
         return array(
             // Campos comuns
-            'payment_type'    => 'string',   // 'event' ou 'membership'
+            'payment_type'    => 'string',   // 'event', 'membership', ou 'legacy'
             'user_id'         => 'integer',  // ID do usuário que pagou
             'amount'          => 'number',   // Valor do pagamento
             'payment_date'    => 'string',   // Data do pagamento (Y-m-d)
             'payment_method'  => 'string',   // Método: credit_card, bank_transfer, pix, cash, other
-            'transaction_id'  => 'string',   // ID da transação (gateway)
+            'transaction_id'  => 'string',   // ID da transação (gateway) - CHAVE ÚNICA para prevenção de duplicatas
             'receipt_url'     => 'string',   // URL do comprovante
             'receipt_id'      => 'integer',  // ID do attachment do comprovante
             'notes'           => 'string',   // Observações
@@ -134,6 +135,18 @@ class Payments_Post_Type {
             'membership_type'           => 'string',   // Tipo: full_provider, associate_access, etc.
             'membership_period_start'   => 'string',   // Data início do período (Y-m-d)
             'membership_period_end'     => 'string',   // Data fim do período (Y-m-d)
+
+            // Campos para importação de CSV legado (v1.53.0)
+            'legacy_order_no'     => 'string',   // Order No do sistema legado
+            'legacy_reference'    => 'string',   // Reference Number do sistema legado
+            'legacy_description'  => 'string',   // Description do item (para identificar evento/membership)
+            'legacy_raw_data'     => 'string',   // JSON com todos os dados originais do CSV
+            'legacy_import_date'  => 'string',   // Data/hora da importação (Y-m-d H:i:s)
+            'payer_name'          => 'string',   // Nome de quem pagou (pode ser diferente do beneficiário)
+            'payer_email'         => 'string',   // Email de quem pagou
+            'card_type'           => 'string',   // Tipo do cartão (Visa, Mastercard, Amex, etc)
+            'tax_amount'          => 'number',   // Valor do imposto (GST)
+            'subtotal_amount'     => 'number',   // Valor sem imposto
         );
     }
 
@@ -142,6 +155,7 @@ class Payments_Post_Type {
      *
      * @since  1.45.0
      * @since  1.49.9 Adicionados campos para membership payments
+     * @since  1.53.0 Adicionados campos para importação de CSV legado
      * @return array
      */
     public static function get_defaults() {
@@ -168,7 +182,83 @@ class Payments_Post_Type {
             'membership_type'           => '',
             'membership_period_start'   => '',
             'membership_period_end'     => '',
+
+            // Legacy Import (v1.53.0)
+            'legacy_order_no'     => '',
+            'legacy_reference'    => '',
+            'legacy_description'  => '',
+            'legacy_raw_data'     => '',
+            'legacy_import_date'  => '',
+            'payer_name'          => '',
+            'payer_email'         => '',
+            'card_type'           => '',
+            'tax_amount'          => 0,
+            'subtotal_amount'     => 0,
         );
+    }
+
+    /**
+     * Verifica se já existe um pagamento com o transaction_id especificado
+     *
+     * @since  1.53.0
+     * @param  string $transaction_id ID da transação
+     * @return int|false ID do pagamento existente ou false se não existe
+     */
+    public static function get_payment_by_transaction_id($transaction_id) {
+        if (empty($transaction_id)) {
+            return false;
+        }
+
+        $query = new \WP_Query(array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => 1,
+            'post_status'    => 'any',
+            'meta_query'     => array(
+                array(
+                    'key'   => self::META_PREFIX . 'transaction_id',
+                    'value' => $transaction_id,
+                ),
+            ),
+            'fields'         => 'ids',
+        ));
+
+        if ($query->have_posts()) {
+            return $query->posts[0];
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica se já existe um pagamento com o legacy_order_no especificado
+     *
+     * @since  1.53.0
+     * @param  string $order_no Order Number do sistema legado
+     * @return int|false ID do pagamento existente ou false se não existe
+     */
+    public static function get_payment_by_legacy_order_no($order_no) {
+        if (empty($order_no)) {
+            return false;
+        }
+
+        $query = new \WP_Query(array(
+            'post_type'      => self::POST_TYPE,
+            'posts_per_page' => 1,
+            'post_status'    => 'any',
+            'meta_query'     => array(
+                array(
+                    'key'   => self::META_PREFIX . 'legacy_order_no',
+                    'value' => $order_no,
+                ),
+            ),
+            'fields'         => 'ids',
+        ));
+
+        if ($query->have_posts()) {
+            return $query->posts[0];
+        }
+
+        return false;
     }
 
     /**
@@ -189,6 +279,15 @@ class Payments_Post_Type {
                 'Membership Payment #%s - User #%d',
                 date('YmdHis'),
                 $data['user_id']
+            );
+        } elseif ($data['payment_type'] === 'legacy') {
+            // Pagamento importado do sistema legado
+            $order_no = !empty($data['legacy_order_no']) ? $data['legacy_order_no'] : date('YmdHis');
+            $payer = !empty($data['payer_name']) ? $data['payer_name'] : 'Unknown';
+            $title = sprintf(
+                'Legacy Payment #%s - %s',
+                $order_no,
+                $payer
             );
         } else {
             $title = sprintf(

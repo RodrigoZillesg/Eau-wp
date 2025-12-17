@@ -129,6 +129,13 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-payments-management.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-payments-management-ajax.php';
 
+        // Payment Receipt Generator (v1.53.6)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payment-receipt-generator.php';
+
+        // My Payments (v1.53.8)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-payments.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-my-payments-ajax.php';
+
         // System Presentation - Public (v1.51.65)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-system-presentation.php';
 
@@ -213,6 +220,7 @@ class Eau_System {
         Eau_Membership_Applications_Management::register_shortcode();
         Eau_System_Presentation::register_shortcode();
         Eau_Payments_Management::init();
+        Eau_My_Payments::register_shortcode();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();
@@ -230,6 +238,7 @@ class Eau_System {
         \EauSystem\Ajax\Eau_Membership_Selection_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_Membership_Applications_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_Payments_Management_Ajax::init();
+        \EauSystem\Ajax\Eau_My_Payments_Ajax::register_handlers();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
         Eau_Duplicate_Scanner::register_hooks();
@@ -254,6 +263,9 @@ class Eau_System {
         // Initialize Payments System
         \EauSystem\Payments\Payments_Post_Type::init();
         \EauSystem\Payments\Payments_Ajax::register_handlers();
+
+        // Initialize Payment Receipt Generator (v1.53.6)
+        \EauSystem\Payments\Payment_Receipt_Generator::register();
 
         // Garante que tabelas do OpenLearning existem
         if (!Eau_OpenLearning_Database::tables_exist()) {

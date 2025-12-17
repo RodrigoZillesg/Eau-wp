@@ -25,7 +25,7 @@ class Eau_System_Presentation {
     /**
      * System version
      */
-    private static $version = '1.52.8';
+    private static $version = '1.54.2';
 
     /**
      * Register shortcode
@@ -274,7 +274,7 @@ class Eau_System_Presentation {
                     'payments' => array(
                         'title' => 'Gestão de Pagamentos',
                         'icon' => 'credit-card',
-                        'description' => 'Módulo financeiro para gerenciamento unificado de pagamentos de eventos e memberships.',
+                        'description' => 'Módulo financeiro para gerenciamento unificado de pagamentos de eventos e memberships. Inclui importação de dados legados e geração de comprovantes.',
                         'capabilities' => array(
                             'Visualização de todas as faturas',
                             'Filtros por status e tipo de pagamento',
@@ -282,12 +282,34 @@ class Eau_System_Presentation {
                             'Rastreamento de status (Pago, Pendente, Falhou)',
                             'Múltiplos métodos de pagamento',
                             'Exportação de relatórios financeiros',
+                            'Importação de pagamentos via CSV',
+                            'Geração de comprovantes (Receipt) em PDF',
                         ),
                         'screenshots' => array(
                             array(
                                 'file' => 'payments-01-table.png',
                                 'title' => 'Tabela de Pagamentos',
                                 'description' => 'Interface de gestão financeira com todas as faturas e pagamentos.',
+                            ),
+                        ),
+                    ),
+                    'my-payments' => array(
+                        'title' => 'Meus Pagamentos',
+                        'icon' => 'receipt',
+                        'description' => 'Página pessoal onde cada usuário pode visualizar todo o histórico de pagamentos realizados para a English Australia, incluindo eventos e memberships.',
+                        'capabilities' => array(
+                            'Histórico completo de pagamentos',
+                            'Filtros por tipo e ano',
+                            'Visualização de detalhes do pagamento',
+                            'Download de comprovantes (Receipt)',
+                            'Estatísticas pessoais (total pago, eventos, memberships)',
+                            'Busca por referência ou descrição',
+                        ),
+                        'screenshots' => array(
+                            array(
+                                'file' => 'my-payments-01-table.png',
+                                'title' => 'Meus Pagamentos',
+                                'description' => 'Interface pessoal com histórico de todos os pagamentos realizados.',
                             ),
                         ),
                     ),
@@ -541,6 +563,7 @@ class Eau_System_Presentation {
                     array('Minha Instituição', '—', '—', '✓', '—'),
                     array('Perfil Pessoal', '✓', '✓', '✓', '✓'),
                     array('Minhas Atividades CPD', '✓', '✓', '✓', '✓'),
+                    array('Meus Pagamentos', '✓', '✓', '✓', '✓'),
                     array('Eventos Públicos', '✓', '✓', '✓', '✓'),
                     array('Cursos OpenLearning', '✓', '✓', '✓', '✓'),
                     array('Deleção em Massa', '✓', '—', '—', '—'),
@@ -843,7 +866,7 @@ class Eau_System_Presentation {
                     'payments' => array(
                         'title' => 'Payments Management',
                         'icon' => 'credit-card',
-                        'description' => 'Financial module for unified management of event and membership payments.',
+                        'description' => 'Financial module for unified management of event and membership payments. Includes legacy data import and receipt generation.',
                         'capabilities' => array(
                             'View all invoices',
                             'Filters by status and payment type',
@@ -851,12 +874,34 @@ class Eau_System_Presentation {
                             'Status tracking (Paid, Pending, Failed)',
                             'Multiple payment methods',
                             'Financial report export',
+                            'CSV payment import',
+                            'PDF receipt generation',
                         ),
                         'screenshots' => array(
                             array(
                                 'file' => 'payments-01-table.png',
                                 'title' => 'Payments Table',
                                 'description' => 'Financial management interface with all invoices and payments.',
+                            ),
+                        ),
+                    ),
+                    'my-payments' => array(
+                        'title' => 'My Payments',
+                        'icon' => 'receipt',
+                        'description' => 'Personal page where each user can view their complete payment history with English Australia, including events and memberships.',
+                        'capabilities' => array(
+                            'Complete payment history',
+                            'Filters by type and year',
+                            'Payment details view',
+                            'Receipt download',
+                            'Personal statistics (total paid, events, memberships)',
+                            'Search by reference or description',
+                        ),
+                        'screenshots' => array(
+                            array(
+                                'file' => 'my-payments-01-table.png',
+                                'title' => 'My Payments',
+                                'description' => 'Personal interface with history of all payments made.',
                             ),
                         ),
                     ),
@@ -1110,6 +1155,7 @@ class Eau_System_Presentation {
                     array('My Institution', '—', '—', '✓', '—'),
                     array('Personal Profile', '✓', '✓', '✓', '✓'),
                     array('My CPD Activities', '✓', '✓', '✓', '✓'),
+                    array('My Payments', '✓', '✓', '✓', '✓'),
                     array('Public Events', '✓', '✓', '✓', '✓'),
                     array('OpenLearning Courses', '✓', '✓', '✓', '✓'),
                     array('Bulk Deletion', '✓', '—', '—', '—'),
@@ -1217,32 +1263,12 @@ class Eau_System_Presentation {
     private static function get_pending_items() {
         return array(
             array(
-                'pt' => 'Correção na visualização de comprovantes de atividades importadas do sistema antigo',
-                'en' => 'Fix for viewing activity evidence imported from the legacy system',
-            ),
-            array(
-                'pt' => 'Ajuste no controle de acesso do botão "Merge Duplicates" para administradores de instituição',
-                'en' => 'Access control adjustment for "Merge Duplicates" button for institution administrators',
-            ),
-            array(
-                'pt' => 'Correção na funcionalidade de recuperação de senha',
-                'en' => 'Fix for password recovery functionality',
-            ),
-            array(
-                'pt' => 'Correção no botão de exportação de atividades CPD',
-                'en' => 'Fix for CPD activities export button',
-            ),
-            array(
-                'pt' => 'Importação completa dos dados do sistema antigo (pagamentos, memberships, comprovantes e datas de expiração)',
-                'en' => 'Complete data import from legacy system (payments, memberships, receipts, and expiration dates)',
+                'pt' => 'Importação dos dados restantes do sistema antigo (memberships e datas de expiração)',
+                'en' => 'Import remaining data from legacy system (memberships and expiration dates)',
             ),
             array(
                 'pt' => 'Preservação das datas originais de cadastro dos membros durante a importação',
                 'en' => 'Preservation of original member registration dates during import',
-            ),
-            array(
-                'pt' => 'Atualização automática de todos os campos relacionados quando um membro é aprovado em uma nova instituição',
-                'en' => 'Automatic update of all related fields when a member is approved at a new institution',
             ),
             array(
                 'pt' => 'Configuração de emails oficiais da English Australia (SMTP) - aguardando acesso ao DNS',

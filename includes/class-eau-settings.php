@@ -226,12 +226,66 @@ class Eau_Settings {
                     </div>
                 </div>
 
+                <!-- Membership Import Section (v1.55.0) -->
+                <div class="eau-settings-section" id="eau-settings-membership-import">
+                    <div class="eau-settings-section-header">
+                        <div class="eau-settings-section-icon">
+                            <i data-lucide="upload"></i>
+                        </div>
+                        <div class="eau-settings-section-title">
+                            <h3>Membership Data Import</h3>
+                            <p>Import membership data from legacy system CSV</p>
+                        </div>
+                    </div>
+
+                    <div class="eau-settings-section-body">
+                        <p class="eau-settings-field-description">
+                            Import membership data from a CSV file exported from the legacy system.
+                            This will update existing members with their membership type, status, start date,
+                            and expiry date. New users will be created if their email is not found in the system.
+                        </p>
+
+                        <div class="eau-import-info-boxes" style="display: flex; gap: 15px; margin: 20px 0;">
+                            <div class="eau-info-box" style="flex: 1; padding: 15px; background: #f0f6fc; border: 1px solid #0073aa; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <i data-lucide="user-check" style="width: 20px; height: 20px; color: #0073aa;"></i>
+                                    <strong>Existing Members</strong>
+                                </div>
+                                <p style="margin: 0; font-size: 13px; color: #666;">
+                                    Members matched by email will have their membership data updated.
+                                </p>
+                            </div>
+                            <div class="eau-info-box" style="flex: 1; padding: 15px; background: #fff8e5; border: 1px solid #dba617; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <i data-lucide="user-plus" style="width: 20px; height: 20px; color: #dba617;"></i>
+                                    <strong>New Members</strong>
+                                </div>
+                                <p style="margin: 0; font-size: 13px; color: #666;">
+                                    Emails not found will create new user accounts with membership data.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="eau-settings-section-footer">
+                        <button type="button" class="eau-btn eau-btn-primary" id="eau-import-membership-btn">
+                            <i data-lucide="upload"></i>
+                            Import Membership Data
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Future Settings Placeholder -->
                 <!-- More sections can be added here -->
 
             </div>
 
         </div>
+
+        <?php
+        // Include Membership Import Modal (v1.55.0)
+        include EAU_SYSTEM_PLUGIN_DIR . 'includes/admin-page-membership-import-modal.php';
+        ?>
         <?php
         return ob_get_clean();
     }

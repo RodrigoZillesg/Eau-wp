@@ -4,6 +4,7 @@ namespace EauSystem\Ajax;
 use EauSystem\Eau_Membership_Database;
 use EauSystem\Eau_Membership_Types;
 use EauSystem\Eau_User_Institution_Helper;
+use EauSystem\Eau_Member_Institution_Service;
 use EauSystem\Email\Email_Membership;
 
 /**
@@ -569,9 +570,13 @@ class Eau_Membership_Applications_Ajax {
      * When cancelled:
      * - Application status changes to 'cancelled'
      * - User's membership status is set to 'cancelled'
+     * - Member is unlinked from institution (if applicable)
+     * - Member type is downgraded from institutionAdmin to member
+     * - History is recorded in member-institution history table
      * - The application will show as "Cancelled" in Payments Management
      *
      * @since 1.51.46
+     * @updated 1.53.0 - Uses Eau_Member_Institution_Service for proper unlinking
      */
     public static function cancel_application() {
         // Verify nonce
@@ -614,6 +619,34 @@ class Eau_Membership_Applications_Ajax {
             wp_send_json_error(array('message' => 'Only approved applications can be cancelled.'));
         }
 
+        // If user was created, check if we can unlink them
+        if (!empty($application->created_user_id)) {
+            $user_id = $application->created_user_id;
+
+            // Check if member can be unlinked (validates if only admin)
+            $can_unlink = Eau_Member_Institution_Service::can_unlink_member($user_id);
+            if (is_wp_error($can_unlink)) {
+                wp_send_json_error(array(
+                    'message' => $can_unlink->get_error_message(),
+                    'error_code' => $can_unlink->get_error_code(),
+                ));
+            }
+
+            // Use centralized service to unlink member from institution
+            $unlink_result = Eau_Member_Institution_Service::unlink_member($user_id, array(
+                'reason' => 'Membership application cancelled: ' . $cancellation_reason,
+            ));
+
+            if (is_wp_error($unlink_result)) {
+                wp_send_json_error(array(
+                    'message' => $unlink_result->get_error_message(),
+                ));
+            }
+
+            // Update membership-specific status to cancelled
+            update_user_meta($user_id, 'mem_membership_status', 'cancelled');
+        }
+
         // Update application status to cancelled
         $result = $wpdb->update(
             $table_name,
@@ -630,11 +663,6 @@ class Eau_Membership_Applications_Ajax {
 
         if ($result === false) {
             wp_send_json_error(array('message' => 'Failed to cancel application.'));
-        }
-
-        // Update user's membership status if user was created
-        if (!empty($application->created_user_id)) {
-            update_user_meta($application->created_user_id, 'mem_membership_status', 'cancelled');
         }
 
         // Send cancellation email

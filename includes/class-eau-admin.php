@@ -28,6 +28,11 @@ class Eau_Admin {
 
         // Handler AJAX para Sincronização de User Types
         add_action('wp_ajax_eau_sync_user_types', array($this, 'handle_sync_user_types'));
+
+        // Handlers AJAX para Membership Import (v1.55.0)
+        add_action('wp_ajax_eau_import_membership_analyze_csv', array($this, 'handle_import_membership_analyze_csv'));
+        add_action('wp_ajax_eau_import_membership_preview', array($this, 'handle_import_membership_preview'));
+        add_action('wp_ajax_eau_import_membership_batch', array($this, 'handle_import_membership_batch'));
     }
 
     /**
@@ -424,6 +429,148 @@ class Eau_Admin {
 
         $syncer = new Eau_User_Type_Sync();
         $result = $syncer->sync_all_user_types();
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Verifica permissão para importação de membership
+     * Aceita superAdmin e Admin (baseado em mem_type)
+     *
+     * @since 1.55.0
+     * @return bool
+     */
+    private function can_import_membership() {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+
+        $user_id = get_current_user_id();
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+
+        return in_array($mem_type, array('superAdmin', 'Admin'));
+    }
+
+    /**
+     * Handler AJAX para análise de CSV de membership
+     *
+     * @since 1.55.0
+     */
+    public function handle_import_membership_analyze_csv() {
+        // Aceita nonce do settings (frontend) ou do system (admin)
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_settings_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'eau_system_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!$this->can_import_membership()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        if (!isset($_FILES['csv_file']) && !isset($_FILES['membership_csv_file'])) {
+            wp_send_json_error(array('message' => 'No file uploaded.'));
+        }
+
+        // Aceita ambos os nomes de campo (frontend e admin)
+        $file = isset($_FILES['csv_file']) ? $_FILES['csv_file'] : $_FILES['membership_csv_file'];
+
+        $csv_handler = new Eau_CSV_Handler();
+        $result = $csv_handler->process_upload($file);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // Adiciona preview na resposta
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $result['filename'];
+
+        if (file_exists($csv_filepath)) {
+            $preview = Eau_Membership_Importer::get_preview($csv_filepath, 10);
+            if (!is_wp_error($preview)) {
+                $result['preview'] = $preview['preview'];
+                $result['existing_count'] = $preview['will_update'];
+                $result['new_count'] = $preview['will_create'];
+            }
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para preview de importação de membership
+     *
+     * @since 1.55.0
+     */
+    public function handle_import_membership_preview() {
+        // Aceita nonce do settings (frontend) ou do system (admin)
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_settings_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'eau_system_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!$this->can_import_membership()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? $_POST['filename'] ?? '');
+
+        if (empty($csv_filename)) {
+            wp_send_json_error(array('message' => 'Filename not provided.'));
+        }
+
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $csv_filename;
+
+        if (!file_exists($csv_filepath)) {
+            wp_send_json_error(array('message' => 'CSV file not found.'));
+        }
+
+        $result = Eau_Membership_Importer::get_preview($csv_filepath, 10);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para importação de membership em lote
+     *
+     * @since 1.55.0
+     */
+    public function handle_import_membership_batch() {
+        // Aceita nonce do settings (frontend) ou do system (admin)
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_settings_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'eau_system_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!$this->can_import_membership()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? $_POST['filename'] ?? '');
+        $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
+        $batch_size = isset($_POST['limit']) ? intval($_POST['limit']) : (isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25);
+
+        if (empty($csv_filename)) {
+            wp_send_json_error(array('message' => 'Filename not provided.'));
+        }
+
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $csv_filename;
+
+        if (!file_exists($csv_filepath)) {
+            wp_send_json_error(array('message' => 'CSV file not found.'));
+        }
+
+        $result = Eau_Membership_Importer::import_batch($csv_filepath, $offset, $batch_size);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

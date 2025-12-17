@@ -80,6 +80,7 @@ class Eau_Payments_Management {
             echo self::render_data_table();
             echo self::render_pagination();
             echo self::render_payment_modal();
+            echo self::render_import_modal();
             ?>
         </div>
         <?php
@@ -192,6 +193,10 @@ class Eau_Payments_Management {
                 <p class="eau-page-header-subtitle"><?php esc_html_e('Manage event registrations and membership payments', 'eau-system'); ?></p>
             </div>
             <div class="eau-page-header-actions">
+                <button type="button" class="eau-btn eau-btn-secondary" id="eau-import-csv-btn">
+                    <i data-lucide="upload"></i>
+                    <?php esc_html_e('Import CSV', 'eau-system'); ?>
+                </button>
                 <button type="button" class="eau-btn eau-btn-secondary" id="eau-export-csv-btn">
                     <i data-lucide="download"></i>
                     <?php esc_html_e('Export CSV', 'eau-system'); ?>
@@ -519,6 +524,188 @@ class Eau_Payments_Management {
                 <div class="eau-modal-footer">
                     <button type="button" class="eau-btn eau-btn-secondary" data-modal-action="close">
                         <?php esc_html_e('Close', 'eau-system'); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza modal de importação de CSV
+     *
+     * @since  1.53.0
+     * @return string HTML
+     */
+    private static function render_import_modal() {
+        ob_start();
+        ?>
+        <div class="eau-modal-overlay" id="eau-import-modal-overlay" style="display: none;">
+            <div class="eau-modal eau-modal-lg">
+                <div class="eau-modal-header">
+                    <h2 class="eau-modal-title">
+                        <i data-lucide="upload"></i>
+                        <?php esc_html_e('Import Payments from CSV', 'eau-system'); ?>
+                    </h2>
+                    <button type="button" class="eau-modal-close" data-modal-action="close">&times;</button>
+                </div>
+                <div class="eau-modal-body">
+                    <!-- Step 1: Upload -->
+                    <div class="eau-import-step" id="eau-import-step-upload">
+                        <div class="eau-import-instructions">
+                            <h3><?php esc_html_e('Upload Legacy Payments CSV', 'eau-system'); ?></h3>
+                            <p><?php esc_html_e('Import payments from your legacy system. The CSV should use semicolon (;) as delimiter and include the following columns:', 'eau-system'); ?></p>
+                            <ul class="eau-import-columns-list">
+                                <li><strong>Order No</strong> - <?php esc_html_e('Unique order number', 'eau-system'); ?></li>
+                                <li><strong>Transaction Id</strong> - <?php esc_html_e('Payment transaction ID (used to prevent duplicates)', 'eau-system'); ?></li>
+                                <li><strong>Email Address</strong> - <?php esc_html_e('Payer email', 'eau-system'); ?></li>
+                                <li><strong>Full Name</strong> - <?php esc_html_e('Payer name', 'eau-system'); ?></li>
+                                <li><strong>Date</strong> - <?php esc_html_e('Payment date (dd/mm/yyyy)', 'eau-system'); ?></li>
+                                <li><strong>Payment Method</strong> - <?php esc_html_e('Payment method', 'eau-system'); ?></li>
+                                <li><strong>Description</strong> - <?php esc_html_e('Item description', 'eau-system'); ?></li>
+                                <li><strong>Price</strong> - <?php esc_html_e('Item price', 'eau-system'); ?></li>
+                                <li><strong>Tax</strong> - <?php esc_html_e('Tax amount', 'eau-system'); ?></li>
+                            </ul>
+                        </div>
+
+                        <div class="eau-import-dropzone" id="eau-import-dropzone">
+                            <div class="eau-import-dropzone-content">
+                                <i data-lucide="upload-cloud"></i>
+                                <p class="eau-import-dropzone-text"><?php esc_html_e('Drag and drop your CSV file here', 'eau-system'); ?></p>
+                                <p class="eau-import-dropzone-or"><?php esc_html_e('or', 'eau-system'); ?></p>
+                                <button type="button" class="eau-btn eau-btn-secondary" id="eau-import-browse-btn">
+                                    <i data-lucide="folder-open"></i>
+                                    <?php esc_html_e('Browse Files', 'eau-system'); ?>
+                                </button>
+                                <input type="file" id="eau-import-file-input" accept=".csv" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="eau-import-file-info" id="eau-import-file-info" style="display: none;">
+                            <div class="eau-import-file-icon">
+                                <i data-lucide="file-spreadsheet"></i>
+                            </div>
+                            <div class="eau-import-file-details">
+                                <span class="eau-import-file-name" id="eau-import-file-name">-</span>
+                                <span class="eau-import-file-size" id="eau-import-file-size">-</span>
+                            </div>
+                            <button type="button" class="eau-btn eau-btn-secondary eau-btn-sm" id="eau-import-remove-file">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Preview -->
+                    <div class="eau-import-step" id="eau-import-step-preview" style="display: none;">
+                        <div class="eau-import-preview-header">
+                            <h3><?php esc_html_e('Preview Import', 'eau-system'); ?></h3>
+                            <div class="eau-import-preview-stats">
+                                <div class="eau-import-stat">
+                                    <span class="eau-import-stat-label"><?php esc_html_e('Total Rows', 'eau-system'); ?></span>
+                                    <span class="eau-import-stat-value" id="eau-import-total-rows">0</span>
+                                </div>
+                                <div class="eau-import-stat">
+                                    <span class="eau-import-stat-label"><?php esc_html_e('Orders', 'eau-system'); ?></span>
+                                    <span class="eau-import-stat-value" id="eau-import-total-orders">0</span>
+                                </div>
+                                <div class="eau-import-stat eau-import-stat-warning">
+                                    <span class="eau-import-stat-label"><?php esc_html_e('Duplicates', 'eau-system'); ?></span>
+                                    <span class="eau-import-stat-value" id="eau-import-duplicates">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="eau-import-preview-table-container">
+                            <table class="eau-table eau-import-preview-table">
+                                <thead>
+                                    <tr>
+                                        <th><?php esc_html_e('Status', 'eau-system'); ?></th>
+                                        <th><?php esc_html_e('Order No', 'eau-system'); ?></th>
+                                        <th><?php esc_html_e('Payer', 'eau-system'); ?></th>
+                                        <th><?php esc_html_e('Date', 'eau-system'); ?></th>
+                                        <th><?php esc_html_e('Description', 'eau-system'); ?></th>
+                                        <th><?php esc_html_e('Amount', 'eau-system'); ?></th>
+                                        <th><?php esc_html_e('User Match', 'eau-system'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="eau-import-preview-body">
+                                    <!-- Populated via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="eau-import-preview-legend">
+                            <div class="eau-import-legend-item">
+                                <span class="eau-badge eau-badge-success"><?php esc_html_e('New', 'eau-system'); ?></span>
+                                <span><?php esc_html_e('Will be imported', 'eau-system'); ?></span>
+                            </div>
+                            <div class="eau-import-legend-item">
+                                <span class="eau-badge eau-badge-warning"><?php esc_html_e('Duplicate', 'eau-system'); ?></span>
+                                <span><?php esc_html_e('Already exists, will be skipped', 'eau-system'); ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Progress -->
+                    <div class="eau-import-step" id="eau-import-step-progress" style="display: none;">
+                        <div class="eau-import-progress-content">
+                            <div class="eau-import-progress-icon">
+                                <i data-lucide="loader-2" class="eau-spin"></i>
+                            </div>
+                            <h3><?php esc_html_e('Importing Payments...', 'eau-system'); ?></h3>
+                            <div class="eau-import-progress-bar">
+                                <div class="eau-import-progress-fill" id="eau-import-progress-fill"></div>
+                            </div>
+                            <p class="eau-import-progress-text" id="eau-import-progress-text">
+                                <?php esc_html_e('Processing...', 'eau-system'); ?>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Result -->
+                    <div class="eau-import-step" id="eau-import-step-result" style="display: none;">
+                        <div class="eau-import-result-content">
+                            <div class="eau-import-result-icon eau-import-result-success">
+                                <i data-lucide="check-circle"></i>
+                            </div>
+                            <h3><?php esc_html_e('Import Complete!', 'eau-system'); ?></h3>
+                            <div class="eau-import-result-stats">
+                                <div class="eau-import-result-stat">
+                                    <span class="eau-import-result-stat-value" id="eau-import-result-imported">0</span>
+                                    <span class="eau-import-result-stat-label"><?php esc_html_e('Imported', 'eau-system'); ?></span>
+                                </div>
+                                <div class="eau-import-result-stat">
+                                    <span class="eau-import-result-stat-value" id="eau-import-result-skipped">0</span>
+                                    <span class="eau-import-result-stat-label"><?php esc_html_e('Skipped', 'eau-system'); ?></span>
+                                </div>
+                                <div class="eau-import-result-stat">
+                                    <span class="eau-import-result-stat-value" id="eau-import-result-errors">0</span>
+                                    <span class="eau-import-result-stat-label"><?php esc_html_e('Errors', 'eau-system'); ?></span>
+                                </div>
+                            </div>
+                            <div class="eau-import-result-errors-list" id="eau-import-result-errors-list" style="display: none;">
+                                <h4><?php esc_html_e('Errors:', 'eau-system'); ?></h4>
+                                <ul id="eau-import-errors-ul"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="eau-modal-footer">
+                    <button type="button" class="eau-btn eau-btn-secondary" data-modal-action="close" id="eau-import-cancel-btn">
+                        <?php esc_html_e('Cancel', 'eau-system'); ?>
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="eau-import-preview-btn" style="display: none;">
+                        <i data-lucide="eye"></i>
+                        <?php esc_html_e('Preview', 'eau-system'); ?>
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-success" id="eau-import-start-btn" style="display: none;">
+                        <i data-lucide="play"></i>
+                        <?php esc_html_e('Start Import', 'eau-system'); ?>
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="eau-import-done-btn" style="display: none;">
+                        <i data-lucide="check"></i>
+                        <?php esc_html_e('Done', 'eau-system'); ?>
                     </button>
                 </div>
             </div>

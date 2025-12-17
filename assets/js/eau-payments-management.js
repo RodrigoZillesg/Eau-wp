@@ -104,12 +104,21 @@
             });
 
             // Pagination
-            $(document).on('click', '#eau-pagination-container .eau-pagination-btn', function() {
-                if ($(this).hasClass('disabled')) return;
-                const page = $(this).data('page');
+            $(document).on('click', '#eau-pagination-container .eau-pagination-btn', function(e) {
+                e.preventDefault();
+                if ($(this).is(':disabled') || $(this).hasClass('eau-pagination-active')) {
+                    return;
+                }
+
+                const page = parseInt($(this).data('page'));
                 if (page) {
                     self.currentPage = page;
                     self.loadInvoices();
+
+                    // Scroll to top of table
+                    $('html, body').animate({
+                        scrollTop: $('.eau-payments-management-container').offset().top - 100
+                    }, 300);
                 }
             });
 
@@ -120,6 +129,14 @@
                 const invoiceId = row.data('id');
                 const invoiceType = row.data('type');
                 self.openPaymentModal(invoiceId, invoiceType);
+            });
+
+            // Download receipt
+            $(document).on('click', '.eau-action-receipt', function(e) {
+                e.preventDefault();
+                const invoiceId = $(this).data('id');
+                const invoiceType = $(this).data('type');
+                self.downloadReceipt(invoiceId, invoiceType);
             });
 
             // Modal close
@@ -152,6 +169,71 @@
             // Export CSV
             $('#eau-export-csv-btn').on('click', function() {
                 self.exportCSV();
+            });
+
+            // ========== CSV Import Event Handlers ==========
+
+            // Open import modal
+            $('#eau-import-csv-btn').on('click', function() {
+                self.openImportModal();
+            });
+
+            // Import modal close
+            $('#eau-import-modal-overlay').on('click', '[data-modal-action="close"]', function() {
+                self.closeImportModal();
+            });
+
+            // Import browse button
+            $('#eau-import-browse-btn').on('click', function() {
+                $('#eau-import-file-input').click();
+            });
+
+            // Import file input change
+            $('#eau-import-file-input').on('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    self.handleImportFile(file);
+                }
+            });
+
+            // Import dropzone drag and drop
+            const dropzone = $('#eau-import-dropzone');
+            dropzone.on('dragover', function(e) {
+                e.preventDefault();
+                $(this).addClass('dragover');
+            });
+            dropzone.on('dragleave', function() {
+                $(this).removeClass('dragover');
+            });
+            dropzone.on('drop', function(e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+                const file = e.originalEvent.dataTransfer.files[0];
+                if (file) {
+                    self.handleImportFile(file);
+                }
+            });
+
+            // Import remove file button
+            $('#eau-import-remove-file').on('click', function() {
+                self.resetImport();
+            });
+
+            // Import preview button
+            $('#eau-import-preview-btn').on('click', function() {
+                self.previewImport();
+            });
+
+            // Import start button
+            $('#eau-import-start-btn').on('click', function() {
+                self.executeImport();
+            });
+
+            // Import done button
+            $('#eau-import-done-btn').on('click', function() {
+                self.closeImportModal();
+                self.loadInvoices(); // Reload data
+                self.loadStats();
             });
 
             // ========== Media Upload Event Handlers ==========
@@ -326,6 +408,11 @@
          * Carrega estatísticas
          */
         loadStats: function() {
+            const self = this;
+
+            // Show skeleton loading in stats cards
+            self.showStatsSkeleton();
+
             $.ajax({
                 url: eauPaymentsManagement.ajaxUrl,
                 type: 'POST',
@@ -336,13 +423,36 @@
                 success: function(response) {
                     if (response.success) {
                         const stats = response.data;
-                        $('#stat-total-due .eau-stat-card-number').text('$' + parseFloat(stats.total_due).toLocaleString('en-US', {minimumFractionDigits: 2}));
-                        $('#stat-total-paid .eau-stat-card-number').text('$' + parseFloat(stats.total_paid).toLocaleString('en-US', {minimumFractionDigits: 2}));
-                        $('#stat-pending .eau-stat-card-number').text(stats.pending_count);
-                        $('#stat-paid .eau-stat-card-number').text(stats.paid_count);
+                        self.updateStatsCard('stat-total-due', '$' + parseFloat(stats.total_due).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                        self.updateStatsCard('stat-total-paid', '$' + parseFloat(stats.total_paid).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                        self.updateStatsCard('stat-pending', stats.pending_count);
+                        self.updateStatsCard('stat-paid', stats.paid_count);
                     }
+                },
+                error: function() {
+                    // Remove skeleton on error, show dashes
+                    self.updateStatsCard('stat-total-due', '-');
+                    self.updateStatsCard('stat-total-paid', '-');
+                    self.updateStatsCard('stat-pending', '-');
+                    self.updateStatsCard('stat-paid', '-');
                 }
             });
+        },
+
+        /**
+         * Mostra skeleton nos stats cards
+         */
+        showStatsSkeleton: function() {
+            $('.eau-stat-card-number').each(function() {
+                $(this).html('<div class="eau-skeleton eau-skeleton-text-short" style="height: 2rem; width: 80%;"></div>');
+            });
+        },
+
+        /**
+         * Atualiza um stats card removendo skeleton
+         */
+        updateStatsCard: function(cardId, value) {
+            $('#' + cardId + ' .eau-stat-card-number').text(value);
         },
 
         /**
@@ -416,6 +526,11 @@
                                 <button type="button" class="eau-action-btn eau-action-view" title="Manage Payments">
                                     <i data-lucide="credit-card"></i>
                                 </button>
+                                ${row.payment_status === 'paid' ? `
+                                <button type="button" class="eau-action-btn eau-action-receipt" title="Download Receipt" data-id="${row.id}" data-type="${row.invoice_type}">
+                                    <i data-lucide="file-text"></i>
+                                </button>
+                                ` : ''}
                             </div>
                         </td>
                     </tr>
@@ -430,54 +545,111 @@
         },
 
         /**
-         * Renderiza paginação
+         * Renderiza paginação (padrão do componente Eau_Pagination)
          */
         renderPagination: function(data) {
             const container = $('#eau-pagination-container');
             container.empty();
 
-            if (data.total_pages <= 1) return;
+            const totalPages = data.total_pages || 1;
 
-            let html = '<div class="eau-pagination">';
-
-            // Previous
-            html += `<button class="eau-pagination-btn ${data.page <= 1 ? 'disabled' : ''}" data-page="${data.page - 1}">
-                <i data-lucide="chevron-left"></i>
-            </button>`;
-
-            // Page numbers
-            const start = Math.max(1, data.page - 2);
-            const end = Math.min(data.total_pages, data.page + 2);
-
-            if (start > 1) {
-                html += `<button class="eau-pagination-btn" data-page="1">1</button>`;
-                if (start > 2) {
-                    html += `<span class="eau-pagination-ellipsis">...</span>`;
-                }
+            if (totalPages <= 1) {
+                return;
             }
 
-            for (let i = start; i <= end; i++) {
-                html += `<button class="eau-pagination-btn ${i === data.page ? 'active' : ''}" data-page="${i}">${i}</button>`;
-            }
+            const currentPage = data.page;
+            const perPage = this.perPage;
+            const startItem = ((currentPage - 1) * perPage) + 1;
+            const endItem = Math.min(currentPage * perPage, data.total);
 
-            if (end < data.total_pages) {
-                if (end < data.total_pages - 1) {
-                    html += `<span class="eau-pagination-ellipsis">...</span>`;
-                }
-                html += `<button class="eau-pagination-btn" data-page="${data.total_pages}">${data.total_pages}</button>`;
-            }
-
-            // Next
-            html += `<button class="eau-pagination-btn ${data.page >= data.total_pages ? 'disabled' : ''}" data-page="${data.page + 1}">
-                <i data-lucide="chevron-right"></i>
-            </button>`;
-
-            html += '</div>';
+            const html = this.buildPaginationHTML(currentPage, totalPages, startItem, endItem, data.total);
             container.html(html);
 
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+        },
+
+        /**
+         * Constrói HTML da paginação (seguindo padrão Eau_Pagination)
+         */
+        buildPaginationHTML: function(currentPage, totalPages, startItem, endItem, total) {
+            const pagesToShow = this.getPagesToShow(currentPage, totalPages);
+
+            let html = '<div class="eau-pagination-wrapper">';
+
+            // Info
+            html += '<div class="eau-pagination-info">';
+            html += `Showing ${startItem.toLocaleString()} to ${endItem.toLocaleString()} of ${total.toLocaleString()} items`;
+            html += '</div>';
+
+            // Navigation
+            html += '<div class="eau-pagination-nav">';
+
+            // Previous button
+            const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+            html += `<button class="eau-pagination-btn eau-pagination-prev ${prevDisabled}" data-page="${Math.max(1, currentPage - 1)}" ${prevDisabled ? 'disabled' : ''}>`;
+            html += '<i data-lucide="chevron-left"></i>';
+            html += '</button>';
+
+            // Page numbers
+            pagesToShow.forEach(function(page) {
+                if (page === '...') {
+                    html += '<span class="eau-pagination-ellipsis">...</span>';
+                } else {
+                    const activeClass = page === currentPage ? 'eau-pagination-active' : '';
+                    html += `<button class="eau-pagination-btn eau-pagination-number ${activeClass}" data-page="${page}">${page}</button>`;
+                }
+            });
+
+            // Next button
+            const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+            html += `<button class="eau-pagination-btn eau-pagination-next ${nextDisabled}" data-page="${Math.min(totalPages, currentPage + 1)}" ${nextDisabled ? 'disabled' : ''}>`;
+            html += '<i data-lucide="chevron-right"></i>';
+            html += '</button>';
+
+            html += '</div></div>';
+
+            return html;
+        },
+
+        /**
+         * Calcula quais páginas mostrar na paginação
+         */
+        getPagesToShow: function(currentPage, totalPages) {
+            const pages = [];
+            const delta = 2; // Páginas antes e depois da atual
+
+            // Sempre mostrar primeira página
+            pages.push(1);
+
+            // Calcular range ao redor da página atual
+            const rangeStart = Math.max(2, currentPage - delta);
+            const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
+
+            // Adicionar ellipsis se necessário antes do range
+            if (rangeStart > 2) {
+                pages.push('...');
+            }
+
+            // Adicionar páginas no range
+            for (let i = rangeStart; i <= rangeEnd; i++) {
+                if (!pages.includes(i)) {
+                    pages.push(i);
+                }
+            }
+
+            // Adicionar ellipsis se necessário depois do range
+            if (rangeEnd < totalPages - 1) {
+                pages.push('...');
+            }
+
+            // Sempre mostrar última página (se maior que 1)
+            if (totalPages > 1 && !pages.includes(totalPages)) {
+                pages.push(totalPages);
+            }
+
+            return pages;
         },
 
         /**
@@ -552,6 +724,8 @@
          * Popula modal com dados da fatura
          */
         populateModal: function(data) {
+            const isImported = data.is_imported === true;
+
             // Member info (new structure)
             $('#eau-payment-member-name').text(data.member_name || '-');
             $('#eau-payment-member-email').text(data.member_email || '-');
@@ -571,8 +745,30 @@
             $('#eau-payment-total-paid').text(data.total_paid_fmt || '$0.00');
             $('#eau-payment-balance').text(data.balance_fmt || '$0.00');
 
+            // Handle imported payment extra info
+            if (isImported) {
+                // Show imported payment details section
+                this.showImportedPaymentDetails(data);
+                // Hide add payment form (imported payments are already fully paid)
+                $('#eau-add-payment-form').hide();
+                // Show imported notice
+                if ($('#eau-imported-notice').length === 0) {
+                    $('#eau-add-payment-form').before(`
+                        <div id="eau-imported-notice" class="eau-imported-notice">
+                            <i data-lucide="info"></i>
+                            <span>This is a historical payment imported from the legacy system. It cannot be modified.</span>
+                        </div>
+                    `);
+                }
+            } else {
+                // Standard invoice - show add payment form
+                $('#eau-add-payment-form').show();
+                $('#eau-imported-notice').remove();
+                $('#eau-imported-details').remove();
+            }
+
             // Payments list
-            this.renderPaymentsList(data.payments || []);
+            this.renderPaymentsList(data.payments || [], isImported);
 
             // Pre-fill amount with balance if there's a balance
             if (data.balance > 0) {
@@ -588,9 +784,42 @@
         },
 
         /**
+         * Mostra detalhes adicionais para pagamentos importados
+         */
+        showImportedPaymentDetails: function(data) {
+            // Remove existing details
+            $('#eau-imported-details').remove();
+
+            let detailsHtml = '<div id="eau-imported-details" class="eau-imported-details">';
+            detailsHtml += '<h4><i data-lucide="file-text"></i> Legacy System Details</h4>';
+            detailsHtml += '<div class="eau-imported-details-grid">';
+
+            if (data.legacy_order_no) {
+                detailsHtml += `<div class="eau-imported-detail"><span class="label">Order #</span><span class="value">${data.legacy_order_no}</span></div>`;
+            }
+            if (data.transaction_id) {
+                detailsHtml += `<div class="eau-imported-detail"><span class="label">Transaction ID</span><span class="value">${data.transaction_id}</span></div>`;
+            }
+            if (data.card_type) {
+                detailsHtml += `<div class="eau-imported-detail"><span class="label">Card Type</span><span class="value">${data.card_type}</span></div>`;
+            }
+            if (data.subtotal_amount > 0) {
+                detailsHtml += `<div class="eau-imported-detail"><span class="label">Subtotal</span><span class="value">${data.subtotal_amount_fmt}</span></div>`;
+            }
+            if (data.tax_amount > 0) {
+                detailsHtml += `<div class="eau-imported-detail"><span class="label">Tax</span><span class="value">${data.tax_amount_fmt}</span></div>`;
+            }
+
+            detailsHtml += '</div></div>';
+
+            // Insert after the summary
+            $('.eau-pm-summary').after(detailsHtml);
+        },
+
+        /**
          * Renderiza lista de pagamentos no modal
          */
-        renderPaymentsList: function(payments) {
+        renderPaymentsList: function(payments, isImported) {
             const container = $('#eau-payments-list');
             container.empty();
 
@@ -609,19 +838,41 @@
                     ? `<a href="${payment.receipt_url}" target="_blank" class="eau-view-receipt">View Receipt</a>`
                     : '';
 
+                // For imported payments, show transaction ID and card type instead of delete button
+                let extraInfo = '';
+                let actionHtml = '';
+
+                if (payment.is_imported || isImported) {
+                    // Show additional imported info
+                    if (payment.transaction_id) {
+                        extraInfo += ` &bull; <span class="eau-payment-txn">TXN: ${payment.transaction_id}</span>`;
+                    }
+                    if (payment.card_type) {
+                        extraInfo += ` &bull; <span class="eau-payment-card">${payment.card_type}</span>`;
+                    }
+                    // No delete button for imported payments
+                    actionHtml = `<span class="eau-payment-imported-badge"><i data-lucide="check-circle"></i></span>`;
+                } else {
+                    // Standard payment - show delete button
+                    actionHtml = `
+                        <button type="button" class="eau-delete-payment-btn" data-payment-id="${payment.id}" title="Delete payment">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    `;
+                }
+
                 const html = `
-                    <div class="eau-payment-item">
+                    <div class="eau-payment-item ${payment.is_imported || isImported ? 'eau-payment-item-imported' : ''}">
                         <div class="eau-payment-item-info">
                             <div class="eau-payment-item-amount">${payment.amount}</div>
                             <div class="eau-payment-item-details">
                                 ${payment.date} &bull; ${payment.method}
                                 ${payment.notes ? ` &bull; <em>${payment.notes}</em>` : ''}
+                                ${extraInfo}
                                 ${receiptHtml}
                             </div>
                         </div>
-                        <button type="button" class="eau-delete-payment-btn" data-payment-id="${payment.id}" title="Delete payment">
-                            <i data-lucide="trash-2"></i>
-                        </button>
+                        ${actionHtml}
                     </div>
                 `;
                 container.append(html);
@@ -753,6 +1004,21 @@
                     self.showError('Export failed');
                 }
             });
+        },
+
+        /**
+         * Abre o receipt em nova aba para download/impressão
+         */
+        downloadReceipt: function(invoiceId, invoiceType) {
+            // Build receipt URL with nonce
+            const receiptUrl = eauPaymentsManagement.ajaxUrl +
+                '?action=eau_generate_payment_receipt' +
+                '&invoice_id=' + invoiceId +
+                '&invoice_type=' + invoiceType +
+                '&nonce=' + eauPaymentsManagement.nonce;
+
+            // Open in new tab
+            window.open(receiptUrl, '_blank');
         },
 
         /**
@@ -1052,6 +1318,314 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+
+        // ========== CSV Import Methods ==========
+
+        /**
+         * Import state
+         */
+        importKey: null,
+        importFile: null,
+
+        /**
+         * Open import modal
+         */
+        openImportModal: function() {
+            this.resetImport();
+            $('#eau-import-modal-overlay').css('display', 'flex').hide().fadeIn(200);
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Close import modal
+         */
+        closeImportModal: function() {
+            $('#eau-import-modal-overlay').fadeOut(200);
+            this.resetImport();
+        },
+
+        /**
+         * Reset import state
+         */
+        resetImport: function() {
+            this.importKey = null;
+            this.importFile = null;
+
+            // Reset file input
+            $('#eau-import-file-input').val('');
+
+            // Show upload step, hide others
+            $('#eau-import-step-upload').show();
+            $('#eau-import-step-preview').hide();
+            $('#eau-import-step-progress').hide();
+            $('#eau-import-step-result').hide();
+
+            // Show/hide buttons
+            $('#eau-import-cancel-btn').show();
+            $('#eau-import-preview-btn').hide();
+            $('#eau-import-start-btn').hide();
+            $('#eau-import-done-btn').hide();
+
+            // Reset dropzone and file info
+            $('#eau-import-dropzone').show();
+            $('#eau-import-file-info').hide();
+
+            // Reset progress
+            $('#eau-import-progress-fill').css('width', '0%');
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Handle import file selection
+         */
+        handleImportFile: function(file) {
+            const self = this;
+
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                EauNotifications.error('Invalid File', 'Please select a CSV file');
+                return;
+            }
+
+            // Show file info
+            $('#eau-import-file-name').text(file.name);
+            $('#eau-import-file-size').text(this.formatFileSize(file.size));
+            $('#eau-import-dropzone').hide();
+            $('#eau-import-file-info').show();
+
+            // Store file reference
+            this.importFile = file;
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('action', 'eau_upload_import_csv');
+            formData.append('nonce', eauPaymentsManagement.nonce);
+            formData.append('csv_file', file);
+
+            $.ajax({
+                url: eauPaymentsManagement.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        self.importKey = response.data.import_key;
+                        $('#eau-import-preview-btn').show();
+                        EauNotifications.success('File Uploaded', 'Click Preview to see import details');
+                    } else {
+                        EauNotifications.error('Upload Failed', response.data.message);
+                        self.resetImport();
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Upload Failed', 'Network error, please try again');
+                    self.resetImport();
+                }
+            });
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Preview import data
+         */
+        previewImport: function() {
+            const self = this;
+
+            if (!this.importKey) {
+                EauNotifications.error('Error', 'Please upload a file first');
+                return;
+            }
+
+            // Show loading state
+            $('#eau-import-preview-btn').prop('disabled', true).html('<i data-lucide="loader-2" class="eau-spin"></i> Loading...');
+
+            $.ajax({
+                url: eauPaymentsManagement.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_preview_import_csv',
+                    nonce: eauPaymentsManagement.nonce,
+                    import_key: this.importKey
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showPreview(response.data);
+                    } else {
+                        EauNotifications.error('Preview Failed', response.data.message);
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Preview Failed', 'Network error, please try again');
+                },
+                complete: function() {
+                    $('#eau-import-preview-btn').prop('disabled', false).html('<i data-lucide="eye"></i> Preview');
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show preview data
+         */
+        showPreview: function(data) {
+            // Update stats
+            $('#eau-import-total-rows').text(data.total_rows);
+            $('#eau-import-total-orders').text(data.total_orders);
+            $('#eau-import-duplicates').text(data.duplicates);
+
+            // Build preview table
+            const tbody = $('#eau-import-preview-body');
+            tbody.empty();
+
+            data.preview.forEach(function(order) {
+                const statusBadge = order.is_duplicate
+                    ? '<span class="eau-badge eau-badge-warning">Duplicate</span>'
+                    : '<span class="eau-badge eau-badge-success">New</span>';
+
+                const userBadge = order.user_found
+                    ? '<span class="eau-badge eau-badge-success">Found</span>'
+                    : '<span class="eau-badge eau-badge-warning">Not Found</span>';
+
+                // Get first item description or summary
+                const description = order.items && order.items.length > 0
+                    ? order.items[0].description
+                    : '-';
+
+                const row = `
+                    <tr>
+                        <td>${statusBadge}</td>
+                        <td>${order.order_no || '-'}</td>
+                        <td>
+                            <div>${order.full_name || order.first_name + ' ' + order.last_name || '-'}</div>
+                            <small style="color: #6b7280;">${order.email || '-'}</small>
+                        </td>
+                        <td>${order.date || '-'}</td>
+                        <td title="${description}">${description.substring(0, 40)}${description.length > 40 ? '...' : ''}</td>
+                        <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+                        <td>${userBadge}</td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            // Show preview step
+            $('#eau-import-step-upload').hide();
+            $('#eau-import-step-preview').show();
+
+            // Update buttons
+            $('#eau-import-preview-btn').hide();
+            $('#eau-import-start-btn').show();
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Execute import
+         */
+        executeImport: function() {
+            const self = this;
+
+            if (!this.importKey) {
+                EauNotifications.error('Error', 'Import key not found');
+                return;
+            }
+
+            // Show progress step
+            $('#eau-import-step-preview').hide();
+            $('#eau-import-step-progress').show();
+            $('#eau-import-start-btn').hide();
+            $('#eau-import-cancel-btn').hide();
+
+            // Animate progress bar
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += Math.random() * 10;
+                if (progress > 90) progress = 90;
+                $('#eau-import-progress-fill').css('width', progress + '%');
+            }, 200);
+
+            $.ajax({
+                url: eauPaymentsManagement.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_execute_import_csv',
+                    nonce: eauPaymentsManagement.nonce,
+                    import_key: this.importKey
+                },
+                success: function(response) {
+                    clearInterval(progressInterval);
+                    $('#eau-import-progress-fill').css('width', '100%');
+
+                    setTimeout(function() {
+                        if (response.success) {
+                            self.showImportResult(response.data);
+                        } else {
+                            EauNotifications.error('Import Failed', response.data.message);
+                            self.resetImport();
+                        }
+                    }, 500);
+                },
+                error: function() {
+                    clearInterval(progressInterval);
+                    EauNotifications.error('Import Failed', 'Network error, please try again');
+                    self.resetImport();
+                }
+            });
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Show import result
+         */
+        showImportResult: function(data) {
+            // Update result stats
+            $('#eau-import-result-imported').text(data.imported);
+            $('#eau-import-result-skipped').text(data.duplicates_skipped);
+            $('#eau-import-result-errors').text(data.errors.length);
+
+            // Show errors if any
+            if (data.errors && data.errors.length > 0) {
+                const errorsList = $('#eau-import-errors-ul');
+                errorsList.empty();
+                data.errors.forEach(function(error) {
+                    errorsList.append(`<li>Order #${error.order_no}: ${error.reason}</li>`);
+                });
+                $('#eau-import-result-errors-list').show();
+            } else {
+                $('#eau-import-result-errors-list').hide();
+            }
+
+            // Show result step
+            $('#eau-import-step-progress').hide();
+            $('#eau-import-step-result').show();
+            $('#eau-import-done-btn').show();
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Show success notification
+            EauNotifications.success(
+                'Import Complete',
+                `${data.imported} payments imported, ${data.duplicates_skipped} duplicates skipped`
+            );
         }
     };
 

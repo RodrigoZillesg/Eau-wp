@@ -35,6 +35,7 @@ class Eau_Payments_Management_Ajax {
      * Inicializa os handlers AJAX
      *
      * @since  1.50.1
+     * @since  1.53.0 Adicionados handlers para importação de CSV
      * @return void
      */
     public static function init() {
@@ -58,12 +59,18 @@ class Eau_Payments_Management_Ajax {
 
         // Search events for dropdown
         add_action('wp_ajax_eau_search_events_for_payment', array(__CLASS__, 'search_events'));
+
+        // CSV Import handlers (v1.53.0)
+        add_action('wp_ajax_eau_upload_import_csv', array(__CLASS__, 'upload_import_csv'));
+        add_action('wp_ajax_eau_preview_import_csv', array(__CLASS__, 'preview_import_csv'));
+        add_action('wp_ajax_eau_execute_import_csv', array(__CLASS__, 'execute_import_csv'));
     }
 
     /**
-     * Lista todas as faturas (registrations + applications)
+     * Lista todas as faturas (registrations + applications + legacy payments)
      *
      * @since  1.51.0
+     * @since  1.53.1 Adicionado suporte para pagamentos legacy importados
      * @return void
      */
     public static function get_invoices() {
@@ -87,12 +94,25 @@ class Eau_Payments_Management_Ajax {
         if (empty($invoice_type) || $invoice_type === 'event') {
             $event_invoices = self::get_event_registrations($search, $payment_status);
             $invoices = array_merge($invoices, $event_invoices);
+
+            // Also get imported event payments (v1.53.2)
+            $imported_events = self::get_imported_payments($search, $payment_status, 'event');
+            $invoices = array_merge($invoices, $imported_events);
         }
 
         // Get Membership Applications (if not filtered to event only)
         if (empty($invoice_type) || $invoice_type === 'membership') {
             $membership_invoices = self::get_membership_applications($search, $payment_status);
             $invoices = array_merge($invoices, $membership_invoices);
+
+            // Also get imported membership payments (v1.53.2)
+            // This includes both 'membership' and 'legacy' payment types
+            $imported_membership = self::get_imported_payments($search, $payment_status, 'membership');
+            $invoices = array_merge($invoices, $imported_membership);
+
+            // Also get payments with 'legacy' type (didn't match event/membership patterns)
+            $imported_legacy = self::get_imported_payments($search, $payment_status, 'legacy');
+            $invoices = array_merge($invoices, $imported_legacy);
         }
 
         // Sort invoices
@@ -324,6 +344,131 @@ class Eau_Payments_Management_Ajax {
     }
 
     /**
+     * Busca pagamentos importados de CSV (identificados por legacy_order_no)
+     *
+     * Pagamentos importados aparecem como seus tipos detectados (Event/Membership),
+     * não como um tipo separado "Legacy".
+     *
+     * @since  1.53.1
+     * @since  1.53.2 Corrigido para identificar por legacy_order_no e mostrar tipo correto
+     * @param  string $search Search term
+     * @param  string $payment_status Filter by payment status (sempre 'paid' para importados)
+     * @param  string $type_filter Filter by type ('event', 'membership', or empty for all)
+     * @return array
+     */
+    private static function get_imported_payments($search = '', $payment_status = '', $type_filter = '') {
+        $invoices = array();
+
+        // Imported payments are always 'paid' since they're historical records
+        // If filtering for other statuses, return empty
+        if (!empty($payment_status) && $payment_status !== 'paid') {
+            return $invoices;
+        }
+
+        $prefix = Payments_Post_Type::META_PREFIX;
+
+        // Query for imported payments - identified by having legacy_order_no
+        $meta_query = array(
+            array(
+                'key'     => $prefix . 'legacy_order_no',
+                'value'   => '',
+                'compare' => '!=',
+            ),
+        );
+
+        // Filter by payment_type if specified
+        if (!empty($type_filter)) {
+            $meta_query[] = array(
+                'key'     => $prefix . 'payment_type',
+                'value'   => $type_filter,
+                'compare' => '=',
+            );
+        }
+
+        $args = array(
+            'post_type'      => 'eau_payment',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'meta_query'     => $meta_query,
+        );
+
+        $payments = get_posts($args);
+
+        foreach ($payments as $payment) {
+            $payment_id = $payment->ID;
+            $payer_name = get_post_meta($payment_id, $prefix . 'payer_name', true);
+            $payer_email = get_post_meta($payment_id, $prefix . 'payer_email', true);
+            $amount = floatval(get_post_meta($payment_id, $prefix . 'amount', true));
+            $payment_date = get_post_meta($payment_id, $prefix . 'payment_date', true);
+            $user_id = get_post_meta($payment_id, $prefix . 'user_id', true);
+            $legacy_order_no = get_post_meta($payment_id, $prefix . 'legacy_order_no', true);
+            $legacy_description = get_post_meta($payment_id, $prefix . 'legacy_description', true);
+            $notes = get_post_meta($payment_id, $prefix . 'notes', true);
+            $payment_type = get_post_meta($payment_id, $prefix . 'payment_type', true) ?: 'membership';
+
+            // Apply search filter
+            if (!empty($search)) {
+                $search_lower = strtolower($search);
+                if (
+                    strpos(strtolower($payer_name), $search_lower) === false &&
+                    strpos(strtolower($payer_email), $search_lower) === false &&
+                    strpos(strtolower($legacy_order_no), $search_lower) === false &&
+                    strpos(strtolower($legacy_description), $search_lower) === false &&
+                    strpos(strtolower($notes), $search_lower) === false
+                ) {
+                    continue;
+                }
+            }
+
+            // Reference is the first line of description or notes
+            $reference = !empty($notes) ? $notes : (!empty($legacy_description) ? explode("\n", $legacy_description)[0] : 'Order #' . $legacy_order_no);
+
+            // Truncate reference if too long
+            if (strlen($reference) > 60) {
+                $reference = substr($reference, 0, 57) . '...';
+            }
+
+            // Determine type label and class based on payment_type (not hardcoded as Legacy)
+            if ($payment_type === 'event') {
+                $type_label = __('Event', 'eau-system');
+                $type_class = 'eau-badge-info';
+                $invoice_type = 'event';
+            } else {
+                // Default to Membership for membership and legacy types
+                $type_label = __('Membership', 'eau-system');
+                $type_class = 'eau-badge-purple';
+                $invoice_type = 'membership';
+            }
+
+            $invoices[] = array(
+                'id'              => $payment_id,
+                'invoice_type'    => $invoice_type,
+                'type_label'      => $type_label,
+                'type_class'      => $type_class,
+                'member_name'     => esc_html($payer_name),
+                'member_email'    => esc_html($payer_email),
+                'user_id'         => intval($user_id),
+                'reference'       => esc_html($reference),
+                'reference_id'    => $legacy_order_no,
+                'amount_due'      => $amount,
+                'amount_due_fmt'  => '$' . number_format($amount, 2),
+                'amount_paid'     => $amount, // Imported payments are fully paid
+                'amount_paid_fmt' => '$' . number_format($amount, 2),
+                'balance'         => 0,
+                'balance_fmt'     => '$0.00',
+                'payment_status'  => 'paid',
+                'status_label'    => __('Paid', 'eau-system'),
+                'status_class'    => 'eau-badge-success',
+                'date'            => !empty($payment_date) ? date('M j, Y', strtotime($payment_date)) : date('M j, Y', strtotime($payment->post_date)),
+                'date_raw'        => !empty($payment_date) ? $payment_date : $payment->post_date,
+                'is_imported'     => true, // Flag to identify imported payments if needed
+            );
+        }
+
+        return $invoices;
+    }
+
+    /**
      * Obtém label do status de pagamento
      *
      * @since  1.51.0
@@ -363,6 +508,7 @@ class Eau_Payments_Management_Ajax {
      * Obtém detalhes de uma fatura (registration ou application)
      *
      * @since  1.51.0
+     * @since  1.53.4 Adicionado suporte para pagamentos importados
      * @return void
      */
     public static function get_invoice_details() {
@@ -379,6 +525,19 @@ class Eau_Payments_Management_Ajax {
             wp_send_json_error(array('message' => __('Invalid invoice', 'eau-system')));
         }
 
+        // Check if this is an imported payment (eau_payment post with legacy_order_no)
+        $post = get_post($invoice_id);
+        if ($post && $post->post_type === 'eau_payment') {
+            $legacy_order_no = get_post_meta($invoice_id, Payments_Post_Type::META_PREFIX . 'legacy_order_no', true);
+            if (!empty($legacy_order_no)) {
+                $details = self::get_imported_payment_details($invoice_id);
+                if ($details) {
+                    wp_send_json_success($details);
+                }
+            }
+        }
+
+        // Standard flow for event registrations and membership applications
         if ($invoice_type === 'event') {
             $details = self::get_event_registration_details($invoice_id);
         } else {
@@ -528,6 +687,109 @@ class Eau_Payments_Management_Ajax {
             'date'            => date('M j, Y', strtotime($app->submitted_at)),
             'payments'        => $formatted_payments,
             'payment_methods' => $payment_methods,
+        );
+    }
+
+    /**
+     * Obtém detalhes de um pagamento importado (legacy)
+     *
+     * Pagamentos importados são registros históricos completos - não há "balance"
+     * porque já foram pagos no sistema legado.
+     *
+     * @since  1.53.4
+     * @param  int $payment_id ID do post eau_payment
+     * @return array|null
+     */
+    private static function get_imported_payment_details($payment_id) {
+        $payment = get_post($payment_id);
+        if (!$payment || $payment->post_type !== 'eau_payment') {
+            return null;
+        }
+
+        $prefix = Payments_Post_Type::META_PREFIX;
+
+        // Get all payment meta
+        $payer_name = get_post_meta($payment_id, $prefix . 'payer_name', true);
+        $payer_email = get_post_meta($payment_id, $prefix . 'payer_email', true);
+        $amount = floatval(get_post_meta($payment_id, $prefix . 'amount', true));
+        $payment_date = get_post_meta($payment_id, $prefix . 'payment_date', true);
+        $payment_method = get_post_meta($payment_id, $prefix . 'payment_method', true);
+        $transaction_id = get_post_meta($payment_id, $prefix . 'transaction_id', true);
+        $user_id = get_post_meta($payment_id, $prefix . 'user_id', true);
+        $notes = get_post_meta($payment_id, $prefix . 'notes', true);
+        $payment_type = get_post_meta($payment_id, $prefix . 'payment_type', true) ?: 'membership';
+
+        // Legacy specific fields
+        $legacy_order_no = get_post_meta($payment_id, $prefix . 'legacy_order_no', true);
+        $legacy_reference = get_post_meta($payment_id, $prefix . 'legacy_reference', true);
+        $legacy_description = get_post_meta($payment_id, $prefix . 'legacy_description', true);
+        $card_type = get_post_meta($payment_id, $prefix . 'card_type', true);
+        $tax_amount = floatval(get_post_meta($payment_id, $prefix . 'tax_amount', true));
+        $subtotal_amount = floatval(get_post_meta($payment_id, $prefix . 'subtotal_amount', true));
+
+        // Build reference string
+        $reference = !empty($notes) ? $notes : (!empty($legacy_description) ? $legacy_description : 'Order #' . $legacy_order_no);
+
+        // Determine invoice type label
+        if ($payment_type === 'event') {
+            $type_label = __('Event', 'eau-system');
+        } else {
+            $type_label = __('Membership', 'eau-system');
+        }
+
+        // Format the single payment as the "payment history"
+        // For imported payments, this IS the payment - it's already been paid
+        $method_labels = Payments_Post_Type::get_payment_methods();
+        $formatted_payments = array(
+            array(
+                'id'           => $payment_id,
+                'amount'       => '$' . number_format($amount, 2),
+                'amount_raw'   => $amount,
+                'date'         => !empty($payment_date) ? date('M j, Y', strtotime($payment_date)) : '-',
+                'method'       => isset($method_labels[$payment_method]) ? $method_labels[$payment_method] : ucfirst($payment_method),
+                'status'       => __('Confirmed', 'eau-system'),
+                'notes'        => $notes,
+                'receipt_url'  => '',
+                'has_receipt'  => false,
+                'is_imported'  => true,
+                'transaction_id' => $transaction_id,
+                'card_type'    => $card_type,
+            ),
+        );
+
+        // Payment methods for the form
+        $payment_methods = Payments_Post_Type::get_payment_methods();
+
+        return array(
+            'invoice_id'         => $payment_id,
+            'invoice_type'       => $payment_type,
+            'is_imported'        => true, // Flag para o frontend saber que é importado
+            'member_name'        => $payer_name,
+            'member_email'       => $payer_email,
+            'user_id'            => intval($user_id),
+            'reference'          => $reference,
+            'reference_id'       => $legacy_order_no,
+            'amount_due'         => $amount,
+            'amount_due_fmt'     => '$' . number_format($amount, 2),
+            'total_paid'         => $amount, // Imported = already fully paid
+            'total_paid_fmt'     => '$' . number_format($amount, 2),
+            'balance'            => 0,
+            'balance_fmt'        => '$0.00',
+            'payment_status'     => 'paid',
+            'status_label'       => __('Paid', 'eau-system'),
+            'date'               => !empty($payment_date) ? date('M j, Y', strtotime($payment_date)) : date('M j, Y', strtotime($payment->post_date)),
+            'payments'           => $formatted_payments,
+            'payment_methods'    => $payment_methods,
+            // Extra imported-specific data
+            'legacy_order_no'    => $legacy_order_no,
+            'legacy_reference'   => $legacy_reference,
+            'legacy_description' => $legacy_description,
+            'transaction_id'     => $transaction_id,
+            'card_type'          => $card_type,
+            'tax_amount'         => $tax_amount,
+            'tax_amount_fmt'     => '$' . number_format($tax_amount, 2),
+            'subtotal_amount'    => $subtotal_amount,
+            'subtotal_amount_fmt' => '$' . number_format($subtotal_amount, 2),
         );
     }
 
@@ -746,6 +1008,7 @@ class Eau_Payments_Management_Ajax {
      * Obtém estatísticas das faturas
      *
      * @since  1.51.0
+     * @since  1.53.1 Adicionado suporte para pagamentos legacy
      * @return void
      */
     public static function get_stats() {
@@ -755,16 +1018,19 @@ class Eau_Payments_Management_Ajax {
             wp_send_json_error(array('message' => __('Permission denied', 'eau-system')));
         }
 
-        // Get all invoices to calculate stats
+        // Get all invoices to calculate stats (including imported payments)
         $event_invoices = self::get_event_registrations('', '');
         $membership_invoices = self::get_membership_applications('', '');
+
+        // Get imported payments (v1.53.2)
+        $imported_payments = self::get_imported_payments('', '', '');
 
         $total_due = 0;
         $total_paid = 0;
         $pending_count = 0;
         $paid_count = 0;
 
-        $all_invoices = array_merge($event_invoices, $membership_invoices);
+        $all_invoices = array_merge($event_invoices, $membership_invoices, $imported_payments);
 
         foreach ($all_invoices as $invoice) {
             $total_due += $invoice['amount_due'];
@@ -778,13 +1044,14 @@ class Eau_Payments_Management_Ajax {
         }
 
         wp_send_json_success(array(
-            'total_due'       => $total_due,
-            'total_paid'      => $total_paid,
-            'total_balance'   => $total_due - $total_paid,
-            'event_count'     => count($event_invoices),
+            'total_due'        => $total_due,
+            'total_paid'       => $total_paid,
+            'total_balance'    => $total_due - $total_paid,
+            'event_count'      => count($event_invoices),
             'membership_count' => count($membership_invoices),
-            'pending_count'   => $pending_count,
-            'paid_count'      => $paid_count,
+            'imported_count'   => count($imported_payments),
+            'pending_count'    => $pending_count,
+            'paid_count'       => $paid_count,
         ));
     }
 
@@ -809,9 +1076,12 @@ class Eau_Payments_Management_Ajax {
 
         if (empty($invoice_type) || $invoice_type === 'event') {
             $invoices = array_merge($invoices, self::get_event_registrations($search, $payment_status));
+            $invoices = array_merge($invoices, self::get_imported_payments($search, $payment_status, 'event'));
         }
         if (empty($invoice_type) || $invoice_type === 'membership') {
             $invoices = array_merge($invoices, self::get_membership_applications($search, $payment_status));
+            $invoices = array_merge($invoices, self::get_imported_payments($search, $payment_status, 'membership'));
+            $invoices = array_merge($invoices, self::get_imported_payments($search, $payment_status, 'legacy'));
         }
 
         // Build CSV
@@ -880,5 +1150,163 @@ class Eau_Payments_Management_Ajax {
         }
 
         wp_send_json_success(array('results' => $results));
+    }
+
+    /**
+     * Upload CSV file for import
+     *
+     * @since  1.53.0
+     * @return void
+     */
+    public static function upload_import_csv() {
+        check_ajax_referer('eau_payments_management_nonce', 'nonce');
+
+        if (!Eau_User_Institution_Helper::has_admin_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'eau-system')));
+        }
+
+        if (empty($_FILES['csv_file'])) {
+            wp_send_json_error(array('message' => __('No file uploaded', 'eau-system')));
+        }
+
+        $file = $_FILES['csv_file'];
+
+        // Validate file type
+        $allowed_types = array('text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel');
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $file_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        // Also check extension
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($extension !== 'csv') {
+            wp_send_json_error(array('message' => __('Only CSV files are allowed', 'eau-system')));
+        }
+
+        // Move to upload directory
+        $upload_dir = wp_upload_dir();
+        $import_dir = $upload_dir['basedir'] . '/eau-imports/';
+
+        if (!file_exists($import_dir)) {
+            wp_mkdir_p($import_dir);
+        }
+
+        // Create unique filename
+        $filename = 'import_' . time() . '_' . sanitize_file_name($file['name']);
+        $filepath = $import_dir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            wp_send_json_error(array('message' => __('Failed to save uploaded file', 'eau-system')));
+        }
+
+        // Store filepath in transient for later use
+        $import_key = 'eau_import_' . get_current_user_id() . '_' . time();
+        set_transient($import_key, $filepath, HOUR_IN_SECONDS);
+
+        wp_send_json_success(array(
+            'message'    => __('File uploaded successfully', 'eau-system'),
+            'import_key' => $import_key,
+            'filename'   => $file['name'],
+            'size'       => size_format($file['size']),
+        ));
+    }
+
+    /**
+     * Preview CSV import data
+     *
+     * @since  1.53.0
+     * @return void
+     */
+    public static function preview_import_csv() {
+        check_ajax_referer('eau_payments_management_nonce', 'nonce');
+
+        if (!Eau_User_Institution_Helper::has_admin_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'eau-system')));
+        }
+
+        $import_key = isset($_POST['import_key']) ? sanitize_text_field($_POST['import_key']) : '';
+
+        if (empty($import_key)) {
+            wp_send_json_error(array('message' => __('Invalid import key', 'eau-system')));
+        }
+
+        $filepath = get_transient($import_key);
+
+        if (!$filepath || !file_exists($filepath)) {
+            wp_send_json_error(array('message' => __('Import file not found. Please upload again.', 'eau-system')));
+        }
+
+        // Use the importer class
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payments-csv-importer.php';
+
+        $preview = \EauSystem\Payments\Payments_CSV_Importer::get_preview($filepath, 20);
+
+        if (is_wp_error($preview)) {
+            wp_send_json_error(array('message' => $preview->get_error_message()));
+        }
+
+        // Count duplicates
+        $duplicates = 0;
+        foreach ($preview['preview'] as $order) {
+            if (!empty($order['is_duplicate'])) {
+                $duplicates++;
+            }
+        }
+
+        wp_send_json_success(array(
+            'total_rows'   => $preview['total_rows'],
+            'total_orders' => $preview['total_orders'],
+            'duplicates'   => $duplicates,
+            'preview'      => $preview['preview'],
+        ));
+    }
+
+    /**
+     * Execute CSV import
+     *
+     * @since  1.53.0
+     * @return void
+     */
+    public static function execute_import_csv() {
+        check_ajax_referer('eau_payments_management_nonce', 'nonce');
+
+        if (!Eau_User_Institution_Helper::has_admin_access()) {
+            wp_send_json_error(array('message' => __('Permission denied', 'eau-system')));
+        }
+
+        $import_key = isset($_POST['import_key']) ? sanitize_text_field($_POST['import_key']) : '';
+
+        if (empty($import_key)) {
+            wp_send_json_error(array('message' => __('Invalid import key', 'eau-system')));
+        }
+
+        $filepath = get_transient($import_key);
+
+        if (!$filepath || !file_exists($filepath)) {
+            wp_send_json_error(array('message' => __('Import file not found. Please upload again.', 'eau-system')));
+        }
+
+        // Use the importer class
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/payments/class-payments-csv-importer.php';
+
+        $importer = new \EauSystem\Payments\Payments_CSV_Importer();
+        $result = $importer->import_from_csv($filepath);
+
+        // Delete transient and file after import
+        delete_transient($import_key);
+
+        // Optionally keep the file for audit, or delete it
+        // unlink($filepath);
+
+        wp_send_json_success(array(
+            'message'            => __('Import completed', 'eau-system'),
+            'total_rows'         => $result['total_rows'],
+            'total_orders'       => $result['total_orders'],
+            'imported'           => $result['imported'],
+            'duplicates_skipped' => $result['duplicates_skipped'],
+            'errors'             => $result['errors'],
+            'matched_users'      => $result['matched_users'],
+            'unmatched_users'    => $result['unmatched_users'],
+        ));
     }
 }

@@ -2,6 +2,7 @@
 namespace EauSystem\Ajax;
 
 use EauSystem\Eau_User_Institution_Helper;
+use EauSystem\Eau_Member_Institution_Service;
 
 /**
  * AJAX Handlers para Members Management
@@ -606,8 +607,7 @@ class Eau_Members_Ajax {
             }
         }
 
-        // Institution Admin: seta automaticamente o company_id da instituição
-        // CORRETO: Usa get_user_managed_company_ids() para pegar TODAS as instituições
+        // Institution Admin: vincular automaticamente à instituição usando serviço centralizado
         // TODO: Frontend deveria permitir ESCOLHER a instituição ao criar membro
         $current_user_id = get_current_user_id();
         if (Eau_User_Institution_Helper::is_institution_admin($current_user_id)) {
@@ -616,7 +616,16 @@ class Eau_Members_Ajax {
                 // Por enquanto, usa a PRIMEIRA instituição
                 // TODO: Adicionar seletor de instituição no frontend
                 $company_id = $company_ids[0];
-                update_user_meta($user_id, 'mem_membercompanyname', $company_id);
+
+                // Busca o post ID da instituição pelo company_id
+                $institution = Eau_Member_Institution_Service::get_institution_by_company_id($company_id);
+                if ($institution) {
+                    // Usa o serviço centralizado para vincular o membro
+                    Eau_Member_Institution_Service::link_member($user_id, $institution->ID, array(
+                        'member_type' => 'member',
+                        'reason' => 'Member created by institution admin',
+                    ));
+                }
             }
         }
 

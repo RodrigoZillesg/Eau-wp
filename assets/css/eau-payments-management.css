@@ -1036,3 +1036,563 @@
         display: none !important;
     }
 }
+
+/* ==========================================================================
+   CSV IMPORT MODAL STYLES
+   @since 1.53.0
+   ========================================================================== */
+
+/* Import Instructions */
+.eau-import-instructions {
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-import-instructions h3 {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 0.75rem 0 !important;
+}
+
+.eau-import-instructions p {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 0 1rem 0 !important;
+}
+
+.eau-import-columns-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 0.5rem !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.eau-import-columns-list li {
+    font-size: 0.75rem !important;
+    color: #4b5563 !important;
+    padding: 0.5rem 0.75rem !important;
+    background: #f9fafb !important;
+    border-radius: 6px !important;
+}
+
+.eau-import-columns-list li strong {
+    color: #111827 !important;
+}
+
+/* Dropzone */
+.eau-import-dropzone {
+    border: 2px dashed #d1d5db !important;
+    border-radius: 12px !important;
+    padding: 3rem 2rem !important;
+    text-align: center !important;
+    background: #f9fafb !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.eau-import-dropzone:hover,
+.eau-import-dropzone.dragover {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+}
+
+.eau-import-dropzone-content i,
+.eau-import-dropzone-content svg {
+    width: 3rem !important;
+    height: 3rem !important;
+    color: #9ca3af !important;
+    stroke: #9ca3af !important;
+    margin-bottom: 1rem !important;
+}
+
+.eau-import-dropzone:hover .eau-import-dropzone-content i,
+.eau-import-dropzone:hover .eau-import-dropzone-content svg,
+.eau-import-dropzone.dragover .eau-import-dropzone-content i,
+.eau-import-dropzone.dragover .eau-import-dropzone-content svg {
+    color: #2563eb !important;
+    stroke: #2563eb !important;
+}
+
+.eau-import-dropzone-text {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.eau-import-dropzone-or {
+    font-size: 0.75rem !important;
+    color: #9ca3af !important;
+    margin: 0 0 0.75rem 0 !important;
+}
+
+/* File Info */
+.eau-import-file-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    border-radius: 8px !important;
+    margin-top: 1rem !important;
+}
+
+.eau-import-file-icon i,
+.eau-import-file-icon svg {
+    width: 2rem !important;
+    height: 2rem !important;
+    color: #16a34a !important;
+    stroke: #16a34a !important;
+}
+
+.eau-import-file-details {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}
+
+.eau-import-file-name {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #111827 !important;
+}
+
+.eau-import-file-size {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+}
+
+/* Preview Header */
+.eau-import-preview-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 1.5rem !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+}
+
+.eau-import-preview-header h3 {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+}
+
+.eau-import-preview-stats {
+    display: flex !important;
+    gap: 1rem !important;
+}
+
+.eau-import-stat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 0.75rem 1rem !important;
+    background: #f9fafb !important;
+    border-radius: 8px !important;
+    min-width: 80px !important;
+}
+
+.eau-import-stat-warning {
+    background: #fef3c7 !important;
+}
+
+.eau-import-stat-label {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.eau-import-stat-value {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+}
+
+.eau-import-stat-warning .eau-import-stat-value {
+    color: #d97706 !important;
+}
+
+/* Preview Table */
+.eau-import-preview-table-container {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    margin-bottom: 1rem !important;
+}
+
+.eau-import-preview-table {
+    font-size: 0.75rem !important;
+}
+
+.eau-import-preview-table th {
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+    position: sticky !important;
+    top: 0 !important;
+    background: #f9fafb !important;
+}
+
+.eau-import-preview-table td {
+    font-size: 0.75rem !important;
+    max-width: 200px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Preview Legend */
+.eau-import-preview-legend {
+    display: flex !important;
+    gap: 1.5rem !important;
+    padding: 0.75rem 1rem !important;
+    background: #f9fafb !important;
+    border-radius: 8px !important;
+}
+
+.eau-import-legend-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+}
+
+/* Progress Step */
+.eau-import-progress-content {
+    text-align: center !important;
+    padding: 3rem 2rem !important;
+}
+
+.eau-import-progress-icon i,
+.eau-import-progress-icon svg {
+    width: 3rem !important;
+    height: 3rem !important;
+    color: #2563eb !important;
+    stroke: #2563eb !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-import-progress-content h3 {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 1.5rem 0 !important;
+}
+
+.eau-import-progress-bar {
+    width: 100% !important;
+    max-width: 400px !important;
+    height: 8px !important;
+    background: #e5e7eb !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+    margin: 0 auto 1rem auto !important;
+}
+
+.eau-import-progress-fill {
+    height: 100% !important;
+    background: #2563eb !important;
+    border-radius: 4px !important;
+    transition: width 0.3s ease !important;
+    width: 0% !important;
+}
+
+.eau-import-progress-text {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+/* Result Step */
+.eau-import-result-content {
+    text-align: center !important;
+    padding: 2rem !important;
+}
+
+.eau-import-result-icon {
+    width: 4rem !important;
+    height: 4rem !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.5rem auto !important;
+}
+
+.eau-import-result-success {
+    background: #dcfce7 !important;
+}
+
+.eau-import-result-success i,
+.eau-import-result-success svg {
+    width: 2rem !important;
+    height: 2rem !important;
+    color: #16a34a !important;
+    stroke: #16a34a !important;
+}
+
+.eau-import-result-content h3 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 1.5rem 0 !important;
+}
+
+.eau-import-result-stats {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 2rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.eau-import-result-stat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.eau-import-result-stat-value {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+}
+
+.eau-import-result-stat-label {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+.eau-import-result-errors-list {
+    text-align: left !important;
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+.eau-import-result-errors-list h4 {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #dc2626 !important;
+    margin: 0 0 0.75rem 0 !important;
+}
+
+.eau-import-result-errors-list ul {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.eau-import-result-errors-list li {
+    font-size: 0.75rem !important;
+    color: #991b1b !important;
+    padding: 0.25rem 0 !important;
+}
+
+/* Badges */
+.eau-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+}
+
+.eau-badge-success {
+    background: #dcfce7 !important;
+    color: #16a34a !important;
+}
+
+.eau-badge-warning {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+}
+
+.eau-badge-danger {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+/* Spin Animation */
+.eau-spin {
+    animation: eau-spin 1s linear infinite !important;
+}
+
+@keyframes eau-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Small Button Variant */
+.eau-btn-sm {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.75rem !important;
+}
+
+.eau-btn-sm i,
+.eau-btn-sm svg {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+}
+
+/* Responsive Import Modal */
+@media (max-width: 767px) {
+    .eau-import-columns-list {
+        grid-template-columns: 1fr !important;
+    }
+
+    .eau-import-preview-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .eau-import-preview-stats {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    .eau-import-result-stats {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+}
+
+/* ==========================================================================
+   Imported Payments Modal Styles (v1.53.4)
+   ========================================================================== */
+
+/* Notice for imported payments */
+.eau-imported-notice {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+    background: #fef3c7 !important;
+    border: 1px solid #fcd34d !important;
+    border-radius: 8px !important;
+    margin-bottom: 1rem !important;
+    color: #92400e !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-imported-notice i {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    flex-shrink: 0 !important;
+    color: #d97706 !important;
+}
+
+/* Imported payment details section */
+.eau-imported-details {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+}
+
+.eau-imported-details h4 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    margin: 0 0 0.75rem 0 !important;
+}
+
+.eau-imported-details h4 i {
+    width: 1rem !important;
+    height: 1rem !important;
+    color: #64748b !important;
+}
+
+.eau-imported-details-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    gap: 0.75rem !important;
+}
+
+.eau-imported-detail {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}
+
+.eau-imported-detail .label {
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+.eau-imported-detail .value {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #1e293b !important;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+}
+
+/* Imported payment item styles */
+.eau-payment-item-imported {
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+}
+
+.eau-payment-imported-badge {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    color: #16a34a !important;
+}
+
+.eau-payment-imported-badge i {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+/* Transaction ID and card type in payment details */
+.eau-payment-txn,
+.eau-payment-card {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+}
+
+.eau-payment-txn {
+    background: #e2e8f0 !important;
+    padding: 0.125rem 0.375rem !important;
+    border-radius: 4px !important;
+}
+
+.eau-payment-card {
+    background: #dbeafe !important;
+    padding: 0.125rem 0.375rem !important;
+    border-radius: 4px !important;
+    color: #1e40af !important;
+}
+
+/* Responsive imported details */
+@media (max-width: 767px) {
+    .eau-imported-details-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
