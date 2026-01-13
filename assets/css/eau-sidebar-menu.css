@@ -1,0 +1,403 @@
+/**
+ * Eau Sidebar Menu Styles
+ *
+ * Menu lateral responsivo para o Eau System
+ *
+ * @since 1.56.0
+ */
+
+/* ================================
+   CSS Variables
+   ================================ */
+:root {
+    --eau-sidebar-width: 320px;
+    --eau-sidebar-bg: #ffffff;
+    --eau-sidebar-text: #111827;
+    --eau-sidebar-text-muted: #6b7280;
+    --eau-sidebar-border: #e5e7eb;
+    --eau-sidebar-hover: #f3f4f6;
+    --eau-sidebar-active: #eff6ff;
+    --eau-sidebar-active-text: #2563eb;
+    --eau-sidebar-overlay: rgba(0, 0, 0, 0.5);
+    --eau-sidebar-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --eau-sidebar-z-index: 99999;
+}
+
+/* ================================
+   Hamburger Button
+   ================================ */
+.eau-sidebar-menu-wrapper {
+    display: inline-flex;
+    align-items: center;
+}
+
+.eau-hamburger-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    color: #374151 !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-hamburger-btn:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+}
+
+.eau-hamburger-btn:active,
+.eau-hamburger-btn:focus {
+    background: #e5e7eb !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-hamburger-btn:visited {
+    color: #374151 !important;
+}
+
+.eau-hamburger-icon {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* ================================
+   Overlay
+   ================================ */
+.eau-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--eau-sidebar-overlay);
+    z-index: calc(var(--eau-sidebar-z-index) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.eau-sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ================================
+   Sidebar Container
+   ================================ */
+.eau-sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: var(--eau-sidebar-width);
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--eau-sidebar-bg);
+    box-shadow: var(--eau-sidebar-shadow);
+    z-index: var(--eau-sidebar-z-index);
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.eau-sidebar.active {
+    right: 0;
+}
+
+/* Scrollbar styling */
+.eau-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.eau-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.eau-sidebar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.eau-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* ================================
+   Close Button
+   ================================ */
+.eau-sidebar-close {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    background: #f3f4f6 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    color: #6b7280 !important;
+    transition: all 0.2s ease !important;
+    z-index: 10;
+}
+
+.eau-sidebar-close:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.eau-sidebar-close:active,
+.eau-sidebar-close:focus {
+    background: #e5e7eb !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-sidebar-close:visited {
+    color: #6b7280 !important;
+}
+
+.eau-sidebar-close svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* ================================
+   Sidebar Sections
+   ================================ */
+.eau-sidebar-section {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--eau-sidebar-border);
+}
+
+.eau-sidebar-section:first-of-type {
+    padding-top: 60px; /* Espaço para o botão de fechar */
+}
+
+.eau-sidebar-section:last-of-type {
+    border-bottom: none;
+}
+
+/* ================================
+   Section Title
+   ================================ */
+.eau-sidebar-section-title {
+    padding: 0 20px 12px;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--eau-sidebar-text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    text-align: right !important;
+}
+
+/* ================================
+   Navigation Links
+   ================================ */
+.eau-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.eau-sidebar-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    padding: 12px 20px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: var(--eau-sidebar-text) !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+    text-align: right !important;
+}
+
+.eau-sidebar-link:hover {
+    background: var(--eau-sidebar-hover) !important;
+    color: var(--eau-sidebar-text) !important;
+    text-decoration: none !important;
+}
+
+.eau-sidebar-link:active,
+.eau-sidebar-link:focus {
+    background: var(--eau-sidebar-hover) !important;
+    outline: none !important;
+    text-decoration: none !important;
+}
+
+.eau-sidebar-link:visited {
+    color: var(--eau-sidebar-text) !important;
+}
+
+.eau-sidebar-link.active {
+    background: var(--eau-sidebar-active) !important;
+    color: var(--eau-sidebar-active-text) !important;
+}
+
+.eau-sidebar-link.active:hover {
+    background: var(--eau-sidebar-active) !important;
+    color: var(--eau-sidebar-active-text) !important;
+}
+
+.eau-sidebar-link-text {
+    flex: 1;
+    text-align: right;
+}
+
+.eau-sidebar-link-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #2563eb;
+}
+
+.eau-sidebar-link-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Different icon colors for different sections */
+.eau-sidebar-section:nth-child(1) .eau-sidebar-link-icon {
+    color: #2563eb; /* Navigation - Blue */
+}
+
+.eau-sidebar-section:nth-child(2) .eau-sidebar-link-icon {
+    color: #2563eb; /* Administration - Blue */
+}
+
+.eau-sidebar-section:nth-child(3) .eau-sidebar-link-icon {
+    color: #2563eb; /* Account - Blue */
+}
+
+/* ================================
+   Body Scroll Lock
+   ================================ */
+body.eau-sidebar-open {
+    overflow: hidden !important;
+}
+
+/* ================================
+   Mobile Responsive
+   ================================ */
+@media (max-width: 480px) {
+    .eau-sidebar {
+        width: 100%;
+    }
+
+    .eau-hamburger-btn {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .eau-hamburger-icon {
+        width: 22px !important;
+        height: 22px !important;
+    }
+
+    .eau-sidebar-link {
+        padding: 14px 20px !important;
+    }
+
+    .eau-sidebar-section-title {
+        font-size: 0.6875rem !important;
+    }
+}
+
+/* ================================
+   Tablet
+   ================================ */
+@media (min-width: 481px) and (max-width: 768px) {
+    .eau-sidebar {
+        width: 300px;
+    }
+}
+
+/* ================================
+   Desktop
+   ================================ */
+@media (min-width: 769px) {
+    .eau-sidebar {
+        width: 320px;
+    }
+}
+
+/* ================================
+   Animation Enhancements
+   ================================ */
+.eau-sidebar-link {
+    position: relative;
+}
+
+.eau-sidebar-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--eau-sidebar-active-text);
+    transform: scaleY(0);
+    transition: transform 0.15s ease;
+}
+
+.eau-sidebar-link.active::before {
+    transform: scaleY(1);
+}
+
+/* ================================
+   Dark Mode Support (Future)
+   ================================ */
+@media (prefers-color-scheme: dark) {
+    /* Placeholder for future dark mode */
+}
+
+/* ================================
+   Print Styles
+   ================================ */
+@media print {
+    .eau-sidebar-menu-wrapper,
+    .eau-sidebar-overlay,
+    .eau-sidebar {
+        display: none !important;
+    }
+}
+
+/* ================================
+   High Contrast Mode
+   ================================ */
+@media (prefers-contrast: high) {
+    .eau-sidebar-link {
+        border: 1px solid transparent;
+    }
+
+    .eau-sidebar-link:focus {
+        border-color: currentColor !important;
+    }
+}
+
+/* ================================
+   Reduced Motion
+   ================================ */
+@media (prefers-reduced-motion: reduce) {
+    .eau-sidebar,
+    .eau-sidebar-overlay,
+    .eau-sidebar-link,
+    .eau-sidebar-link::before {
+        transition: none !important;
+    }
+}

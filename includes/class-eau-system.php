@@ -139,6 +139,9 @@ class Eau_System {
         // System Presentation - Public (v1.51.65)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-system-presentation.php';
 
+        // Sidebar Menu (v1.56.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-sidebar-menu.php';
+
         // Ensure membership tables exist (for updates without reactivation)
         if (!Eau_Membership_Database::tables_exist()) {
             Eau_Membership_Database::create_tables();
@@ -221,6 +224,7 @@ class Eau_System {
         Eau_System_Presentation::register_shortcode();
         Eau_Payments_Management::init();
         Eau_My_Payments::register_shortcode();
+        Eau_Sidebar_Menu::register_shortcode();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();
