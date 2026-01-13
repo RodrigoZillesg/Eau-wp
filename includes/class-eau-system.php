@@ -142,6 +142,9 @@ class Eau_System {
         // Sidebar Menu (v1.56.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-sidebar-menu.php';
 
+        // Pages Manager (v1.57.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-pages.php';
+
         // Ensure membership tables exist (for updates without reactivation)
         if (!Eau_Membership_Database::tables_exist()) {
             Eau_Membership_Database::create_tables();
@@ -289,6 +292,11 @@ class Eau_System {
 
         // Registra hooks do Membership Cron (v1.50.0)
         Eau_Membership_Cron::register_hooks();
+
+        // Verifica se precisa criar páginas (para updates sem reativação) (v1.57.0)
+        if (Eau_Pages::needs_page_creation()) {
+            Eau_Pages::create_pages();
+        }
     }
 
     public function get_plugin_name() {

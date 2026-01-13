@@ -3,7 +3,7 @@
  * Plugin Name: Eau System
  * Plugin URI: https://platty.com.br
  * Description: Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
- * Version: 1.56.0
+ * Version: 1.57.0
  * Author: Platty / Rodrigo Zillesg
  * Author URI: https://platty.com.br
  * Text Domain: eau-system
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define constantes do plugin
-define('EAU_SYSTEM_VERSION', '1.56.0');
+define('EAU_SYSTEM_VERSION', '1.57.0');
 define('EAU_SYSTEM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EAU_SYSTEM_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EAU_SYSTEM_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -96,6 +96,9 @@ register_activation_hook(__FILE__, function() {
 
     // Setup cron para verificação de expiração de membership (v1.50.0)
     \EauSystem\Eau_Membership_Cron::setup_cron();
+
+    // Cria páginas do sistema automaticamente (v1.57.0)
+    \EauSystem\Eau_Pages::create_pages();
 
     // Cria tabelas necessárias se precisar
     flush_rewrite_rules();
