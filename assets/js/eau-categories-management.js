@@ -46,6 +46,18 @@
             // Refresh Categories
             $('#eau-refresh-categories').on('click', this.handleRefreshCategories.bind(this));
 
+            // Export Categories (v1.55.5)
+            $('#eau-export-categories').on('click', this.handleExportCategories.bind(this));
+
+            // Import Categories (v1.55.5)
+            $('#eau-import-categories').on('click', this.handleImportCategoriesModal.bind(this));
+            $('#import-btn-cancel').on('click', this.handleImportClose.bind(this));
+            $('#import-btn-back').on('click', this.handleImportBack.bind(this));
+            $('#import-btn-analyze').on('click', this.handleImportAnalyze.bind(this));
+            $('#import-btn-execute').on('click', this.handleImportExecute.bind(this));
+            $('#import-btn-close').on('click', this.handleImportClose.bind(this));
+            $('[data-modal-close]').on('click', this.handleImportClose.bind(this));
+
             // Table actions
             $(document).on('click', '.eau-action-view', this.handleViewCategory.bind(this));
             $(document).on('click', '.eau-action-edit', this.handleEditCategory.bind(this));
@@ -749,6 +761,329 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        },
+
+        // ============================================
+        // Export/Import Functions (v1.55.5)
+        // ============================================
+
+        // Import state
+        importFilename: '',
+        importStep: 'upload',
+
+        /**
+         * Handle export categories
+         */
+        handleExportCategories: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            const $btn = $('#eau-export-categories');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Exporting...');
+
+            $.ajax({
+                url: eauCategoriesData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_export_categories',
+                    nonce: eauCategoriesData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Create downloadable JSON file
+                        const data = response.data;
+                        const jsonStr = JSON.stringify(data, null, 2);
+                        const blob = new Blob([jsonStr], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+
+                        // Create download link
+                        const filename = 'eau-categories-export-' + self.formatDateForFilename() + '.json';
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        EauNotifications.success('Export Complete', `Exported ${data.total_categories} categories to ${filename}`);
+                    } else {
+                        EauNotifications.error('Export Failed', response.data.message || 'Failed to export categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Export Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        /**
+         * Format date for filename
+         */
+        formatDateForFilename: function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}-${hours}${minutes}`;
+        },
+
+        /**
+         * Handle import categories modal open
+         */
+        handleImportCategoriesModal: function(e) {
+            e.preventDefault();
+            this.importFilename = '';
+            this.importStep = 'upload';
+            this.showImportStep('upload');
+            $('#import-categories-form')[0].reset();
+            $('#eau-modal-import-overlay').css('display', 'flex').hide().fadeIn(200);
+            lucide.createIcons();
+        },
+
+        /**
+         * Handle import close
+         */
+        handleImportClose: function(e) {
+            if (e) e.preventDefault();
+            $('#eau-modal-import-overlay').fadeOut(200);
+        },
+
+        /**
+         * Handle import back
+         */
+        handleImportBack: function(e) {
+            e.preventDefault();
+            this.showImportStep('upload');
+        },
+
+        /**
+         * Show import step
+         */
+        showImportStep: function(step) {
+            this.importStep = step;
+
+            // Hide all steps
+            $('.import-step').hide();
+
+            // Show current step
+            $('#import-step-' + step).show();
+
+            // Update buttons
+            $('#import-btn-cancel').toggle(step === 'upload');
+            $('#import-btn-back').toggle(step === 'preview');
+            $('#import-btn-analyze').toggle(step === 'upload');
+            $('#import-btn-execute').toggle(step === 'preview');
+            $('#import-btn-close').toggle(step === 'result');
+        },
+
+        /**
+         * Handle import analyze
+         */
+        handleImportAnalyze: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            const fileInput = $('#import-json-file')[0];
+            if (!fileInput.files || fileInput.files.length === 0) {
+                EauNotifications.warning('No File', 'Please select a JSON file to import');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Validate file
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                EauNotifications.error('Invalid File', 'Please select a JSON file');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                EauNotifications.error('File Too Large', 'Maximum file size is 5MB');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'eau_import_categories_analyze');
+            formData.append('nonce', eauCategoriesData.nonce);
+            formData.append('json_file', file);
+
+            const $btn = $('#import-btn-analyze');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Analyzing...');
+
+            $.ajax({
+                url: eauCategoriesData.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        self.importFilename = response.data.filename;
+                        self.showImportPreview(response.data);
+                    } else {
+                        EauNotifications.error('Analysis Failed', response.data.message || 'Failed to analyze file');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Analysis Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        /**
+         * Show import preview
+         */
+        showImportPreview: function(data) {
+            // Build stats
+            const statsHtml = `
+                <div class="eau-stat-box" style="flex: 1; padding: 15px; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #0369a1;">${data.total_categories}</div>
+                    <div style="font-size: 12px; color: #666; text-transform: uppercase;">Total Categories</div>
+                </div>
+                <div class="eau-stat-box" style="flex: 1; padding: 15px; background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #16a34a;">${data.will_update}</div>
+                    <div style="font-size: 12px; color: #666; text-transform: uppercase;">Will Update</div>
+                </div>
+                <div class="eau-stat-box" style="flex: 1; padding: 15px; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #d97706;">${data.will_create}</div>
+                    <div style="font-size: 12px; color: #666; text-transform: uppercase;">Will Create</div>
+                </div>
+            `;
+            $('#import-preview-stats').html(statsHtml);
+
+            // Build preview table
+            let tableHtml = '';
+            if (data.preview && data.preview.length > 0) {
+                data.preview.forEach(function(cat) {
+                    const actionClass = cat.action === 'update' ? 'eau-badge-success' : 'eau-badge-warning';
+                    const actionLabel = cat.action === 'update' ? 'UPDATE' : 'CREATE';
+                    tableHtml += `
+                        <tr>
+                            <td style="padding: 8px 12px;">${cat.category_serial}</td>
+                            <td style="padding: 8px 12px;">${cat.category_name}</td>
+                            <td style="padding: 8px 12px;">${cat.points_per_hour}</td>
+                            <td style="padding: 8px 12px;">
+                                <span class="${actionClass}" style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+                                    ${cat.action === 'update' ? 'background: #d1fae5; color: #065f46;' : 'background: #fef3c7; color: #92400e;'}">
+                                    ${actionLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            $('#import-preview-table tbody').html(tableHtml);
+
+            this.showImportStep('preview');
+            lucide.createIcons();
+        },
+
+        /**
+         * Handle import execute
+         */
+        handleImportExecute: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            if (!this.importFilename) {
+                EauNotifications.error('Error', 'No file to import');
+                return;
+            }
+
+            const skipExisting = $('#import-skip-existing').is(':checked');
+
+            const $btn = $('#import-btn-execute');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Importing...');
+
+            $.ajax({
+                url: eauCategoriesData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_import_categories_execute',
+                    nonce: eauCategoriesData.nonce,
+                    filename: this.importFilename,
+                    skip_existing: skipExisting
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showImportResult(response.data);
+                        self.loadCategories();
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Import Failed', response.data.message || 'Failed to import categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Import Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        /**
+         * Show import result
+         */
+        showImportResult: function(data) {
+            const successIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+
+            let errorsHtml = '';
+            if (data.errors && data.errors.length > 0) {
+                errorsHtml = `
+                    <div style="margin-top: 20px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px;">
+                        <strong style="color: #991b1b;">Errors (${data.errors.length}):</strong>
+                        <ul style="margin: 8px 0 0 20px; font-size: 13px; color: #991b1b;">
+                            ${data.errors.map(e => `<li>Row ${e.row}: ${e.message}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div style="text-align: center; padding: 20px;">
+                    ${successIcon}
+                    <h3 style="margin: 16px 0 8px; color: #111827;">Import Complete!</h3>
+                    <p style="color: #6b7280; margin-bottom: 20px;">Successfully processed ${data.total} categories</p>
+
+                    <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #16a34a;">${data.updated}</div>
+                            <div style="font-size: 12px; color: #666;">Updated</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #d97706;">${data.created}</div>
+                            <div style="font-size: 12px; color: #666;">Created</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #6b7280;">${data.skipped}</div>
+                            <div style="font-size: 12px; color: #666;">Skipped</div>
+                        </div>
+                    </div>
+
+                    ${errorsHtml}
+                </div>
+            `;
+
+            $('#import-result-content').html(html);
+            this.showImportStep('result');
+
+            EauNotifications.success('Import Complete', `Imported ${data.total} categories: ${data.created} created, ${data.updated} updated`);
         }
     };
 

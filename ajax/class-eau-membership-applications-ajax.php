@@ -345,7 +345,7 @@ class Eau_Membership_Applications_Ajax {
             update_user_meta($user_id, 'mem_firstname', $application->first_name);
             update_user_meta($user_id, 'mem_lastname', $application->last_name);
             update_user_meta($user_id, 'mem_phone', $application->phone);
-            update_user_meta($user_id, 'mem_position', $application->position);
+            update_user_meta($user_id, 'mem_memberposition', $application->position);
 
             // Handle institution creation for provider types
             $institution_id = null;

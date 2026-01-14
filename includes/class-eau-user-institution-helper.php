@@ -449,6 +449,7 @@ class Eau_User_Institution_Helper {
             'institution_id' => '',
             'membership_type' => '',
             'tag' => '',
+            'position' => '',
             'registered_date_from' => '',
             'registered_date_to' => '',
             'orderby' => 'display_name',
@@ -553,6 +554,12 @@ class Eau_User_Institution_Helper {
             $join[] = "INNER JOIN {$wpdb->usermeta} um_tags ON u.ID = um_tags.user_id AND um_tags.meta_key = 'mem_tags'";
             // O valor é serializado como a:N:{i:0;s:X:"slug";...}, então buscamos pela string do slug
             $where[] = $wpdb->prepare("um_tags.meta_value LIKE %s", '%"' . $wpdb->esc_like($args['tag']) . '"%');
+        }
+
+        // Filtro por position (mem_memberposition)
+        if (!empty($args['position'])) {
+            $join[] = "INNER JOIN {$wpdb->usermeta} um_position ON u.ID = um_position.user_id AND um_position.meta_key = 'mem_memberposition'";
+            $where[] = $wpdb->prepare("um_position.meta_value = %s", $args['position']);
         }
 
         // Monta query de contagem

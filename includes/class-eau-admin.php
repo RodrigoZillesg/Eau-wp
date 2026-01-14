@@ -33,6 +33,11 @@ class Eau_Admin {
         add_action('wp_ajax_eau_import_membership_analyze_csv', array($this, 'handle_import_membership_analyze_csv'));
         add_action('wp_ajax_eau_import_membership_preview', array($this, 'handle_import_membership_preview'));
         add_action('wp_ajax_eau_import_membership_batch', array($this, 'handle_import_membership_batch'));
+
+        // Handlers AJAX para Institution Import (v1.54.0)
+        add_action('wp_ajax_eau_import_institution_analyze_csv', array($this, 'handle_import_institution_analyze_csv'));
+        add_action('wp_ajax_eau_import_institution_preview', array($this, 'handle_import_institution_preview'));
+        add_action('wp_ajax_eau_import_institution_batch', array($this, 'handle_import_institution_batch'));
     }
 
     /**
@@ -117,6 +122,19 @@ class Eau_Admin {
                 'createError' => __('Erro ao criar o Post Type.', 'eau-system'),
                 'selectColumns' => __('Selecione pelo menos uma coluna.', 'eau-system'),
                 'postTypeName' => __('Digite o nome do Post Type.', 'eau-system'),
+            ),
+            'knownMetaFields' => array(
+                array('name' => 'mem_status', 'title' => 'Member Status'),
+                array('name' => 'mem_membercompanyname', 'title' => 'Member Company Name'),
+                array('name' => 'mem_phone', 'title' => 'Phone'),
+                array('name' => 'mem_address', 'title' => 'Address'),
+                array('name' => 'mem_city', 'title' => 'City'),
+                array('name' => 'mem_state', 'title' => 'State'),
+                array('name' => 'mem_postcode', 'title' => 'Postcode'),
+                array('name' => 'mem_country', 'title' => 'Country'),
+                array('name' => 'mem_memberposition', 'title' => 'Member Position'),
+                array('name' => 'mem_type', 'title' => 'Member Type'),
+                array('name' => 'mem_tags', 'title' => 'Tags'),
             )
         ));
     }
@@ -571,6 +589,127 @@ class Eau_Admin {
         }
 
         $result = Eau_Membership_Importer::import_batch($csv_filepath, $offset, $batch_size);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para análise de CSV de instituições
+     *
+     * @since 1.54.0
+     */
+    public function handle_import_institution_analyze_csv() {
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_settings_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'eau_system_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!$this->can_import_membership()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        if (!isset($_FILES['csv_file']) && !isset($_FILES['institution_csv_file'])) {
+            wp_send_json_error(array('message' => 'No file uploaded.'));
+        }
+
+        $file = isset($_FILES['csv_file']) ? $_FILES['csv_file'] : $_FILES['institution_csv_file'];
+
+        $csv_handler = new Eau_CSV_Handler();
+        $result = $csv_handler->process_upload($file);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        // Adiciona preview na resposta
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $result['filename'];
+
+        if (file_exists($csv_filepath)) {
+            $preview = Eau_Institution_Importer::get_preview($csv_filepath, 10);
+            if (!is_wp_error($preview)) {
+                $result['preview'] = $preview['preview'];
+                $result['total_institutions'] = $preview['total_institutions'];
+                $result['existing_count'] = $preview['will_update'];
+                $result['new_count'] = $preview['will_create'];
+            }
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para preview de importação de instituições
+     *
+     * @since 1.54.0
+     */
+    public function handle_import_institution_preview() {
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_settings_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'eau_system_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!$this->can_import_membership()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? $_POST['filename'] ?? '');
+
+        if (empty($csv_filename)) {
+            wp_send_json_error(array('message' => 'Filename not provided.'));
+        }
+
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $csv_filename;
+
+        if (!file_exists($csv_filepath)) {
+            wp_send_json_error(array('message' => 'CSV file not found.'));
+        }
+
+        $result = Eau_Institution_Importer::get_preview($csv_filepath, 10);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Handler AJAX para importação de instituições em lote
+     *
+     * @since 1.54.0
+     */
+    public function handle_import_institution_batch() {
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_settings_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'eau_system_nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+
+        if (!$this->can_import_membership()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? $_POST['filename'] ?? '');
+        $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
+        $batch_size = isset($_POST['limit']) ? intval($_POST['limit']) : (isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25);
+
+        if (empty($csv_filename)) {
+            wp_send_json_error(array('message' => 'Filename not provided.'));
+        }
+
+        $upload_dir = wp_upload_dir();
+        $csv_filepath = $upload_dir['basedir'] . '/eau-system-csv/' . $csv_filename;
+
+        if (!file_exists($csv_filepath)) {
+            wp_send_json_error(array('message' => 'CSV file not found.'));
+        }
+
+        $result = Eau_Institution_Importer::import_batch($csv_filepath, $offset, $batch_size);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

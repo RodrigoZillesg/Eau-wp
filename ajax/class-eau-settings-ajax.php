@@ -2,6 +2,7 @@
 namespace EauSystem\Ajax;
 
 use EauSystem\Eau_Settings;
+use EauSystem\Eau_Pages;
 
 /**
  * AJAX Handlers para Settings
@@ -25,6 +26,9 @@ class Eau_Settings_Ajax {
         add_action('wp_ajax_eau_add_member_tag', array(__CLASS__, 'add_member_tag'));
         add_action('wp_ajax_eau_update_member_tag', array(__CLASS__, 'update_member_tag'));
         add_action('wp_ajax_eau_delete_member_tag', array(__CLASS__, 'delete_member_tag'));
+
+        // System Pages (v1.57.0)
+        add_action('wp_ajax_eau_recreate_missing_pages', array(__CLASS__, 'recreate_missing_pages'));
     }
 
     /**
@@ -189,6 +193,30 @@ class Eau_Settings_Ajax {
 
         wp_send_json_success(array(
             'message' => 'Tag deleted successfully.',
+        ));
+    }
+
+    /**
+     * AJAX: Recreate All Pages (v1.57.4)
+     * Deletes all existing pages and recreates them
+     */
+    public static function recreate_missing_pages() {
+        // Verifica nonce
+        check_ajax_referer('eau_settings_nonce', 'nonce');
+
+        // Verifica permissão
+        if (!Eau_Settings::can_access_settings()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        // Deleta e recria todas as páginas
+        $results = Eau_Pages::delete_and_recreate_all_pages();
+
+        wp_send_json_success(array(
+            'message'  => 'All pages have been recreated.',
+            'created'  => count($results['created']),
+            'existing' => count($results['existing']),
+            'errors'   => array_keys($results['errors']),
         ));
     }
 }

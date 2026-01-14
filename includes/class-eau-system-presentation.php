@@ -25,7 +25,7 @@ class Eau_System_Presentation {
     /**
      * System version
      */
-    private static $version = '1.54.2';
+    private static $version = '1.55.6';
 
     /**
      * Register shortcode
@@ -1262,14 +1262,6 @@ class Eau_System_Presentation {
      */
     private static function get_pending_items() {
         return array(
-            array(
-                'pt' => 'Importação dos dados restantes do sistema antigo (memberships e datas de expiração)',
-                'en' => 'Import remaining data from legacy system (memberships and expiration dates)',
-            ),
-            array(
-                'pt' => 'Preservação das datas originais de cadastro dos membros durante a importação',
-                'en' => 'Preservation of original member registration dates during import',
-            ),
             array(
                 'pt' => 'Configuração de emails oficiais da English Australia (SMTP) - aguardando acesso ao DNS',
                 'en' => 'Configuration of official English Australia emails (SMTP) - awaiting DNS access',

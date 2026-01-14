@@ -58,6 +58,14 @@ class Eau_Categories_Management {
                     <p class="eau-page-header-subtitle">Configure categories and points per hour for CPD activities</p>
                 </div>
                 <div class="eau-page-header-actions">
+                    <button class="eau-btn eau-btn-ghost" id="eau-import-categories" title="Import Categories">
+                        <i data-lucide="upload"></i>
+                        Import
+                    </button>
+                    <button class="eau-btn eau-btn-ghost" id="eau-export-categories" title="Export Categories">
+                        <i data-lucide="download"></i>
+                        Export
+                    </button>
                     <button class="eau-btn eau-btn-secondary" id="eau-refresh-categories">
                         <i data-lucide="refresh-cw"></i>
                         Refresh from Activities
@@ -260,7 +268,118 @@ class Eau_Categories_Management {
         ));
         $html .= $add_modal->render();
 
+        // Modal Import (v1.55.5)
+        $html .= self::render_import_modal();
+
         return $html;
+    }
+
+    /**
+     * Renderiza o modal de importação
+     *
+     * @since 1.55.5
+     * @return string HTML do modal
+     */
+    private static function render_import_modal() {
+        ob_start();
+        ?>
+        <div class="eau-modal-overlay" id="eau-modal-import-overlay" style="display: none;">
+            <div class="eau-modal eau-modal-lg">
+                <div class="eau-modal-header">
+                    <h2 class="eau-modal-title">
+                        <i data-lucide="upload"></i>
+                        Import Categories
+                    </h2>
+                    <button type="button" class="eau-modal-close" data-modal-close>&times;</button>
+                </div>
+                <div class="eau-modal-body">
+                    <!-- Step 1: Upload -->
+                    <div id="import-step-upload" class="import-step">
+                        <p class="eau-description">
+                            Upload a JSON file previously exported from this system.
+                            Categories will be matched by Category ID (serial).
+                        </p>
+
+                        <div class="eau-info-box" style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                <i data-lucide="info" style="width: 20px; height: 20px; color: #0ea5e9; flex-shrink: 0;"></i>
+                                <div>
+                                    <strong>How it works:</strong>
+                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                                        <li>Existing categories (same ID) will be <strong>updated</strong></li>
+                                        <li>New categories will be <strong>created</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="import-categories-form" enctype="multipart/form-data">
+                            <div class="eau-form-group">
+                                <label class="eau-form-label">JSON File</label>
+                                <input type="file" name="json_file" id="import-json-file" accept=".json" required class="eau-form-input">
+                                <p class="eau-form-hint">Maximum file size: 5MB</p>
+                            </div>
+
+                            <div class="eau-form-group">
+                                <label class="eau-checkbox-label">
+                                    <input type="checkbox" name="skip_existing" id="import-skip-existing">
+                                    Skip existing categories (only add new ones)
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Step 2: Preview -->
+                    <div id="import-step-preview" class="import-step" style="display: none;">
+                        <div id="import-preview-stats" class="eau-preview-stats" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <!-- Stats loaded via JS -->
+                        </div>
+
+                        <h4>Preview (first 10 categories):</h4>
+                        <div class="eau-table-wrapper" style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+                            <table class="eau-data-table" id="import-preview-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category ID</th>
+                                        <th>Category Name</th>
+                                        <th>Points/Hour</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Preview rows loaded via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Result -->
+                    <div id="import-step-result" class="import-step" style="display: none;">
+                        <div id="import-result-content">
+                            <!-- Result loaded via JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="eau-modal-footer">
+                    <button type="button" class="eau-btn eau-btn-secondary" id="import-btn-cancel">Cancel</button>
+                    <button type="button" class="eau-btn eau-btn-secondary" id="import-btn-back" style="display: none;">Back</button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="import-btn-analyze">
+                        <i data-lucide="search"></i>
+                        Analyze File
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="import-btn-execute" style="display: none;">
+                        <i data-lucide="upload"></i>
+                        Import Categories
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="import-btn-close" style="display: none;">
+                        <i data-lucide="check"></i>
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 
     /**

@@ -24,8 +24,9 @@ class Eau_Pages {
     /**
      * Versão atual da estrutura de páginas
      * Incrementar quando adicionar novas páginas
+     * v1.0.1 - Removed manage-categories (integrated into Settings)
      */
-    const PAGES_VERSION = '1.0.0';
+    const PAGES_VERSION = '1.0.1';
 
     /**
      * Definição de todas as páginas do sistema
@@ -104,13 +105,7 @@ class Eau_Pages {
                 'parent'    => 'dashboard',
                 'order'     => 3,
             ),
-            'manage-categories' => array(
-                'title'     => 'Manage Categories',
-                'slug'      => 'manage-categories',
-                'shortcode' => '[eau_categories_management]',
-                'parent'    => 'dashboard',
-                'order'     => 4,
-            ),
+            // manage-categories removed in v1.60.0 - now integrated into Settings page
             'my-cpds' => array(
                 'title'     => 'My CPDs',
                 'slug'      => 'my-cpds',
@@ -431,6 +426,41 @@ class Eau_Pages {
         update_option(self::OPTION_PAGE_IDS, $page_ids);
 
         // Recria páginas faltantes
+        return self::create_pages();
+    }
+
+    /**
+     * Deleta todas as páginas do sistema e recria
+     *
+     * @since 1.57.4
+     * @return array
+     */
+    public static function delete_and_recreate_all_pages() {
+        $page_ids = self::get_page_ids();
+        $deleted = 0;
+
+        // Deleta todas as páginas existentes (permanentemente)
+        foreach ($page_ids as $key => $id) {
+            $post = get_post($id);
+            if ($post && $post->post_status !== 'trash') {
+                // Force delete (bypass trash)
+                wp_delete_post($id, true);
+                $deleted++;
+            }
+        }
+
+        // Limpa todos os IDs salvos
+        update_option(self::OPTION_PAGE_IDS, array());
+
+        // Reseta versão para forçar recriação
+        update_option(self::OPTION_PAGES_VERSION, '0.0.0');
+
+        // Log
+        if ($deleted > 0) {
+            error_log('Eau System: Deleted ' . $deleted . ' pages before recreation.');
+        }
+
+        // Recria todas as páginas
         return self::create_pages();
     }
 

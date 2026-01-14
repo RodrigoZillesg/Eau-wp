@@ -353,7 +353,7 @@ class Eau_Membership_Selection {
         $email = $user->user_email;
         // Try mem_phone first (new field), fallback to mem_mobile (legacy)
         $phone = get_user_meta($user_id, 'mem_phone', true) ?: get_user_meta($user_id, 'mem_mobile', true);
-        $position = get_user_meta($user_id, 'mem_position', true);
+        $position = get_user_meta($user_id, 'mem_memberposition', true);
         $company_id = get_user_meta($user_id, 'mem_membercompanyname', true);
         $company_name = '';
 

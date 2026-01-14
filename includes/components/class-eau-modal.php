@@ -118,6 +118,7 @@ class Eau_Modal {
             'medium' => 'eau-modal-medium',
             'large' => 'eau-modal-large',
             'full' => 'eau-modal-full',
+            'fullheight' => 'eau-modal-fullheight', // Ocupa altura total da tela
         );
 
         $size = $this->config['size'];

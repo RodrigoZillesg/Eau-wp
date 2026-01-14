@@ -395,4 +395,24 @@ class Eau_Filters {
 
         return $options;
     }
+
+    /**
+     * Get member position options for filters
+     *
+     * @since 1.58.0
+     * @return array Associative array of position_value => position_label
+     */
+    public static function get_position_options() {
+        return array(
+            'teacher' => 'Teacher',
+            'academic_manager' => 'Academic Manager',
+            'director_of_studies' => 'Director of Studies',
+            'principal' => 'Principal',
+            'general_manager_ceo' => 'General Manager/CEO',
+            'marketing_sales' => 'Marketing/Sales',
+            'admissions' => 'Admissions',
+            'student_services' => 'Student Services',
+            'other' => 'Other',
+        );
+    }
 }

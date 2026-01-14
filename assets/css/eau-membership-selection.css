@@ -32,7 +32,7 @@ body:has(.eau-membership-selection) header.page-header {
 ============================================ */
 
 .eau-membership-selection {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
     padding: 2rem 1rem;
     padding-top: 80px; /* Space for fixed header */

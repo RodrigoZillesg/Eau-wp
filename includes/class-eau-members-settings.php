@@ -346,7 +346,7 @@ class Eau_Members_Settings {
         // Adiciona meta fields personalizados
         $meta_fields = self::get_user_meta_fields();
         foreach ($meta_fields as $meta_key => $meta_field) {
-            $fields[$meta_key] = array(
+            $field_config = array(
                 'type' => 'meta',
                 'label' => $meta_field['label'],
                 'meta_key' => $meta_key,
@@ -356,6 +356,13 @@ class Eau_Members_Settings {
                 'readonly' => isset($meta_field['readonly']) ? $meta_field['readonly'] : false,
                 'order' => isset($meta_field['order']) ? $meta_field['order'] : (100 + count($fields)),
             );
+
+            // Copia options se existir (para selects, country, etc)
+            if (isset($meta_field['options'])) {
+                $field_config['options'] = $meta_field['options'];
+            }
+
+            $fields[$meta_key] = $field_config;
         }
 
         return $fields;
@@ -389,17 +396,61 @@ class Eau_Members_Settings {
                 'label' => 'City',
                 'field_type' => 'text',
             ),
+            'mem_country' => array(
+                'label' => 'Country',
+                'field_type' => 'country',
+                'options' => array(
+                    '' => 'Select Country',
+                    'AU' => 'Australia',
+                    'NZ' => 'New Zealand',
+                    'GB' => 'United Kingdom',
+                    'US' => 'United States',
+                    'CA' => 'Canada',
+                    'IE' => 'Ireland',
+                    'SG' => 'Singapore',
+                    'MY' => 'Malaysia',
+                    'PH' => 'Philippines',
+                    'IN' => 'India',
+                    'CN' => 'China',
+                    'JP' => 'Japan',
+                    'KR' => 'South Korea',
+                    'TH' => 'Thailand',
+                    'VN' => 'Vietnam',
+                    'ID' => 'Indonesia',
+                    'DE' => 'Germany',
+                    'FR' => 'France',
+                    'IT' => 'Italy',
+                    'ES' => 'Spain',
+                    'BR' => 'Brazil',
+                    'MX' => 'Mexico',
+                    'ZA' => 'South Africa',
+                    'AE' => 'United Arab Emirates',
+                    'OTHER' => 'Other',
+                ),
+            ),
             'mem_state' => array(
-                'label' => 'State',
-                'field_type' => 'text',
+                'label' => 'State/Province',
+                'field_type' => 'state',
             ),
             'mem_postcode' => array(
                 'label' => 'Postcode',
                 'field_type' => 'text',
             ),
-            'mem_country' => array(
-                'label' => 'Country',
-                'field_type' => 'text',
+            'mem_memberposition' => array(
+                'label' => 'Position',
+                'field_type' => 'select',
+                'options' => array(
+                    '' => 'Select Position',
+                    'teacher' => 'Teacher',
+                    'academic_manager' => 'Academic Manager',
+                    'director_of_studies' => 'Director of Studies',
+                    'principal' => 'Principal',
+                    'general_manager_ceo' => 'General Manager/CEO',
+                    'marketing_sales' => 'Marketing/Sales',
+                    'admissions' => 'Admissions',
+                    'student_services' => 'Student Services',
+                    'other' => 'Other',
+                ),
             ),
             'mem_tags' => array(
                 'label' => 'Tags',
@@ -428,7 +479,7 @@ class Eau_Members_Settings {
      * Campos que devem estar sempre habilitados por padrão
      * (mesmo se não existem nas configurações salvas)
      */
-    const FORCE_ENABLED_FIELDS = array('mem_tags');
+    const FORCE_ENABLED_FIELDS = array('mem_tags', 'mem_memberposition');
 
     /**
      * Retorna as configurações salvas
@@ -446,6 +497,15 @@ class Eau_Members_Settings {
             } else {
                 // Merge com configurações salvas
                 $config = array_merge($field, $saved_settings[$key]);
+            }
+
+            // IMPORTANTE: Sempre preserva options e field_type originais do campo
+            // Esses valores são definidos no código e não devem ser sobrescritos
+            if (isset($field['options'])) {
+                $config['options'] = $field['options'];
+            }
+            if (isset($field['field_type'])) {
+                $config['field_type'] = $field['field_type'];
             }
 
             // Força enabled para campos que devem estar sempre habilitados

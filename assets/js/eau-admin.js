@@ -1335,7 +1335,7 @@
             mappingHtml += '</div>';
         });
 
-        // Meta fields customizados
+        // Meta fields customizados do Meta Box selecionado
         if (importUsersData.fields && importUsersData.fields.length > 0) {
             mappingHtml += '<h4 style="margin-top: 20px;">Campos Customizados do Meta Box</h4>';
 
@@ -1347,6 +1347,30 @@
 
                 data.columns.forEach(function(column) {
                     const selected = (normalizeForComparison(column) === normalizeForComparison(field.title)) ? 'selected' : '';
+                    mappingHtml += `<option value="${escapeHtml(column)}" ${selected}>${escapeHtml(column)}</option>`;
+                });
+
+                mappingHtml += '</select>';
+                mappingHtml += '</div>';
+            });
+        }
+
+        // Campos conhecidos do sistema Eau (sempre disponíveis)
+        if (eauSystem.knownMetaFields && eauSystem.knownMetaFields.length > 0) {
+            mappingHtml += '<h4 style="margin-top: 20px;">Campos do Sistema Eau</h4>';
+
+            eauSystem.knownMetaFields.forEach(function(field) {
+                mappingHtml += '<div class="eau-mapping-item">';
+                mappingHtml += `<label>${field.title}</label>`;
+                mappingHtml += `<select class="eau-mapping-select-meta" data-field="${field.name}">`;
+                mappingHtml += '<option value="">-- Não mapear --</option>';
+
+                data.columns.forEach(function(column) {
+                    // Auto-seleciona se o nome da coluna corresponder (ex: "Member Position" -> mem_memberposition)
+                    const normalizedColumn = normalizeForComparison(column);
+                    const normalizedTitle = normalizeForComparison(field.title);
+                    const normalizedName = normalizeForComparison(field.name.replace('mem_', '').replace(/_/g, ' '));
+                    const selected = (normalizedColumn === normalizedTitle || normalizedColumn === normalizedName) ? 'selected' : '';
                     mappingHtml += `<option value="${escapeHtml(column)}" ${selected}>${escapeHtml(column)}</option>`;
                 });
 

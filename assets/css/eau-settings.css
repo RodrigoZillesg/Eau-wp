@@ -2,6 +2,7 @@
  * Settings Page Styles
  *
  * @since 1.39.0
+ * @since 1.60.0 Adicionado sistema de abas e aba de Categories
  */
 
 /* Container */
@@ -609,4 +610,677 @@
         width: 100%;
         margin-top: 0.5rem;
     }
+}
+
+/* ==========================================================================
+   System Pages Section (v1.57.0)
+   ========================================================================== */
+
+.eau-system-pages-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Pages Summary */
+.eau-pages-summary {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.eau-pages-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    min-width: 80px;
+}
+
+.eau-pages-summary-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+}
+
+.eau-pages-summary-label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+.eau-pages-summary-success {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+.eau-pages-summary-success .eau-pages-summary-number {
+    color: #059669;
+}
+
+.eau-pages-summary-success .eau-pages-summary-label {
+    color: #10b981;
+}
+
+.eau-pages-summary-warning {
+    background: #fffbeb;
+    border-color: #fcd34d;
+}
+
+.eau-pages-summary-warning .eau-pages-summary-number {
+    color: #d97706;
+}
+
+.eau-pages-summary-warning .eau-pages-summary-label {
+    color: #f59e0b;
+}
+
+/* Pages Table */
+.eau-pages-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.eau-pages-table thead th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.eau-pages-table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+}
+
+.eau-pages-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.eau-pages-table tbody tr.eau-row-missing {
+    background: #fffbeb;
+}
+
+.eau-pages-table tbody tr.eau-row-missing:hover {
+    background: #fef3c7;
+}
+
+/* Page column */
+.eau-pages-table td strong {
+    display: block;
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.eau-page-desc {
+    display: block;
+    font-size: 0.8125rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* URL column */
+.eau-page-url {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Inconsolata', monospace;
+    font-size: 0.8125rem;
+}
+
+.eau-page-url:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.eau-page-url i,
+.eau-page-url svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+}
+
+.eau-page-url-missing {
+    font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Inconsolata', monospace;
+    font-size: 0.8125rem;
+    color: #9ca3af;
+}
+
+/* Shortcode column */
+.eau-pages-table code {
+    font-size: 0.75rem;
+    font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Inconsolata', monospace;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Status badge */
+.eau-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 9999px;
+}
+
+.eau-status-active {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.eau-status-missing {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .eau-pages-table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .eau-pages-summary {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .eau-pages-summary-item {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .eau-pages-summary-number {
+        font-size: 1.25rem;
+    }
+}
+
+/* ==========================================================================
+   Tabs Navigation (v1.60.0)
+   ========================================================================== */
+
+.eau-settings-tabs-nav {
+    display: flex !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    background: #f3f4f6 !important;
+    border-radius: 12px !important;
+    margin-bottom: 1.5rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.eau-settings-tab {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-settings-tab:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    text-decoration: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-settings-tab:focus,
+.eau-settings-tab:active,
+.eau-settings-tab:visited {
+    background: transparent !important;
+    color: #6b7280 !important;
+    text-decoration: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-settings-tab.active {
+    background: #fff !important;
+    color: #1f2937 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.eau-settings-tab.active:hover,
+.eau-settings-tab.active:focus,
+.eau-settings-tab.active:active,
+.eau-settings-tab.active:visited {
+    background: #fff !important;
+    color: #1f2937 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+}
+
+.eau-settings-tab i,
+.eau-settings-tab svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-settings-tab.active i,
+.eau-settings-tab.active svg {
+    color: #2563eb !important;
+}
+
+/* Tab Content */
+.eau-settings-tabs-content {
+    min-height: 400px;
+}
+
+.eau-settings-tab-panel {
+    display: none;
+    animation: eau-tab-fade-in 0.2s ease;
+}
+
+.eau-settings-tab-panel.active {
+    display: block;
+}
+
+@keyframes eau-tab-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive tabs */
+@media (max-width: 768px) {
+    .eau-settings-tabs-nav {
+        padding: 0.375rem !important;
+        gap: 0.375rem !important;
+        border-radius: 10px !important;
+    }
+
+    .eau-settings-tab {
+        padding: 0.625rem 0.75rem !important;
+        font-size: 0.8125rem !important;
+    }
+
+    .eau-settings-tab span {
+        display: none !important;
+    }
+
+    .eau-settings-tab i,
+    .eau-settings-tab svg {
+        width: 1.125rem !important;
+        height: 1.125rem !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .eau-settings-tabs-nav {
+        justify-content: flex-start !important;
+    }
+}
+
+/* ==========================================================================
+   Categories Tab (v1.60.0)
+   ========================================================================== */
+
+.eau-categories-tab-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Categories Header */
+.eau-categories-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.eau-categories-header .eau-search-wrapper {
+    flex: 1;
+    max-width: 400px;
+    min-width: 200px;
+    position: relative;
+}
+
+.eau-categories-header .eau-search-wrapper i,
+.eau-categories-header .eau-search-wrapper svg {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.eau-categories-header .eau-search-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem 0.625rem 2.5rem;
+    font-size: 0.875rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #111827;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eau-categories-header .eau-search-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.eau-categories-header .eau-search-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Categories Actions */
+.eau-categories-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Ghost Button */
+.eau-btn-ghost {
+    background: transparent !important;
+    border: 1px solid #e5e7eb !important;
+    color: #6b7280 !important;
+    padding: 0.5rem 0.75rem !important;
+}
+
+.eau-btn-ghost:hover {
+    background: #f9fafb !important;
+    border-color: #d1d5db !important;
+    color: #374151 !important;
+}
+
+.eau-btn-ghost:active,
+.eau-btn-ghost:focus {
+    background: #f3f4f6 !important;
+    outline: none !important;
+}
+
+.eau-btn-ghost i,
+.eau-btn-ghost svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Categories Table Actions Column */
+.eau-categories-tab-container .eau-data-table-wrapper {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Responsive Categories */
+@media (max-width: 768px) {
+    .eau-categories-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .eau-categories-header .eau-search-wrapper {
+        max-width: 100%;
+    }
+
+    .eau-categories-actions {
+        justify-content: flex-start;
+    }
+
+    .eau-categories-actions .eau-btn {
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .eau-categories-actions .eau-btn span {
+        display: none;
+    }
+}
+
+/* Import Modal Styles */
+.eau-preview-stats {
+    display: flex;
+    gap: 15px;
+}
+
+.eau-preview-stat {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.eau-preview-stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.eau-preview-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+}
+
+.eau-preview-stat.total {
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+}
+
+.eau-preview-stat.total .eau-preview-stat-number {
+    color: #0284c7;
+}
+
+.eau-preview-stat.total .eau-preview-stat-label {
+    color: #0ea5e9;
+}
+
+.eau-preview-stat.create {
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+}
+
+.eau-preview-stat.create .eau-preview-stat-number {
+    color: #059669;
+}
+
+.eau-preview-stat.create .eau-preview-stat-label {
+    color: #10b981;
+}
+
+.eau-preview-stat.update {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+}
+
+.eau-preview-stat.update .eau-preview-stat-number {
+    color: #d97706;
+}
+
+.eau-preview-stat.update .eau-preview-stat-label {
+    color: #f59e0b;
+}
+
+/* Import Result */
+.eau-import-result {
+    text-align: center;
+    padding: 2rem;
+}
+
+.eau-import-result-icon {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.eau-import-result-icon.success {
+    background: #ecfdf5;
+}
+
+.eau-import-result-icon.success i,
+.eau-import-result-icon.success svg {
+    color: #10b981;
+    width: 2rem;
+    height: 2rem;
+}
+
+.eau-import-result-icon.error {
+    background: #fef2f2;
+}
+
+.eau-import-result-icon.error i,
+.eau-import-result-icon.error svg {
+    color: #ef4444;
+    width: 2rem;
+    height: 2rem;
+}
+
+.eau-import-result h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.eau-import-result p {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* Import table badges */
+.import-action-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+}
+
+.import-action-badge.create {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.import-action-badge.update {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.import-action-badge.skip {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Checkbox label */
+.eau-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+.eau-checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Data Import Tab - Spacing between sections (v1.60.4)
+   ========================================================================== */
+
+.eau-settings-tab-panel[data-tab-content="import"] .eau-settings-section + .eau-settings-section {
+    margin-top: 1.5rem;
+}
+
+/* ==========================================================================
+   System Tab - Force link styles (v1.60.4)
+   ========================================================================== */
+
+.eau-settings-container .eau-pages-table a.eau-page-url,
+.eau-settings-container .eau-pages-table a.eau-page-url:link,
+.eau-settings-container .eau-pages-table a.eau-page-url:visited {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    color: #2563eb !important;
+    text-decoration: none !important;
+    font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Inconsolata', monospace !important;
+    font-size: 0.8125rem !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+.eau-settings-container .eau-pages-table a.eau-page-url:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline !important;
+    background: transparent !important;
+}
+
+.eau-settings-container .eau-pages-table a.eau-page-url:active,
+.eau-settings-container .eau-pages-table a.eau-page-url:focus {
+    color: #1e40af !important;
+    text-decoration: underline !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
 }

@@ -278,6 +278,10 @@ class Eau_Members_Management {
                     'label' => 'USER TYPE',
                 ),
                 array(
+                    'key' => 'position',
+                    'label' => 'POSITION',
+                ),
+                array(
                     'key' => 'status',
                     'label' => 'STATUS',
                 ),
@@ -336,6 +340,13 @@ class Eau_Members_Management {
                     'type' => 'select',
                     'options' => Eau_Filters::get_user_type_options(),
                     'placeholder' => 'All User Types',
+                ),
+                array(
+                    'key' => 'position',
+                    'label' => 'Position',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_position_options(),
+                    'placeholder' => 'All Positions',
                 ),
                 array(
                     'key' => 'institution',
@@ -399,7 +410,7 @@ class Eau_Members_Management {
         $edit_modal_config = array(
             'id' => 'eau-modal-edit',
             'title' => 'Edit Member',
-            'size' => 'large',
+            'size' => 'fullheight',
             'show_footer' => true,
             'footer_buttons' => array(
                 array(
@@ -421,7 +432,7 @@ class Eau_Members_Management {
         $add_modal_config = array(
             'id' => 'eau-modal-add',
             'title' => 'Add New Member',
-            'size' => 'large',
+            'size' => 'fullheight',
             'show_footer' => true,
             'footer_buttons' => array(
                 array(

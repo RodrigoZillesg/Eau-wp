@@ -2,16 +2,21 @@
 namespace EauSystem;
 
 use EauSystem\Components\Eau_Access_Denied;
+use EauSystem\Components\Eau_Stats_Cards;
+use EauSystem\Components\Eau_Data_Table;
+use EauSystem\Components\Eau_Modal;
 
 /**
  * System Settings Page
  *
  * Página de configurações do sistema via shortcode.
  * Acessível apenas para superAdmin e Admin.
+ * Organizado em abas: General, Categories, Tags, Data Import, System.
  *
  * Shortcode: [eau_settings]
  *
  * @since 1.39.0
+ * @since 1.60.0 Reorganizado em abas, integrado Categories Management
  */
 class Eau_Settings {
 
@@ -89,194 +94,311 @@ class Eau_Settings {
                 </div>
             </div>
 
-            <!-- Settings Sections -->
-            <div class="eau-settings-sections">
+            <!-- Tabs Navigation -->
+            <div class="eau-settings-tabs-nav">
+                <button class="eau-settings-tab active" data-tab="general">
+                    <i data-lucide="sliders-horizontal"></i>
+                    <span>General</span>
+                </button>
+                <button class="eau-settings-tab" data-tab="cpd-categories">
+                    <i data-lucide="folder"></i>
+                    <span>CPD Categories</span>
+                </button>
+                <button class="eau-settings-tab" data-tab="event-categories">
+                    <i data-lucide="calendar-range"></i>
+                    <span>Event Categories</span>
+                </button>
+                <button class="eau-settings-tab" data-tab="tags">
+                    <i data-lucide="tags"></i>
+                    <span>Tags</span>
+                </button>
+                <button class="eau-settings-tab" data-tab="import">
+                    <i data-lucide="upload"></i>
+                    <span>Data Import</span>
+                </button>
+                <button class="eau-settings-tab" data-tab="system">
+                    <i data-lucide="file-text"></i>
+                    <span>System</span>
+                </button>
+            </div>
 
-                <!-- CPD Activities Section -->
-                <div class="eau-settings-section" id="eau-settings-activities">
-                    <div class="eau-settings-section-header">
-                        <div class="eau-settings-section-icon">
-                            <i data-lucide="clipboard-check"></i>
+            <!-- Tab Contents -->
+            <div class="eau-settings-tabs-content">
+
+                <!-- Tab: General -->
+                <div class="eau-settings-tab-panel active" data-tab-content="general">
+                    <div class="eau-settings-section">
+                        <div class="eau-settings-section-header">
+                            <div class="eau-settings-section-icon">
+                                <i data-lucide="clipboard-check"></i>
+                            </div>
+                            <div class="eau-settings-section-title">
+                                <h3>CPD Activities</h3>
+                                <p>Configure how CPD activities are processed</p>
+                            </div>
                         </div>
-                        <div class="eau-settings-section-title">
-                            <h3>CPD Activities</h3>
-                            <p>Configure how CPD activities are processed</p>
+
+                        <div class="eau-settings-section-body">
+                            <div class="eau-settings-field">
+                                <label class="eau-settings-field-label">Activity Approval Mode</label>
+                                <p class="eau-settings-field-description">
+                                    Choose how new activities submitted by members are handled
+                                </p>
+
+                                <div class="eau-radio-group" id="eau-approval-mode">
+                                    <label class="eau-radio-option <?php echo $approval_mode === self::APPROVAL_AUTO ? 'selected' : ''; ?>">
+                                        <input
+                                            type="radio"
+                                            name="approval_mode"
+                                            value="<?php echo esc_attr(self::APPROVAL_AUTO); ?>"
+                                            <?php checked($approval_mode, self::APPROVAL_AUTO); ?>
+                                        >
+                                        <div class="eau-radio-content">
+                                            <div class="eau-radio-indicator"></div>
+                                            <div class="eau-radio-text">
+                                                <span class="eau-radio-title">Automatic Approval</span>
+                                                <span class="eau-radio-description">
+                                                    Activities are verified immediately upon creation.
+                                                    Points are counted right away.
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    <label class="eau-radio-option <?php echo $approval_mode === self::APPROVAL_MANUAL ? 'selected' : ''; ?>">
+                                        <input
+                                            type="radio"
+                                            name="approval_mode"
+                                            value="<?php echo esc_attr(self::APPROVAL_MANUAL); ?>"
+                                            <?php checked($approval_mode, self::APPROVAL_MANUAL); ?>
+                                        >
+                                        <div class="eau-radio-content">
+                                            <div class="eau-radio-indicator"></div>
+                                            <div class="eau-radio-text">
+                                                <span class="eau-radio-title">Manual Approval</span>
+                                                <span class="eau-radio-description">
+                                                    Activities require admin review before being verified.
+                                                    Points are counted only after approval.
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-footer">
+                            <button type="button" class="eau-btn eau-btn-primary" id="eau-save-settings-btn">
+                                <i data-lucide="save"></i>
+                                Save Settings
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <div class="eau-settings-section-body">
-                        <div class="eau-settings-field">
-                            <label class="eau-settings-field-label">Activity Approval Mode</label>
+                <!-- Tab: CPD Categories -->
+                <div class="eau-settings-tab-panel" data-tab-content="cpd-categories">
+                    <?php echo self::render_categories_tab(); ?>
+                </div>
+
+                <!-- Tab: Event Categories -->
+                <div class="eau-settings-tab-panel" data-tab-content="event-categories">
+                    <?php echo self::render_event_categories_tab(); ?>
+                </div>
+
+                <!-- Tab: Tags -->
+                <div class="eau-settings-tab-panel" data-tab-content="tags">
+                    <div class="eau-settings-section">
+                        <div class="eau-settings-section-header">
+                            <div class="eau-settings-section-icon">
+                                <i data-lucide="tags"></i>
+                            </div>
+                            <div class="eau-settings-section-title">
+                                <h3>Member Tags</h3>
+                                <p>Manage tags for member segmentation and Mailchimp integration</p>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-body">
                             <p class="eau-settings-field-description">
-                                Choose how new activities submitted by members are handled
+                                Create and manage tags that can be assigned to members. These tags will be used for
+                                email list segmentation in Mailchimp.
                             </p>
 
-                            <div class="eau-radio-group" id="eau-approval-mode">
-                                <label class="eau-radio-option <?php echo $approval_mode === self::APPROVAL_AUTO ? 'selected' : ''; ?>">
-                                    <input
-                                        type="radio"
-                                        name="approval_mode"
-                                        value="<?php echo esc_attr(self::APPROVAL_AUTO); ?>"
-                                        <?php checked($approval_mode, self::APPROVAL_AUTO); ?>
-                                    >
-                                    <div class="eau-radio-content">
-                                        <div class="eau-radio-indicator"></div>
-                                        <div class="eau-radio-text">
-                                            <span class="eau-radio-title">Automatic Approval</span>
-                                            <span class="eau-radio-description">
-                                                Activities are verified immediately upon creation.
-                                                Points are counted right away.
-                                            </span>
-                                        </div>
+                            <!-- Tags List -->
+                            <div class="eau-tags-manager">
+                                <div class="eau-tags-list" id="eau-tags-list">
+                                    <!-- Tags loaded via JS -->
+                                    <div class="eau-tags-loading">
+                                        <div class="eau-skeleton" style="height: 44px;"></div>
+                                        <div class="eau-skeleton" style="height: 44px;"></div>
+                                        <div class="eau-skeleton" style="height: 44px;"></div>
                                     </div>
-                                </label>
-
-                                <label class="eau-radio-option <?php echo $approval_mode === self::APPROVAL_MANUAL ? 'selected' : ''; ?>">
-                                    <input
-                                        type="radio"
-                                        name="approval_mode"
-                                        value="<?php echo esc_attr(self::APPROVAL_MANUAL); ?>"
-                                        <?php checked($approval_mode, self::APPROVAL_MANUAL); ?>
-                                    >
-                                    <div class="eau-radio-content">
-                                        <div class="eau-radio-indicator"></div>
-                                        <div class="eau-radio-text">
-                                            <span class="eau-radio-title">Manual Approval</span>
-                                            <span class="eau-radio-description">
-                                                Activities require admin review before being verified.
-                                                Points are counted only after approval.
-                                            </span>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="eau-settings-section-footer">
-                        <button type="button" class="eau-btn eau-btn-primary" id="eau-save-settings-btn">
-                            <i data-lucide="save"></i>
-                            Save Settings
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Member Tags Section -->
-                <div class="eau-settings-section" id="eau-settings-member-tags">
-                    <div class="eau-settings-section-header">
-                        <div class="eau-settings-section-icon">
-                            <i data-lucide="tags"></i>
-                        </div>
-                        <div class="eau-settings-section-title">
-                            <h3>Member Tags</h3>
-                            <p>Manage tags for member segmentation and Mailchimp integration</p>
-                        </div>
-                    </div>
-
-                    <div class="eau-settings-section-body">
-                        <p class="eau-settings-field-description">
-                            Create and manage tags that can be assigned to members. These tags will be used for
-                            email list segmentation in Mailchimp.
-                        </p>
-
-                        <!-- Tags List -->
-                        <div class="eau-tags-manager">
-                            <div class="eau-tags-list" id="eau-tags-list">
-                                <!-- Tags loaded via JS -->
-                                <div class="eau-tags-loading">
-                                    <div class="eau-skeleton" style="height: 44px;"></div>
-                                    <div class="eau-skeleton" style="height: 44px;"></div>
-                                    <div class="eau-skeleton" style="height: 44px;"></div>
                                 </div>
-                            </div>
 
-                            <!-- Add New Tag Form -->
-                            <div class="eau-add-tag-form">
-                                <div class="eau-add-tag-inputs">
-                                    <div class="eau-add-tag-row">
+                                <!-- Add New Tag Form -->
+                                <div class="eau-add-tag-form">
+                                    <div class="eau-add-tag-inputs">
+                                        <div class="eau-add-tag-row">
+                                            <input
+                                                type="text"
+                                                id="eau-new-tag-name"
+                                                class="eau-form-input"
+                                                placeholder="Tag name..."
+                                                maxlength="50"
+                                            >
+                                            <input
+                                                type="color"
+                                                id="eau-new-tag-color"
+                                                class="eau-color-picker"
+                                                value="#3b82f6"
+                                                title="Choose tag color"
+                                            >
+                                        </div>
                                         <input
                                             type="text"
-                                            id="eau-new-tag-name"
+                                            id="eau-new-tag-description"
                                             class="eau-form-input"
-                                            placeholder="Tag name..."
-                                            maxlength="50"
-                                        >
-                                        <input
-                                            type="color"
-                                            id="eau-new-tag-color"
-                                            class="eau-color-picker"
-                                            value="#3b82f6"
-                                            title="Choose tag color"
+                                            placeholder="Description (optional) - helps identify the tag for email lists"
+                                            maxlength="200"
                                         >
                                     </div>
-                                    <input
-                                        type="text"
-                                        id="eau-new-tag-description"
-                                        class="eau-form-input"
-                                        placeholder="Description (optional) - helps identify the tag for email lists"
-                                        maxlength="200"
-                                    >
+                                    <button type="button" class="eau-btn eau-btn-primary" id="eau-add-tag-btn">
+                                        <i data-lucide="plus"></i>
+                                        Add Tag
+                                    </button>
                                 </div>
-                                <button type="button" class="eau-btn eau-btn-primary" id="eau-add-tag-btn">
-                                    <i data-lucide="plus"></i>
-                                    Add Tag
-                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Membership Import Section (v1.55.0) -->
-                <div class="eau-settings-section" id="eau-settings-membership-import">
-                    <div class="eau-settings-section-header">
-                        <div class="eau-settings-section-icon">
-                            <i data-lucide="upload"></i>
+                <!-- Tab: Data Import -->
+                <div class="eau-settings-tab-panel" data-tab-content="import">
+                    <!-- Membership Import Section -->
+                    <div class="eau-settings-section">
+                        <div class="eau-settings-section-header">
+                            <div class="eau-settings-section-icon">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <div class="eau-settings-section-title">
+                                <h3>Membership Data Import</h3>
+                                <p>Import membership data from legacy system CSV</p>
+                            </div>
                         </div>
-                        <div class="eau-settings-section-title">
-                            <h3>Membership Data Import</h3>
-                            <p>Import membership data from legacy system CSV</p>
+
+                        <div class="eau-settings-section-body">
+                            <p class="eau-settings-field-description">
+                                Import membership data from a CSV file exported from the legacy system.
+                                This will update existing members with their membership type, status, start date,
+                                and expiry date. New users will be created if their email is not found in the system.
+                            </p>
+
+                            <div class="eau-import-info-boxes" style="display: flex; gap: 15px; margin: 20px 0;">
+                                <div class="eau-info-box" style="flex: 1; padding: 15px; background: #f0f6fc; border: 1px solid #0073aa; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i data-lucide="user-check" style="width: 20px; height: 20px; color: #0073aa;"></i>
+                                        <strong>Existing Members</strong>
+                                    </div>
+                                    <p style="margin: 0; font-size: 13px; color: #666;">
+                                        Members matched by email will have their membership data updated.
+                                    </p>
+                                </div>
+                                <div class="eau-info-box" style="flex: 1; padding: 15px; background: #fff8e5; border: 1px solid #dba617; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i data-lucide="user-plus" style="width: 20px; height: 20px; color: #dba617;"></i>
+                                        <strong>New Members</strong>
+                                    </div>
+                                    <p style="margin: 0; font-size: 13px; color: #666;">
+                                        Emails not found will create new user accounts with membership data.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-footer">
+                            <button type="button" class="eau-btn eau-btn-primary" id="eau-import-membership-btn">
+                                <i data-lucide="upload"></i>
+                                Import Membership Data
+                            </button>
                         </div>
                     </div>
 
-                    <div class="eau-settings-section-body">
-                        <p class="eau-settings-field-description">
-                            Import membership data from a CSV file exported from the legacy system.
-                            This will update existing members with their membership type, status, start date,
-                            and expiry date. New users will be created if their email is not found in the system.
-                        </p>
-
-                        <div class="eau-import-info-boxes" style="display: flex; gap: 15px; margin: 20px 0;">
-                            <div class="eau-info-box" style="flex: 1; padding: 15px; background: #f0f6fc; border: 1px solid #0073aa; border-radius: 8px;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                    <i data-lucide="user-check" style="width: 20px; height: 20px; color: #0073aa;"></i>
-                                    <strong>Existing Members</strong>
-                                </div>
-                                <p style="margin: 0; font-size: 13px; color: #666;">
-                                    Members matched by email will have their membership data updated.
-                                </p>
+                    <!-- Institution Import Section -->
+                    <div class="eau-settings-section">
+                        <div class="eau-settings-section-header">
+                            <div class="eau-settings-section-icon">
+                                <i data-lucide="building-2"></i>
                             </div>
-                            <div class="eau-info-box" style="flex: 1; padding: 15px; background: #fff8e5; border: 1px solid #dba617; border-radius: 8px;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                    <i data-lucide="user-plus" style="width: 20px; height: 20px; color: #dba617;"></i>
-                                    <strong>New Members</strong>
-                                </div>
-                                <p style="margin: 0; font-size: 13px; color: #666;">
-                                    Emails not found will create new user accounts with membership data.
-                                </p>
+                            <div class="eau-settings-section-title">
+                                <h3>Institution Data Import</h3>
+                                <p>Import institution data from legacy system CSV</p>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="eau-settings-section-footer">
-                        <button type="button" class="eau-btn eau-btn-primary" id="eau-import-membership-btn">
-                            <i data-lucide="upload"></i>
-                            Import Membership Data
-                        </button>
+                        <div class="eau-settings-section-body">
+                            <p class="eau-settings-field-description">
+                                Import institution data from the same CSV file used for membership import.
+                                The system will extract unique institutions by Company ID, updating existing
+                                institutions or creating new ones.
+                            </p>
+
+                            <div class="eau-import-info-boxes" style="display: flex; gap: 15px; margin: 20px 0;">
+                                <div class="eau-info-box" style="flex: 1; padding: 15px; background: #f0f6fc; border: 1px solid #0073aa; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i data-lucide="building" style="width: 20px; height: 20px; color: #0073aa;"></i>
+                                        <strong>Existing Institutions</strong>
+                                    </div>
+                                    <p style="margin: 0; font-size: 13px; color: #666;">
+                                        Institutions matched by Company ID will have their data updated.
+                                    </p>
+                                </div>
+                                <div class="eau-info-box" style="flex: 1; padding: 15px; background: #fff8e5; border: 1px solid #dba617; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i data-lucide="building-2" style="width: 20px; height: 20px; color: #dba617;"></i>
+                                        <strong>New Institutions</strong>
+                                    </div>
+                                    <p style="margin: 0; font-size: 13px; color: #666;">
+                                        Company IDs not found will create new institution records.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-footer">
+                            <button type="button" class="eau-btn eau-btn-primary" id="eau-import-institution-btn">
+                                <i data-lucide="upload"></i>
+                                Import Institution Data
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Future Settings Placeholder -->
-                <!-- More sections can be added here -->
+                <!-- Tab: System -->
+                <div class="eau-settings-tab-panel" data-tab-content="system">
+                    <div class="eau-settings-section">
+                        <div class="eau-settings-section-header">
+                            <div class="eau-settings-section-icon">
+                                <i data-lucide="file-text"></i>
+                            </div>
+                            <div class="eau-settings-section-title">
+                                <h3>System Pages</h3>
+                                <p>All pages automatically created by Eau System</p>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-body">
+                            <?php echo self::render_system_pages_list(); ?>
+                        </div>
+
+                        <div class="eau-settings-section-footer">
+                            <button type="button" class="eau-btn eau-btn-secondary" id="eau-recreate-pages-btn">
+                                <i data-lucide="refresh-cw"></i>
+                                Recreate All Pages
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
             </div>
 
@@ -285,6 +407,15 @@ class Eau_Settings {
         <?php
         // Include Membership Import Modal (v1.55.0)
         include EAU_SYSTEM_PLUGIN_DIR . 'includes/admin-page-membership-import-modal.php';
+
+        // Include Institution Import Modal (v1.54.0)
+        include EAU_SYSTEM_PLUGIN_DIR . 'includes/admin-page-institution-import-modal.php';
+
+        // CPD Categories Modals
+        echo self::render_categories_modals();
+
+        // Event Categories Modals
+        echo self::render_event_categories_modals();
         ?>
         <?php
         return ob_get_clean();
@@ -495,6 +626,9 @@ class Eau_Settings {
 
     /**
      * Carrega assets (CSS e JS)
+     *
+     * @since 1.39.0
+     * @since 1.60.0 Adicionado nonce de Categories
      */
     private static function enqueue_assets() {
         // CSS dos componentes
@@ -531,10 +665,671 @@ class Eau_Settings {
             true
         );
 
-        // Localiza script
+        // Localiza script com dados de Settings, CPD Categories e Event Categories
         wp_localize_script('eau-settings', 'eauSettingsData', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('eau_settings_nonce'),
+            'categoriesNonce' => wp_create_nonce('eau_categories_nonce'),
+            'eventCategoriesNonce' => wp_create_nonce('eau_event_categories_nonce'),
         ));
+    }
+
+    /**
+     * Renderiza a lista de páginas do sistema
+     *
+     * @since 1.57.0
+     * @return string HTML da lista
+     */
+    private static function render_system_pages_list() {
+        $pages_status = Eau_Pages::get_pages_status();
+        $summary = Eau_Pages::get_pages_summary();
+        $descriptions = self::get_page_descriptions();
+
+        ob_start();
+        ?>
+        <div class="eau-system-pages-wrapper">
+            <!-- Summary -->
+            <div class="eau-pages-summary">
+                <div class="eau-pages-summary-item">
+                    <span class="eau-pages-summary-number"><?php echo $summary['total']; ?></span>
+                    <span class="eau-pages-summary-label">Total</span>
+                </div>
+                <div class="eau-pages-summary-item eau-pages-summary-success">
+                    <span class="eau-pages-summary-number"><?php echo $summary['existing']; ?></span>
+                    <span class="eau-pages-summary-label">Active</span>
+                </div>
+                <?php if ($summary['missing'] > 0) : ?>
+                <div class="eau-pages-summary-item eau-pages-summary-warning">
+                    <span class="eau-pages-summary-number"><?php echo $summary['missing']; ?></span>
+                    <span class="eau-pages-summary-label">Missing</span>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Pages Table -->
+            <table class="eau-pages-table">
+                <thead>
+                    <tr>
+                        <th>Page</th>
+                        <th>URL</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($pages_status as $key => $page) :
+                        $description = isset($descriptions[$key]) ? $descriptions[$key] : '';
+                        $url_path = $page['parent'] ? '/dashboard/' . $page['slug'] . '/' : '/' . $page['slug'] . '/';
+                    ?>
+                    <tr class="<?php echo $page['exists'] ? '' : 'eau-row-missing'; ?>">
+                        <td>
+                            <strong><?php echo esc_html($page['title']); ?></strong>
+                            <span class="eau-page-desc"><?php echo esc_html($description); ?></span>
+                        </td>
+                        <td>
+                            <?php if ($page['exists'] && $page['url']) : ?>
+                            <a href="<?php echo esc_url($page['url']); ?>" target="_blank" class="eau-page-url">
+                                <?php echo esc_html($url_path); ?>
+                                <i data-lucide="external-link"></i>
+                            </a>
+                            <?php else : ?>
+                            <span class="eau-page-url-missing"><?php echo esc_html($url_path); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <span class="eau-status-badge <?php echo $page['exists'] ? 'eau-status-active' : 'eau-status-missing'; ?>">
+                                <?php echo $page['exists'] ? 'Active' : 'Missing'; ?>
+                            </span>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Retorna descrições para cada página do sistema
+     *
+     * @since 1.57.0
+     * @return array
+     */
+    private static function get_page_descriptions() {
+        return array(
+            // Top level pages
+            'dashboard'              => 'Main administration dashboard with statistics and quick access',
+            'profile'                => 'User profile management and personal information',
+            'register'               => 'Public registration form for new members',
+            'membership-selection'   => 'Membership type selection during registration',
+            'events'                 => 'Public events listing and registration',
+            'roadmap'                => 'System presentation and feature documentation',
+
+            // Dashboard children
+            'manage-members'         => 'Member management: view, edit, create and delete members',
+            'manage-institutions'    => 'Institution management: view, edit, create and delete institutions',
+            'manage-activities'      => 'CPD activities management: view, approve and manage activities',
+            'manage-categories'      => 'Activity categories management: organize and configure CPD categories',
+            'my-cpds'                => 'Personal CPD activities tracking and submission',
+            'my-payments'            => 'Personal payment history and invoices',
+            'my-institution'         => 'Institution details and member management for institution admins',
+            'courses'                => 'OpenLearning courses listing and enrollment',
+            'settings'               => 'System-wide settings and configuration',
+            'merge-members'          => 'Duplicate member detection and merge tool',
+            'open-learning-management' => 'OpenLearning integration management and sync',
+            'payments'               => 'Payment management: view and process all payments',
+            'events-management'      => 'Events management: create, edit and manage events',
+            'membership-applications' => 'Membership applications: review and approve new applications',
+        );
+    }
+
+    /**
+     * Renderiza a aba de Categories
+     *
+     * @since 1.60.0
+     * @return string HTML da aba
+     */
+    private static function render_categories_tab() {
+        $stats = self::get_categories_stats();
+
+        ob_start();
+        ?>
+        <div class="eau-categories-tab-container">
+            <!-- Stats Cards -->
+            <?php echo self::render_categories_stats_cards($stats); ?>
+
+            <!-- Header with Actions -->
+            <div class="eau-categories-header">
+                <div class="eau-search-wrapper">
+                    <i data-lucide="search"></i>
+                    <input
+                        type="text"
+                        class="eau-search-input"
+                        placeholder="Search by category name or ID..."
+                        id="eau-categories-search"
+                    >
+                </div>
+                <div class="eau-categories-actions">
+                    <button class="eau-btn eau-btn-ghost" id="eau-import-categories" title="Import Categories">
+                        <i data-lucide="upload"></i>
+                        Import
+                    </button>
+                    <button class="eau-btn eau-btn-ghost" id="eau-export-categories" title="Export Categories">
+                        <i data-lucide="download"></i>
+                        Export
+                    </button>
+                    <button class="eau-btn eau-btn-secondary" id="eau-refresh-categories">
+                        <i data-lucide="refresh-cw"></i>
+                        Refresh from Activities
+                    </button>
+                    <button class="eau-btn eau-btn-primary" id="eau-add-category">
+                        <i data-lucide="plus"></i>
+                        Add Category
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <?php echo self::render_categories_table(); ?>
+
+            <!-- Pagination -->
+            <div id="eau-categories-pagination"></div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Pega estatísticas das categorias
+     *
+     * @since 1.60.0
+     * @return array Estatísticas
+     */
+    private static function get_categories_stats() {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . Eau_Categories_Database::TABLE_NAME;
+
+        // Total de categorias
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+        // Categorias com pontos configurados
+        $configured = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE points_per_hour > 0");
+
+        // Categorias sem pontos
+        $not_configured = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE points_per_hour = 0");
+
+        // Média de pontos por hora
+        $avg_points = $wpdb->get_var("SELECT AVG(points_per_hour) FROM $table_name WHERE points_per_hour > 0");
+
+        return array(
+            'total' => (int) $total,
+            'configured' => (int) $configured,
+            'not_configured' => (int) $not_configured,
+            'avg_points' => (float) $avg_points,
+        );
+    }
+
+    /**
+     * Renderiza os cards de estatísticas de categorias
+     *
+     * @since 1.60.0
+     * @param array $stats Estatísticas das categorias
+     * @return string HTML dos cards
+     */
+    private static function render_categories_stats_cards($stats) {
+        $cards_data = array(
+            array(
+                'title' => 'Total Categories',
+                'number' => $stats['total'],
+                'icon' => 'folder',
+                'color' => 'blue',
+            ),
+            array(
+                'title' => 'Configured',
+                'number' => $stats['configured'],
+                'icon' => 'check-circle',
+                'color' => 'green',
+            ),
+            array(
+                'title' => 'Not Configured',
+                'number' => $stats['not_configured'],
+                'icon' => 'alert-circle',
+                'color' => 'orange',
+            ),
+            array(
+                'title' => 'Avg Points/Hour',
+                'number' => $stats['avg_points'] ? number_format_i18n($stats['avg_points'], 2) : '0.00',
+                'icon' => 'trending-up',
+                'color' => 'purple',
+            ),
+        );
+
+        $stats_cards = new Eau_Stats_Cards($cards_data);
+        return $stats_cards->render();
+    }
+
+    /**
+     * Renderiza a tabela de categorias
+     *
+     * @since 1.60.0
+     * @return string HTML da tabela
+     */
+    private static function render_categories_table() {
+        $columns = array(
+            array(
+                'key' => 'category_serial',
+                'label' => 'Category ID',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'category_name',
+                'label' => 'Category Name',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'points_per_hour',
+                'label' => 'Points/Hour',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'updated_at',
+                'label' => 'Last Updated',
+                'sortable' => true,
+            ),
+        );
+
+        $table = new Eau_Data_Table(array(
+            'id' => 'categories-table',
+            'columns' => $columns,
+            'loading_rows' => 20,
+            'selectable' => false,
+        ));
+
+        return $table->render();
+    }
+
+    /**
+     * Renderiza os modais de categorias
+     *
+     * @since 1.60.0
+     * @return string HTML dos modais
+     */
+    private static function render_categories_modals() {
+        $html = '';
+
+        // Modal View
+        $view_modal = new Eau_Modal(array(
+            'id' => 'eau-modal-view',
+            'title' => 'View Category',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Close',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+            ),
+        ));
+        $html .= $view_modal->render();
+
+        // Modal Edit
+        $edit_modal = new Eau_Modal(array(
+            'id' => 'eau-modal-edit',
+            'title' => 'Edit Category',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Save Changes',
+                    'class' => 'eau-btn-primary',
+                    'action' => 'save',
+                ),
+            ),
+        ));
+        $html .= $edit_modal->render();
+
+        // Modal Add
+        $add_modal = new Eau_Modal(array(
+            'id' => 'eau-modal-add',
+            'title' => 'Add Category',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Create Category',
+                    'class' => 'eau-btn-primary',
+                    'action' => 'create',
+                ),
+            ),
+        ));
+        $html .= $add_modal->render();
+
+        // Modal Import
+        $html .= self::render_categories_import_modal();
+
+        return $html;
+    }
+
+    /**
+     * Renderiza o modal de importação de categorias
+     *
+     * @since 1.60.0
+     * @return string HTML do modal
+     */
+    private static function render_categories_import_modal() {
+        ob_start();
+        ?>
+        <div class="eau-modal-overlay" id="eau-modal-import-overlay" style="display: none;">
+            <div class="eau-modal eau-modal-lg">
+                <div class="eau-modal-header">
+                    <h2 class="eau-modal-title">
+                        <i data-lucide="upload"></i>
+                        Import Categories
+                    </h2>
+                    <button type="button" class="eau-modal-close" data-modal-close>&times;</button>
+                </div>
+                <div class="eau-modal-body">
+                    <!-- Step 1: Upload -->
+                    <div id="import-step-upload" class="import-step">
+                        <p class="eau-description">
+                            Upload a JSON file previously exported from this system.
+                            Categories will be matched by Category ID (serial).
+                        </p>
+
+                        <div class="eau-info-box" style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                <i data-lucide="info" style="width: 20px; height: 20px; color: #0ea5e9; flex-shrink: 0;"></i>
+                                <div>
+                                    <strong>How it works:</strong>
+                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                                        <li>Existing categories (same ID) will be <strong>updated</strong></li>
+                                        <li>New categories will be <strong>created</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="import-categories-form" enctype="multipart/form-data">
+                            <div class="eau-form-group">
+                                <label class="eau-form-label">JSON File</label>
+                                <input type="file" name="json_file" id="import-json-file" accept=".json" required class="eau-form-input">
+                                <p class="eau-form-hint">Maximum file size: 5MB</p>
+                            </div>
+
+                            <div class="eau-form-group">
+                                <label class="eau-checkbox-label">
+                                    <input type="checkbox" name="skip_existing" id="import-skip-existing">
+                                    Skip existing categories (only add new ones)
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Step 2: Preview -->
+                    <div id="import-step-preview" class="import-step" style="display: none;">
+                        <div id="import-preview-stats" class="eau-preview-stats" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <!-- Stats loaded via JS -->
+                        </div>
+
+                        <h4>Preview (first 10 categories):</h4>
+                        <div class="eau-table-wrapper" style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+                            <table class="eau-data-table" id="import-preview-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category ID</th>
+                                        <th>Category Name</th>
+                                        <th>Points/Hour</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Preview rows loaded via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Result -->
+                    <div id="import-step-result" class="import-step" style="display: none;">
+                        <div id="import-result-content">
+                            <!-- Result loaded via JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="eau-modal-footer">
+                    <button type="button" class="eau-btn eau-btn-secondary" id="import-btn-cancel">Cancel</button>
+                    <button type="button" class="eau-btn eau-btn-secondary" id="import-btn-back" style="display: none;">Back</button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="import-btn-analyze">
+                        <i data-lucide="search"></i>
+                        Analyze File
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="import-btn-execute" style="display: none;">
+                        <i data-lucide="upload"></i>
+                        Import Categories
+                    </button>
+                    <button type="button" class="eau-btn eau-btn-primary" id="import-btn-close" style="display: none;">
+                        <i data-lucide="check"></i>
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    // ==========================================================================
+    // EVENT CATEGORIES TAB (v1.61.0)
+    // ==========================================================================
+
+    /**
+     * Renderiza a aba de Event Categories
+     *
+     * @since 1.61.0
+     * @return string HTML da aba
+     */
+    private static function render_event_categories_tab() {
+        $stats = self::get_event_categories_stats();
+
+        ob_start();
+        ?>
+        <div class="eau-categories-tab-container" id="event-categories-container">
+            <!-- Stats Cards -->
+            <?php echo self::render_event_categories_stats_cards($stats); ?>
+
+            <!-- Header with Actions -->
+            <div class="eau-categories-header">
+                <div class="eau-search-wrapper">
+                    <i data-lucide="search"></i>
+                    <input
+                        type="text"
+                        class="eau-search-input"
+                        placeholder="Search by category name or ID..."
+                        id="eau-event-categories-search"
+                    >
+                </div>
+                <div class="eau-categories-actions">
+                    <button class="eau-btn eau-btn-secondary" id="eau-refresh-event-categories">
+                        <i data-lucide="refresh-cw"></i>
+                        Refresh from Events
+                    </button>
+                    <button class="eau-btn eau-btn-primary" id="eau-add-event-category">
+                        <i data-lucide="plus"></i>
+                        Add Category
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <?php echo self::render_event_categories_table(); ?>
+
+            <!-- Pagination -->
+            <div id="eau-event-categories-pagination"></div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Pega estatísticas das categorias de eventos
+     *
+     * @since 1.61.0
+     * @return array Estatísticas
+     */
+    private static function get_event_categories_stats() {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . Eau_Event_Categories_Database::TABLE_NAME;
+
+        // Verifica se a tabela existe
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        if (!$table_exists) {
+            return array('total' => 0);
+        }
+
+        // Total de categorias
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+        return array(
+            'total' => (int) $total,
+        );
+    }
+
+    /**
+     * Renderiza os cards de estatísticas de categorias de eventos
+     *
+     * @since 1.61.0
+     * @param array $stats Estatísticas das categorias
+     * @return string HTML dos cards
+     */
+    private static function render_event_categories_stats_cards($stats) {
+        $cards_data = array(
+            array(
+                'title' => 'Total Event Categories',
+                'number' => $stats['total'],
+                'icon' => 'calendar-range',
+                'color' => 'blue',
+            ),
+        );
+
+        $stats_cards = new Eau_Stats_Cards($cards_data);
+        return $stats_cards->render();
+    }
+
+    /**
+     * Renderiza a tabela de categorias de eventos
+     *
+     * @since 1.61.0
+     * @return string HTML da tabela
+     */
+    private static function render_event_categories_table() {
+        $columns = array(
+            array(
+                'key' => 'category_serial',
+                'label' => 'Category ID',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'category_name',
+                'label' => 'Category Name',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'updated_at',
+                'label' => 'Last Updated',
+                'sortable' => true,
+            ),
+        );
+
+        $table = new Eau_Data_Table(array(
+            'id' => 'event-categories-table',
+            'columns' => $columns,
+            'loading_rows' => 20,
+            'selectable' => false,
+        ));
+
+        return $table->render();
+    }
+
+    /**
+     * Renderiza os modais de categorias de eventos
+     *
+     * @since 1.61.0
+     * @return string HTML dos modais
+     */
+    private static function render_event_categories_modals() {
+        $html = '';
+
+        // Modal View
+        $view_modal = new Eau_Modal(array(
+            'id' => 'eau-event-modal-view',
+            'title' => 'View Event Category',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Close',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+            ),
+        ));
+        $html .= $view_modal->render();
+
+        // Modal Edit
+        $edit_modal = new Eau_Modal(array(
+            'id' => 'eau-event-modal-edit',
+            'title' => 'Edit Event Category',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Save Changes',
+                    'class' => 'eau-btn-primary',
+                    'action' => 'save',
+                ),
+            ),
+        ));
+        $html .= $edit_modal->render();
+
+        // Modal Add
+        $add_modal = new Eau_Modal(array(
+            'id' => 'eau-event-modal-add',
+            'title' => 'Add Event Category',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Create Category',
+                    'class' => 'eau-btn-primary',
+                    'action' => 'create',
+                ),
+            ),
+        ));
+        $html .= $add_modal->render();
+
+        return $html;
     }
 }

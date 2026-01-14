@@ -1,0 +1,32 @@
+{
+  "url": "https://www.englishaustralia.com.au/administration/eventsadmin/events/event?eventSerial=502",
+  "title": "English Australia - Events",
+  "forms": [],
+  "tabs": [],
+  "inputs": [
+    {
+      "tag": "input",
+      "type": "button",
+      "name": "back_button",
+      "id": "",
+      "placeholder": ""
+    }
+  ],
+  "labels": [
+    "Individual:",
+    "Group:",
+    "Total:",
+    "Paying:",
+    "Free:",
+    "Cancelled:",
+    "Refunded:",
+    "Paying:",
+    "Free:",
+    "Cancelled:",
+    "Refunded:",
+    "Total Revenue:"
+  ],
+  "sections": [
+    "Members"
+  ]
+}

@@ -2,6 +2,7 @@
  * Settings Page Controller
  *
  * @since 1.39.0
+ * @since 1.60.0 Adicionado sistema de abas e Categories Management
  */
 (function($) {
     'use strict';
@@ -14,17 +15,95 @@
         },
         tags: [],
         editingTagId: null,
+        activeTab: 'general',
+        categoriesLoaded: false,
+        eventCategoriesLoaded: false,
 
         /**
          * Initialize controller
          */
         init: function() {
             this.bindEvents();
+            this.bindTabEvents();
             this.loadTags();
+            this.restoreTab();
 
             // Initialize Lucide icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
+            }
+        },
+
+        /**
+         * Bind tab events (v1.60.0)
+         */
+        bindTabEvents: function() {
+            const self = this;
+
+            // Tab click
+            $('.eau-settings-tab').on('click', function(e) {
+                e.preventDefault();
+                const tab = $(this).data('tab');
+                self.switchTab(tab);
+            });
+        },
+
+        /**
+         * Switch tab (v1.60.0)
+         */
+        switchTab: function(tab) {
+            // Update buttons
+            $('.eau-settings-tab').removeClass('active');
+            $(`.eau-settings-tab[data-tab="${tab}"]`).addClass('active');
+
+            // Update panels
+            $('.eau-settings-tab-panel').removeClass('active');
+            $(`.eau-settings-tab-panel[data-tab-content="${tab}"]`).addClass('active');
+
+            this.activeTab = tab;
+
+            // Store active tab in localStorage
+            localStorage.setItem('eau_settings_active_tab', tab);
+
+            // Lazy load CPD Categories when tab is activated
+            if (tab === 'cpd-categories' && !this.categoriesLoaded) {
+                this.categoriesLoaded = true;
+                if (typeof EauCategoriesController !== 'undefined') {
+                    EauCategoriesController.init();
+                }
+            }
+
+            // Lazy load Event Categories when tab is activated
+            if (tab === 'event-categories' && !this.eventCategoriesLoaded) {
+                this.eventCategoriesLoaded = true;
+                if (typeof EauEventCategoriesController !== 'undefined') {
+                    EauEventCategoriesController.init();
+                }
+            }
+
+            // Re-init Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Restore tab from localStorage (v1.60.0)
+         */
+        restoreTab: function() {
+            const validTabs = ['general', 'cpd-categories', 'event-categories', 'tags', 'import', 'system'];
+
+            // Check URL hash first
+            const hash = window.location.hash.substring(1);
+            if (hash && validTabs.includes(hash)) {
+                this.switchTab(hash);
+                return;
+            }
+
+            // Otherwise check localStorage
+            const savedTab = localStorage.getItem('eau_settings_active_tab');
+            if (savedTab && validTabs.includes(savedTab)) {
+                this.switchTab(savedTab);
             }
         },
 
@@ -44,6 +123,11 @@
             // Save settings button
             $('#eau-save-settings-btn').on('click', function() {
                 self.saveSettings();
+            });
+
+            // Recreate missing pages button (v1.57.0)
+            $('#eau-recreate-pages-btn').on('click', function() {
+                self.recreateMissingPages();
             });
 
             // Add tag button
@@ -420,6 +504,75 @@
                         self.settings = settings;
                     } else {
                         EauNotifications.error('Error', response.data.message || 'Failed to save settings.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Please check your connection and try again.');
+                },
+                complete: function() {
+                    // Re-enable button
+                    $btn.prop('disabled', false).html(originalHtml);
+
+                    // Re-init icons
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Recreate all pages (v1.57.4)
+         * Deletes all existing pages and recreates them
+         */
+        recreateMissingPages: function() {
+            const self = this;
+
+            // Confirmation dialog
+            EauNotifications.confirm({
+                title: 'Recreate All Pages?',
+                message: 'This will delete all existing system pages and create new ones. Any manual changes to these pages will be lost.',
+                type: 'warning',
+                confirmText: 'Recreate All',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    self.executeRecreatePages();
+                }
+            });
+        },
+
+        /**
+         * Execute the recreate pages action
+         */
+        executeRecreatePages: function() {
+            const $btn = $('#eau-recreate-pages-btn');
+            const originalHtml = $btn.html();
+
+            // Disable button and show loading
+            $btn.prop('disabled', true).html('<i data-lucide="loader-2" class="eau-spin"></i> Recreating...');
+
+            // Re-init icons for loading spinner
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_recreate_missing_pages',
+                    nonce: eauSettingsData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        EauNotifications.success('Pages Recreated', `Successfully created ${data.created} page(s).`);
+                        // Reload page to show updated list
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to recreate pages.');
                     }
                 },
                 error: function() {
@@ -820,5 +973,2091 @@
             EauMembershipImportController.init();
         }
     });
+
+    // ============================================
+    // Institution Import Controller (v1.54.0)
+    // ============================================
+
+    const EauInstitutionImportController = {
+        // State
+        csvFilename: '',
+        totalInstitutions: 0,
+        totalUpdated: 0,
+        totalCreated: 0,
+        totalSkipped: 0,
+
+        /**
+         * Initialize controller
+         */
+        init: function() {
+            this.bindEvents();
+        },
+
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+
+            // Open modal button
+            $('#eau-import-institution-btn').on('click', function() {
+                self.openModal();
+            });
+
+            // Close modal
+            $(document).on('click', '.eau-modal-close-institution, #eau-institution-close-modal', function() {
+                self.closeModal();
+            });
+
+            // Close on overlay click
+            $(document).on('click', '#eau-import-institution-modal .eau-modal-overlay', function() {
+                self.closeModal();
+            });
+
+            // Upload form submit
+            $('#eau-import-institution-upload-form').on('submit', function(e) {
+                e.preventDefault();
+                self.uploadCSV();
+            });
+
+            // Back to step 1
+            $('#eau-institution-back-to-step1').on('click', function() {
+                self.showStep(1);
+            });
+
+            // Start import
+            $('#eau-institution-start-import').on('click', function() {
+                self.startImport();
+            });
+        },
+
+        /**
+         * Open modal
+         */
+        openModal: function() {
+            this.resetState();
+            $('#eau-import-institution-modal').addClass('active');
+            this.showStep(1);
+
+            // Initialize Lucide icons in modal
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Close modal
+         */
+        closeModal: function() {
+            $('#eau-import-institution-modal').removeClass('active');
+            this.resetState();
+        },
+
+        /**
+         * Reset state
+         */
+        resetState: function() {
+            this.csvFilename = '';
+            this.totalInstitutions = 0;
+            this.totalUpdated = 0;
+            this.totalCreated = 0;
+            this.totalSkipped = 0;
+
+            // Reset form
+            $('#eau-import-institution-upload-form')[0].reset();
+
+            // Clear preview
+            $('#eau-institution-preview-stats').html('');
+            $('#eau-institution-preview-table tbody').html('');
+
+            // Clear log
+            $('#eau-institution-import-log').html('');
+
+            // Reset progress
+            $('#eau-institution-progress-fill').css('width', '0%');
+            $('#eau-institution-progress-text').text('Preparing...');
+
+            // Clear summary
+            $('#eau-institution-import-summary').html('');
+        },
+
+        /**
+         * Show specific step
+         */
+        showStep: function(step) {
+            $('#eau-import-institution-modal .eau-import-step').hide();
+            $(`#eau-import-institution-step-${step}`).show();
+        },
+
+        /**
+         * Upload CSV for analysis
+         */
+        uploadCSV: function() {
+            const self = this;
+            const fileInput = $('#institution_csv_file')[0];
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                EauNotifications.warning('Warning', 'Please select a CSV file.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                EauNotifications.error('Invalid File', 'Please select a CSV file.');
+                return;
+            }
+
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                EauNotifications.error('File Too Large', 'Maximum file size is 10MB.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'eau_import_institution_analyze_csv');
+            formData.append('nonce', eauSettingsData.nonce);
+            formData.append('csv_file', file);
+
+            const $btn = $('#eau-import-institution-upload-form button[type="submit"]');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Analyzing...');
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        self.csvFilename = response.data.filename;
+                        self.totalInstitutions = response.data.total_institutions;
+                        self.showPreview(response.data);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to analyze CSV.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Failed to upload CSV file.');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show preview (Step 2)
+         */
+        showPreview: function(data) {
+            const self = this;
+
+            // Build stats HTML
+            const statsHtml = `
+                <div class="eau-stat-box total">
+                    <div class="eau-stat-number">${data.total_institutions}</div>
+                    <div class="eau-stat-label">Unique Institutions</div>
+                </div>
+                <div class="eau-stat-box update">
+                    <div class="eau-stat-number">${data.will_update}</div>
+                    <div class="eau-stat-label">Will Update</div>
+                </div>
+                <div class="eau-stat-box create">
+                    <div class="eau-stat-number">${data.will_create}</div>
+                    <div class="eau-stat-label">Will Create</div>
+                </div>
+            `;
+            $('#eau-institution-preview-stats').html(statsHtml);
+
+            // Build preview table
+            let tableHtml = '';
+            if (data.preview && data.preview.length > 0) {
+                data.preview.forEach(function(row) {
+                    const actionClass = row.action === 'update' ? 'update' : 'create';
+                    const actionLabel = row.action === 'update' ? 'UPDATE' : 'CREATE';
+                    tableHtml += `
+                        <tr>
+                            <td>${self.escapeHtml(row.company_id)}</td>
+                            <td>${self.escapeHtml(row.company_name)}</td>
+                            <td>${self.escapeHtml(row.email)}</td>
+                            <td>${self.escapeHtml(row.type)}</td>
+                            <td>${self.escapeHtml(row.state)}</td>
+                            <td><span class="eau-action-badge ${actionClass}">${actionLabel}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+            $('#eau-institution-preview-table tbody').html(tableHtml);
+
+            this.showStep(2);
+
+            // Re-initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Start import process
+         */
+        startImport: function() {
+            this.showStep(3);
+            this.totalUpdated = 0;
+            this.totalCreated = 0;
+            this.totalSkipped = 0;
+            $('#eau-institution-import-log').html('');
+
+            this.logMessage('info', 'Starting institution import...');
+            this.processBatch(0);
+        },
+
+        /**
+         * Process batch
+         */
+        processBatch: function(offset, retryCount) {
+            const self = this;
+            retryCount = retryCount || 0;
+            const maxRetries = 3;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                timeout: 60000, // 60 seconds timeout
+                data: {
+                    action: 'eau_import_institution_batch',
+                    nonce: eauSettingsData.nonce,
+                    filename: this.csvFilename,
+                    offset: offset,
+                    limit: 25
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        self.totalUpdated += data.updated || 0;
+                        self.totalCreated += data.created || 0;
+                        self.totalSkipped += data.skipped || 0;
+
+                        // Update progress
+                        const progress = Math.round((data.processed / data.total) * 100);
+                        $('#eau-institution-progress-fill').css('width', progress + '%');
+                        $('#eau-institution-progress-text').text(
+                            `Processed ${data.processed} of ${data.total} institutions (${progress}%)`
+                        );
+
+                        // Log results
+                        if (data.updated > 0) {
+                            self.logMessage('success', `Batch: ${data.updated} institutions updated`);
+                        }
+                        if (data.created > 0) {
+                            self.logMessage('warning', `Batch: ${data.created} institutions created`);
+                        }
+                        if (data.skipped > 0) {
+                            self.logMessage('error', `Batch: ${data.skipped} institutions skipped`);
+                        }
+
+                        // Log errors
+                        if (data.errors && data.errors.length > 0) {
+                            data.errors.forEach(function(error) {
+                                self.logMessage('error', `Row ${error.row}: ${error.message}`);
+                            });
+                        }
+
+                        // Continue or finish
+                        if (data.has_more) {
+                            self.processBatch(data.processed);
+                        } else {
+                            self.showComplete(data);
+                        }
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Import failed.');
+                        self.logMessage('error', response.data.message || 'Import failed.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    if (retryCount < maxRetries) {
+                        self.logMessage('warning', `Network error. Retrying (${retryCount + 1}/${maxRetries})...`);
+                        // Wait 2 seconds before retry
+                        setTimeout(function() {
+                            self.processBatch(offset, retryCount + 1);
+                        }, 2000);
+                    } else {
+                        EauNotifications.error('Network Error', 'Import interrupted after multiple retries.');
+                        self.logMessage('error', 'Network error - import interrupted after ' + maxRetries + ' retries.');
+                        self.logMessage('info', 'You can try again from the beginning.');
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show import complete (Step 4)
+         */
+        showComplete: function(data) {
+            this.logMessage('success', 'Institution import complete!');
+
+            const summaryHtml = `
+                <div class="eau-summary-grid">
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number updated">${this.totalUpdated}</div>
+                        <div class="eau-summary-label">Institutions Updated</div>
+                    </div>
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number created">${this.totalCreated}</div>
+                        <div class="eau-summary-label">Institutions Created</div>
+                    </div>
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number skipped">${this.totalSkipped}</div>
+                        <div class="eau-summary-label">Institutions Skipped</div>
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 15px;">
+                    <strong>Total processed:</strong> ${data.total} unique institutions
+                </p>
+            `;
+            $('#eau-institution-import-summary').html(summaryHtml);
+
+            this.showStep(4);
+            EauNotifications.success('Import Complete', `Successfully processed ${data.total} institutions.`);
+        },
+
+        /**
+         * Log message
+         */
+        logMessage: function(type, message) {
+            const $log = $('#eau-institution-import-log');
+            const timestamp = new Date().toLocaleTimeString();
+            $log.append(`<p class="eau-log-${type}">[${timestamp}] ${this.escapeHtml(message)}</p>`);
+            $log.scrollTop($log[0].scrollHeight);
+        },
+
+        /**
+         * Escape HTML
+         */
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    };
+
+    // Initialize Institution Import Controller
+    $(document).ready(function() {
+        // Only initialize if the import button exists
+        if ($('#eau-import-institution-btn').length > 0) {
+            EauInstitutionImportController.init();
+        }
+    });
+
+    // ============================================
+    // Categories Controller (v1.60.0)
+    // Integrated from class-eau-categories-management.php
+    // ============================================
+
+    const EauCategoriesController = {
+
+        // State
+        currentPage: 1,
+        perPage: 20,
+        searchTerm: '',
+        selectedIds: [],
+        orderBy: 'category_name',
+        order: 'ASC',
+
+        // Import state
+        importFilename: '',
+        importStep: 'upload',
+
+        /**
+         * Initialize
+         */
+        init: function() {
+            this.bindEvents();
+            this.loadCategories();
+        },
+
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+
+            // Search
+            $('#eau-categories-search').on('input', this.debounce(function(e) {
+                self.searchTerm = $(e.target).val();
+                self.currentPage = 1;
+                self.loadCategories();
+            }, 300));
+
+            // Add Category
+            $('#eau-add-category').on('click', this.handleAddCategory.bind(this));
+
+            // Refresh Categories
+            $('#eau-refresh-categories').on('click', this.handleRefreshCategories.bind(this));
+
+            // Export Categories
+            $('#eau-export-categories').on('click', this.handleExportCategories.bind(this));
+
+            // Import Categories
+            $('#eau-import-categories').on('click', this.handleImportCategoriesModal.bind(this));
+            $('#import-btn-cancel').on('click', this.handleImportClose.bind(this));
+            $('#import-btn-back').on('click', this.handleImportBack.bind(this));
+            $('#import-btn-analyze').on('click', this.handleImportAnalyze.bind(this));
+            $('#import-btn-execute').on('click', this.handleImportExecute.bind(this));
+            $('#import-btn-close').on('click', this.handleImportClose.bind(this));
+            $('[data-modal-close]').on('click', this.handleImportClose.bind(this));
+
+            // Table actions
+            $(document).on('click', '.eau-action-view', this.handleViewCategory.bind(this));
+            $(document).on('click', '.eau-action-edit', this.handleEditCategory.bind(this));
+            $(document).on('click', '.eau-action-delete', this.handleDeleteCategory.bind(this));
+
+            // Modal close (Eau_Modal component uses data-modal-action)
+            $(document).on('click', '.eau-modal-close, [data-modal-action="close"]', this.handleCloseModal.bind(this));
+
+            // Modal save (Eau_Modal component uses data-modal-action)
+            $(document).on('click', '[data-modal-action="save"]', this.handleSaveCategory.bind(this));
+            $(document).on('click', '[data-modal-action="create"]', this.handleSaveCategory.bind(this));
+
+            // Sortable columns
+            $(document).on('click', '#categories-table .eau-table-th.eau-sortable', this.handleSort.bind(this));
+
+            // Pagination
+            $(document).on('click', '#eau-categories-pagination .eau-pagination-btn', function(e) {
+                e.preventDefault();
+                if ($(this).is(':disabled') || $(this).hasClass('eau-pagination-active')) {
+                    return;
+                }
+                const page = parseInt($(this).data('page'));
+                self.currentPage = page;
+                self.loadCategories();
+            });
+        },
+
+        /**
+         * Handle sort
+         */
+        handleSort: function(e) {
+            const $th = $(e.currentTarget);
+            const column = $th.data('key');
+
+            if (this.orderBy === column) {
+                this.order = this.order === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                this.orderBy = column;
+                this.order = 'ASC';
+            }
+
+            this.loadCategories();
+        },
+
+        /**
+         * Load categories
+         */
+        loadCategories: function() {
+            const self = this;
+
+            // Show skeleton
+            this.showSkeleton();
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_categories',
+                    nonce: eauSettingsData.categoriesNonce,
+                    page: this.currentPage,
+                    per_page: this.perPage,
+                    search: this.searchTerm,
+                    orderby: this.orderBy,
+                    order: this.order
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.renderCategories(response.data.categories, response.data.pagination);
+                        self.renderPagination(response.data.pagination);
+                        // Update table count
+                        self.updateTableCount(response.data.pagination.total);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load categories');
+                },
+                complete: function() {
+                    self.hideSkeleton();
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Load statistics
+         */
+        loadStats: function() {
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_categories_stats',
+                    nonce: eauSettingsData.categoriesNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.updateStatsCards(response.data);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Update stats cards
+         */
+        updateStatsCards: function(stats) {
+            const $container = $('.eau-categories-tab-container');
+            $container.find('.eau-stat-card').eq(0).find('.eau-stat-number').text(stats.total);
+            $container.find('.eau-stat-card').eq(1).find('.eau-stat-number').text(stats.configured);
+            $container.find('.eau-stat-card').eq(2).find('.eau-stat-number').text(stats.not_configured);
+            $container.find('.eau-stat-card').eq(3).find('.eau-stat-number').text(stats.avg_points);
+        },
+
+        /**
+         * Render categories
+         */
+        renderCategories: function(categories, pagination) {
+            const tbody = $('#categories-table tbody');
+            tbody.empty();
+
+            if (categories.length === 0) {
+                tbody.html(`
+                    <tr class="eau-table-empty">
+                        <td colspan="5" class="eau-table-td" style="text-align: center;">
+                            <div class="eau-empty-state">
+                                <i data-lucide="inbox"></i>
+                                <p>No categories found</p>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            categories.forEach(category => {
+                const pointsBadgeClass = category.points_per_hour_raw > 0 ? 'eau-points-badge' : 'eau-points-badge eau-points-badge-zero';
+
+                const row = `
+                    <tr class="eau-table-tr">
+                        <td class="eau-table-td">
+                            <span class="eau-category-serial">${category.category_serial}</span>
+                        </td>
+                        <td class="eau-table-td">${category.category_name}</td>
+                        <td class="eau-table-td">
+                            <span class="${pointsBadgeClass}">${category.points_per_hour}</span>
+                        </td>
+                        <td class="eau-table-td">${category.updated_at}</td>
+                        <td class="eau-table-td">
+                            <div class="eau-table-actions">
+                                <button class="eau-action-btn eau-action-view" data-id="${category.id}" title="View">
+                                    <i data-lucide="eye"></i>
+                                </button>
+                                <button class="eau-action-btn eau-action-edit" data-id="${category.id}" title="Edit">
+                                    <i data-lucide="edit"></i>
+                                </button>
+                                <button class="eau-action-btn eau-action-delete" data-id="${category.id}" title="Delete">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        },
+
+        /**
+         * Render pagination
+         */
+        renderPagination: function(pagination) {
+            const totalPages = pagination.total_pages || 1;
+            const $container = $('#eau-categories-pagination');
+
+            if (totalPages <= 1) {
+                $container.html('');
+                return;
+            }
+
+            const startItem = ((pagination.page - 1) * pagination.per_page) + 1;
+            const endItem = Math.min(pagination.page * pagination.per_page, pagination.total);
+
+            const html = this.buildPaginationHTML(pagination.page, totalPages, startItem, endItem, pagination.total);
+            $container.html(html);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Build pagination HTML
+         */
+        buildPaginationHTML: function(currentPage, totalPages, startItem, endItem, total) {
+            const pagesToShow = this.getPagesToShow(currentPage, totalPages);
+
+            let html = '<div class="eau-pagination-wrapper">';
+
+            html += '<div class="eau-pagination-info">';
+            html += `Showing ${startItem.toLocaleString()} to ${endItem.toLocaleString()} of ${total.toLocaleString()} categories`;
+            html += '</div>';
+
+            html += '<div class="eau-pagination-nav">';
+
+            const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+            html += `<button class="eau-pagination-btn eau-pagination-prev ${prevDisabled}" data-page="${Math.max(1, currentPage - 1)}" ${prevDisabled ? 'disabled' : ''}>`;
+            html += '<i data-lucide="chevron-left"></i>';
+            html += '</button>';
+
+            pagesToShow.forEach(function(page) {
+                if (page === '...') {
+                    html += '<span class="eau-pagination-ellipsis">...</span>';
+                } else {
+                    const activeClass = page === currentPage ? 'eau-pagination-active' : '';
+                    html += `<button class="eau-pagination-btn eau-pagination-number ${activeClass}" data-page="${page}">${page}</button>`;
+                }
+            });
+
+            const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+            html += `<button class="eau-pagination-btn eau-pagination-next ${nextDisabled}" data-page="${Math.min(totalPages, currentPage + 1)}" ${nextDisabled ? 'disabled' : ''}>`;
+            html += '<i data-lucide="chevron-right"></i>';
+            html += '</button>';
+
+            html += '</div></div>';
+
+            return html;
+        },
+
+        /**
+         * Get pages to show
+         */
+        getPagesToShow: function(currentPage, totalPages) {
+            const maxShown = 5;
+            const pages = [];
+
+            if (totalPages <= maxShown + 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+                return pages;
+            }
+
+            pages.push(1);
+
+            let start = Math.max(2, currentPage - Math.floor(maxShown / 2));
+            let end = Math.min(totalPages - 1, currentPage + Math.floor(maxShown / 2));
+
+            if (currentPage <= Math.ceil(maxShown / 2) + 1) {
+                end = Math.min(totalPages - 1, maxShown);
+            }
+
+            if (currentPage >= totalPages - Math.ceil(maxShown / 2)) {
+                start = Math.max(2, totalPages - maxShown);
+            }
+
+            if (start > 2) {
+                pages.push('...');
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+
+            if (end < totalPages - 1) {
+                pages.push('...');
+            }
+
+            if (totalPages > 1) {
+                pages.push(totalPages);
+            }
+
+            return pages;
+        },
+
+        /**
+         * Handle add category
+         */
+        handleAddCategory: function(e) {
+            e.preventDefault();
+            this.openModal('eau-modal-add');
+            this.loadAddForm();
+        },
+
+        /**
+         * Handle refresh categories
+         */
+        handleRefreshCategories: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_sync_categories',
+                    nonce: eauSettingsData.categoriesNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        let message = `Found ${data.total_found} categories. `;
+                        message += `Added ${data.added} new, skipped ${data.skipped} existing.`;
+
+                        EauNotifications.success('Sync Complete', message);
+                        self.loadCategories();
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to sync categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to sync categories');
+                }
+            });
+        },
+
+        /**
+         * Handle view category
+         */
+        handleViewCategory: function(e) {
+            e.preventDefault();
+            const categoryId = $(e.currentTarget).data('id');
+            this.openModal('eau-modal-view');
+            this.loadCategoryDetails(categoryId, 'view');
+        },
+
+        /**
+         * Handle edit category
+         */
+        handleEditCategory: function(e) {
+            e.preventDefault();
+            const categoryId = $(e.currentTarget).data('id');
+            this.openModal('eau-modal-edit');
+            this.loadCategoryDetails(categoryId, 'edit');
+        },
+
+        /**
+         * Handle delete category
+         */
+        handleDeleteCategory: function(e) {
+            e.preventDefault();
+            const categoryId = $(e.currentTarget).data('id');
+            const self = this;
+
+            EauNotifications.confirm({
+                title: 'Delete Category?',
+                message: 'Are you sure you want to delete this category? This action cannot be undone.',
+                type: 'danger',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauSettingsData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_delete_category',
+                            nonce: eauSettingsData.categoriesNonce,
+                            id: categoryId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Success', 'Category deleted successfully');
+                                self.loadCategories();
+                                self.loadStats();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to delete category');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Error', 'Failed to delete category');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Load category details
+         */
+        loadCategoryDetails: function(categoryId, mode) {
+            const self = this;
+            const modalId = mode === 'view' ? 'eau-modal-view' : 'eau-modal-edit';
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_category',
+                    nonce: eauSettingsData.categoriesNonce,
+                    id: categoryId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (mode === 'view') {
+                            self.renderViewForm(response.data);
+                        } else {
+                            self.renderEditForm(response.data);
+                        }
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load category');
+                        self.closeModal(modalId);
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load category');
+                    self.closeModal(modalId);
+                }
+            });
+        },
+
+        /**
+         * Render view form
+         */
+        renderViewForm: function(category) {
+            const html = `
+                <form class="eau-modal-form">
+                    <div class="eau-form-grid">
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Category ID</label>
+                            <input type="text" class="eau-form-input" value="${category.category_serial}" readonly>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Category Name</label>
+                            <input type="text" class="eau-form-input" value="${category.category_name}" readonly>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Points per Hour</label>
+                            <input type="text" class="eau-form-input" value="${category.points_per_hour}" readonly>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Created At</label>
+                            <input type="text" class="eau-form-input" value="${category.created_at || 'N/A'}" readonly>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Last Updated</label>
+                            <input type="text" class="eau-form-input" value="${category.updated_at || 'N/A'}" readonly>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            $('#eau-modal-view-body').html(html);
+        },
+
+        /**
+         * Render edit form
+         */
+        renderEditForm: function(category) {
+            const html = `
+                <form class="eau-modal-form" id="eau-category-edit-form">
+                    <input type="hidden" id="edit-category-id" value="${category.id}">
+                    <input type="hidden" id="edit-category-serial" value="${category.category_serial}">
+                    <div class="eau-form-grid">
+                        <div class="eau-form-field">
+                            <label class="eau-form-label" for="edit-category-serial-display">Category ID</label>
+                            <input type="text" id="edit-category-serial-display" class="eau-form-input" value="${category.category_serial}" readonly>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label" for="edit-category-name">Category Name <span class="eau-form-required">*</span></label>
+                            <input type="text" id="edit-category-name" class="eau-form-input" value="${category.category_name}" required>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label" for="edit-points-per-hour">Points per Hour <span class="eau-form-required">*</span></label>
+                            <input type="number" step="0.10" min="0" id="edit-points-per-hour" class="eau-form-input" value="${category.points_per_hour}" required>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            $('#eau-modal-edit-body').html(html);
+        },
+
+        /**
+         * Load add form
+         */
+        loadAddForm: function() {
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_generate_category_serial',
+                    nonce: eauSettingsData.categoriesNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const categorySerial = response.data.category_serial;
+
+                        const html = `
+                            <form class="eau-modal-form" id="eau-category-add-form">
+                                <div class="eau-form-grid">
+                                    <div class="eau-form-field">
+                                        <label class="eau-form-label" for="add-category-serial">Category ID</label>
+                                        <input type="text" id="add-category-serial" class="eau-form-input" value="${categorySerial}" readonly>
+                                    </div>
+                                    <div class="eau-form-field">
+                                        <label class="eau-form-label" for="add-category-name">Category Name <span class="eau-form-required">*</span></label>
+                                        <input type="text" id="add-category-name" class="eau-form-input" placeholder="Enter category name" required>
+                                    </div>
+                                    <div class="eau-form-field">
+                                        <label class="eau-form-label" for="add-points-per-hour">Points per Hour <span class="eau-form-required">*</span></label>
+                                        <input type="number" step="0.10" min="0" id="add-points-per-hour" class="eau-form-input" value="1.00" required>
+                                    </div>
+                                </div>
+                            </form>
+                        `;
+
+                        $('#eau-modal-add-body').html(html);
+                    } else {
+                        EauNotifications.error('Error', 'Failed to generate Category ID');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to generate Category ID');
+                }
+            });
+        },
+
+        /**
+         * Handle save category
+         */
+        handleSaveCategory: function(e) {
+            e.preventDefault();
+            const $modal = $(e.currentTarget).closest('.eau-modal');
+            const modalId = $modal.attr('id');
+
+            let data = {
+                action: 'eau_save_category',
+                nonce: eauSettingsData.categoriesNonce
+            };
+
+            if (modalId === 'eau-modal-edit') {
+                data.id = $('#edit-category-id').val();
+                data.category_serial = $('#edit-category-serial').val().trim();
+                data.category_name = $('#edit-category-name').val().trim();
+                data.points_per_hour = $('#edit-points-per-hour').val();
+            } else if (modalId === 'eau-modal-add') {
+                data.category_serial = $('#add-category-serial').val().trim();
+                data.category_name = $('#add-category-name').val().trim();
+                data.points_per_hour = $('#add-points-per-hour').val();
+            }
+
+            if (!data.category_serial || !data.category_name) {
+                EauNotifications.error('Validation Error', 'Please fill in all required fields');
+                return;
+            }
+
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success('Success', response.data.message || 'Category saved successfully');
+                        self.closeModal(modalId);
+                        self.loadCategories();
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to save category');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to save category');
+                }
+            });
+        },
+
+        /**
+         * Open modal
+         */
+        openModal: function(modalId) {
+            const $overlay = $('#' + modalId + '-overlay');
+            $overlay.css('display', 'flex').hide().fadeIn(200);
+
+            const self = this;
+            $overlay.off('click').on('click', function(e) {
+                if ($(e.target).hasClass('eau-modal-overlay')) {
+                    self.closeModal(modalId);
+                }
+            });
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Close modal
+         */
+        closeModal: function(modalId) {
+            if (modalId) {
+                $('#' + modalId + '-overlay').fadeOut(200);
+            } else {
+                $('.eau-modal-overlay').fadeOut(200);
+            }
+        },
+
+        /**
+         * Handle close modal
+         */
+        handleCloseModal: function(e) {
+            if (e) {
+                e.preventDefault();
+            }
+            this.closeModal();
+        },
+
+        /**
+         * Show skeleton
+         */
+        showSkeleton: function() {
+            $('#categories-table-loading').show();
+        },
+
+        /**
+         * Hide skeleton
+         */
+        hideSkeleton: function() {
+            $('#categories-table-loading').hide();
+        },
+
+        /**
+         * Debounce helper
+         */
+        debounce: function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        },
+
+        /**
+         * Update table count display
+         */
+        updateTableCount: function(total) {
+            $('#categories-table-count .eau-count-number').text(total.toLocaleString());
+        },
+
+        // ============================================
+        // Export/Import Functions
+        // ============================================
+
+        /**
+         * Handle export categories
+         */
+        handleExportCategories: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            const $btn = $('#eau-export-categories');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Exporting...');
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_export_categories',
+                    nonce: eauSettingsData.categoriesNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        const jsonStr = JSON.stringify(data, null, 2);
+                        const blob = new Blob([jsonStr], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+
+                        const filename = 'eau-categories-export-' + self.formatDateForFilename() + '.json';
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        EauNotifications.success('Export Complete', `Exported ${data.total_categories} categories to ${filename}`);
+                    } else {
+                        EauNotifications.error('Export Failed', response.data.message || 'Failed to export categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Export Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Format date for filename
+         */
+        formatDateForFilename: function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}-${hours}${minutes}`;
+        },
+
+        /**
+         * Handle import categories modal open
+         */
+        handleImportCategoriesModal: function(e) {
+            e.preventDefault();
+            this.importFilename = '';
+            this.importStep = 'upload';
+            this.showImportStep('upload');
+            $('#import-categories-form')[0].reset();
+            $('#eau-modal-import-overlay').css('display', 'flex').hide().fadeIn(200);
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Handle import close
+         */
+        handleImportClose: function(e) {
+            if (e) e.preventDefault();
+            $('#eau-modal-import-overlay').fadeOut(200);
+        },
+
+        /**
+         * Handle import back
+         */
+        handleImportBack: function(e) {
+            e.preventDefault();
+            this.showImportStep('upload');
+        },
+
+        /**
+         * Show import step
+         */
+        showImportStep: function(step) {
+            this.importStep = step;
+
+            $('.import-step').hide();
+            $('#import-step-' + step).show();
+
+            $('#import-btn-cancel').toggle(step === 'upload');
+            $('#import-btn-back').toggle(step === 'preview');
+            $('#import-btn-analyze').toggle(step === 'upload');
+            $('#import-btn-execute').toggle(step === 'preview');
+            $('#import-btn-close').toggle(step === 'result');
+        },
+
+        /**
+         * Handle import analyze
+         */
+        handleImportAnalyze: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            const fileInput = $('#import-json-file')[0];
+            if (!fileInput.files || fileInput.files.length === 0) {
+                EauNotifications.warning('No File', 'Please select a JSON file to import');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                EauNotifications.error('Invalid File', 'Please select a JSON file');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                EauNotifications.error('File Too Large', 'Maximum file size is 5MB');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'eau_import_categories_analyze');
+            formData.append('nonce', eauSettingsData.categoriesNonce);
+            formData.append('json_file', file);
+
+            const $btn = $('#import-btn-analyze');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Analyzing...');
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        self.importFilename = response.data.filename;
+                        self.showImportPreview(response.data);
+                    } else {
+                        EauNotifications.error('Analysis Failed', response.data.message || 'Failed to analyze file');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Analysis Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show import preview
+         */
+        showImportPreview: function(data) {
+            const statsHtml = `
+                <div class="eau-preview-stat total">
+                    <div class="eau-preview-stat-number">${data.total_categories}</div>
+                    <div class="eau-preview-stat-label">Total Categories</div>
+                </div>
+                <div class="eau-preview-stat create">
+                    <div class="eau-preview-stat-number">${data.will_create}</div>
+                    <div class="eau-preview-stat-label">Will Create</div>
+                </div>
+                <div class="eau-preview-stat update">
+                    <div class="eau-preview-stat-number">${data.will_update}</div>
+                    <div class="eau-preview-stat-label">Will Update</div>
+                </div>
+            `;
+            $('#import-preview-stats').html(statsHtml);
+
+            let tableHtml = '';
+            if (data.preview && data.preview.length > 0) {
+                data.preview.forEach(function(cat) {
+                    const actionClass = cat.action === 'update' ? 'import-action-badge update' : 'import-action-badge create';
+                    const actionLabel = cat.action === 'update' ? 'UPDATE' : 'CREATE';
+                    tableHtml += `
+                        <tr>
+                            <td style="padding: 8px 12px;">${cat.category_serial}</td>
+                            <td style="padding: 8px 12px;">${cat.category_name}</td>
+                            <td style="padding: 8px 12px;">${cat.points_per_hour}</td>
+                            <td style="padding: 8px 12px;">
+                                <span class="${actionClass}">${actionLabel}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            $('#import-preview-table tbody').html(tableHtml);
+
+            this.showImportStep('preview');
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Handle import execute
+         */
+        handleImportExecute: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            if (!this.importFilename) {
+                EauNotifications.error('Error', 'No file to import');
+                return;
+            }
+
+            const skipExisting = $('#import-skip-existing').is(':checked');
+
+            const $btn = $('#import-btn-execute');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Importing...');
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_import_categories_execute',
+                    nonce: eauSettingsData.categoriesNonce,
+                    filename: this.importFilename,
+                    skip_existing: skipExisting
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showImportResult(response.data);
+                        self.loadCategories();
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Import Failed', response.data.message || 'Failed to import categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Import Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show import result
+         */
+        showImportResult: function(data) {
+            const html = `
+                <div class="eau-import-result">
+                    <div class="eau-import-result-icon success">
+                        <i data-lucide="check-circle"></i>
+                    </div>
+                    <h3>Import Complete!</h3>
+                    <p>Successfully processed ${data.total} categories</p>
+
+                    <div style="display: flex; justify-content: center; gap: 30px; margin: 20px 0;">
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #16a34a;">${data.updated}</div>
+                            <div style="font-size: 12px; color: #666;">Updated</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #d97706;">${data.created}</div>
+                            <div style="font-size: 12px; color: #666;">Created</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #6b7280;">${data.skipped}</div>
+                            <div style="font-size: 12px; color: #666;">Skipped</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#import-result-content').html(html);
+            this.showImportStep('result');
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            EauNotifications.success('Import Complete', `Imported ${data.total} categories: ${data.created} created, ${data.updated} updated`);
+        }
+    };
+
+    // Make EauCategoriesController globally accessible for lazy loading
+    window.EauCategoriesController = EauCategoriesController;
+
+    // ============================================
+    // Event Categories Controller (v1.61.0)
+    // ============================================
+
+    const EauEventCategoriesController = {
+        // State
+        currentPage: 1,
+        perPage: 20,
+        searchTerm: '',
+        orderBy: 'category_name',
+        order: 'ASC',
+        editingCategoryId: null,
+
+        /**
+         * Initialize controller
+         */
+        init: function() {
+            this.bindEvents();
+            this.loadCategories();
+            this.loadStats();
+        },
+
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+
+            // Search
+            $('#eau-event-categories-search').on('input', this.debounce(function() {
+                self.searchTerm = $(this).val();
+                self.currentPage = 1;
+                self.loadCategories();
+            }, 300));
+
+            // Add button
+            $('#eau-add-event-category').on('click', this.handleAddCategory.bind(this));
+
+            // Refresh from Events button
+            $('#eau-refresh-event-categories').on('click', this.handleRefreshFromEvents.bind(this));
+
+            // Table actions
+            $(document).on('click', '#event-categories-container .eau-action-view', this.handleViewCategory.bind(this));
+            $(document).on('click', '#event-categories-container .eau-action-edit', this.handleEditCategory.bind(this));
+            $(document).on('click', '#event-categories-container .eau-action-delete', this.handleDeleteCategory.bind(this));
+
+            // Modal close (uses data-modal-action from Eau_Modal component)
+            $(document).on('click', '#eau-event-modal-view-overlay .eau-modal-close, #eau-event-modal-view-overlay [data-modal-action="close"]', function(e) {
+                e.preventDefault();
+                self.closeModal('eau-event-modal-view');
+            });
+            $(document).on('click', '#eau-event-modal-edit-overlay .eau-modal-close, #eau-event-modal-edit-overlay [data-modal-action="close"]', function(e) {
+                e.preventDefault();
+                self.closeModal('eau-event-modal-edit');
+            });
+            $(document).on('click', '#eau-event-modal-add-overlay .eau-modal-close, #eau-event-modal-add-overlay [data-modal-action="close"]', function(e) {
+                e.preventDefault();
+                self.closeModal('eau-event-modal-add');
+            });
+
+            // Modal save
+            $(document).on('click', '#eau-event-modal-edit-overlay [data-modal-action="save"]', this.handleSaveCategory.bind(this));
+            $(document).on('click', '#eau-event-modal-add-overlay [data-modal-action="create"]', this.handleSaveCategory.bind(this));
+
+            // Sortable columns
+            $(document).on('click', '#event-categories-table .eau-table-th.eau-sortable', this.handleSort.bind(this));
+
+            // Pagination
+            $(document).on('click', '#eau-event-categories-pagination .eau-pagination-btn', function(e) {
+                e.preventDefault();
+                if ($(this).is(':disabled') || $(this).hasClass('eau-pagination-active')) {
+                    return;
+                }
+                const page = parseInt($(this).data('page'));
+                self.currentPage = page;
+                self.loadCategories();
+            });
+        },
+
+        /**
+         * Load categories
+         */
+        loadCategories: function() {
+            const self = this;
+
+            this.showSkeleton();
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_event_categories',
+                    nonce: eauSettingsData.eventCategoriesNonce,
+                    page: this.currentPage,
+                    per_page: this.perPage,
+                    search: this.searchTerm,
+                    orderby: this.orderBy,
+                    order: this.order
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.renderCategories(response.data.categories, response.data.pagination);
+                        self.renderPagination(response.data.pagination);
+                        self.updateTableCount(response.data.pagination.total);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load event categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load event categories');
+                },
+                complete: function() {
+                    self.hideSkeleton();
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Load statistics
+         */
+        loadStats: function() {
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_event_categories_stats',
+                    nonce: eauSettingsData.eventCategoriesNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.updateStats(response.data);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Update stats display
+         */
+        updateStats: function(stats) {
+            $('#event-categories-container .eau-stats-cards .eau-stats-card:first-child .eau-stats-number').text(stats.total);
+        },
+
+        /**
+         * Render categories
+         */
+        renderCategories: function(categories, pagination) {
+            const $tbody = $('#event-categories-table-tbody');
+
+            if (!categories || categories.length === 0) {
+                $tbody.html(`
+                    <tr class="eau-table-empty">
+                        <td colspan="4" style="text-align: center; padding: 3rem;">
+                            <i data-lucide="inbox" style="width: 3rem; height: 3rem; color: #d1d5db; margin-bottom: 1rem;"></i>
+                            <p style="color: #6b7280; margin: 0;">No event categories found</p>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            let html = '';
+            categories.forEach(function(category) {
+                html += `
+                    <tr class="eau-table-row" data-id="${category.id}">
+                        <td class="eau-table-td" data-label="Category ID">
+                            <span style="font-family: monospace; font-size: 0.875rem; color: #6b7280;">${category.category_serial}</span>
+                        </td>
+                        <td class="eau-table-td" data-label="Category Name">
+                            <strong style="color: #1f2937;">${category.category_name}</strong>
+                        </td>
+                        <td class="eau-table-td" data-label="Last Updated">
+                            <span style="color: #6b7280; font-size: 0.875rem;">${category.updated_at}</span>
+                        </td>
+                        <td class="eau-table-td eau-table-td-actions">
+                            <div class="eau-table-actions">
+                                <button class="eau-action-btn eau-action-view" data-id="${category.id}" title="View">
+                                    <i data-lucide="eye"></i>
+                                </button>
+                                <button class="eau-action-btn eau-action-edit" data-id="${category.id}" title="Edit">
+                                    <i data-lucide="pencil"></i>
+                                </button>
+                                <button class="eau-action-btn eau-action-delete" data-id="${category.id}" title="Delete">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $tbody.html(html);
+        },
+
+        /**
+         * Render pagination
+         */
+        renderPagination: function(pagination) {
+            const totalPages = pagination.total_pages || 1;
+            const $container = $('#eau-event-categories-pagination');
+
+            if (totalPages <= 1) {
+                $container.html('');
+                return;
+            }
+
+            const startItem = ((pagination.page - 1) * pagination.per_page) + 1;
+            const endItem = Math.min(pagination.page * pagination.per_page, pagination.total);
+
+            const html = this.buildPaginationHTML(pagination.page, totalPages, startItem, endItem, pagination.total);
+            $container.html(html);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Build pagination HTML
+         */
+        buildPaginationHTML: function(currentPage, totalPages, startItem, endItem, total) {
+            const pagesToShow = this.getPagesToShow(currentPage, totalPages);
+
+            let html = '<div class="eau-pagination-wrapper">';
+
+            html += '<div class="eau-pagination-info">';
+            html += `Showing ${startItem.toLocaleString()} to ${endItem.toLocaleString()} of ${total.toLocaleString()} categories`;
+            html += '</div>';
+
+            html += '<div class="eau-pagination-nav">';
+
+            const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+            html += `<button class="eau-pagination-btn eau-pagination-prev ${prevDisabled}" data-page="${Math.max(1, currentPage - 1)}" ${prevDisabled ? 'disabled' : ''}>`;
+            html += '<i data-lucide="chevron-left"></i>';
+            html += '</button>';
+
+            pagesToShow.forEach(function(page) {
+                if (page === '...') {
+                    html += '<span class="eau-pagination-ellipsis">...</span>';
+                } else {
+                    const activeClass = page === currentPage ? 'eau-pagination-active' : '';
+                    html += `<button class="eau-pagination-btn eau-pagination-number ${activeClass}" data-page="${page}">${page}</button>`;
+                }
+            });
+
+            const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+            html += `<button class="eau-pagination-btn eau-pagination-next ${nextDisabled}" data-page="${Math.min(totalPages, currentPage + 1)}" ${nextDisabled ? 'disabled' : ''}>`;
+            html += '<i data-lucide="chevron-right"></i>';
+            html += '</button>';
+
+            html += '</div></div>';
+
+            return html;
+        },
+
+        /**
+         * Get pages to show
+         */
+        getPagesToShow: function(currentPage, totalPages) {
+            const maxShown = 5;
+            const pages = [];
+
+            if (totalPages <= maxShown + 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                pages.push(1);
+
+                let start = Math.max(2, currentPage - 1);
+                let end = Math.min(totalPages - 1, currentPage + 1);
+
+                if (currentPage <= 3) {
+                    end = maxShown - 1;
+                }
+                if (currentPage >= totalPages - 2) {
+                    start = totalPages - maxShown + 2;
+                }
+
+                if (start > 2) {
+                    pages.push('...');
+                }
+
+                for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+
+                if (end < totalPages - 1) {
+                    pages.push('...');
+                }
+
+                pages.push(totalPages);
+            }
+
+            return pages;
+        },
+
+        /**
+         * Handle sort
+         */
+        handleSort: function(e) {
+            const $th = $(e.currentTarget);
+            const key = $th.data('key');
+
+            if (this.orderBy === key) {
+                this.order = this.order === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                this.orderBy = key;
+                this.order = 'ASC';
+            }
+
+            // Update sort indicators
+            $('#event-categories-table .eau-table-th').removeClass('sorted-asc sorted-desc');
+            $th.addClass(this.order === 'ASC' ? 'sorted-asc' : 'sorted-desc');
+
+            this.loadCategories();
+        },
+
+        /**
+         * Handle view category
+         */
+        handleViewCategory: function(e) {
+            e.preventDefault();
+            const id = $(e.currentTarget).data('id');
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_event_category',
+                    nonce: eauSettingsData.eventCategoriesNonce,
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showViewModal(response.data);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load category');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load category');
+                }
+            });
+        },
+
+        /**
+         * Show view modal
+         */
+        showViewModal: function(category) {
+            const html = `
+                <div class="eau-form-grid" style="gap: 1.5rem;">
+                    <div class="eau-form-field">
+                        <label class="eau-form-label">Category ID</label>
+                        <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px; font-family: monospace;">
+                            ${category.category_serial}
+                        </div>
+                    </div>
+                    <div class="eau-form-field">
+                        <label class="eau-form-label">Category Name</label>
+                        <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                            ${category.category_name}
+                        </div>
+                    </div>
+                    <div class="eau-form-field">
+                        <label class="eau-form-label">Created</label>
+                        <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                            ${category.created_at}
+                        </div>
+                    </div>
+                    <div class="eau-form-field">
+                        <label class="eau-form-label">Last Updated</label>
+                        <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                            ${category.updated_at}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#eau-event-modal-view-body').html(html);
+            this.openModal('eau-event-modal-view');
+        },
+
+        /**
+         * Handle edit category
+         */
+        handleEditCategory: function(e) {
+            e.preventDefault();
+            const id = $(e.currentTarget).data('id');
+            const self = this;
+
+            this.editingCategoryId = id;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_event_category',
+                    nonce: eauSettingsData.eventCategoriesNonce,
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showEditModal(response.data);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load category');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load category');
+                }
+            });
+        },
+
+        /**
+         * Show edit modal
+         */
+        showEditModal: function(category) {
+            const html = `
+                <form id="event-category-edit-form" class="eau-form-grid" style="gap: 1.5rem;">
+                    <input type="hidden" name="id" value="${category.id}">
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="edit-event-category-serial">Category ID <span class="eau-form-required">*</span></label>
+                        <input type="text" class="eau-form-input" id="edit-event-category-serial" name="category_serial" value="${category.category_serial}" required>
+                    </div>
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="edit-event-category-name">Category Name <span class="eau-form-required">*</span></label>
+                        <input type="text" class="eau-form-input" id="edit-event-category-name" name="category_name" value="${category.category_name}" required>
+                    </div>
+                </form>
+            `;
+
+            $('#eau-event-modal-edit-body').html(html);
+            this.openModal('eau-event-modal-edit');
+        },
+
+        /**
+         * Handle add category
+         */
+        handleAddCategory: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            this.editingCategoryId = null;
+
+            // Generate category serial
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_generate_event_category_serial',
+                    nonce: eauSettingsData.eventCategoriesNonce
+                },
+                success: function(response) {
+                    const serial = response.success ? response.data.category_serial : '';
+                    self.showAddModal(serial);
+                },
+                error: function() {
+                    self.showAddModal('');
+                }
+            });
+        },
+
+        /**
+         * Show add modal
+         */
+        showAddModal: function(serial) {
+            const html = `
+                <form id="event-category-add-form" class="eau-form-grid" style="gap: 1.5rem;">
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="add-event-category-serial">Category ID <span class="eau-form-required">*</span></label>
+                        <input type="text" class="eau-form-input" id="add-event-category-serial" name="category_serial" value="${serial}" required>
+                    </div>
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="add-event-category-name">Category Name <span class="eau-form-required">*</span></label>
+                        <input type="text" class="eau-form-input" id="add-event-category-name" name="category_name" value="" required>
+                    </div>
+                </form>
+            `;
+
+            $('#eau-event-modal-add-body').html(html);
+            this.openModal('eau-event-modal-add');
+        },
+
+        /**
+         * Handle delete category
+         */
+        handleDeleteCategory: function(e) {
+            e.preventDefault();
+            const id = $(e.currentTarget).data('id');
+            const self = this;
+
+            EauNotifications.confirm(
+                'Delete Category',
+                'Are you sure you want to delete this event category? This action cannot be undone.',
+                function() {
+                    $.ajax({
+                        url: eauSettingsData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_delete_event_category',
+                            nonce: eauSettingsData.eventCategoriesNonce,
+                            id: id
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Success', 'Event category deleted successfully');
+                                self.loadCategories();
+                                self.loadStats();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to delete category');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Error', 'Failed to delete category');
+                        }
+                    });
+                }
+            );
+        },
+
+        /**
+         * Handle refresh from events
+         */
+        handleRefreshFromEvents: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            const $btn = $('#eau-refresh-event-categories');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader-2" class="eau-spin"></i> Syncing...');
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_sync_event_categories',
+                    nonce: eauSettingsData.eventCategoriesNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success(
+                            'Sync Complete',
+                            `Found ${response.data.total_found} categories. Added ${response.data.added}, skipped ${response.data.skipped}.`
+                        );
+                        self.loadCategories();
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to sync categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to sync categories');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Handle save category
+         */
+        handleSaveCategory: function(e) {
+            e.preventDefault();
+
+            const $modal = $(e.currentTarget).closest('.eau-modal-overlay');
+            const modalId = $modal.find('.eau-modal').attr('id');
+            const isEdit = modalId === 'eau-event-modal-edit';
+            const $form = isEdit ? $('#event-category-edit-form') : $('#event-category-add-form');
+
+            const data = {
+                action: 'eau_save_event_category',
+                nonce: eauSettingsData.eventCategoriesNonce,
+                category_serial: $form.find('[name="category_serial"]').val(),
+                category_name: $form.find('[name="category_name"]').val()
+            };
+
+            if (isEdit) {
+                data.id = $form.find('[name="id"]').val();
+            }
+
+            if (!data.category_serial || !data.category_name) {
+                EauNotifications.error('Validation Error', 'Please fill in all required fields');
+                return;
+            }
+
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success('Success', response.data.message || 'Category saved successfully');
+                        self.closeModal(modalId);
+                        self.loadCategories();
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to save category');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to save category');
+                }
+            });
+        },
+
+        /**
+         * Open modal
+         */
+        openModal: function(modalId) {
+            const $overlay = $('#' + modalId + '-overlay');
+            $overlay.css('display', 'flex').hide().fadeIn(200);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Close modal
+         */
+        closeModal: function(modalId) {
+            if (modalId) {
+                $('#' + modalId + '-overlay').fadeOut(200);
+            } else {
+                $('.eau-modal-overlay').fadeOut(200);
+            }
+        },
+
+        /**
+         * Show skeleton
+         */
+        showSkeleton: function() {
+            $('#event-categories-table-loading').show();
+        },
+
+        /**
+         * Hide skeleton
+         */
+        hideSkeleton: function() {
+            $('#event-categories-table-loading').hide();
+        },
+
+        /**
+         * Update table count display
+         */
+        updateTableCount: function(total) {
+            $('#event-categories-table-count .eau-count-number').text(total.toLocaleString());
+        },
+
+        /**
+         * Debounce helper
+         */
+        debounce: function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    // Make EauEventCategoriesController globally accessible for lazy loading
+    window.EauEventCategoriesController = EauEventCategoriesController;
 
 })(jQuery);

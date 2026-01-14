@@ -278,14 +278,7 @@ class Eau_Sidebar_Menu {
             );
         }
 
-        // CPD Categories - Admin e superAdmin
-        if (in_array($mem_type, array('Admin', 'superAdmin'))) {
-            $items[] = array(
-                'label' => 'CPD Categories',
-                'url' => home_url('/dashboard/manage-categories/'),
-                'icon' => self::get_icon('folder-tree'),
-            );
-        }
+        // CPD Categories removed in v1.60.0 - now integrated into Settings page
 
         // Open Learning Management - Admin e superAdmin
         if (in_array($mem_type, array('Admin', 'superAdmin'))) {

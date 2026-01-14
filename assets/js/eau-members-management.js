@@ -24,16 +24,108 @@
         order: 'ASC', // Direção: ASC ou DESC
         phoneIti: null, // intl-tel-input instance
 
+        // States/Provinces by country
+        statesByCountry: {
+            'AU': {
+                'ACT': 'Australian Capital Territory',
+                'NSW': 'New South Wales',
+                'NT': 'Northern Territory',
+                'QLD': 'Queensland',
+                'SA': 'South Australia',
+                'TAS': 'Tasmania',
+                'VIC': 'Victoria',
+                'WA': 'Western Australia'
+            },
+            'NZ': {
+                'AUK': 'Auckland',
+                'BOP': 'Bay of Plenty',
+                'CAN': 'Canterbury',
+                'GIS': 'Gisborne',
+                'HKB': 'Hawke\'s Bay',
+                'MWT': 'Manawatu-Wanganui',
+                'MBH': 'Marlborough',
+                'NSN': 'Nelson',
+                'NTL': 'Northland',
+                'OTA': 'Otago',
+                'STL': 'Southland',
+                'TKI': 'Taranaki',
+                'TAS': 'Tasman',
+                'WKO': 'Waikato',
+                'WGN': 'Wellington',
+                'WTC': 'West Coast'
+            },
+            'GB': {
+                'ENG': 'England',
+                'SCT': 'Scotland',
+                'WLS': 'Wales',
+                'NIR': 'Northern Ireland'
+            },
+            'US': {
+                'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+                'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+                'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+                'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+                'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+                'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+                'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+                'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+                'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+                'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+                'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+                'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+                'WI': 'Wisconsin', 'WY': 'Wyoming', 'DC': 'District of Columbia'
+            },
+            'CA': {
+                'AB': 'Alberta', 'BC': 'British Columbia', 'MB': 'Manitoba',
+                'NB': 'New Brunswick', 'NL': 'Newfoundland and Labrador',
+                'NS': 'Nova Scotia', 'NT': 'Northwest Territories', 'NU': 'Nunavut',
+                'ON': 'Ontario', 'PE': 'Prince Edward Island', 'QC': 'Quebec',
+                'SK': 'Saskatchewan', 'YT': 'Yukon'
+            },
+            'BR': {
+                'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas',
+                'BA': 'Bahia', 'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo',
+                'GO': 'Goiás', 'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul',
+                'MG': 'Minas Gerais', 'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná',
+                'PE': 'Pernambuco', 'PI': 'Piauí', 'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte',
+                'RS': 'Rio Grande do Sul', 'RO': 'Rondônia', 'RR': 'Roraima',
+                'SC': 'Santa Catarina', 'SP': 'São Paulo', 'SE': 'Sergipe', 'TO': 'Tocantins'
+            }
+        },
+
         /**
          * Inicializa
          */
         init: function() {
+            this.hideBulkActionButtons(); // Esconde botões de ação em massa inicialmente
             this.loadEditableFields(); // Carrega campos configurados
             this.loadInstitutions(); // Carrega instituições
             this.loadAvailableTags(); // Carrega tags disponíveis
             this.bindEvents();
             this.checkUrlParams(); // Check for URL parameters BEFORE loading members
             this.loadMembers();
+        },
+
+        /**
+         * Esconde os botões de ação em massa (Delete Selected, Manage Tags)
+         * Chamado no init e quando não há itens selecionados
+         * Usa css() com !important para sobrescrever o CSS do .eau-btn
+         */
+        hideBulkActionButtons: function() {
+            $('#eau-bulk-delete-members').css('display', 'none');
+            $('#eau-bulk-manage-tags').css('display', 'none');
+            // Força o !important via cssText para sobrescrever o CSS
+            document.getElementById('eau-bulk-delete-members')?.style.setProperty('display', 'none', 'important');
+            document.getElementById('eau-bulk-manage-tags')?.style.setProperty('display', 'none', 'important');
+        },
+
+        /**
+         * Mostra os botões de ação em massa
+         */
+        showBulkActionButtons: function() {
+            // Remove o style inline para deixar o CSS padrão (.eau-btn) funcionar
+            $('#eau-bulk-delete-members').css('display', '');
+            $('#eau-bulk-manage-tags').css('display', '');
         },
 
         /**
@@ -342,6 +434,7 @@
                         <td class="eau-table-td" data-label="CONTACT">${row.contact}</td>
                         <td class="eau-table-td" data-label="MEMBERSHIP">${row.membership}</td>
                         <td class="eau-table-td" data-label="USER TYPE">${row.user_type}</td>
+                        <td class="eau-table-td" data-label="POSITION">${row.position || '<span class="eau-text-muted">-</span>'}</td>
                         <td class="eau-table-td" data-label="STATUS">${row.status}</td>
                         <td class="eau-table-td eau-table-td-actions">
                             <div class="eau-table-actions">
@@ -379,7 +472,7 @@
         getEmptyState: function() {
             return `
                 <tr class="eau-table-empty">
-                    <td colspan="7" style="text-align: center; padding: 3rem;">
+                    <td colspan="8" style="text-align: center; padding: 3rem;">
                         <i data-lucide="inbox" style="width: 3rem; height: 3rem; color: #d1d5db; margin-bottom: 1rem;"></i>
                         <p style="color: #6b7280; margin: 0;">No members found</p>
                     </td>
@@ -452,22 +545,20 @@
                 self.selectedIds.push($(this).val());
             });
 
-            // Mostrar/ocultar botão de deleção em massa (apenas para super admin)
-            if (eauMembersData.isSuperAdmin) {
-                if (this.selectedIds.length > 0) {
-                    $('#eau-bulk-delete-members').show();
-                } else {
-                    $('#eau-bulk-delete-members').hide();
+            // Mostrar/ocultar botões de ação em massa baseado na seleção
+            if (this.selectedIds.length > 0) {
+                // Mostra os botões removendo o style inline (deixa o CSS padrão funcionar)
+                if (eauMembersData.isSuperAdmin) {
+                    const deleteBtn = document.getElementById('eau-bulk-delete-members');
+                    if (deleteBtn) deleteBtn.style.removeProperty('display');
                 }
-            }
-
-            // Mostrar/ocultar botão de bulk manage tags (Admin ou superAdmin)
-            if (eauMembersData.canManageTags) {
-                if (this.selectedIds.length > 0) {
-                    $('#eau-bulk-manage-tags').show();
-                } else {
-                    $('#eau-bulk-manage-tags').hide();
+                if (eauMembersData.canManageTags) {
+                    const tagsBtn = document.getElementById('eau-bulk-manage-tags');
+                    if (tagsBtn) tagsBtn.style.removeProperty('display');
                 }
+            } else {
+                // Esconde os botões usando !important para sobrescrever o CSS
+                this.hideBulkActionButtons();
             }
         },
 
@@ -949,6 +1040,59 @@
             if (!isView) {
                 this.initPhoneInput(userData);
                 this.initTagsField();
+                this.initCountryStateFields();
+            }
+        },
+
+        /**
+         * Initialize country/state dynamic dropdowns
+         */
+        initCountryStateFields: function() {
+            const self = this;
+            const countrySelect = document.querySelector('#eau-member-country');
+            const stateField = document.querySelector('#eau-member-state');
+
+            if (countrySelect && stateField) {
+                countrySelect.addEventListener('change', function() {
+                    self.updateStateOptions(this.value, '');
+                });
+            }
+        },
+
+        /**
+         * Update state options based on selected country
+         */
+        updateStateOptions: function(countryCode, currentValue) {
+            const stateContainer = document.querySelector('#eau-member-state');
+            if (!stateContainer) return;
+
+            const states = this.statesByCountry[countryCode] || {};
+            const hasStates = Object.keys(states).length > 0;
+            const parentDiv = stateContainer.parentElement;
+
+            if (hasStates) {
+                // Replace with select
+                let html = `<select class="eau-form-select" name="mem_state" id="eau-member-state">`;
+                html += `<option value="">Select State/Province</option>`;
+                Object.entries(states).forEach(([stateCode, stateName]) => {
+                    const selected = currentValue === stateCode ? 'selected' : '';
+                    html += `<option value="${stateCode}" ${selected}>${stateName}</option>`;
+                });
+                html += `</select>`;
+
+                // Replace the existing element
+                const oldElement = document.querySelector('#eau-member-state');
+                const newElement = document.createElement('div');
+                newElement.innerHTML = html;
+                oldElement.replaceWith(newElement.firstChild);
+            } else {
+                // Replace with text input
+                const html = `<input type="text" class="eau-form-input" name="mem_state" id="eau-member-state" value="${currentValue}" placeholder="Enter state/province">`;
+
+                const oldElement = document.querySelector('#eau-member-state');
+                const newElement = document.createElement('div');
+                newElement.innerHTML = html;
+                oldElement.replaceWith(newElement.firstChild);
             }
         },
 
@@ -1093,8 +1237,22 @@
                         }
                         fieldHTML += `<input type="text" class="eau-form-input" value="${displayValue}" readonly>`;
                     }
+                } else if (fieldConfig.options) {
+                    // Generic select with options from config
+                    if (!isView && !readonly) {
+                        fieldHTML += `<select class="eau-form-select" name="${fieldName}" ${requiredAttr}>`;
+                        Object.entries(fieldConfig.options).forEach(([optValue, optLabel]) => {
+                            const selected = value === optValue ? 'selected' : '';
+                            fieldHTML += `<option value="${optValue}" ${selected}>${optLabel}</option>`;
+                        });
+                        fieldHTML += `</select>`;
+                    } else {
+                        // View mode - show label instead of value
+                        const displayValue = fieldConfig.options[value] || value || '';
+                        fieldHTML += `<input type="text" class="eau-form-input" value="${displayValue}" readonly>`;
+                    }
                 } else {
-                    // Generic select - apenas texto readonly por enquanto
+                    // Generic select without options - show as text input
                     fieldHTML += `<input type="text" class="eau-form-input" name="${fieldName}" value="${value}" ${readonly} ${requiredAttr}>`;
                 }
 
@@ -1164,6 +1322,59 @@
                 }
 
                 fieldHTML += `</div>`;
+                fieldHTML += `</div>`;
+            } else if (inputType === 'country') {
+                // Country dropdown
+                fieldHTML += `<div class="eau-form-field">`;
+                fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
+
+                if (!isView && !readonly) {
+                    fieldHTML += `<select class="eau-form-select" name="${fieldName}" id="eau-member-country" ${requiredAttr}>`;
+                    if (fieldConfig.options) {
+                        Object.entries(fieldConfig.options).forEach(([optValue, optLabel]) => {
+                            const selected = value === optValue ? 'selected' : '';
+                            fieldHTML += `<option value="${optValue}" ${selected}>${optLabel}</option>`;
+                        });
+                    }
+                    fieldHTML += `</select>`;
+                } else {
+                    // View mode
+                    const displayValue = fieldConfig.options && fieldConfig.options[value] ? fieldConfig.options[value] : value;
+                    fieldHTML += `<input type="text" class="eau-form-input" value="${displayValue || ''}" readonly>`;
+                }
+
+                fieldHTML += `</div>`;
+            } else if (inputType === 'state') {
+                // State dropdown (dynamic based on country)
+                fieldHTML += `<div class="eau-form-field">`;
+                fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
+
+                if (!isView && !readonly) {
+                    // Get country value to populate states
+                    const countryValue = userData.meta && userData.meta.mem_country ? userData.meta.mem_country : 'AU';
+                    const states = this.statesByCountry[countryValue] || {};
+                    const hasStates = Object.keys(states).length > 0;
+
+                    if (hasStates) {
+                        fieldHTML += `<select class="eau-form-select" name="${fieldName}" id="eau-member-state" ${requiredAttr}>`;
+                        fieldHTML += `<option value="">Select State/Province</option>`;
+                        Object.entries(states).forEach(([stateCode, stateName]) => {
+                            const selected = value === stateCode ? 'selected' : '';
+                            fieldHTML += `<option value="${stateCode}" ${selected}>${stateName}</option>`;
+                        });
+                        fieldHTML += `</select>`;
+                    } else {
+                        // No predefined states - show text input
+                        fieldHTML += `<input type="text" class="eau-form-input" name="${fieldName}" id="eau-member-state" value="${value || ''}" placeholder="Enter state/province" ${requiredAttr}>`;
+                    }
+                } else {
+                    // View mode - try to get state label
+                    const countryValue = userData.meta && userData.meta.mem_country ? userData.meta.mem_country : '';
+                    const states = this.statesByCountry[countryValue] || {};
+                    const displayValue = states[value] || value;
+                    fieldHTML += `<input type="text" class="eau-form-input" value="${displayValue || ''}" readonly>`;
+                }
+
                 fieldHTML += `</div>`;
             } else {
                 // Input text, email, etc

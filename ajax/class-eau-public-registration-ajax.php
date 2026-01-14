@@ -205,7 +205,7 @@ class Eau_Public_Registration_Ajax {
         update_user_meta($user_id, 'mem_firstname', $first_name);
         update_user_meta($user_id, 'mem_lastname', $last_name);
         update_user_meta($user_id, 'mem_phone', $phone); // Standard phone field used in profile
-        update_user_meta($user_id, 'mem_position', $position);
+        update_user_meta($user_id, 'mem_memberposition', $position);
         update_user_meta($user_id, 'mem_state', $state);
         update_user_meta($user_id, 'mem_country', $country);
         update_user_meta($user_id, 'mem_userid', $user_id);

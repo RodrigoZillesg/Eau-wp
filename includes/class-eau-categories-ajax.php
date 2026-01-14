@@ -30,6 +30,15 @@ class Eau_Categories_Ajax {
 
         // Get stats
         add_action('wp_ajax_eau_get_categories_stats', array(__CLASS__, 'get_categories_stats'));
+
+        // Export categories (v1.55.5)
+        add_action('wp_ajax_eau_export_categories', array(__CLASS__, 'export_categories'));
+
+        // Import categories - analyze (v1.55.5)
+        add_action('wp_ajax_eau_import_categories_analyze', array(__CLASS__, 'import_categories_analyze'));
+
+        // Import categories - execute (v1.55.5)
+        add_action('wp_ajax_eau_import_categories_execute', array(__CLASS__, 'import_categories_execute'));
     }
 
     /**
@@ -263,6 +272,116 @@ class Eau_Categories_Ajax {
             'configured' => (int) $configured,
             'not_configured' => (int) $not_configured,
             'avg_points' => $avg_points ? number_format_i18n((float) $avg_points, 2) : '0.00',
+        ));
+    }
+
+    /**
+     * Export categories to JSON
+     *
+     * @since 1.55.5
+     */
+    public static function export_categories() {
+        check_ajax_referer('eau_categories_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'), 403);
+        }
+
+        $data = Eau_Categories_Export_Import::export_categories();
+
+        wp_send_json_success($data);
+    }
+
+    /**
+     * Analyze import file and show preview
+     *
+     * @since 1.55.5
+     */
+    public static function import_categories_analyze() {
+        check_ajax_referer('eau_categories_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'), 403);
+        }
+
+        if (!isset($_FILES['json_file'])) {
+            wp_send_json_error(array('message' => 'Nenhum arquivo enviado.'), 400);
+        }
+
+        // Parse uploaded file
+        $data = Eau_Categories_Export_Import::parse_uploaded_file($_FILES['json_file']);
+
+        if (is_wp_error($data)) {
+            wp_send_json_error(array('message' => $data->get_error_message()), 400);
+        }
+
+        // Validate structure
+        $validation = Eau_Categories_Export_Import::validate_import_data($data);
+
+        if (is_wp_error($validation)) {
+            wp_send_json_error(array('message' => $validation->get_error_message()), 400);
+        }
+
+        // Store temp file for later import
+        $temp_filename = Eau_Categories_Export_Import::store_temp_file($_FILES['json_file']);
+
+        if (is_wp_error($temp_filename)) {
+            wp_send_json_error(array('message' => $temp_filename->get_error_message()), 500);
+        }
+
+        // Get preview
+        $preview = Eau_Categories_Export_Import::get_import_preview($data, 10);
+
+        wp_send_json_success(array(
+            'filename' => $temp_filename,
+            'total_categories' => $preview['total_categories'],
+            'will_create' => $preview['will_create'],
+            'will_update' => $preview['will_update'],
+            'preview' => $preview['preview'],
+            'export_date' => isset($data['export_date']) ? $data['export_date'] : null,
+            'plugin_version' => isset($data['plugin_version']) ? $data['plugin_version'] : null,
+        ));
+    }
+
+    /**
+     * Execute import
+     *
+     * @since 1.55.5
+     */
+    public static function import_categories_execute() {
+        check_ajax_referer('eau_categories_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permissão negada.'), 403);
+        }
+
+        $filename = isset($_POST['filename']) ? sanitize_file_name($_POST['filename']) : '';
+        $skip_existing = isset($_POST['skip_existing']) ? filter_var($_POST['skip_existing'], FILTER_VALIDATE_BOOLEAN) : false;
+
+        if (empty($filename)) {
+            wp_send_json_error(array('message' => 'Arquivo não especificado.'), 400);
+        }
+
+        // Get data from temp file
+        $data = Eau_Categories_Export_Import::get_temp_file_data($filename);
+
+        if (is_wp_error($data)) {
+            wp_send_json_error(array('message' => $data->get_error_message()), 400);
+        }
+
+        // Execute import
+        $results = Eau_Categories_Export_Import::import_categories($data, $skip_existing);
+
+        // Clean up temp file
+        Eau_Categories_Export_Import::delete_temp_file($filename);
+
+        wp_send_json_success(array(
+            'message' => 'Importação concluída.',
+            'total' => $results['total'],
+            'created' => $results['created'],
+            'updated' => $results['updated'],
+            'skipped' => $results['skipped'],
+            'errors' => $results['errors'],
         ));
     }
 }

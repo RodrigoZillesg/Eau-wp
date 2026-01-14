@@ -270,7 +270,7 @@ class Eau_Membership_Importer {
             update_user_meta($user_id, 'mem_membercompanyname', $company_id);
         }
         if (!empty($position)) {
-            update_user_meta($user_id, 'mem_position', $position);
+            update_user_meta($user_id, 'mem_memberposition', $position);
         }
 
         // Update first/last name if provided and current is empty

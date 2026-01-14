@@ -57,6 +57,10 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-categories-management.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-categories-ajax.php';
 
+        // Event Categories Management (v1.61.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-event-categories-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-event-categories-ajax.php';
+
         // My CPDs (v1.37.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-cpds.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-my-cpds-ajax.php';
@@ -145,6 +149,9 @@ class Eau_System {
         // Pages Manager (v1.57.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-pages.php';
 
+        // Custom Header (v1.57.5)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-header.php';
+
         // Ensure membership tables exist (for updates without reactivation)
         if (!Eau_Membership_Database::tables_exist()) {
             Eau_Membership_Database::create_tables();
@@ -178,6 +185,156 @@ class Eau_System {
     private function define_frontend_hooks() {
         // Enfileira assets do dashboard no frontend
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
+
+        // Adiciona CSS crítico inline para evitar FOUC (Flash of Unstyled Content)
+        add_action('wp_head', array($this, 'add_critical_css'), 1);
+
+        // Adiciona script para remover loading quando CSS carregar
+        add_action('wp_footer', array($this, 'add_fouc_prevention_script'), 999);
+    }
+
+    /**
+     * Adiciona CSS crítico inline no <head> para evitar FOUC
+     * Prioridade 1 para carregar antes de qualquer outro CSS
+     */
+    public function add_critical_css() {
+        ?>
+        <style id="eau-critical-css">
+            /* Overlay de loading - esconde conteúdo até CSS carregar */
+            .eau-loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #f9fafb;
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.3s ease-out;
+            }
+            .eau-loading-overlay.eau-fade-out {
+                opacity: 0;
+                pointer-events: none;
+            }
+            .eau-loading-spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid #e5e7eb;
+                border-top-color: #2563eb;
+                border-radius: 50%;
+                animation: eau-spin 0.8s linear infinite;
+            }
+            @keyframes eau-spin {
+                to { transform: rotate(360deg); }
+            }
+
+            /* Esconde conteúdo Eau inicialmente até CSS carregar */
+            body:not(.eau-styles-loaded) .eau-dashboard-container,
+            body:not(.eau-styles-loaded) .eau-members-management,
+            body:not(.eau-styles-loaded) .eau-institutions-management,
+            body:not(.eau-styles-loaded) .eau-activities-management,
+            body:not(.eau-styles-loaded) .eau-categories-management,
+            body:not(.eau-styles-loaded) .eau-my-cpds-container,
+            body:not(.eau-styles-loaded) .eau-my-profile-container,
+            body:not(.eau-styles-loaded) .eau-my-institution-container,
+            body:not(.eau-styles-loaded) .eau-settings-container,
+            body:not(.eau-styles-loaded) .eau-payments-container,
+            body:not(.eau-styles-loaded) .eau-duplicate-manager,
+            body:not(.eau-styles-loaded) .eau-openlearning-container,
+            body:not(.eau-styles-loaded) .eau-events-management,
+            body:not(.eau-styles-loaded) .eau-registration-form,
+            body:not(.eau-styles-loaded) .eau-membership-selection,
+            body:not(.eau-styles-loaded) .eau-membership-applications {
+                opacity: 0;
+            }
+
+            /* Transição suave quando estilos carregarem */
+            body.eau-styles-loaded .eau-dashboard-container,
+            body.eau-styles-loaded .eau-members-management,
+            body.eau-styles-loaded .eau-institutions-management,
+            body.eau-styles-loaded .eau-activities-management,
+            body.eau-styles-loaded .eau-categories-management,
+            body.eau-styles-loaded .eau-my-cpds-container,
+            body.eau-styles-loaded .eau-my-profile-container,
+            body.eau-styles-loaded .eau-my-institution-container,
+            body.eau-styles-loaded .eau-settings-container,
+            body.eau-styles-loaded .eau-payments-container,
+            body.eau-styles-loaded .eau-duplicate-manager,
+            body.eau-styles-loaded .eau-openlearning-container,
+            body.eau-styles-loaded .eau-events-management,
+            body.eau-styles-loaded .eau-registration-form,
+            body.eau-styles-loaded .eau-membership-selection,
+            body.eau-styles-loaded .eau-membership-applications {
+                opacity: 1;
+                transition: opacity 0.2s ease-in;
+            }
+        </style>
+        <script>
+            // Adiciona overlay de loading imediatamente
+            (function() {
+                var overlay = document.createElement('div');
+                overlay.className = 'eau-loading-overlay';
+                overlay.id = 'eau-loading-overlay';
+                overlay.innerHTML = '<div class="eau-loading-spinner"></div>';
+                document.documentElement.appendChild(overlay);
+            })();
+        </script>
+        <?php
+    }
+
+    /**
+     * Adiciona script no footer para remover overlay quando CSS carregar
+     */
+    public function add_fouc_prevention_script() {
+        ?>
+        <script>
+            (function() {
+                function removeLoadingOverlay() {
+                    var overlay = document.getElementById('eau-loading-overlay');
+                    if (overlay) {
+                        overlay.classList.add('eau-fade-out');
+                        setTimeout(function() {
+                            overlay.remove();
+                        }, 300);
+                    }
+                    document.body.classList.add('eau-styles-loaded');
+                }
+
+                // Verifica se todas as stylesheets foram carregadas
+                function checkStylesLoaded() {
+                    var stylesheets = document.querySelectorAll('link[rel="stylesheet"]');
+                    var allLoaded = true;
+
+                    stylesheets.forEach(function(link) {
+                        if (!link.sheet) {
+                            allLoaded = false;
+                        }
+                    });
+
+                    return allLoaded;
+                }
+
+                // Aguarda DOM ready e estilos carregados
+                if (document.readyState === 'complete') {
+                    removeLoadingOverlay();
+                } else {
+                    window.addEventListener('load', function() {
+                        // Pequeno delay para garantir que estilos foram aplicados
+                        setTimeout(removeLoadingOverlay, 50);
+                    });
+                }
+
+                // Fallback: remove após 3 segundos caso algo dê errado
+                setTimeout(function() {
+                    if (document.getElementById('eau-loading-overlay')) {
+                        removeLoadingOverlay();
+                    }
+                }, 3000);
+            })();
+        </script>
+        <?php
     }
 
     public function enqueue_frontend_assets() {
@@ -234,6 +391,7 @@ class Eau_System {
         \EauSystem\Ajax\Eau_Institutions_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_Activities_Ajax::register_handlers();
         Eau_Categories_Ajax::register_ajax_handlers();
+        Eau_Event_Categories_Ajax::register_ajax_handlers();
         \EauSystem\Ajax\Eau_My_Cpds_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_Settings_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_My_Profile_Ajax::register_handlers();
@@ -297,6 +455,9 @@ class Eau_System {
         if (Eau_Pages::needs_page_creation()) {
             Eau_Pages::create_pages();
         }
+
+        // Initialize custom header for system pages (v1.57.5)
+        Eau_Header::init();
     }
 
     public function get_plugin_name() {

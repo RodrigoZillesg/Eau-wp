@@ -1171,6 +1171,35 @@
     max-height: calc(100vh - 2rem) !important;
 }
 
+/* Modal Full Height - Ocupa altura total da tela abaixo do header */
+.eau-modal-container.eau-modal-fullheight,
+.eau-modal-fullheight .eau-modal-container,
+.eau-modal-overlay > .eau-modal.eau-modal-fullheight {
+    top: calc(70px + 1rem) !important; /* Header height (70px) + margin */
+    transform: translateX(-50%) !important;
+    max-width: 900px !important;
+    height: calc(100vh - 70px - 2rem) !important; /* Full height - header - margins */
+    max-height: calc(100vh - 70px - 2rem) !important;
+}
+
+/* Animação específica para fullheight (sem translateY no transform) */
+@keyframes eauSlideUpFullheight {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.eau-modal-container.eau-modal-fullheight,
+.eau-modal-fullheight .eau-modal-container,
+.eau-modal-overlay > .eau-modal.eau-modal-fullheight {
+    animation: eauSlideUpFullheight 0.2s ease !important;
+}
+
 /* Modal Header */
 .eau-modal-header {
     display: flex !important;

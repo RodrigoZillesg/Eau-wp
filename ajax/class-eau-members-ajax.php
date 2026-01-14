@@ -81,6 +81,7 @@ class Eau_Members_Ajax {
         $institution_id = isset($_POST['institution']) ? absint($_POST['institution']) : '';
         $membership_type = isset($_POST['membership_type']) ? sanitize_text_field($_POST['membership_type']) : '';
         $tag = isset($_POST['tag']) ? sanitize_text_field($_POST['tag']) : '';
+        $position = isset($_POST['position']) ? sanitize_text_field($_POST['position']) : '';
         $registered_date_from = isset($_POST['registered_date_from']) ? sanitize_text_field($_POST['registered_date_from']) : '';
         $registered_date_to = isset($_POST['registered_date_to']) ? sanitize_text_field($_POST['registered_date_to']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'display_name';
@@ -99,6 +100,7 @@ class Eau_Members_Ajax {
             'institution_id' => $institution_id,
             'membership_type' => $membership_type,
             'tag' => $tag,
+            'position' => $position,
             'registered_date_from' => $registered_date_from,
             'registered_date_to' => $registered_date_to,
             'orderby' => $orderby,
@@ -190,6 +192,13 @@ class Eau_Members_Ajax {
             esc_html($user_type_label)
         );
 
+        // Position (mem_memberposition)
+        $position_value = get_user_meta($user['ID'], 'mem_memberposition', true);
+        $position_label = self::get_position_label($position_value);
+        // Se não encontrar label no mapeamento, usa o valor original do banco
+        $position_display = !empty($position_label) ? $position_label : $position_value;
+        $position_html = !empty($position_display) ? esc_html($position_display) : '<span class="eau-text-muted">-</span>';
+
         // Status (case-insensitive comparison)
         $status_lower = strtolower($user['status']);
         $status_class = $status_lower === 'active' ? 'eau-status-badge-active' : 'eau-status-badge-inactive';
@@ -208,6 +217,7 @@ class Eau_Members_Ajax {
             'contact' => $contact_html,
             'membership' => $membership_html,
             'user_type' => $user_type_html,
+            'position' => $position_html,
             'status' => $status_html,
             'actions' => $actions_html,
             'member_tags' => implode(',', $member_tags), // Slugs das tags separadas por vírgula
@@ -275,6 +285,54 @@ class Eau_Members_Ajax {
         }
 
         return 'eau-user-type-member';
+    }
+
+    /**
+     * Pega o label amigável da position
+     *
+     * @param string $position Position value (pode ser slug ou label)
+     * @return string Label amigável ou string vazia se não encontrar
+     */
+    private static function get_position_label($position) {
+        if (empty($position)) {
+            return '';
+        }
+
+        // Mapeamento de slugs para labels
+        $labels = array(
+            'teacher' => 'Teacher',
+            'academic_manager' => 'Academic Manager',
+            'director_of_studies' => 'Director of Studies',
+            'principal' => 'Principal',
+            'general_manager_ceo' => 'General Manager/CEO',
+            'marketing_sales' => 'Marketing/Sales',
+            'admissions' => 'Admissions',
+            'student_services' => 'Student Services',
+            'other' => 'Other',
+        );
+
+        // Tenta encontrar pelo slug (case-insensitive)
+        $position_lower = strtolower($position);
+        if (isset($labels[$position_lower])) {
+            return $labels[$position_lower];
+        }
+
+        // Tenta encontrar pelo slug com underscores (ex: "Director of Studies" -> "director_of_studies")
+        $position_slug = strtolower(str_replace(' ', '_', $position));
+        $position_slug = preg_replace('/[^a-z0-9_]/', '', $position_slug);
+        if (isset($labels[$position_slug])) {
+            return $labels[$position_slug];
+        }
+
+        // Se o valor já é um label válido (case-insensitive), retorna o label padronizado
+        $labels_lower = array_map('strtolower', $labels);
+        $search_key = array_search($position_lower, $labels_lower);
+        if ($search_key !== false) {
+            return $labels[$search_key];
+        }
+
+        // Não encontrou - retorna vazio para usar o valor original
+        return '';
     }
 
     /**

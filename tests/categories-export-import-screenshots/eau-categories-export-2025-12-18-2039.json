@@ -1,0 +1,88 @@
+{
+  "export_version": "1.0",
+  "export_date": "2025-12-19 10:39:42",
+  "plugin_version": "1.55.5",
+  "total_categories": 16,
+  "categories": [
+    {
+      "category_serial": "14",
+      "category_name": "Attend English Australia PD event",
+      "points_per_hour": "2.00"
+    },
+    {
+      "category_serial": "9",
+      "category_name": "Attend English Australia webinar",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "21",
+      "category_name": "Attend in-house PD or Training event",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "15",
+      "category_name": "Attend industry PD event",
+      "points_per_hour": "3.00"
+    },
+    {
+      "category_serial": "10",
+      "category_name": "Attend Industry Training",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "23",
+      "category_name": "Attend industry webinar",
+      "points_per_hour": "2.00"
+    },
+    {
+      "category_serial": "19",
+      "category_name": "Be observed teaching (including feedback)",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "20",
+      "category_name": "Complete professional course",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "25",
+      "category_name": "Learning Circle Interactive Course",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "24",
+      "category_name": "Mentor TESOL teacher",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "18",
+      "category_name": "Peer-observe someone's lesson",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "22",
+      "category_name": "Present at in-house PD event (include preparation time)",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "17",
+      "category_name": "Present at industry event (include preparation time)",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "13",
+      "category_name": "Read journal article",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "11",
+      "category_name": "Read professional article",
+      "points_per_hour": "1.00"
+    },
+    {
+      "category_serial": "12",
+      "category_name": "Watch recorded webinar",
+      "points_per_hour": "1.00"
+    }
+  ]
+}
