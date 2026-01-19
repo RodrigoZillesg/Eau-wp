@@ -160,6 +160,7 @@
                             <input type="checkbox" class="eau-row-checkbox" value="${row._id}">
                         </td>
                         <td class="eau-table-td" data-label="INSTITUTION">${row.institution}</td>
+                        <td class="eau-table-td" data-label="CAMPUS">${row.campus || ''}</td>
                         <td class="eau-table-td" data-label="CODE">${row.code}</td>
                         <td class="eau-table-td" data-label="TYPE">${row.type}</td>
                         <td class="eau-table-td" data-label="CONTACT">${row.contact}</td>
@@ -198,7 +199,7 @@
         getEmptyState: function() {
             return `
                 <tr class="eau-table-empty">
-                    <td colspan="10" style="text-align: center; padding: 3rem;">
+                    <td colspan="11" style="text-align: center; padding: 3rem;">
                         <i data-lucide="inbox" style="width: 3rem; height: 3rem; color: #d1d5db; margin-bottom: 1rem;"></i>
                         <p style="color: #6b7280; margin: 0;">No institutions found</p>
                     </td>
@@ -220,6 +221,7 @@
             // Mapeamento de colunas para campos de ordenação
             const columnMap = {
                 'institution': 'ins_company_name',
+                'campus': 'ins_company_name',
                 'code': 'ins_company_id',
                 'type': 'ins_type',
                 'contact': 'ins_company_email',

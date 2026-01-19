@@ -109,6 +109,12 @@ class Eau_Email_Update_Page {
                         <i data-lucide="info"></i>
                         Your institutional email will be saved as a secondary email for reference.
                     </p>
+                    <p class="eau-logout-link">
+                        <a href="<?php echo esc_url(wp_logout_url(home_url('/login/'))); ?>">
+                            <i data-lucide="log-out"></i>
+                            Logout and use a different account
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>

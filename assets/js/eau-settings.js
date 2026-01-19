@@ -130,6 +130,11 @@
                 self.recreateMissingPages();
             });
 
+            // Save email exemptions button (v1.66.8)
+            $('#eau-save-email-exempt-btn').on('click', function() {
+                self.saveEmailExemptions();
+            });
+
             // Add tag button
             $('#eau-add-tag-btn').on('click', function() {
                 self.addTag();
@@ -573,6 +578,59 @@
                         }, 1500);
                     } else {
                         EauNotifications.error('Error', response.data.message || 'Failed to recreate pages.');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Network Error', 'Please check your connection and try again.');
+                },
+                complete: function() {
+                    // Re-enable button
+                    $btn.prop('disabled', false).html(originalHtml);
+
+                    // Re-init icons
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Save email exemptions (v1.66.8)
+         */
+        saveEmailExemptions: function() {
+            const $btn = $('#eau-save-email-exempt-btn');
+            const $textarea = $('#eau-email-migration-exempt');
+            const originalHtml = $btn.html();
+            const emails = $textarea.val().trim();
+
+            // Disable button and show loading
+            $btn.prop('disabled', true).html('<i data-lucide="loader-2" class="eau-spin"></i> Saving...');
+
+            // Re-init icons for loading spinner
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_save_email_exempt',
+                    nonce: eauSettingsData.nonce,
+                    emails: emails
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const count = response.data.count || 0;
+                        EauNotifications.success(
+                            'Exemptions Saved',
+                            count > 0
+                                ? `${count} email(s) added to exemption list.`
+                                : 'Exemption list cleared.'
+                        );
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to save exemptions.');
                     }
                 },
                 error: function() {
@@ -1157,8 +1215,23 @@
         showPreview: function(data) {
             const self = this;
 
+            // Store format for later use
+            this.csvFormat = data.format || 'legacy';
+
+            // Show format info badge
+            const formatClass = this.csvFormat === 'membership' ? 'membership' : 'legacy';
+            const formatLabel = data.format_name || (this.csvFormat === 'membership' ? 'MembershipDetails' : 'Legacy');
+            const formatHtml = `
+                <span class="eau-format-badge ${formatClass}">
+                    <i data-lucide="${this.csvFormat === 'membership' ? 'calendar-check' : 'building-2'}"></i>
+                    ${formatLabel}
+                </span>
+                <span style="color: #666; font-size: 13px;">Format detected automatically</span>
+            `;
+            $('#eau-institution-format-info').html(formatHtml);
+
             // Build stats HTML
-            const statsHtml = `
+            let statsHtml = `
                 <div class="eau-stat-box total">
                     <div class="eau-stat-number">${data.total_institutions}</div>
                     <div class="eau-stat-label">Unique Institutions</div>
@@ -1172,24 +1245,83 @@
                     <div class="eau-stat-label">Will Create</div>
                 </div>
             `;
+
+            // Show delete stat if there are institutions to delete
+            if (data.will_delete && data.will_delete > 0) {
+                statsHtml += `
+                    <div class="eau-stat-box delete">
+                        <div class="eau-stat-number">${data.will_delete}</div>
+                        <div class="eau-stat-label">Not in CSV</div>
+                    </div>
+                `;
+            }
             $('#eau-institution-preview-stats').html(statsHtml);
 
-            // Build preview table
+            // Show sync option for membership format
+            if (this.csvFormat === 'membership' && data.will_delete > 0) {
+                $('#eau-institution-sync-option').show();
+                $('#eau-institution-delete-count').text('(' + data.will_delete + ' institutions)');
+            } else {
+                $('#eau-institution-sync-option').hide();
+            }
+
+            // Update table headers based on format
+            let theadHtml = '';
+            if (this.csvFormat === 'membership') {
+                theadHtml = `
+                    <tr>
+                        <th>Company ID</th>
+                        <th>Company Name</th>
+                        <th>Membership Type</th>
+                        <th>Start Date</th>
+                        <th>Expiry Date</th>
+                        <th>Action</th>
+                    </tr>
+                `;
+            } else {
+                theadHtml = `
+                    <tr>
+                        <th>Company ID</th>
+                        <th>Company Name</th>
+                        <th>Email</th>
+                        <th>Type</th>
+                        <th>State</th>
+                        <th>Action</th>
+                    </tr>
+                `;
+            }
+            $('#eau-institution-preview-thead').html(theadHtml);
+
+            // Build preview table rows
             let tableHtml = '';
             if (data.preview && data.preview.length > 0) {
                 data.preview.forEach(function(row) {
                     const actionClass = row.action === 'update' ? 'update' : 'create';
                     const actionLabel = row.action === 'update' ? 'UPDATE' : 'CREATE';
-                    tableHtml += `
-                        <tr>
-                            <td>${self.escapeHtml(row.company_id)}</td>
-                            <td>${self.escapeHtml(row.company_name)}</td>
-                            <td>${self.escapeHtml(row.email)}</td>
-                            <td>${self.escapeHtml(row.type)}</td>
-                            <td>${self.escapeHtml(row.state)}</td>
-                            <td><span class="eau-action-badge ${actionClass}">${actionLabel}</span></td>
-                        </tr>
-                    `;
+
+                    if (self.csvFormat === 'membership') {
+                        tableHtml += `
+                            <tr>
+                                <td>${self.escapeHtml(row.company_id)}</td>
+                                <td>${self.escapeHtml(row.company_name)}</td>
+                                <td>${self.escapeHtml(row.membership_type || '')}</td>
+                                <td>${self.escapeHtml(row.start_date || '')}</td>
+                                <td>${self.escapeHtml(row.expiry_date || '')}</td>
+                                <td><span class="eau-action-badge ${actionClass}">${actionLabel}</span></td>
+                            </tr>
+                        `;
+                    } else {
+                        tableHtml += `
+                            <tr>
+                                <td>${self.escapeHtml(row.company_id)}</td>
+                                <td>${self.escapeHtml(row.company_name)}</td>
+                                <td>${self.escapeHtml(row.email || '')}</td>
+                                <td>${self.escapeHtml(row.type || '')}</td>
+                                <td>${self.escapeHtml(row.state || '')}</td>
+                                <td><span class="eau-action-badge ${actionClass}">${actionLabel}</span></td>
+                            </tr>
+                        `;
+                    }
                 });
             }
             $('#eau-institution-preview-table tbody').html(tableHtml);
@@ -1210,9 +1342,14 @@
             this.totalUpdated = 0;
             this.totalCreated = 0;
             this.totalSkipped = 0;
+            this.totalDeleted = 0;
+            this.syncDelete = $('#eau-institution-sync-delete').is(':checked');
             $('#eau-institution-import-log').html('');
 
             this.logMessage('info', 'Starting institution import...');
+            if (this.syncDelete) {
+                this.logMessage('warning', 'Full sync enabled - institutions not in CSV will be deleted.');
+            }
             this.processBatch(0);
         },
 
@@ -1233,7 +1370,8 @@
                     nonce: eauSettingsData.nonce,
                     filename: this.csvFilename,
                     offset: offset,
-                    limit: 25
+                    limit: 25,
+                    sync_delete: this.syncDelete ? 1 : 0
                 },
                 success: function(response) {
                     if (response.success) {
@@ -1242,6 +1380,7 @@
                         self.totalUpdated += data.updated || 0;
                         self.totalCreated += data.created || 0;
                         self.totalSkipped += data.skipped || 0;
+                        self.totalDeleted += data.deleted || 0;
 
                         // Update progress
                         const progress = Math.round((data.processed / data.total) * 100);
@@ -1259,6 +1398,9 @@
                         }
                         if (data.skipped > 0) {
                             self.logMessage('error', `Batch: ${data.skipped} institutions skipped`);
+                        }
+                        if (data.deleted > 0) {
+                            self.logMessage('info', `Sync: ${data.deleted} institutions deleted (not in CSV)`);
                         }
 
                         // Log errors
@@ -1301,8 +1443,15 @@
         showComplete: function(data) {
             this.logMessage('success', 'Institution import complete!');
 
+            // Build deleted item HTML conditionally
+            const deletedItemHtml = this.totalDeleted > 0 ? `
+                    <div class="eau-summary-item">
+                        <div class="eau-summary-number deleted">${this.totalDeleted}</div>
+                        <div class="eau-summary-label">Institutions Deleted</div>
+                    </div>` : '';
+
             const summaryHtml = `
-                <div class="eau-summary-grid">
+                <div class="eau-summary-grid${this.totalDeleted > 0 ? ' eau-summary-grid-4' : ''}">
                     <div class="eau-summary-item">
                         <div class="eau-summary-number updated">${this.totalUpdated}</div>
                         <div class="eau-summary-label">Institutions Updated</div>
@@ -1315,6 +1464,7 @@
                         <div class="eau-summary-number skipped">${this.totalSkipped}</div>
                         <div class="eau-summary-label">Institutions Skipped</div>
                     </div>
+                    ${deletedItemHtml}
                 </div>
                 <p style="text-align: center; margin-top: 15px;">
                     <strong>Total processed:</strong> ${data.total} unique institutions

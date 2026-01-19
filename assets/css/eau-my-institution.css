@@ -490,6 +490,12 @@
     color: #4b5563;
 }
 
+/* v1.67.1 - Info badge for transferred status */
+.eau-badge-info {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
 .eau-badge-outline {
     background: transparent;
     border: 1px solid #d1d5db;
@@ -646,6 +652,19 @@
 
 .eau-history-item-cancelled {
     border-left: 4px solid #9ca3af;
+}
+
+/* v1.67.1 - Member-institution history statuses */
+.eau-history-item-linked {
+    border-left: 4px solid #10b981;
+}
+
+.eau-history-item-unlinked {
+    border-left: 4px solid #ef4444;
+}
+
+.eau-history-item-transferred {
+    border-left: 4px solid #3b82f6;
 }
 
 .eau-history-item-header {
@@ -954,5 +973,600 @@
 
     #eau-edit-institution-modal .eau-form-field-span-2 {
         grid-column: span 1;
+    }
+}
+
+/* ========================================
+   Tabs System (v1.65.0)
+   ======================================== */
+
+.eau-tabs-wrapper {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Tab Navigation */
+.eau-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.eau-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-size: 0.875rem !important;
+    font-weight: 500;
+    color: #6b7280 !important;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.eau-tab:hover {
+    color: #2563eb !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+}
+
+.eau-tab.active {
+    color: #2563eb !important;
+    border-bottom-color: #2563eb !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+}
+
+.eau-tab:focus,
+.eau-tab:active {
+    outline: none !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+}
+
+.eau-tab i,
+.eau-tab svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.eau-tab-text {
+    display: inline;
+}
+
+.eau-tab-badge {
+    display: none;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.eau-tab-badge:not(:empty) {
+    display: inline-block;
+}
+
+/* Tab Content */
+.eau-tab-contents {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 1.5rem;
+}
+
+.eau-tab-content {
+    display: none;
+}
+
+.eau-tab-content.active {
+    display: block;
+}
+
+/* ========================================
+   Institution Selector
+   ======================================== */
+
+.eau-institution-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.eau-institution-selector label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #0369a1;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.eau-institution-selector label i,
+.eau-institution-selector label svg {
+    width: 18px;
+    height: 18px;
+}
+
+.eau-institution-selector select {
+    flex: 1;
+    max-width: 400px;
+    padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+    border: 1px solid #7dd3fc;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: #ffffff;
+    color: #111827;
+}
+
+.eau-institution-selector select:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+/* ========================================
+   Section Divider & Subtitles
+   ======================================== */
+
+.eau-section-divider {
+    margin: 2rem 0;
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.eau-section-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.eau-section-subtitle i,
+.eau-section-subtitle svg {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+.eau-section-subtitle .eau-badge {
+    margin-left: 0.5rem;
+}
+
+/* ========================================
+   Leave Section
+   ======================================== */
+
+.eau-leave-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.eau-leave-section .eau-btn-outline-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.eau-leave-section .eau-btn-outline-danger:hover,
+.eau-leave-section .eau-btn-outline-danger:focus,
+.eau-leave-section .eau-btn-outline-danger:active {
+    background: #fee2e2 !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+    outline: none !important;
+}
+
+/* ========================================
+   Loading State for Institution Details
+   ======================================== */
+
+.eau-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.eau-loading-state p {
+    margin: 1rem 0 0 0;
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   Empty State Enhancements
+   ======================================== */
+
+.eau-empty-state h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* ========================================
+   My History Section (Below Tabs)
+   ======================================== */
+
+.eau-my-history-section {
+    margin-top: 0;
+}
+
+/* ========================================
+   Embedded Institution Single Page Overrides
+   ======================================== */
+
+/* Ajustes para a single page quando incorporada */
+.eau-institution-embedded {
+    /* Remove margens extras quando embedded */
+}
+
+.eau-institution-embedded .eau-institution-hero {
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.eau-institution-embedded .eau-info-cards {
+    margin-bottom: 1.5rem;
+}
+
+.eau-institution-embedded .eau-members-section,
+.eau-institution-embedded .eau-primary-contact-section,
+.eau-institution-embedded .eau-institution-admins-section {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+/* ========================================
+   Responsive Adjustments for Tabs
+   ======================================== */
+
+@media (max-width: 768px) {
+    .eau-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .eau-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .eau-tab {
+        padding: 0.875rem 1rem;
+        font-size: 0.8125rem !important;
+    }
+
+    .eau-tab-text {
+        display: none;
+    }
+
+    .eau-tab i,
+    .eau-tab svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .eau-tab-contents {
+        padding: 1rem;
+    }
+
+    .eau-institution-selector {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .eau-institution-selector select {
+        max-width: 100%;
+    }
+
+    .eau-section-divider {
+        margin: 1.5rem 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .eau-tabs-wrapper {
+        margin-left: -16px;
+        margin-right: -16px;
+    }
+
+    .eau-tabs {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .eau-tab-contents {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+}
+
+/* ============================================
+   INSTITUTION SELECT DROPDOWN (v1.65.2)
+   ============================================ */
+
+.eau-section-description {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin-bottom: 1.5rem !important;
+    margin-top: -0.5rem !important;
+}
+
+/* Institution Search & Select Wrapper */
+.eau-institution-search-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.eau-institution-filter-input {
+    width: 100% !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+}
+
+.eau-institution-filter-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-institution-filter-input::placeholder {
+    color: #9ca3af !important;
+}
+
+.eau-institution-select-large {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9375rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    cursor: pointer !important;
+}
+
+.eau-institution-select-large:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-institution-select-large:disabled {
+    background-color: #f3f4f6 !important;
+    cursor: not-allowed !important;
+}
+
+.eau-form-hint {
+    font-size: 0.8125rem !important;
+    color: #9ca3af !important;
+    margin-top: 0.5rem !important;
+}
+
+/* Institution Preview Card */
+.eau-institution-preview-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.eau-institution-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.eau-institution-preview-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid #e0f2fe;
+}
+
+.eau-institution-preview-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.eau-institution-preview-logo i {
+    width: 28px;
+    height: 28px;
+    color: #0ea5e9;
+}
+
+.eau-institution-preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.eau-institution-preview-info h4 {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+    margin: 0 0 0.25rem 0 !important;
+    line-height: 1.3 !important;
+}
+
+.eau-institution-preview-info p {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+.eau-institution-preview-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.eau-preview-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.eau-preview-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.eau-preview-detail span:not(.eau-preview-label):not(.eau-badge) {
+    color: #374151;
+}
+
+.eau-institution-preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.eau-institution-preview-actions .eau-btn {
+    padding: 0.625rem 1.5rem !important;
+}
+
+/* Responsive adjustments for preview card */
+@media (max-width: 576px) {
+    .eau-institution-preview-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .eau-institution-preview-logo {
+        width: 80px;
+        height: 80px;
+    }
+
+    .eau-institution-preview-details {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .eau-preview-detail {
+        justify-content: center;
+    }
+
+    .eau-institution-preview-actions {
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   MANAGE INSTITUTION LINK (v1.65.4)
+   ============================================ */
+
+.eau-manage-institution-link {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.eau-manage-institution-link .eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.625rem 1.25rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-manage-institution-link .eau-btn-primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #2563eb !important;
+}
+
+.eau-manage-institution-link .eau-btn-primary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+.eau-manage-institution-link .eau-btn-primary:active,
+.eau-manage-institution-link .eau-btn-primary:focus,
+.eau-manage-institution-link .eau-btn-primary:visited {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    outline: none !important;
+    text-decoration: none !important;
+}
+
+.eau-manage-institution-link .eau-btn i,
+.eau-manage-institution-link .eau-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .eau-manage-institution-link {
+        justify-content: center;
+    }
+
+    .eau-manage-institution-link .eau-btn {
+        width: 100%;
+        justify-content: center;
     }
 }

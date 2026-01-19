@@ -20,10 +20,19 @@
         phoneIti: null, // intl-tel-input instance
         currentCountryHasDetailedData: false,
 
+        // === STATE for Tabs ===
+        searchDataLoaded: false,
+        requestsDataLoaded: false,
+        currentInstitutionId: 0,
+        allInstitutions: [], // All institutions for select dropdown
+
         // === INIT ===
         init: function() {
             this.config = window.eauMyInstitutionData || {};
+            this.currentInstitutionId = this.config.defaultInstitutionId || 0;
             this.bindEvents();
+            this.bindTabEvents();
+            this.bindInstitutionSelectorEvents();
             this.bindLocationEvents();
             this.bindMediaUploadEvents();
             this.loadInitialData();
@@ -33,33 +42,40 @@
         bindEvents: function() {
             const self = this;
 
-            // Search input with debounce
-            $('#eau-institution-search').on('input', function() {
-                clearTimeout(self.searchTimeout);
-                const term = $(this).val().trim();
-
-                if (term.length < 2) {
-                    self.clearSearchResults();
-                    return;
+            // Institution select change - show preview
+            $('#eau-institution-select').on('change', function() {
+                const institutionId = $(this).val();
+                if (institutionId) {
+                    self.showInstitutionPreview(institutionId);
+                } else {
+                    self.hideInstitutionPreview();
                 }
-
-                self.searchTimeout = setTimeout(function() {
-                    self.searchPage = 1;
-                    self.searchInstitutions(term);
-                }, 300);
             });
 
-            // Search pagination
-            $(document).on('click', '#eau-search-pagination .eau-pagination-btn', function(e) {
+            // Institution filter input - filter select options
+            $('#eau-institution-filter').on('input', function() {
+                const filterTerm = $(this).val().toLowerCase().trim();
+                self.filterInstitutionSelect(filterTerm);
+            });
+
+            // Clear filter when select changes
+            $('#eau-institution-select').on('change', function() {
+                if ($(this).val()) {
+                    $('#eau-institution-filter').val('');
+                }
+            });
+
+            // Request to join button (from preview card)
+            $('#eau-request-join-btn').on('click', function(e) {
                 e.preventDefault();
-                const page = $(this).data('page');
-                if (page) {
-                    self.searchPage = page;
-                    self.searchInstitutions($('#eau-institution-search').val().trim());
+                const institutionId = $(this).data('institution-id');
+                const institutionName = $(this).data('institution-name');
+                if (institutionId) {
+                    self.openRequestModal(institutionId, institutionName);
                 }
             });
 
-            // Request to join button
+            // Request to join button (legacy - from search results)
             $(document).on('click', '.eau-request-join-btn', function(e) {
                 e.preventDefault();
                 const $btn = $(this);
@@ -182,6 +198,55 @@
                 }
             });
         },
+
+        // === BIND TAB EVENTS ===
+        bindTabEvents: function() {
+            const self = this;
+
+            // Tab switching
+            $(document).on('click', '.eau-tabs .eau-tab', function(e) {
+                e.preventDefault();
+                const tab = $(this).data('tab');
+
+                // Don't do anything if already active
+                if ($(this).hasClass('active')) {
+                    return;
+                }
+
+                // Update tab buttons
+                $('.eau-tabs .eau-tab').removeClass('active');
+                $(this).addClass('active');
+
+                // Update tab contents
+                $('.eau-tab-content').removeClass('active');
+                $(`.eau-tab-content[data-tab="${tab}"]`).addClass('active');
+
+                // Load data for specific tabs if needed (lazy loading)
+                if (tab === 'search' && !self.searchDataLoaded) {
+                    self.loadInstitutionsForSelect();
+                    self.loadPendingRequests();
+                    self.searchDataLoaded = true;
+                }
+                if (tab === 'requests' && !self.requestsDataLoaded) {
+                    self.loadIncomingRequests();
+                    self.loadInstitutionHistory();
+                    self.requestsDataLoaded = true;
+                }
+
+                // Re-initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        // === BIND INSTITUTION SELECTOR EVENTS ===
+        // Note: Binding is now done dynamically in renderInstitutionDetailsTab()
+        bindInstitutionSelectorEvents: function() {
+            // Empty - selector binding happens after AJAX load in renderInstitutionDetailsTab
+        },
+
+        // Note: loadInstitutionDetailsEmbedded removed - now using loadInstitutionEmbedded
 
         // === BIND LOCATION EVENTS (Country -> State -> City cascade) ===
         bindLocationEvents: function() {
@@ -567,15 +632,171 @@
 
         // === LOAD INITIAL DATA ===
         loadInitialData: function() {
-            this.loadStats();
-            this.loadCurrentInstitution();
-            this.loadPendingRequests();
+            // Stats (institutionAdmin only - shown above tabs)
+            if (this.config.isInstitutionAdmin) {
+                this.loadStats();
+            }
+
+            // My Request History (always visible below tabs)
             this.loadMyHistory();
 
-            if (this.config.isInstitutionAdmin) {
-                this.loadIncomingRequests();
-                this.loadInstitutionHistory();
+            // Load Institution Details (first tab - always visible initially)
+            this.loadInstitutionDetailsTab();
+
+            // Initialize Lucide icons for the initially rendered content
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
             }
+
+            // Note: Other data is loaded lazily when tabs are clicked
+            // - Search tab: loadPendingRequests() is called when tab is activated
+            // - Requests tab: loadIncomingRequests() and loadInstitutionHistory() when tab is activated
+        },
+
+        // === LOAD INSTITUTION DETAILS TAB ===
+        loadInstitutionDetailsTab: function() {
+            const self = this;
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_my_institution',
+                    nonce: this.config.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.currentInstitutions = response.data.institutions || [];
+                        self.renderInstitutionDetailsTab();
+                    } else {
+                        self.renderNoInstitutionState();
+                    }
+                },
+                error: function() {
+                    self.renderNoInstitutionState();
+                }
+            });
+        },
+
+        renderInstitutionDetailsTab: function() {
+            const self = this;
+            const $content = $('#eau-institution-details-content');
+            const $selectorContainer = $('#eau-institution-selector-container');
+            const $leaveContainer = $('#eau-leave-section-container');
+
+            if (this.currentInstitutions.length === 0) {
+                this.renderNoInstitutionState();
+                return;
+            }
+
+            // If multiple institutions, show selector
+            if (this.currentInstitutions.length > 1) {
+                let selectorHtml = `
+                    <div class="eau-institution-selector">
+                        <label for="eau-institution-selector">
+                            <i data-lucide="building-2"></i>
+                            Select Institution:
+                        </label>
+                        <select id="eau-institution-selector" class="eau-form-select">
+                `;
+                this.currentInstitutions.forEach(function(inst) {
+                    selectorHtml += `<option value="${inst.id}">${self.escapeHtml(inst.name)}</option>`;
+                });
+                selectorHtml += `
+                        </select>
+                    </div>
+                `;
+                $selectorContainer.html(selectorHtml).show();
+
+                // Bind change event
+                $('#eau-institution-selector').on('change', function() {
+                    const institutionId = $(this).val();
+                    self.loadInstitutionEmbedded(institutionId);
+                });
+            }
+
+            // Load the first institution's embedded content
+            const firstInstitutionId = this.currentInstitutions[0].id;
+            this.currentInstitutionId = firstInstitutionId;
+            this.loadInstitutionEmbedded(firstInstitutionId);
+
+            // Show leave button for regular members (not institutionAdmin) with single institution
+            if (!this.config.isInstitutionAdmin && this.currentInstitutions.length === 1) {
+                const inst = this.currentInstitutions[0];
+                $leaveContainer.html(`
+                    <div class="eau-leave-section">
+                        <button type="button" class="eau-btn eau-btn-outline-danger eau-leave-institution-btn"
+                                data-institution-id="${inst.id}"
+                                data-institution-name="${self.escapeHtml(inst.name)}">
+                            <i data-lucide="log-out"></i>
+                            Leave Institution
+                        </button>
+                    </div>
+                `).show();
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        },
+
+        renderNoInstitutionState: function() {
+            const $content = $('#eau-institution-details-content');
+            $content.html(`
+                <div class="eau-empty-state">
+                    <i data-lucide="building-2"></i>
+                    <h3>No Institution</h3>
+                    <p>You are not currently linked to any institution.</p>
+                    <p class="eau-text-muted">Use the "Search & Join" tab to find and request to join an institution.</p>
+                </div>
+            `);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        loadInstitutionEmbedded: function(institutionId) {
+            const self = this;
+            const $content = $('#eau-institution-details-content');
+
+            // Show loading skeleton
+            $content.html('<div class="eau-loading-state"><div class="eau-spinner"></div><p>Loading institution details...</p></div>');
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_institution_embedded',
+                    nonce: this.config.nonce,
+                    institution_id: institutionId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $content.html(response.data.html);
+                        self.currentInstitutionId = institutionId;
+
+                        // Initialize Lucide icons first
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+
+                        // Initialize the single page controller with script data from AJAX
+                        if (response.data.scriptData) {
+                            // Re-initialize single page controller with new data
+                            if (typeof EauInstitutionSingleController !== 'undefined') {
+                                // Use the reinit method which properly initializes and loads members
+                                EauInstitutionSingleController.reinit(institutionId, response.data.scriptData);
+                            }
+                        }
+                    } else {
+                        $content.html('<div class="eau-empty-state"><p>' + (response.data.message || 'Error loading institution') + '</p></div>');
+                    }
+                },
+                error: function() {
+                    $content.html('<div class="eau-empty-state"><p>Error loading institution. Please try again.</p></div>');
+                }
+            });
         },
 
         // === LOAD STATS ===
@@ -652,8 +873,11 @@
 
             if (stats.incoming_requests > 0) {
                 $('#eau-incoming-count').text(stats.incoming_requests).show();
+                // v1.66.6 - Também atualiza o badge na aba Requests
+                $('#eau-requests-badge').text(stats.incoming_requests).show();
             } else {
                 $('#eau-incoming-count').hide();
+                $('#eau-requests-badge').hide();
             }
 
             if (typeof lucide !== 'undefined') {
@@ -935,6 +1159,206 @@
             }
         },
 
+        // === INSTITUTION SELECT (NEW) ===
+        loadInstitutionsForSelect: function() {
+            const self = this;
+            const $select = $('#eau-institution-select');
+            const $hint = $('#eau-institution-select-hint');
+
+            $hint.text('Loading institutions...');
+            $select.prop('disabled', true);
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_all_institutions_for_select',
+                    nonce: this.config.nonce
+                },
+                success: function(response) {
+                    if (response.success && response.data.institutions) {
+                        self.allInstitutions = response.data.institutions;
+                        self.populateInstitutionSelect(response.data.institutions);
+                        $hint.text(response.data.institutions.length + ' institutions available');
+                    } else {
+                        $hint.text('No institutions available');
+                    }
+                    $select.prop('disabled', false);
+                },
+                error: function() {
+                    $hint.text('Error loading institutions. Please refresh the page.');
+                    $select.prop('disabled', false);
+                }
+            });
+        },
+
+        populateInstitutionSelect: function(institutions) {
+            const self = this;
+            const $select = $('#eau-institution-select');
+
+            // Clear existing options except the first one
+            $select.find('option:not(:first)').remove();
+
+            // Add options for each institution
+            institutions.forEach(function(inst) {
+                const location = [inst.city, inst.state].filter(Boolean).join(', ');
+                let optionText = inst.name;
+                if (location) {
+                    optionText += ' - ' + location;
+                }
+
+                // Add status indicators
+                let suffix = '';
+                if (inst.is_current) {
+                    suffix = ' (Current)';
+                } else if (inst.has_pending_request) {
+                    suffix = ' (Pending Request)';
+                }
+
+                const $option = $('<option></option>')
+                    .val(inst.id)
+                    .text(optionText + suffix)
+                    .data('institution', inst);
+
+                if (inst.is_current || inst.has_pending_request) {
+                    $option.prop('disabled', true);
+                }
+
+                $select.append($option);
+            });
+        },
+
+        filterInstitutionSelect: function(filterTerm) {
+            const $select = $('#eau-institution-select');
+            const $options = $select.find('option');
+            let visibleCount = 0;
+
+            $options.each(function() {
+                const $option = $(this);
+                const value = $option.val();
+
+                // Always show the placeholder option
+                if (!value) {
+                    $option.show();
+                    return;
+                }
+
+                const text = $option.text().toLowerCase();
+                const inst = $option.data('institution');
+
+                // Check if matches filter term
+                let matches = text.includes(filterTerm);
+
+                // Also check city, state, country if available
+                if (!matches && inst) {
+                    const city = (inst.city || '').toLowerCase();
+                    const state = (inst.state || '').toLowerCase();
+                    const country = (inst.country || '').toLowerCase();
+                    matches = city.includes(filterTerm) ||
+                              state.includes(filterTerm) ||
+                              country.includes(filterTerm);
+                }
+
+                if (matches || !filterTerm) {
+                    $option.show();
+                    visibleCount++;
+                } else {
+                    $option.hide();
+                }
+            });
+
+            // Update hint with filtered count
+            const $hint = $('#eau-institution-select-hint');
+            if (filterTerm) {
+                $hint.text(visibleCount + ' institutions matching "' + filterTerm + '"');
+            } else {
+                $hint.text(this.allInstitutions.length + ' institutions available');
+            }
+
+            // If only one visible option (besides placeholder), auto-select it
+            if (visibleCount === 1 && filterTerm) {
+                const $visibleOption = $select.find('option:visible').not(':first');
+                if ($visibleOption.length === 1 && !$visibleOption.prop('disabled')) {
+                    $select.val($visibleOption.val()).trigger('change');
+                }
+            }
+        },
+
+        showInstitutionPreview: function(institutionId) {
+            const self = this;
+            const $preview = $('#eau-selected-institution-preview');
+
+            // Find institution from cached data
+            const inst = this.allInstitutions.find(i => i.id == institutionId);
+
+            if (!inst) {
+                this.hideInstitutionPreview();
+                return;
+            }
+
+            // Update preview content
+            if (inst.logo) {
+                $('#eau-preview-logo').html(`<img src="${inst.logo}" alt="${self.escapeHtml(inst.name)}">`);
+            } else {
+                $('#eau-preview-logo').html('<i data-lucide="building-2"></i>');
+            }
+
+            $('#eau-preview-name').text(inst.name);
+
+            const location = [inst.city, inst.state, inst.country].filter(Boolean).join(', ');
+            $('#eau-preview-location').text(location || 'Location not specified');
+
+            // Type
+            if (inst.type) {
+                $('#eau-preview-type').text(inst.type).removeClass().addClass('eau-badge eau-badge-info');
+                $('#eau-preview-type-container').show();
+            } else {
+                $('#eau-preview-type-container').hide();
+            }
+
+            // Email
+            if (inst.email) {
+                $('#eau-preview-email').text(inst.email);
+                $('#eau-preview-email-container').show();
+            } else {
+                $('#eau-preview-email-container').hide();
+            }
+
+            // Phone
+            if (inst.phone) {
+                $('#eau-preview-phone').text(inst.phone);
+                $('#eau-preview-phone-container').show();
+            } else {
+                $('#eau-preview-phone-container').hide();
+            }
+
+            // Update request button
+            const $btn = $('#eau-request-join-btn');
+            $btn.data('institution-id', inst.id);
+            $btn.data('institution-name', inst.name);
+
+            // Disable button if already current or pending
+            if (inst.is_current) {
+                $btn.prop('disabled', true).html('<i data-lucide="check"></i> Already a Member');
+            } else if (inst.has_pending_request) {
+                $btn.prop('disabled', true).html('<i data-lucide="clock"></i> Request Pending');
+            } else {
+                $btn.prop('disabled', false).html('<i data-lucide="user-plus"></i> Request to Join');
+            }
+
+            // Show preview
+            $preview.slideDown(200);
+
+            // Re-init Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        hideInstitutionPreview: function() {
+            $('#eau-selected-institution-preview').slideUp(200);
+        },
+
         // === REQUEST MODAL ===
         openRequestModal: function(institutionId, institutionName) {
             this.selectedInstitution = {
@@ -980,7 +1404,21 @@
                     if (response.success) {
                         EauNotifications.success('Success', self.config.strings.requestSent);
                         $('#eau-request-modal-overlay').fadeOut(200);
+
+                        // Reload data
                         self.loadInitialData();
+
+                        // Reload institutions for select to update status
+                        if (self.searchDataLoaded) {
+                            self.loadInstitutionsForSelect();
+                            self.loadPendingRequests();
+                        }
+
+                        // Hide preview card
+                        self.hideInstitutionPreview();
+
+                        // Reset select
+                        $('#eau-institution-select').val('');
                     } else {
                         EauNotifications.error('Error', response.data.message || self.config.strings.error);
                     }
@@ -1087,6 +1525,12 @@
                             if (response.success) {
                                 EauNotifications.success('Cancelled', self.config.strings.requestCancelled);
                                 self.loadInitialData();
+
+                                // Reload institutions for select to update status
+                                if (self.searchDataLoaded) {
+                                    self.loadInstitutionsForSelect();
+                                    self.loadPendingRequests();
+                                }
                             } else {
                                 EauNotifications.error('Error', response.data.message || self.config.strings.error);
                             }
@@ -1235,7 +1679,11 @@
                             : self.config.strings.requestRejected;
                         EauNotifications.success('Success', message);
                         $('#eau-respond-modal-overlay').fadeOut(200);
-                        self.loadInitialData();
+
+                        // v1.66.7 - Recarrega dados da aba Requests além do loadInitialData
+                        self.loadStats(); // Atualiza contadores
+                        self.loadIncomingRequests(); // Atualiza lista de incoming requests
+                        self.loadInstitutionHistory(); // Atualiza histórico da instituição
                     } else {
                         EauNotifications.error('Error', response.data.message || self.config.strings.error);
                     }
@@ -1590,7 +2038,11 @@
                 'approved': '<i data-lucide="check-circle"></i>',
                 'rejected': '<i data-lucide="x-circle"></i>',
                 'cancelled': '<i data-lucide="minus-circle"></i>',
-                'pending': '<i data-lucide="clock"></i>'
+                'pending': '<i data-lucide="clock"></i>',
+                // v1.67.1 - Member-institution history statuses
+                'linked': '<i data-lucide="user-plus"></i>',
+                'unlinked': '<i data-lucide="user-minus"></i>',
+                'transferred': '<i data-lucide="arrow-right-left"></i>'
             };
             return icons[status] || '';
         },
@@ -1790,7 +2242,8 @@
                     if (response.success) {
                         EauNotifications.success('Success', self.config.strings.institutionUpdated);
                         self.closeEditModal();
-                        self.loadCurrentInstitution();
+                        // Reload institution details tab
+                        self.loadInstitutionDetailsTab();
                     } else {
                         EauNotifications.error('Error', response.data.message || self.config.strings.error);
                     }

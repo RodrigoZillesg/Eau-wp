@@ -60,15 +60,36 @@ if (!defined('WPINC')) {
             <div id="eau-import-institution-step-2" class="eau-import-step" style="display: none;">
                 <h3><?php esc_html_e('Step 2: Preview', 'eau-system'); ?></h3>
 
+                <!-- Format Detection Badge -->
+                <div id="eau-institution-format-info" class="eau-format-info" style="margin-bottom: 15px;">
+                    <!-- Format info will be loaded here -->
+                </div>
+
                 <div id="eau-institution-preview-stats" class="eau-preview-stats">
                     <!-- Stats will be loaded here -->
+                </div>
+
+                <!-- Sync Delete Option (only for membership format) -->
+                <div id="eau-institution-sync-option" class="eau-sync-option" style="display: none; margin-bottom: 15px; padding: 12px; background: #fff8e5; border: 1px solid #dba617; border-radius: 4px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="eau-institution-sync-delete" value="1">
+                        <span>
+                            <strong><?php esc_html_e('Full Sync:', 'eau-system'); ?></strong>
+                            <?php esc_html_e('Delete institutions from database that are not in the CSV', 'eau-system'); ?>
+                            <span id="eau-institution-delete-count" style="color: #dc3545; font-weight: 600;"></span>
+                        </span>
+                    </label>
+                    <p style="margin: 8px 0 0 26px; font-size: 12px; color: #666;">
+                        <?php esc_html_e('Enable this to keep your database in sync with the CSV. Institutions not present in the CSV will be permanently deleted.', 'eau-system'); ?>
+                    </p>
                 </div>
 
                 <div id="eau-institution-preview-table-container">
                     <h4><?php esc_html_e('Preview (first 10 institutions):', 'eau-system'); ?></h4>
                     <div class="eau-table-wrapper">
+                        <!-- Table will be dynamically generated based on format -->
                         <table class="widefat striped" id="eau-institution-preview-table">
-                            <thead>
+                            <thead id="eau-institution-preview-thead">
                                 <tr>
                                     <th><?php esc_html_e('Company ID', 'eau-system'); ?></th>
                                     <th><?php esc_html_e('Company Name', 'eau-system'); ?></th>
@@ -198,6 +219,40 @@ if (!defined('WPINC')) {
     border: 1px solid #dba617;
 }
 
+#eau-import-institution-modal .eau-stat-box.delete {
+    background: #fef2f2;
+    border: 1px solid #dc3545;
+}
+
+/* Format Info Badge */
+#eau-import-institution-modal .eau-format-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#eau-import-institution-modal .eau-format-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#eau-import-institution-modal .eau-format-badge.legacy {
+    background: #e8f4fd;
+    color: #0073aa;
+    border: 1px solid #0073aa;
+}
+
+#eau-import-institution-modal .eau-format-badge.membership {
+    background: #f0fff4;
+    color: #00a32a;
+    border: 1px solid #00a32a;
+}
+
 #eau-import-institution-modal .eau-stat-number {
     font-size: 28px;
     font-weight: 700;
@@ -320,6 +375,10 @@ if (!defined('WPINC')) {
     margin-bottom: 15px;
 }
 
+#eau-import-institution-modal .eau-summary-grid.eau-summary-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
 #eau-import-institution-modal .eau-summary-item {
     text-align: center;
 }
@@ -344,5 +403,9 @@ if (!defined('WPINC')) {
 
 #eau-import-institution-modal .eau-summary-number.skipped {
     color: #dc3545;
+}
+
+#eau-import-institution-modal .eau-summary-number.deleted {
+    color: #6366f1;
 }
 </style>

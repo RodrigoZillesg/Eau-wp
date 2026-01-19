@@ -34,8 +34,56 @@ class Eau_User_Institution_Helper {
     }
 
     /**
+     * Pega os tipos do usuário como array normalizado
+     *
+     * @since 1.66.2 - Suporte a múltiplos tipos
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return array Array de tipos do usuário
+     */
+    public static function get_user_types($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+
+        // Se já é array, retorna
+        if (is_array($mem_type)) {
+            return array_filter($mem_type);
+        }
+
+        // Se é string, converte para array
+        if (!empty($mem_type)) {
+            return array($mem_type);
+        }
+
+        // Sem tipo definido, assume 'member'
+        return array('member');
+    }
+
+    /**
+     * Verifica se o usuário tem um tipo específico
+     *
+     * @since 1.66.2 - Suporte a múltiplos tipos
+     * @param string $type Tipo a verificar
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se o usuário tem o tipo
+     */
+    public static function user_has_type($type, $user_id = null) {
+        $types = self::get_user_types($user_id);
+        return in_array($type, $types);
+    }
+
+    /**
      * Verifica se usuário é Institution Admin
      *
+     * Um usuário é considerado institutionAdmin se:
+     * 1. Novo sistema: mem_managed_institutions contém pelo menos um ID
+     * 2. OU: mem_type contém 'institutionAdmin' (string ou array)
+     * 3. OU: É ins_company_primary_contact de alguma instituição
+     *
+     * @since 1.66.0 - Novo sistema de separação de papéis
+     * @since 1.66.2 - Suporte a múltiplos tipos
      * @param int|null $user_id ID do usuário (null = usuário atual)
      * @return bool True se for institution admin
      */
@@ -44,38 +92,58 @@ class Eau_User_Institution_Helper {
             $user_id = get_current_user_id();
         }
 
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-        return ($mem_type === 'institutionAdmin');
+        // 1. Verifica novo sistema (mem_managed_institutions)
+        $managed = get_user_meta($user_id, 'mem_managed_institutions', true);
+        if (!empty($managed) && is_array($managed) && count($managed) > 0) {
+            return true;
+        }
+
+        // 2. Verifica se mem_type contém 'institutionAdmin'
+        if (self::user_has_type('institutionAdmin', $user_id)) {
+            return true;
+        }
+
+        // 3. Verifica se é Primary Contact de alguma instituição
+        $mem_userid = self::get_user_mem_userid($user_id);
+        if (!empty($mem_userid)) {
+            global $wpdb;
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->postmeta} pm
+                INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+                WHERE p.post_type = 'institutions'
+                AND p.post_status = 'publish'
+                AND pm.meta_key = 'ins_company_primary_contact'
+                AND pm.meta_value = %s",
+                $mem_userid
+            ));
+            if ($count > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
      * Verifica se usuário é Super Admin
      *
+     * @since 1.66.2 - Suporte a múltiplos tipos
      * @param int|null $user_id ID do usuário (null = usuário atual)
      * @return bool True se for super admin
      */
     public static function is_super_admin($user_id = null) {
-        if (!$user_id) {
-            $user_id = get_current_user_id();
-        }
-
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-        return ($mem_type === 'superAdmin');
+        return self::user_has_type('superAdmin', $user_id);
     }
 
     /**
      * Verifica se usuário é Admin
      *
+     * @since 1.66.2 - Suporte a múltiplos tipos
      * @param int|null $user_id ID do usuário (null = usuário atual)
      * @return bool True se for admin
      */
     public static function is_admin($user_id = null) {
-        if (!$user_id) {
-            $user_id = get_current_user_id();
-        }
-
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-        return ($mem_type === 'Admin');
+        return self::user_has_type('Admin', $user_id);
     }
 
     /**
@@ -86,6 +154,199 @@ class Eau_User_Institution_Helper {
      */
     public static function has_admin_access($user_id = null) {
         return self::is_super_admin($user_id) || self::is_admin($user_id);
+    }
+
+    // =========================================================================
+    // MANAGED INSTITUTIONS HELPERS (v1.66.0)
+    // =========================================================================
+
+    /**
+     * Adiciona uma instituição à lista de instituições administradas pelo usuário
+     *
+     * Este método NÃO altera o mem_type do usuário, preservando seu papel original
+     * (superAdmin, Admin, member, etc.)
+     *
+     * @since 1.66.0 - Novo sistema de separação de papéis
+     * @param int $user_id ID do usuário WordPress
+     * @param int $institution_id ID da instituição (post ID)
+     * @return bool True em caso de sucesso
+     */
+    public static function add_managed_institution($user_id, $institution_id) {
+        $user_id = absint($user_id);
+        $institution_id = absint($institution_id);
+
+        if (!$user_id || !$institution_id) {
+            return false;
+        }
+
+        // Verifica se a instituição existe
+        $institution = get_post($institution_id);
+        if (!$institution || $institution->post_type !== 'institutions') {
+            return false;
+        }
+
+        // Pega lista atual
+        $managed = get_user_meta($user_id, 'mem_managed_institutions', true);
+        if (!is_array($managed)) {
+            $managed = array();
+        }
+
+        // Adiciona se não existir
+        if (!in_array($institution_id, $managed)) {
+            $managed[] = $institution_id;
+            update_user_meta($user_id, 'mem_managed_institutions', array_values($managed));
+        }
+
+        return true;
+    }
+
+    /**
+     * Remove uma instituição da lista de instituições administradas pelo usuário
+     *
+     * Este método NÃO altera o mem_type do usuário, preservando seu papel original.
+     * Se o usuário tinha mem_type = 'institutionAdmin' (legado) e não administrar mais
+     * nenhuma instituição, o método opcionalmente pode atualizar para 'member'.
+     *
+     * @since 1.66.0 - Novo sistema de separação de papéis
+     * @param int $user_id ID do usuário WordPress
+     * @param int $institution_id ID da instituição (post ID)
+     * @param bool $downgrade_legacy Se true, altera mem_type de 'institutionAdmin' para 'member'
+     *                               quando não administrar mais nenhuma instituição
+     * @return bool True em caso de sucesso
+     */
+    public static function remove_managed_institution($user_id, $institution_id, $downgrade_legacy = false) {
+        $user_id = absint($user_id);
+        $institution_id = absint($institution_id);
+
+        if (!$user_id || !$institution_id) {
+            return false;
+        }
+
+        // Pega lista atual
+        $managed = get_user_meta($user_id, 'mem_managed_institutions', true);
+        if (!is_array($managed)) {
+            $managed = array();
+        }
+
+        // Remove a instituição da lista
+        $managed = array_filter($managed, function($id) use ($institution_id) {
+            return absint($id) !== $institution_id;
+        });
+
+        // Atualiza o meta
+        update_user_meta($user_id, 'mem_managed_institutions', array_values($managed));
+
+        // Se downgrade_legacy está ativo e não administra mais nenhuma instituição
+        if ($downgrade_legacy) {
+            // Verifica se ainda administra alguma instituição (via novo sistema ou legado)
+            $still_manages = self::get_user_managed_institutions($user_id);
+            if (empty($still_manages)) {
+                // Se o mem_type era 'institutionAdmin' (legado), muda para 'member'
+                $mem_type = get_user_meta($user_id, 'mem_type', true);
+                if ($mem_type === 'institutionAdmin') {
+                    update_user_meta($user_id, 'mem_type', 'member');
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Verifica se um usuário administra uma instituição específica
+     *
+     * @since 1.66.0
+     * @param int $user_id ID do usuário WordPress
+     * @param int $institution_id ID da instituição (post ID)
+     * @return bool True se o usuário administra essa instituição
+     */
+    public static function user_manages_institution($user_id, $institution_id) {
+        $user_id = absint($user_id);
+        $institution_id = absint($institution_id);
+
+        if (!$user_id || !$institution_id) {
+            return false;
+        }
+
+        $managed = self::get_user_managed_institutions($user_id);
+        foreach ($managed as $inst) {
+            if ($inst->ID === $institution_id) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Obtém todos os user IDs que administram uma instituição específica
+     *
+     * Combina:
+     * 1. Usuários com a instituição em mem_managed_institutions (novo sistema)
+     * 2. Usuários com mem_type = institutionAdmin e mem_membercompanyname = company_id (legado)
+     * 3. Usuário que é ins_company_primary_contact da instituição
+     *
+     * @since 1.66.0
+     * @param int $institution_id ID da instituição (post ID)
+     * @return array Array de user IDs (inteiros)
+     */
+    public static function get_institution_admin_user_ids($institution_id) {
+        $institution_id = absint($institution_id);
+        if (!$institution_id) {
+            return array();
+        }
+
+        global $wpdb;
+        $user_ids = array();
+
+        // 1. Busca no novo sistema (mem_managed_institutions contém o institution_id)
+        // Nota: mem_managed_institutions é um array serializado
+        $all_users_with_managed = $wpdb->get_results(
+            "SELECT user_id, meta_value FROM {$wpdb->usermeta}
+            WHERE meta_key = 'mem_managed_institutions'
+            AND meta_value != '' AND meta_value IS NOT NULL"
+        );
+
+        foreach ($all_users_with_managed as $row) {
+            $managed = maybe_unserialize($row->meta_value);
+            if (is_array($managed) && in_array($institution_id, array_map('absint', $managed))) {
+                $user_ids[] = absint($row->user_id);
+            }
+        }
+
+        // 2. Busca usuários com mem_type = institutionAdmin E mem_membercompanyname = company_id (legado)
+        $company_id = get_post_meta($institution_id, 'ins_company_id', true);
+        if (!empty($company_id)) {
+            $legacy_admins = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT u1.user_id
+                FROM {$wpdb->usermeta} u1
+                INNER JOIN {$wpdb->usermeta} u2 ON u1.user_id = u2.user_id
+                WHERE u1.meta_key = 'mem_type' AND u1.meta_value = 'institutionAdmin'
+                AND u2.meta_key = 'mem_membercompanyname' AND u2.meta_value = %s",
+                $company_id
+            ));
+            $user_ids = array_merge($user_ids, array_map('absint', $legacy_admins));
+        }
+
+        // 3. Busca o primary contact da instituição
+        $primary_contact_mem_userid = get_post_meta($institution_id, 'ins_company_primary_contact', true);
+        if (!empty($primary_contact_mem_userid)) {
+            // Converte mem_userid para user_id
+            $primary_user_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT user_id FROM {$wpdb->usermeta}
+                WHERE meta_key = 'mem_userid' AND meta_value = %s
+                LIMIT 1",
+                $primary_contact_mem_userid
+            ));
+            if ($primary_user_id) {
+                $user_ids[] = absint($primary_user_id);
+            }
+        }
+
+        // Remove duplicatas e zeros
+        $user_ids = array_unique(array_filter($user_ids));
+
+        return array_values($user_ids);
     }
 
     // =========================================================================
@@ -113,7 +374,22 @@ class Eau_User_Institution_Helper {
         }
 
         $membership_status = get_user_meta($user_id, 'mem_membership_status', true);
-        return $membership_status === 'active';
+
+        // v1.67.2 - Considera ativo se:
+        // 1. Status é explicitamente 'active'
+        // 2. OU usuário está vinculado a uma instituição E status NÃO é explicitamente inativo
+        if ($membership_status === 'active') {
+            return true;
+        }
+
+        // Se vinculado a uma instituição, considera ativo exceto se explicitamente inativo
+        $user_institution = self::get_user_institution($user_id);
+        if ($user_institution) {
+            $inactive_statuses = array('cancelled', 'expired', 'suspended');
+            return !in_array($membership_status, $inactive_statuses);
+        }
+
+        return false;
     }
 
     /**
@@ -222,9 +498,13 @@ class Eau_User_Institution_Helper {
     /**
      * Pega TODAS as instituições que o usuário administra
      *
-     * CORRETO: Usa ins_company_primary_contact = mem_userid
+     * Combina:
+     * 1. Novo sistema: mem_managed_institutions (array de IDs de instituição)
+     * 2. Legado: ins_company_primary_contact = mem_userid
+     *
      * Um admin pode gerenciar MÚLTIPLAS instituições!
      *
+     * @since 1.66.0 - Novo sistema de separação de papéis
      * @param int|null $user_id ID do usuário (null = usuário atual)
      * @return array Array de WP_Post objects (instituições)
      */
@@ -233,43 +513,50 @@ class Eau_User_Institution_Helper {
             $user_id = get_current_user_id();
         }
 
-        // Se não for institution admin, retorna vazio
-        if (!self::is_institution_admin($user_id)) {
-            return array();
+        $institution_ids = array();
+
+        // 1. Do novo sistema (mem_managed_institutions)
+        $managed = get_user_meta($user_id, 'mem_managed_institutions', true);
+        if (is_array($managed) && !empty($managed)) {
+            $institution_ids = array_merge($institution_ids, $managed);
         }
 
+        // 2. Instituições onde é Primary Contact (legado)
         $mem_userid = self::get_user_mem_userid($user_id);
-        if (empty($mem_userid)) {
-            return array();
+        if (!empty($mem_userid)) {
+            global $wpdb;
+            $as_primary = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT p.ID
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE p.post_type = 'institutions'
+                AND p.post_status = 'publish'
+                AND pm.meta_key = 'ins_company_primary_contact'
+                AND pm.meta_value = %s",
+                $mem_userid
+            ));
+            if (!empty($as_primary)) {
+                $institution_ids = array_merge($institution_ids, $as_primary);
+            }
         }
 
-        global $wpdb;
-
-        // Busca TODAS as instituições onde ins_company_primary_contact = mem_userid
-        $institution_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT p.ID
-            FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-            WHERE p.post_type = 'institutions'
-            AND p.post_status = 'publish'
-            AND pm.meta_key = 'ins_company_primary_contact'
-            AND pm.meta_value = %s
-            ORDER BY p.post_title ASC",
-            $mem_userid
-        ));
+        // Remove duplicatas e converte para inteiros
+        $institution_ids = array_unique(array_map('absint', $institution_ids));
+        $institution_ids = array_filter($institution_ids); // Remove zeros
 
         if (empty($institution_ids)) {
             return array();
         }
 
         // Retorna os posts das instituições
-        $institutions = array();
-        foreach ($institution_ids as $id) {
-            $post = get_post($id);
-            if ($post) {
-                $institutions[] = $post;
-            }
-        }
+        $institutions = get_posts(array(
+            'post_type' => 'institutions',
+            'posts_per_page' => -1,
+            'post__in' => $institution_ids,
+            'post_status' => 'publish',
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ));
 
         return $institutions;
     }

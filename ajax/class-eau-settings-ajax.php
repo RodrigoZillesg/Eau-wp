@@ -29,6 +29,9 @@ class Eau_Settings_Ajax {
 
         // System Pages (v1.57.0)
         add_action('wp_ajax_eau_recreate_missing_pages', array(__CLASS__, 'recreate_missing_pages'));
+
+        // Email Migration Exemptions (v1.66.8)
+        add_action('wp_ajax_eau_save_email_exempt', array(__CLASS__, 'save_email_exempt'));
     }
 
     /**
@@ -217,6 +220,34 @@ class Eau_Settings_Ajax {
             'created'  => count($results['created']),
             'existing' => count($results['existing']),
             'errors'   => array_keys($results['errors']),
+        ));
+    }
+
+    /**
+     * AJAX: Save Email Migration Exemptions (v1.66.8)
+     */
+    public static function save_email_exempt() {
+        // Verifica nonce
+        check_ajax_referer('eau_settings_nonce', 'nonce');
+
+        // Verifica permissão
+        if (!Eau_Settings::can_access_settings()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        // Pega os emails
+        $emails = isset($_POST['emails']) ? sanitize_textarea_field($_POST['emails']) : '';
+
+        // Salva na opção
+        update_option(Eau_Settings::OPTION_EMAIL_MIGRATION_EXEMPT, $emails);
+
+        // Retorna a lista de emails válidos para confirmação
+        $valid_emails = Eau_Settings::get_email_migration_exempt_list();
+
+        wp_send_json_success(array(
+            'message' => 'Email exemptions saved successfully.',
+            'count' => count($valid_emails),
+            'emails' => $valid_emails,
         ));
     }
 }

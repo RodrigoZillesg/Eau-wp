@@ -12,9 +12,13 @@ use EauSystem\Components\Eau_Pagination;
  * Allows members to view their institution, search for others,
  * and request to link to a new institution.
  *
+ * For institutionAdmin, shows the full single page view with
+ * all editing capabilities via integrated tabs.
+ *
  * Shortcode: [eau_my_institution]
  *
  * @since 1.44.0
+ * @since 1.65.0 Reestruturado com sistema de tabs e integração com single page
  */
 class Eau_My_Institution {
 
@@ -23,6 +27,33 @@ class Eau_My_Institution {
      */
     public static function register_shortcode() {
         add_shortcode('eau_my_institution', array(__CLASS__, 'render_page'));
+    }
+
+    /**
+     * Get all institutions the user is linked to
+     *
+     * @since 1.66.4 - Atualizado para usar o novo sistema de separação de papéis
+     * @param int $user_id User ID
+     * @return array Array of WP_Post objects
+     */
+    private static function get_user_all_institutions($user_id) {
+        $institutions = array();
+
+        // For institutionAdmin - get all managed institutions (novo sistema)
+        if (Eau_User_Institution_Helper::is_institution_admin($user_id)) {
+            $managed = Eau_User_Institution_Helper::get_user_managed_institutions($user_id);
+            foreach ($managed as $inst) {
+                $institutions[$inst->ID] = $inst;
+            }
+        }
+
+        // For all users - get member institution (via mem_membercompanyname)
+        $member_institution = Eau_User_Institution_Helper::get_user_institution($user_id);
+        if ($member_institution && !isset($institutions[$member_institution->ID])) {
+            $institutions[$member_institution->ID] = $member_institution;
+        }
+
+        return array_values($institutions);
     }
 
     /**
@@ -37,21 +68,42 @@ class Eau_My_Institution {
             return Eau_Access_Denied::not_logged_in();
         }
 
-        // Verifica se membership está ativo (v1.51.53)
-        if (!Eau_User_Institution_Helper::is_membership_active()) {
+        // v1.67.1 - Permite acesso mais amplo à página My Institution
+        // Acesso permitido para:
+        // - non-member (para solicitar afiliação)
+        // - usuários vinculados a uma instituição (mem_membercompanyname definido)
+        // - usuários com membership ativo
+        // - admins e institutionAdmins
+        $user_id = get_current_user_id();
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        $is_non_member = ($mem_type === 'non-member');
+        $is_linked_to_institution = !empty(Eau_User_Institution_Helper::get_user_institution($user_id));
+
+        // Permite acesso se:
+        // 1. É non-member (pode solicitar afiliação)
+        // 2. Está vinculado a uma instituição
+        // 3. Tem membership ativo
+        if (!$is_non_member && !$is_linked_to_institution && !Eau_User_Institution_Helper::is_membership_active()) {
             return Eau_Access_Denied::membership_inactive();
         }
 
         // Enqueue assets
         self::enqueue_assets();
 
-        $user_id = get_current_user_id();
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-        $is_institution_admin = ($mem_type === 'institutionAdmin');
+        // v1.66.4 - Usa o helper para verificar se é institution admin (novo sistema)
+        // Nota: $user_id já foi declarado acima no access check
+        $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin($user_id);
+
+        // Get user's institutions
+        $user_institutions = self::get_user_all_institutions($user_id);
+        $has_institution = !empty($user_institutions);
+        $default_institution_id = $has_institution ? $user_institutions[0]->ID : 0;
 
         ob_start();
         ?>
-        <div class="eau-my-institution-container" id="eau-my-institution-container">
+        <div class="eau-my-institution-container" id="eau-my-institution-container"
+             data-default-institution="<?php echo esc_attr($default_institution_id); ?>"
+             data-has-institution="<?php echo $has_institution ? '1' : '0'; ?>">
 
             <!-- Page Header -->
             <div class="eau-page-header">
@@ -67,113 +119,56 @@ class Eau_My_Institution {
                 </div>
             </div>
 
-            <!-- Stats Cards (hidden for regular members) -->
-            <?php if ($mem_type !== 'Member'): ?>
+            <!-- Stats Cards (institutionAdmin only) -->
+            <?php if ($is_institution_admin): ?>
             <div class="eau-my-institution-stats" id="eau-my-institution-stats">
                 <?php echo Eau_Skeleton::stats_cards(2); ?>
             </div>
             <?php endif; ?>
 
-            <!-- Current Institution Section -->
-            <div class="eau-section" id="eau-current-institution-section">
-                <div class="eau-section-header">
-                    <h2 class="eau-section-title">
-                        <i data-lucide="home"></i>
-                        <?php echo $is_institution_admin ? 'My Institutions' : 'Current Institution'; ?>
-                    </h2>
-                </div>
-                <div class="eau-section-body" id="eau-current-institution-body">
-                    <?php echo Eau_Skeleton::card(); ?>
-                </div>
-            </div>
-
-            <!-- Incoming Requests Section (only for institutionAdmin) -->
-            <?php if ($is_institution_admin): ?>
-            <div class="eau-section" id="eau-incoming-requests-section">
-                <div class="eau-section-header">
-                    <h2 class="eau-section-title">
+            <!-- TABS -->
+            <div class="eau-tabs-wrapper">
+                <div class="eau-tabs">
+                    <button class="eau-tab active" data-tab="details">
+                        <i data-lucide="building-2"></i>
+                        <span class="eau-tab-text">Institution Details</span>
+                    </button>
+                    <button class="eau-tab" data-tab="search">
+                        <i data-lucide="search"></i>
+                        <span class="eau-tab-text">Search & Join</span>
+                    </button>
+                    <?php if ($is_institution_admin): ?>
+                    <button class="eau-tab" data-tab="requests">
                         <i data-lucide="inbox"></i>
-                        Incoming Requests
-                        <span class="eau-badge eau-badge-primary" id="eau-incoming-count" style="display: none;">0</span>
-                    </h2>
+                        <span class="eau-tab-text">Requests</span>
+                        <span class="eau-tab-badge" id="eau-requests-badge"></span>
+                    </button>
+                    <?php endif; ?>
                 </div>
-                <div class="eau-section-body" id="eau-incoming-requests-body">
-                    <?php echo Eau_Skeleton::text(3); ?>
-                </div>
-            </div>
-            <?php endif; ?>
 
-            <!-- Search Institutions Section -->
-            <div class="eau-section" id="eau-search-section">
-                <div class="eau-section-header">
-                    <h2 class="eau-section-title">
-                        <i data-lucide="search"></i>
-                        Find an Institution
-                    </h2>
-                </div>
-                <div class="eau-section-body">
-                    <!-- Search Bar -->
-                    <div class="eau-search-wrapper eau-mb-4">
-                        <i data-lucide="search"></i>
-                        <input type="text"
-                               class="eau-search-input"
-                               id="eau-institution-search"
-                               placeholder="Search by institution name, city, or state...">
+                <!-- TAB CONTENTS -->
+                <div class="eau-tab-contents">
+                    <!-- Tab 1: Institution Details -->
+                    <div class="eau-tab-content active" data-tab="details">
+                        <?php echo self::render_institution_details_tab($user_institutions, $is_institution_admin); ?>
                     </div>
 
-                    <!-- Search Results -->
-                    <div id="eau-search-results">
-                        <p class="eau-text-muted eau-text-center">Enter a search term to find institutions</p>
+                    <!-- Tab 2: Search & Join -->
+                    <div class="eau-tab-content" data-tab="search">
+                        <?php echo self::render_search_tab(); ?>
                     </div>
 
-                    <!-- Search Pagination -->
-                    <div id="eau-search-pagination" style="display: none;"></div>
+                    <!-- Tab 3: Requests (institutionAdmin) -->
+                    <?php if ($is_institution_admin): ?>
+                    <div class="eau-tab-content" data-tab="requests">
+                        <?php echo self::render_requests_tab(); ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
-            <!-- Pending Requests Section -->
-            <div class="eau-section" id="eau-pending-requests-section">
-                <div class="eau-section-header">
-                    <h2 class="eau-section-title">
-                        <i data-lucide="clock"></i>
-                        My Pending Requests
-                        <span class="eau-badge eau-badge-warning" id="eau-pending-count" style="display: none;">0</span>
-                    </h2>
-                </div>
-                <div class="eau-section-body" id="eau-pending-requests-body">
-                    <?php echo Eau_Skeleton::text(2); ?>
-                </div>
-            </div>
-
-            <!-- Request History Section (for institutionAdmin) -->
-            <?php if ($is_institution_admin): ?>
-            <div class="eau-section" id="eau-institution-history-section">
-                <div class="eau-section-header">
-                    <h2 class="eau-section-title">
-                        <i data-lucide="history"></i>
-                        Request History
-                    </h2>
-                </div>
-                <div class="eau-section-body" id="eau-institution-history-body">
-                    <?php echo Eau_Skeleton::text(3); ?>
-                </div>
-                <div id="eau-institution-history-pagination" class="eau-pagination-container" style="display: none;"></div>
-            </div>
-            <?php endif; ?>
-
-            <!-- My Request History Section -->
-            <div class="eau-section" id="eau-my-history-section">
-                <div class="eau-section-header">
-                    <h2 class="eau-section-title">
-                        <i data-lucide="file-clock"></i>
-                        My Request History
-                    </h2>
-                </div>
-                <div class="eau-section-body" id="eau-my-history-body">
-                    <?php echo Eau_Skeleton::text(3); ?>
-                </div>
-                <div id="eau-my-history-pagination" class="eau-pagination-container" style="display: none;"></div>
-            </div>
+            <!-- My Request History (sempre visível abaixo das tabs) -->
+            <?php echo self::render_my_history_section(); ?>
 
             <!-- Modals -->
             <?php echo self::render_request_modal(); ?>
@@ -184,6 +179,183 @@ class Eau_My_Institution {
                 <?php echo self::render_edit_institution_modal(); ?>
             <?php endif; ?>
 
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Render the Institution Details tab content
+     *
+     * Shows skeleton loading initially, content is loaded via AJAX
+     * to ensure consistency with the working AJAX implementation.
+     *
+     * @param array $institutions Array of WP_Post objects (not used, kept for compatibility)
+     * @param bool $is_institution_admin Whether user is institutionAdmin
+     * @return string HTML
+     */
+    private static function render_institution_details_tab($institutions, $is_institution_admin) {
+        ob_start();
+        ?>
+        <!-- Institution selector placeholder (will be populated via AJAX if needed) -->
+        <div id="eau-institution-selector-container" style="display: none;"></div>
+
+        <!-- Conteúdo da Single Page (embedded) - loaded via AJAX -->
+        <div id="eau-institution-details-content">
+            <?php echo Eau_Skeleton::card(); ?>
+        </div>
+
+        <!-- Leave section placeholder (for regular members) -->
+        <div id="eau-leave-section-container" style="display: none;"></div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Render the Search & Join tab content
+     *
+     * @return string HTML
+     */
+    private static function render_search_tab() {
+        ob_start();
+        ?>
+        <!-- Search Section -->
+        <div class="eau-search-section-content">
+            <h3 class="eau-section-subtitle">
+                <i data-lucide="building-2"></i>
+                Find an Institution
+            </h3>
+            <p class="eau-section-description">Select an institution from the list below to view details and request to join.</p>
+
+            <!-- Institution Search & Select -->
+            <div class="eau-form-group eau-mb-4">
+                <label for="eau-institution-filter" class="eau-form-label">
+                    <i data-lucide="search"></i>
+                    Search Institution
+                </label>
+                <div class="eau-institution-search-wrapper">
+                    <input type="text"
+                           id="eau-institution-filter"
+                           class="eau-form-input eau-institution-filter-input"
+                           placeholder="Type to filter institutions...">
+                    <select id="eau-institution-select" class="eau-form-select eau-institution-select-large">
+                        <option value="">-- Select an institution --</option>
+                    </select>
+                </div>
+                <p class="eau-form-hint" id="eau-institution-select-hint">Loading institutions...</p>
+            </div>
+
+            <!-- Selected Institution Preview -->
+            <div id="eau-selected-institution-preview" style="display: none;">
+                <div class="eau-institution-preview-card">
+                    <div class="eau-institution-preview-header">
+                        <div class="eau-institution-preview-logo" id="eau-preview-logo">
+                            <i data-lucide="building-2"></i>
+                        </div>
+                        <div class="eau-institution-preview-info">
+                            <h4 id="eau-preview-name"></h4>
+                            <p id="eau-preview-location" class="eau-text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="eau-institution-preview-details">
+                        <div class="eau-preview-detail" id="eau-preview-type-container">
+                            <span class="eau-preview-label">Type:</span>
+                            <span id="eau-preview-type" class="eau-badge"></span>
+                        </div>
+                        <div class="eau-preview-detail" id="eau-preview-email-container">
+                            <span class="eau-preview-label">Email:</span>
+                            <span id="eau-preview-email"></span>
+                        </div>
+                        <div class="eau-preview-detail" id="eau-preview-phone-container">
+                            <span class="eau-preview-label">Phone:</span>
+                            <span id="eau-preview-phone"></span>
+                        </div>
+                    </div>
+                    <div class="eau-institution-preview-actions">
+                        <button type="button" class="eau-btn eau-btn-primary" id="eau-request-join-btn">
+                            <i data-lucide="user-plus"></i>
+                            Request to Join
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <hr class="eau-section-divider">
+
+        <!-- My Pending Requests Section -->
+        <div class="eau-pending-section-content">
+            <h3 class="eau-section-subtitle">
+                <i data-lucide="clock"></i>
+                My Pending Requests
+                <span class="eau-badge eau-badge-warning" id="eau-pending-count" style="display: none;">0</span>
+            </h3>
+            <div id="eau-pending-requests-body">
+                <?php echo Eau_Skeleton::text(2); ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Render the Requests tab content (institutionAdmin only)
+     *
+     * @return string HTML
+     */
+    private static function render_requests_tab() {
+        ob_start();
+        ?>
+        <!-- Incoming Requests Section -->
+        <div class="eau-incoming-section-content">
+            <h3 class="eau-section-subtitle">
+                <i data-lucide="inbox"></i>
+                Incoming Requests
+                <span class="eau-badge eau-badge-primary" id="eau-incoming-count" style="display: none;">0</span>
+            </h3>
+            <div id="eau-incoming-requests-body">
+                <?php echo Eau_Skeleton::text(3); ?>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <hr class="eau-section-divider">
+
+        <!-- Institution Request History Section -->
+        <div class="eau-institution-history-content">
+            <h3 class="eau-section-subtitle">
+                <i data-lucide="history"></i>
+                Institution Request History
+            </h3>
+            <div id="eau-institution-history-body">
+                <?php echo Eau_Skeleton::text(3); ?>
+            </div>
+            <div id="eau-institution-history-pagination" class="eau-pagination-container" style="display: none;"></div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Render the My Request History section (always visible)
+     *
+     * @return string HTML
+     */
+    private static function render_my_history_section() {
+        ob_start();
+        ?>
+        <div class="eau-section eau-my-history-section" id="eau-my-history-section">
+            <div class="eau-section-header">
+                <h2 class="eau-section-title">
+                    <i data-lucide="file-clock"></i>
+                    My Request History
+                </h2>
+            </div>
+            <div class="eau-section-body" id="eau-my-history-body">
+                <?php echo Eau_Skeleton::text(3); ?>
+            </div>
+            <div id="eau-my-history-pagination" class="eau-pagination-container" style="display: none;"></div>
         </div>
         <?php
         return ob_get_clean();
@@ -531,7 +703,7 @@ class Eau_My_Institution {
      * Enqueue page assets
      */
     public static function enqueue_assets() {
-        $version = defined('EAU_SYSTEM_VERSION') ? EAU_SYSTEM_VERSION : '1.46.0';
+        $version = defined('EAU_SYSTEM_VERSION') ? EAU_SYSTEM_VERSION : '1.65.0';
         $plugin_url = defined('EAU_SYSTEM_PLUGIN_URL') ? EAU_SYSTEM_PLUGIN_URL : plugin_dir_url(dirname(__FILE__));
 
         // CSS
@@ -550,10 +722,18 @@ class Eau_My_Institution {
             '18.2.1'
         );
 
+        // Institution Single CSS (para a embedded page)
+        wp_enqueue_style(
+            'eau-institution-single',
+            $plugin_url . 'assets/css/eau-institution-single.css',
+            array('eau-components'),
+            $version
+        );
+
         wp_enqueue_style(
             'eau-my-institution',
             $plugin_url . 'assets/css/eau-my-institution.css',
-            array('eau-components', 'intl-tel-input'),
+            array('eau-components', 'intl-tel-input', 'eau-institution-single'),
             $version
         );
 
@@ -575,24 +755,62 @@ class Eau_My_Institution {
             true
         );
 
-        // Main JS
+        // Lucide Icons
         wp_enqueue_script(
-            'eau-my-institution',
-            $plugin_url . 'assets/js/eau-my-institution.js',
-            array('jquery', 'eau-notifications', 'intl-tel-input'),
+            'lucide-icons',
+            'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
+            array(),
+            null,
+            true
+        );
+
+        // Institution Single JS (para as funcionalidades da embedded page)
+        wp_enqueue_script(
+            'eau-institution-single',
+            $plugin_url . 'assets/js/eau-institution-single.js',
+            array('jquery', 'lucide-icons', 'eau-notifications'),
             $version,
             true
         );
 
-        // Localize script
+        // Main JS
+        wp_enqueue_script(
+            'eau-my-institution',
+            $plugin_url . 'assets/js/eau-my-institution.js',
+            array('jquery', 'eau-notifications', 'intl-tel-input', 'lucide-icons', 'eau-institution-single'),
+            $version,
+            true
+        );
+
+        // Localize Institution Single script
         $user_id = get_current_user_id();
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        $user_institutions = self::get_user_all_institutions($user_id);
+        $default_institution_id = !empty($user_institutions) ? $user_institutions[0]->ID : 0;
+
+        if ($default_institution_id) {
+            $permissions = Eau_Institution_Single::get_user_permissions($default_institution_id);
+            $can_edit_members = Eau_Institution_Single::user_can_edit_members($default_institution_id);
+
+            wp_localize_script('eau-institution-single', 'eauInstitutionSingleData', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('eau_institution_single_nonce'),
+                'canEdit' => $permissions['can_edit'],
+                'canEditRestricted' => $permissions['can_edit_restricted'],
+                'canEditMembers' => $can_edit_members,
+                'canManageAdmins' => $permissions['can_manage_admins'],
+            ));
+        }
+
+        // Localize My Institution script
+        // v1.66.4 - Usa o helper para verificar se é institution admin (novo sistema)
+        $is_inst_admin = Eau_User_Institution_Helper::is_institution_admin($user_id);
 
         wp_localize_script('eau-my-institution', 'eauMyInstitutionData', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('eau_my_institution_nonce'),
-            'userType' => $mem_type,
-            'isInstitutionAdmin' => ($mem_type === 'institutionAdmin'),
+            'userType' => get_user_meta($user_id, 'mem_type', true),
+            'isInstitutionAdmin' => $is_inst_admin,
+            'defaultInstitutionId' => $default_institution_id,
             'strings' => array(
                 'loading' => 'Loading...',
                 'noInstitution' => 'You are not currently linked to any institution.',
@@ -614,17 +832,9 @@ class Eau_My_Institution {
                 'selectCity' => 'Select city...',
                 'loadingStates' => 'Loading states...',
                 'loadingCities' => 'Loading cities...',
+                'loadingInstitutionDetails' => 'Loading institution details...',
             ),
         ));
-
-        // Lucide Icons
-        wp_enqueue_script(
-            'lucide-icons',
-            'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
-            array(),
-            null,
-            true
-        );
 
         // Media Upload Component Assets
         \EauSystem\Components\Eau_Media_Upload::enqueue_assets();

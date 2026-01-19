@@ -49,8 +49,11 @@ class Eau_Institutions_Ajax {
         $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
         $membership_type = isset($_POST['membership_type']) ? sanitize_text_field($_POST['membership_type']) : '';
         $institution_type = isset($_POST['institution_type']) ? sanitize_text_field($_POST['institution_type']) : '';
-        $created_date_from = isset($_POST['created_date_from']) ? sanitize_text_field($_POST['created_date_from']) : '';
-        $created_date_to = isset($_POST['created_date_to']) ? sanitize_text_field($_POST['created_date_to']) : '';
+        $campus = isset($_POST['campus']) ? sanitize_text_field($_POST['campus']) : '';
+        $start_date_from = isset($_POST['start_date_from']) ? sanitize_text_field($_POST['start_date_from']) : '';
+        $start_date_to = isset($_POST['start_date_to']) ? sanitize_text_field($_POST['start_date_to']) : '';
+        $expire_date_from = isset($_POST['expire_date_from']) ? sanitize_text_field($_POST['expire_date_from']) : '';
+        $expire_date_to = isset($_POST['expire_date_to']) ? sanitize_text_field($_POST['expire_date_to']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'title';
         $order = isset($_POST['order']) ? sanitize_text_field($_POST['order']) : 'ASC';
 
@@ -62,8 +65,11 @@ class Eau_Institutions_Ajax {
             'status' => $status,
             'membership_type' => $membership_type,
             'institution_type' => $institution_type,
-            'created_date_from' => $created_date_from,
-            'created_date_to' => $created_date_to,
+            'campus' => $campus,
+            'start_date_from' => $start_date_from,
+            'start_date_to' => $start_date_to,
+            'expire_date_from' => $expire_date_from,
+            'expire_date_to' => $expire_date_to,
             'orderby' => $orderby,
             'order' => $order,
         ));
@@ -98,8 +104,11 @@ class Eau_Institutions_Ajax {
             'status' => '',
             'membership_type' => '',
             'institution_type' => '',
-            'created_date_from' => '',
-            'created_date_to' => '',
+            'campus' => '',
+            'start_date_from' => '',
+            'start_date_to' => '',
+            'expire_date_from' => '',
+            'expire_date_to' => '',
             'orderby' => 'title',
             'order' => 'ASC',
         );
@@ -211,23 +220,58 @@ class Eau_Institutions_Ajax {
             }
         }
 
-        if (!empty($meta_query) && count($meta_query) > 1) {
-            $query_args['meta_query'] = $meta_query;
+        // Filtro de campus (ins_company_name - pesquisa por nome do campus/instituição)
+        if (!empty($args['campus'])) {
+            $meta_query[] = array(
+                'key' => 'ins_company_name',
+                'value' => $args['campus'],
+                'compare' => 'LIKE',
+            );
         }
 
-        // Date query
-        if (!empty($args['created_date_from']) || !empty($args['created_date_to'])) {
-            $date_query = array();
-
-            if (!empty($args['created_date_from'])) {
-                $date_query['after'] = $args['created_date_from'];
+        // Start Date filter (meta field: ins_member_start_date)
+        if (!empty($args['start_date_from']) || !empty($args['start_date_to'])) {
+            if (!empty($args['start_date_from'])) {
+                $meta_query[] = array(
+                    'key' => 'ins_member_start_date',
+                    'value' => $args['start_date_from'],
+                    'compare' => '>=',
+                    'type' => 'DATE',
+                );
             }
-
-            if (!empty($args['created_date_to'])) {
-                $date_query['before'] = $args['created_date_to'];
+            if (!empty($args['start_date_to'])) {
+                $meta_query[] = array(
+                    'key' => 'ins_member_start_date',
+                    'value' => $args['start_date_to'],
+                    'compare' => '<=',
+                    'type' => 'DATE',
+                );
             }
+        }
 
-            $query_args['date_query'] = array($date_query);
+        // Expire Date filter (meta field: ins_member_expire_date)
+        if (!empty($args['expire_date_from']) || !empty($args['expire_date_to'])) {
+            if (!empty($args['expire_date_from'])) {
+                $meta_query[] = array(
+                    'key' => 'ins_member_expire_date',
+                    'value' => $args['expire_date_from'],
+                    'compare' => '>=',
+                    'type' => 'DATE',
+                );
+            }
+            if (!empty($args['expire_date_to'])) {
+                $meta_query[] = array(
+                    'key' => 'ins_member_expire_date',
+                    'value' => $args['expire_date_to'],
+                    'compare' => '<=',
+                    'type' => 'DATE',
+                );
+            }
+        }
+
+        // Apply meta_query if we have filters
+        if (!empty($meta_query) && count($meta_query) > 1) {
+            $query_args['meta_query'] = $meta_query;
         }
 
         // Execute query
@@ -462,6 +506,7 @@ class Eau_Institutions_Ajax {
         return array(
             '_id' => $post->ID,
             'institution' => $institution_html,
+            'campus' => esc_html($company_name),
             'code' => $code_html,
             'type' => $type_html,
             'contact' => $contact_html,

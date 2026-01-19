@@ -91,8 +91,10 @@ class Eau_Email_Migration {
     }
 
     /**
-     * Check if user is exempt from migration (superAdmin or Admin)
+     * Check if user is exempt from migration (superAdmin, Admin, institutionAdmin, or in exempt list)
      *
+     * @since 1.66.8 - Uses centralized helper to support multi-type mem_type
+     * @since 1.66.8 - Added support for exempt email list from settings
      * @param int $user_id User ID
      * @return bool
      */
@@ -101,10 +103,37 @@ class Eau_Email_Migration {
             $user_id = get_current_user_id();
         }
 
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        // v1.66.8 - Check if user's email is in the exempt list (settings)
+        $user = get_userdata($user_id);
+        if ($user && \EauSystem\Eau_Settings::is_email_exempt_from_migration($user->user_email)) {
+            return true;
+        }
 
-        // superAdmin and Admin are exempt
-        return in_array($mem_type, array('superAdmin', 'Admin'));
+        // v1.66.8 - Verificação direta do mem_type (suporta string e array)
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        $admin_types = array('superAdmin', 'Admin', 'institutionAdmin');
+
+        if (is_array($mem_type)) {
+            if (!empty(array_intersect($mem_type, $admin_types))) {
+                return true;
+            }
+        } else {
+            if (in_array($mem_type, $admin_types)) {
+                return true;
+            }
+        }
+
+        // Fallback: Use centralized helper which supports multi-type mem_type
+        if (Eau_User_Institution_Helper::has_admin_access($user_id)) {
+            return true;
+        }
+
+        // Also exempt institution admins (via mem_managed_institutions or primary contact)
+        if (Eau_User_Institution_Helper::is_institution_admin($user_id)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

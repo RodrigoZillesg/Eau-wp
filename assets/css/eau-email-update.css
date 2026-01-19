@@ -615,6 +615,33 @@ body.eau-email-update-locked .site {
     font-size: 0.875rem !important;
 }
 
+/* Logout Link */
+.eau-logout-link {
+    margin: 1rem 0 0 0 !important;
+    text-align: center !important;
+}
+
+.eau-logout-link a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.8125rem !important;
+    color: #6b7280 !important;
+    text-decoration: none !important;
+    transition: color 0.2s ease !important;
+}
+
+.eau-logout-link a:hover {
+    color: #dc2626 !important;
+}
+
+.eau-logout-link a i,
+.eau-logout-link a svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */

@@ -376,6 +376,21 @@ class Eau_Members_Settings {
 
         // Meta fields conhecidos do Eau System
         $known_meta = array(
+            'mem_type' => array(
+                'label' => 'User Types',
+                'field_type' => 'user_type_multi',
+                'enabled' => true,
+                'required' => false,
+                'readonly' => false,
+                'order' => 10,
+                'options' => array(
+                    'superAdmin' => 'Super Admin',
+                    'Admin' => 'Admin',
+                    'institutionAdmin' => 'Institution Admin',
+                    'member' => 'Member',
+                    'non-member' => 'Non-Member',
+                ),
+            ),
             'mem_status' => array(
                 'label' => 'Member Status',
                 'field_type' => 'select',
@@ -479,7 +494,7 @@ class Eau_Members_Settings {
      * Campos que devem estar sempre habilitados por padrão
      * (mesmo se não existem nas configurações salvas)
      */
-    const FORCE_ENABLED_FIELDS = array('mem_tags', 'mem_memberposition');
+    const FORCE_ENABLED_FIELDS = array('mem_tags', 'mem_memberposition', 'mem_type');
 
     /**
      * Retorna as configurações salvas
@@ -526,6 +541,99 @@ class Eau_Members_Settings {
             return $order_a - $order_b;
         });
 
+        // Filtra opções de mem_type baseado nas permissões do usuário atual
+        if (isset($editable_fields['mem_type'])) {
+            $editable_fields['mem_type']['options'] = self::get_allowed_user_types();
+        }
+
         return $editable_fields;
+    }
+
+    /**
+     * Retorna os tipos de usuário que o usuário atual pode atribuir
+     *
+     * @since 1.66.0
+     * @return array Tipos permitidos
+     */
+    public static function get_allowed_user_types() {
+        $current_user_id = get_current_user_id();
+
+        // Todos os tipos disponíveis
+        $all_types = array(
+            'superAdmin' => 'Super Admin',
+            'Admin' => 'Admin',
+            'institutionAdmin' => 'Institution Admin',
+            'member' => 'Member',
+            'non-member' => 'Non-Member',
+        );
+
+        // SuperAdmin: pode atribuir qualquer tipo
+        if (Eau_User_Institution_Helper::is_super_admin($current_user_id)) {
+            return $all_types;
+        }
+
+        // Admin: pode atribuir Admin, institutionAdmin, member, non-member (não superAdmin)
+        if (Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            unset($all_types['superAdmin']);
+            return $all_types;
+        }
+
+        // InstitutionAdmin: pode atribuir institutionAdmin, member, non-member (não superAdmin ou Admin)
+        if (Eau_User_Institution_Helper::is_institution_admin($current_user_id)) {
+            unset($all_types['superAdmin']);
+            unset($all_types['Admin']);
+            return $all_types;
+        }
+
+        // Outros usuários: não podem alterar mem_type
+        return array();
+    }
+
+    /**
+     * Valida se o usuário atual pode alterar o mem_type de um usuário para o valor especificado
+     *
+     * @since 1.66.0
+     * @param int $target_user_id ID do usuário alvo
+     * @param string $new_type Novo tipo a ser atribuído
+     * @return bool|WP_Error True se permitido, WP_Error se não
+     */
+    public static function can_change_user_type($target_user_id, $new_type) {
+        $current_user_id = get_current_user_id();
+        $allowed_types = self::get_allowed_user_types();
+
+        // Verifica se o tipo é permitido
+        if (!isset($allowed_types[$new_type])) {
+            return new \WP_Error('not_allowed', 'You are not allowed to assign this user type.');
+        }
+
+        // Não pode alterar o próprio tipo (para evitar perda de acesso)
+        if ($target_user_id === $current_user_id && $new_type !== get_user_meta($current_user_id, 'mem_type', true)) {
+            // Só permite se for superAdmin alterando a si mesmo
+            if (!Eau_User_Institution_Helper::is_super_admin($current_user_id)) {
+                return new \WP_Error('self_change', 'You cannot change your own user type.');
+            }
+        }
+
+        // Admin não pode alterar superAdmin
+        $target_type = get_user_meta($target_user_id, 'mem_type', true);
+        if ($target_type === 'superAdmin' && !Eau_User_Institution_Helper::is_super_admin($current_user_id)) {
+            return new \WP_Error('cannot_modify_super', 'You cannot modify a Super Admin user.');
+        }
+
+        // Admin não pode alterar outro Admin para algo menor (exceto se for superAdmin)
+        if ($target_type === 'Admin' && !Eau_User_Institution_Helper::is_super_admin($current_user_id) && !Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            return new \WP_Error('cannot_modify_admin', 'You cannot modify an Admin user.');
+        }
+
+        // institutionAdmin só pode modificar usuários de suas instituições
+        if (Eau_User_Institution_Helper::is_institution_admin($current_user_id) &&
+            !Eau_User_Institution_Helper::is_super_admin($current_user_id) &&
+            !Eau_User_Institution_Helper::is_admin($current_user_id)) {
+            if (!Eau_User_Institution_Helper::can_user_access_user($current_user_id, $target_user_id)) {
+                return new \WP_Error('no_access', 'You do not have access to modify this user.');
+            }
+        }
+
+        return true;
     }
 }

@@ -2,8 +2,9 @@
 /**
  * Institution Importer
  *
- * Imports institution data from legacy CSV, updating existing institutions
- * or creating new ones when Company ID is not found.
+ * Imports institution data from CSV, supporting two formats:
+ * - Legacy format: Detailed company data with many fields
+ * - MembershipDetails format: Membership data with start/expiry dates
  *
  * @package    EauSystem
  * @subpackage Includes
@@ -26,6 +27,12 @@ if (!defined('WPINC')) {
 class Eau_Institution_Importer {
 
     /**
+     * CSV Format constants
+     */
+    const FORMAT_LEGACY = 'legacy';
+    const FORMAT_MEMBERSHIP = 'membership';
+
+    /**
      * Mapping of CSV company types to system types
      *
      * @var array
@@ -36,6 +43,49 @@ class Eau_Institution_Importer {
         'media'           => 'media',
         'other'           => 'other',
     );
+
+    /**
+     * Detect CSV format based on headers
+     *
+     * @since  1.63.9
+     * @param  array $headers CSV headers
+     * @return string         FORMAT_LEGACY or FORMAT_MEMBERSHIP
+     */
+    public static function detect_format($headers) {
+        // Normalize headers to lowercase for comparison
+        $headers_lower = array_map('strtolower', array_map('trim', $headers));
+
+        // MembershipDetails format has these specific headers
+        $membership_headers = array('start date', 'expiry date', 'userid', 'total staff', 'membership type', 'member name', 'campus name');
+
+        $matches = 0;
+        foreach ($membership_headers as $header) {
+            if (in_array($header, $headers_lower)) {
+                $matches++;
+            }
+        }
+
+        // If 4+ of the membership headers match, it's the membership format
+        if ($matches >= 4) {
+            return self::FORMAT_MEMBERSHIP;
+        }
+
+        return self::FORMAT_LEGACY;
+    }
+
+    /**
+     * Get format name for display
+     *
+     * @since  1.63.9
+     * @param  string $format Format constant
+     * @return string         Human readable format name
+     */
+    public static function get_format_name($format) {
+        if ($format === self::FORMAT_MEMBERSHIP) {
+            return 'MembershipDetails (Membership Data)';
+        }
+        return 'Legacy (Company Details)';
+    }
 
     /**
      * Get preview of CSV data without importing
@@ -57,7 +107,21 @@ class Eau_Institution_Importer {
             return $csv_data;
         }
 
-        // Extract unique institutions by Company ID
+        if (empty($csv_data)) {
+            return new \WP_Error('empty_csv', __('CSV file is empty.', 'eau-system'));
+        }
+
+        // Detect format from first row keys
+        $first_row = reset($csv_data);
+        $headers = array_keys($first_row);
+        $format = self::detect_format($headers);
+
+        // Use format-specific extraction
+        if ($format === self::FORMAT_MEMBERSHIP) {
+            return self::get_preview_membership($csv_data, $limit, $format);
+        }
+
+        // Legacy format
         $unique_institutions = self::extract_unique_institutions($csv_data);
 
         $total_institutions = count($unique_institutions);
@@ -83,23 +147,180 @@ class Eau_Institution_Importer {
             $preview[] = array(
                 'company_id'   => $company_id,
                 'company_name' => $institution_data['company_name'],
-                'email'        => $institution_data['email'],
-                'type'         => $institution_data['type'],
-                'cricos'       => $institution_data['cricos'],
-                'state'        => $institution_data['state'],
-                'country'      => $institution_data['country'],
+                'email'        => isset($institution_data['email']) ? $institution_data['email'] : '',
+                'type'         => isset($institution_data['type']) ? $institution_data['type'] : '',
+                'cricos'       => isset($institution_data['cricos']) ? $institution_data['cricos'] : '',
+                'state'        => isset($institution_data['state']) ? $institution_data['state'] : '',
+                'country'      => isset($institution_data['country']) ? $institution_data['country'] : '',
                 'action'       => $existing ? 'update' : 'create',
                 'post_id'      => $existing ? $existing->ID : null,
             );
         }
 
+        // Count institutions that will be deleted (not in CSV)
+        $will_delete = self::count_institutions_not_in_csv($unique_institutions);
+
         return array(
+            'format'             => $format,
+            'format_name'        => self::get_format_name($format),
             'total_rows'         => count($csv_data),
             'total_institutions' => $total_institutions,
             'will_update'        => $will_update,
             'will_create'        => $will_create,
+            'will_delete'        => $will_delete,
             'preview'            => $preview,
         );
+    }
+
+    /**
+     * Get preview for MembershipDetails format
+     *
+     * @since  1.63.9
+     * @param  array  $csv_data CSV data
+     * @param  int    $limit    Number of rows to preview
+     * @param  string $format   Format constant
+     * @return array
+     */
+    private static function get_preview_membership($csv_data, $limit, $format) {
+        $unique_institutions = self::extract_membership_institutions($csv_data);
+
+        $total_institutions = count($unique_institutions);
+        $preview_institutions = array_slice($unique_institutions, 0, $limit, true);
+        $will_update = 0;
+        $will_create = 0;
+        $preview = array();
+
+        // Analyze all institutions for counts
+        foreach ($unique_institutions as $company_id => $institution_data) {
+            $existing = self::find_existing_institution($company_id, $institution_data['company_name']);
+            if ($existing) {
+                $will_update++;
+            } else {
+                $will_create++;
+            }
+        }
+
+        // Build preview data
+        foreach ($preview_institutions as $company_id => $institution_data) {
+            $existing = self::find_existing_institution($company_id, $institution_data['company_name']);
+
+            $preview[] = array(
+                'company_id'      => $company_id,
+                'company_name'    => $institution_data['company_name'],
+                'membership_type' => $institution_data['membership_type'],
+                'start_date'      => $institution_data['start_date'],
+                'expiry_date'     => $institution_data['expiry_date'],
+                'total_staff'     => $institution_data['total_staff'],
+                'action'          => $existing ? 'update' : 'create',
+                'post_id'         => $existing ? $existing->ID : null,
+            );
+        }
+
+        // Count institutions that will be deleted (not in CSV)
+        $will_delete = self::count_institutions_not_in_csv($unique_institutions);
+
+        return array(
+            'format'             => $format,
+            'format_name'        => self::get_format_name($format),
+            'total_rows'         => count($csv_data),
+            'total_institutions' => $total_institutions,
+            'will_update'        => $will_update,
+            'will_create'        => $will_create,
+            'will_delete'        => $will_delete,
+            'preview'            => $preview,
+        );
+    }
+
+    /**
+     * Extract institutions from MembershipDetails format CSV
+     *
+     * @since  1.63.9
+     * @param  array $csv_data CSV data
+     * @return array           Unique institutions keyed by Company ID
+     */
+    private static function extract_membership_institutions($csv_data) {
+        $institutions = array();
+
+        foreach ($csv_data as $row) {
+            $company_id = self::get_csv_value($row, 'Company ID');
+
+            if (empty($company_id)) {
+                continue;
+            }
+
+            if (isset($institutions[$company_id])) {
+                continue;
+            }
+
+            // Use Campus Name if available, otherwise Member Name
+            $campus_name = self::get_csv_value($row, 'Campus Name');
+            $member_name = self::get_csv_value($row, 'Member Name');
+            $company_name = !empty($campus_name) ? $campus_name : $member_name;
+
+            // Convert dates from DD/MM/YYYY to YYYY-MM-DD
+            $start_date = self::convert_date_format(self::get_csv_value($row, 'Start Date'));
+            $expiry_date = self::convert_date_format(self::get_csv_value($row, 'Expiry Date'));
+
+            $institutions[$company_id] = array(
+                'company_id'      => $company_id,
+                'company_name'    => $company_name,
+                'member_name'     => $member_name,
+                'campus_name'     => $campus_name,
+                'user_id'         => self::get_csv_value($row, 'UserId'),
+                'total_staff'     => intval(self::get_csv_value($row, 'Total Staff')),
+                'membership_type' => self::get_csv_value($row, 'Membership Type'),
+                'start_date'      => $start_date,
+                'expiry_date'     => $expiry_date,
+            );
+        }
+
+        return $institutions;
+    }
+
+    /**
+     * Convert date from DD/MM/YYYY to YYYY-MM-DD
+     *
+     * @since  1.63.9
+     * @param  string $date Date in DD/MM/YYYY format
+     * @return string       Date in YYYY-MM-DD format or empty string
+     */
+    private static function convert_date_format($date) {
+        if (empty($date)) {
+            return '';
+        }
+
+        $parts = explode('/', $date);
+        if (count($parts) !== 3) {
+            return $date; // Return as-is if not in expected format
+        }
+
+        return $parts[2] . '-' . str_pad($parts[1], 2, '0', STR_PAD_LEFT) . '-' . str_pad($parts[0], 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Count institutions in database that are not in the CSV
+     *
+     * @since  1.63.9
+     * @param  array $csv_institutions Institutions from CSV keyed by company ID
+     * @return int                     Number of institutions not in CSV
+     */
+    private static function count_institutions_not_in_csv($csv_institutions) {
+        $query = new \WP_Query(array(
+            'post_type'      => 'institutions',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ));
+
+        $count = 0;
+        foreach ($query->posts as $post_id) {
+            $company_id = get_post_meta($post_id, 'ins_company_id', true);
+            if (!empty($company_id) && !isset($csv_institutions[$company_id])) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
@@ -159,9 +380,10 @@ class Eau_Institution_Importer {
      * @param  string $csv_filepath Path to CSV file
      * @param  int    $offset       Starting offset
      * @param  int    $limit        Batch size
+     * @param  bool   $sync_delete  If true, delete institutions not in CSV (for membership format)
      * @return array|WP_Error
      */
-    public static function import_batch($csv_filepath, $offset = 0, $limit = 25) {
+    public static function import_batch($csv_filepath, $offset = 0, $limit = 25, $sync_delete = false) {
         if (!file_exists($csv_filepath)) {
             return new \WP_Error('file_not_found', __('CSV file not found.', 'eau-system'));
         }
@@ -173,21 +395,41 @@ class Eau_Institution_Importer {
             return $csv_data;
         }
 
-        // Extract unique institutions
-        $unique_institutions = self::extract_unique_institutions($csv_data);
-        $institutions_array = array_values($unique_institutions);
+        if (empty($csv_data)) {
+            return new \WP_Error('empty_csv', __('CSV file is empty.', 'eau-system'));
+        }
 
+        // Detect format
+        $first_row = reset($csv_data);
+        $headers = array_keys($first_row);
+        $format = self::detect_format($headers);
+
+        // Extract institutions based on format
+        if ($format === self::FORMAT_MEMBERSHIP) {
+            $unique_institutions = self::extract_membership_institutions($csv_data);
+        } else {
+            $unique_institutions = self::extract_unique_institutions($csv_data);
+        }
+
+        $institutions_array = array_values($unique_institutions);
         $total_institutions = count($institutions_array);
         $batch_data = array_slice($institutions_array, $offset, $limit);
 
         $updated = 0;
         $created = 0;
         $skipped = 0;
+        $deleted = 0;
         $errors = array();
 
         foreach ($batch_data as $index => $institution_data) {
             $row_number = $offset + $index + 1;
-            $result = self::process_institution($institution_data, $row_number);
+
+            // Use format-specific processing
+            if ($format === self::FORMAT_MEMBERSHIP) {
+                $result = self::process_membership_institution($institution_data, $row_number);
+            } else {
+                $result = self::process_institution($institution_data, $row_number);
+            }
 
             if (is_wp_error($result)) {
                 $skipped++;
@@ -206,17 +448,160 @@ class Eau_Institution_Importer {
         }
 
         $processed = $offset + count($batch_data);
+        $has_more = $processed < $total_institutions;
+
+        // If this is the last batch and sync_delete is true, delete institutions not in CSV
+        if (!$has_more && $sync_delete) {
+            $deleted = self::delete_institutions_not_in_csv($unique_institutions);
+        }
 
         return array(
             'success'   => true,
+            'format'    => $format,
             'updated'   => $updated,
             'created'   => $created,
             'skipped'   => $skipped,
+            'deleted'   => $deleted,
             'total'     => $total_institutions,
             'processed' => $processed,
-            'has_more'  => $processed < $total_institutions,
+            'has_more'  => $has_more,
             'errors'    => $errors,
         );
+    }
+
+    /**
+     * Process a single institution from MembershipDetails format
+     *
+     * @since  1.63.9
+     * @param  array $institution_data Institution data from CSV
+     * @param  int   $row_number       Row number for error reporting
+     * @return string|WP_Error         'created', 'updated', or WP_Error
+     */
+    private static function process_membership_institution($institution_data, $row_number) {
+        $company_id = $institution_data['company_id'];
+        $company_name = $institution_data['company_name'];
+
+        if (empty($company_id)) {
+            return new \WP_Error('empty_company_id', sprintf(__('Row %d: No Company ID', 'eau-system'), $row_number));
+        }
+
+        $existing = self::find_existing_institution($company_id, $company_name);
+
+        if ($existing) {
+            // UPDATE existing institution
+            $result = self::update_membership_institution($existing->ID, $institution_data);
+            if (is_wp_error($result)) {
+                return $result;
+            }
+            return 'updated';
+        } else {
+            // CREATE new institution
+            $result = self::create_membership_institution($institution_data, $row_number);
+            if (is_wp_error($result)) {
+                return $result;
+            }
+            return 'created';
+        }
+    }
+
+    /**
+     * Update institution with MembershipDetails data
+     *
+     * @since  1.63.9
+     * @param  int   $post_id          Institution post ID
+     * @param  array $institution_data Institution data
+     * @return bool|WP_Error
+     */
+    private static function update_membership_institution($post_id, $institution_data) {
+        // Update post title
+        if (!empty($institution_data['company_name'])) {
+            wp_update_post(array(
+                'ID'         => $post_id,
+                'post_title' => sanitize_text_field($institution_data['company_name']),
+            ));
+        }
+
+        // Update meta fields
+        update_post_meta($post_id, 'ins_company_id', sanitize_text_field($institution_data['company_id']));
+        update_post_meta($post_id, 'ins_company_name', sanitize_text_field($institution_data['company_name']));
+        update_post_meta($post_id, 'ins_member_start_date', sanitize_text_field($institution_data['start_date']));
+        update_post_meta($post_id, 'ins_member_expire_date', sanitize_text_field($institution_data['expiry_date']));
+        update_post_meta($post_id, 'ins_total_staff', intval($institution_data['total_staff']));
+        update_post_meta($post_id, 'ins_membership_type', sanitize_text_field($institution_data['membership_type']));
+        update_post_meta($post_id, 'ins_company_primary_contact', sanitize_text_field($institution_data['user_id']));
+        update_post_meta($post_id, 'ins_status', 'active');
+
+        // Determine institution type based on membership_type
+        $membership_type = $institution_data['membership_type'];
+        if (strpos($membership_type, 'College') !== false) {
+            update_post_meta($post_id, 'ins_type', 'College');
+        } elseif (strpos($membership_type, 'Corporate') !== false || strpos($membership_type, 'Affiliate') !== false) {
+            update_post_meta($post_id, 'ins_type', 'Corporate affiliate');
+        }
+
+        return true;
+    }
+
+    /**
+     * Create institution from MembershipDetails data
+     *
+     * @since  1.63.9
+     * @param  array $institution_data Institution data
+     * @param  int   $row_number       Row number for error reporting
+     * @return int|WP_Error            Post ID or error
+     */
+    private static function create_membership_institution($institution_data, $row_number) {
+        $company_name = !empty($institution_data['company_name'])
+            ? sanitize_text_field($institution_data['company_name'])
+            : 'Institution ' . $institution_data['company_id'];
+
+        $post_id = wp_insert_post(array(
+            'post_type'   => 'institutions',
+            'post_title'  => $company_name,
+            'post_status' => 'publish',
+            'post_author' => get_current_user_id() ?: 1,
+        ));
+
+        if (is_wp_error($post_id)) {
+            return new \WP_Error(
+                'institution_creation_failed',
+                sprintf(__('Row %d: Failed to create institution - %s', 'eau-system'), $row_number, $post_id->get_error_message())
+            );
+        }
+
+        // Add meta fields
+        self::update_membership_institution($post_id, $institution_data);
+
+        return $post_id;
+    }
+
+    /**
+     * Delete institutions that are not in the CSV
+     *
+     * @since  1.63.9
+     * @param  array $csv_institutions Institutions from CSV keyed by company ID
+     * @return int                     Number of deleted institutions
+     */
+    private static function delete_institutions_not_in_csv($csv_institutions) {
+        $query = new \WP_Query(array(
+            'post_type'      => 'institutions',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ));
+
+        $deleted = 0;
+        foreach ($query->posts as $post_id) {
+            $company_id = get_post_meta($post_id, 'ins_company_id', true);
+            if (!empty($company_id) && !isset($csv_institutions[$company_id])) {
+                $result = wp_delete_post($post_id, true);
+                if ($result) {
+                    $deleted++;
+                }
+            }
+        }
+
+        return $deleted;
     }
 
     /**

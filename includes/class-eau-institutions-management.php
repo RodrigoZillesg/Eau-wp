@@ -306,6 +306,11 @@ class Eau_Institutions_Management {
                     'sortable' => true,
                 ),
                 array(
+                    'key' => 'campus',
+                    'label' => 'CAMPUS',
+                    'sortable' => true,
+                ),
+                array(
                     'key' => 'code',
                     'label' => 'CODE',
                     'sortable' => true,
@@ -401,8 +406,19 @@ class Eau_Institutions_Management {
                     'placeholder' => 'All Types',
                 ),
                 array(
-                    'key' => 'created_date',
-                    'label' => 'Creation Date',
+                    'key' => 'campus',
+                    'label' => 'Campus',
+                    'type' => 'text',
+                    'placeholder' => 'Search by campus name...',
+                ),
+                array(
+                    'key' => 'start_date',
+                    'label' => 'Start Date',
+                    'type' => 'date_range',
+                ),
+                array(
+                    'key' => 'expire_date',
+                    'label' => 'Expire Date',
                     'type' => 'date_range',
                 ),
             ),

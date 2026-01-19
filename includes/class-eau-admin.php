@@ -697,6 +697,7 @@ class Eau_Admin {
         $csv_filename = sanitize_text_field($_POST['csv_filename'] ?? $_POST['filename'] ?? '');
         $offset = isset($_POST['offset']) ? intval($_POST['offset']) : 0;
         $batch_size = isset($_POST['limit']) ? intval($_POST['limit']) : (isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 25);
+        $sync_delete = isset($_POST['sync_delete']) ? filter_var($_POST['sync_delete'], FILTER_VALIDATE_BOOLEAN) : false;
 
         if (empty($csv_filename)) {
             wp_send_json_error(array('message' => 'Filename not provided.'));
@@ -709,7 +710,7 @@ class Eau_Admin {
             wp_send_json_error(array('message' => 'CSV file not found.'));
         }
 
-        $result = Eau_Institution_Importer::import_batch($csv_filepath, $offset, $batch_size);
+        $result = Eau_Institution_Importer::import_batch($csv_filepath, $offset, $batch_size, $sync_delete);
 
         if (is_wp_error($result)) {
             wp_send_json_error(array('message' => $result->get_error_message()));

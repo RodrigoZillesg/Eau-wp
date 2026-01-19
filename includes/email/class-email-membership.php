@@ -268,6 +268,43 @@ class Email_Membership {
     }
 
     /**
+     * Envia email notificando o membro que foi removido de uma instituição
+     *
+     * @since 1.67.4
+     * @param int    $user_id        ID do usuário removido
+     * @param int    $institution_id ID da instituição
+     * @param string $reason         Motivo da remoção (opcional)
+     * @return bool
+     */
+    public static function send_member_removed_from_institution($user_id, $institution_id, $reason = '') {
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return false;
+        }
+
+        $institution = get_post($institution_id);
+        if (!$institution) {
+            return false;
+        }
+
+        $institution_name = get_post_meta($institution_id, 'ins_company_name', true) ?: $institution->post_title;
+        $first_name = get_user_meta($user_id, 'first_name', true) ?: $user->display_name;
+
+        $content = self::template_member_removed_from_institution([
+            'name'             => $first_name,
+            'institution_name' => $institution_name,
+            'reason'           => $reason,
+            'contact_email'    => Email_Config::get_from_email(),
+        ]);
+
+        return Email_Service::send(
+            $user->user_email,
+            'Institution Membership Update - English Australia',
+            $content
+        );
+    }
+
+    /**
      * Obtém o label do tipo de membership
      *
      * @param string $type_key Chave do tipo
@@ -515,6 +552,40 @@ class Email_Membership {
             <p>If you have any questions about renewing your membership or need assistance, please contact us at <a href=\"mailto:{$contact_email}\">{$contact_email}</a>.</p>
             <p>Thank you for being a valued member of English Australia.</p>
             <p>Best regards,<br>The English Australia Team</p>
+        ";
+
+        return $content;
+    }
+
+    /**
+     * Template: Membro removido de instituição
+     *
+     * @since 1.67.4
+     */
+    private static function template_member_removed_from_institution($data) {
+        $name = $data['name'] ?? 'Member';
+        $institution_name = $data['institution_name'] ?? 'the institution';
+        $reason = $data['reason'] ?? '';
+        $contact_email = $data['contact_email'] ?? 'info@englishaustralia.com.au';
+
+        $content = "
+            <h1>Institution Membership Update</h1>
+            <p>Dear {$name},</p>
+            <p>We are writing to inform you that your membership with <strong>{$institution_name}</strong> has been ended by an institution administrator.</p>
+        ";
+
+        if (!empty($reason)) {
+            $content .= Email_Template::info_box_html("
+                <h3>Reason Provided</h3>
+                <p>" . esc_html($reason) . "</p>
+            ");
+        }
+
+        $content .= "
+            <p>As a result, your account has been updated to reflect this change. You may join another institution by submitting a new membership request.</p>
+            <p>If you believe this was done in error or have any questions, please contact us at <a href=\"mailto:{$contact_email}\">{$contact_email}</a> or reach out to the institution directly.</p>
+            <p>We appreciate your understanding.</p>
+            <p>Kind regards,<br>The English Australia Team</p>
         ";
 
         return $content;

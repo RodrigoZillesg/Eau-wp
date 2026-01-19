@@ -144,6 +144,10 @@ class Eau_Dashboard {
         // Identifica tipo de usuário
         $user_role_info = self::get_user_role_info($current_user->ID);
 
+        // v1.66.9 - Verifica se é non-member
+        $mem_type = get_user_meta($current_user->ID, 'mem_type', true);
+        $is_non_member = ($mem_type === 'non-member');
+
         // Verifica se é membro com status pendente (aguardando aprovação)
         // Verifica mem_membership_status = 'pending' OU (mem_membership_status vazio E mem_status = 'pending')
         $is_pending_member = false;
@@ -384,7 +388,8 @@ class Eau_Dashboard {
                 </a>
                 <?php endif; ?>
 
-                <!-- Active Events (visible to all users) -->
+                <!-- Active Events (visible to all users except non-member) -->
+                <?php if (!$is_non_member): ?>
                 <a href="/events/" class="eau-dashboard-card-link">
                     <div class="eau-dashboard-card eau-card-purple">
                         <div class="eau-card-content">
@@ -403,6 +408,7 @@ class Eau_Dashboard {
                         </div>
                     </div>
                 </a>
+                <?php endif; ?>
 
                 <!-- Points Awarded (Admin/superAdmin only) -->
                 <?php if (Eau_User_Institution_Helper::has_admin_access()): ?>
@@ -469,9 +475,49 @@ class Eau_Dashboard {
                     </div>
                 </a>
                 <?php else:
-                // My Membership (for non-admin users)
-                $membership_info = self::get_user_membership_info($current_user->ID);
-                if ($membership_info):
+                // v1.67.1 - Verifica se usuário está vinculado a uma instituição
+                $user_institution = Eau_User_Institution_Helper::get_user_institution($current_user->ID);
+
+                if ($user_institution):
+                    // Usuário está vinculado a uma instituição - mostra card "My Institution"
+                ?>
+                <a href="/dashboard/my-institution/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-purple">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">My Institution</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number eau-card-institution-name"><?php echo esc_html($user_institution->post_title); ?></span>
+                                <span class="eau-card-active">Active Member</span>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="building-2"></i>
+                        </div>
+                    </div>
+                </a>
+                <?php elseif ($is_non_member): ?>
+                    <!-- Non-member: mostra card para solicitar afiliação -->
+                    <?php $membership_info = self::get_user_membership_info($current_user->ID); ?>
+                <a href="/dashboard/my-institution/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-teal">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">My Membership</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number eau-card-membership-type"><?php echo esc_html($membership_info['type_label']); ?></span>
+                                <span class="eau-card-<?php echo esc_attr($membership_info['status_class']); ?>">
+                                    Apply for an Institution
+                                </span>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="id-card"></i>
+                        </div>
+                    </div>
+                </a>
+                <?php else:
+                    // Outros casos: mostra card de membership
+                    $membership_info = self::get_user_membership_info($current_user->ID);
+                    if ($membership_info):
                 ?>
                 <a href="/membership-selection/" class="eau-dashboard-card-link">
                     <div class="eau-dashboard-card eau-card-teal">
@@ -489,6 +535,7 @@ class Eau_Dashboard {
                         </div>
                     </div>
                 </a>
+                    <?php endif; ?>
                 <?php endif; ?>
                 <?php endif; ?>
 
@@ -722,7 +769,8 @@ class Eau_Dashboard {
             </script>
             <?php endif; ?>
 
-            <!-- OpenLearning Courses Section -->
+            <!-- OpenLearning Courses Section (hidden for non-member) -->
+            <?php if (!$is_non_member): ?>
             <?php
             // Busca 4 cursos do Post Type (destaques primeiro)
             $dashboard_courses = Eau_OpenLearning_Post_Type::get_dashboard_courses();
@@ -790,6 +838,7 @@ class Eau_Dashboard {
                 </div>
                 <?php endif; ?>
             </div>
+            <?php endif; // End of !$is_non_member check for courses ?>
 
         </div>
 
@@ -1292,21 +1341,23 @@ class Eau_Dashboard {
     /**
      * Retorna informações sobre a role do usuário para exibição
      *
+     * @since 1.67.4 Agora usa mem_type ao invés de WordPress roles
      * @param int $user_id ID do usuário
      * @return array Array com 'description' e 'institutions' (array de nomes)
      */
     private static function get_user_role_info($user_id) {
-        $user = get_userdata($user_id);
+        // v1.67.4 - Usa mem_type ao invés de WordPress roles
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
 
-        // Verifica se é Super Admin ou Admin (manage_options)
-        if (in_array('administrator', $user->roles) || current_user_can('manage_options')) {
+        // Verifica se é Super Admin ou Admin pelo mem_type
+        if ($mem_type === 'superAdmin' || $mem_type === 'Admin') {
             return array(
                 'description' => 'System Administrator - Full access to all institutions and data',
                 'institutions' => array(),
             );
         }
 
-        // Verifica se é Institution Admin - CORRETO: pega TODAS as instituições
+        // Verifica se é Institution Admin - pega TODAS as instituições que administra
         if (Eau_User_Institution_Helper::is_institution_admin($user_id)) {
             $institution_names = Eau_User_Institution_Helper::get_user_managed_institution_names($user_id);
 
@@ -1323,7 +1374,15 @@ class Eau_Dashboard {
             );
         }
 
-        // Membro comum
+        // Verifica se é non-member
+        if ($mem_type === 'non-member' || empty($mem_type)) {
+            return array(
+                'description' => 'To access member benefits, request to join an institution using the "My Membership" card below.',
+                'institutions' => array(),
+            );
+        }
+
+        // Membro comum (member)
         return array(
             'description' => 'Here\'s what\'s happening with your membership today.',
             'institutions' => array(),

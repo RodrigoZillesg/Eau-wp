@@ -72,11 +72,36 @@ class Eau_Member_Institution_Service {
 
         // Update user metadata
         update_user_meta($user_id, 'mem_membercompanyname', $ins_company_id);
-        update_user_meta($user_id, 'mem_type', $options['member_type']);
+
+        // Novo sistema (v1.66.0): Separação de papéis do sistema vs administração de instituição
+        if ($options['member_type'] === 'institutionAdmin') {
+            // Não altera mem_type - preserva papel original (superAdmin, Admin, member, etc.)
+            // Usa o novo sistema de managed institutions
+            Eau_User_Institution_Helper::add_managed_institution($user_id, $institution_id);
+        } else {
+            // Para outros tipos (member, non-member), só altera mem_type se:
+            // - Não for superAdmin ou Admin (preserva papéis administrativos)
+            // - Ou se o mem_type atual estiver vazio/indefinido
+            $roles_to_preserve = array('superAdmin', 'Admin');
+            if (!in_array($previous_member_type, $roles_to_preserve)) {
+                update_user_meta($user_id, 'mem_type', $options['member_type']);
+            }
+        }
+
+        // v1.67.1 - Define membership status como 'active' quando vinculado a uma instituição
+        // Isso garante que o usuário tenha acesso às funcionalidades de membro
+        $current_membership_status = get_user_meta($user_id, 'mem_membership_status', true);
+        if (empty($current_membership_status) || $current_membership_status === 'inactive') {
+            update_user_meta($user_id, 'mem_membership_status', 'active');
+        }
 
         // If setting as primary contact, update institution
         if ($options['set_as_primary_contact']) {
-            update_post_meta($institution_id, 'ins_company_primary_contact', $user_id);
+            // Usa o mem_userid do usuário como primary contact
+            $mem_userid = get_user_meta($user_id, 'mem_userid', true);
+            if (!empty($mem_userid)) {
+                update_post_meta($institution_id, 'ins_company_primary_contact', $mem_userid);
+            }
         }
 
         // Log to history
@@ -189,9 +214,18 @@ class Eau_Member_Institution_Service {
         // Clear institution link
         delete_user_meta($user_id, 'mem_membercompanyname');
 
-        // Downgrade from institutionAdmin to member
+        // Remove da lista de managed institutions (novo sistema v1.66.0)
+        if ($current_institution_id) {
+            Eau_User_Institution_Helper::remove_managed_institution($user_id, $current_institution_id, true);
+        }
+
+        // Downgrade from institutionAdmin to member (legado - mantido para compatibilidade)
         if ($current_member_type === 'institutionAdmin') {
-            update_user_meta($user_id, 'mem_type', 'member');
+            // Verifica se ainda administra outras instituições
+            $still_manages = Eau_User_Institution_Helper::get_user_managed_institutions($user_id);
+            if (empty($still_manages)) {
+                update_user_meta($user_id, 'mem_type', 'member');
+            }
         }
 
         // Update membership status if requested
@@ -277,19 +311,45 @@ class Eau_Member_Institution_Service {
 
         // Clear primary contact from old institution if applicable
         if ($previous_institution_id) {
+            $mem_userid = get_user_meta($user_id, 'mem_userid', true);
             $primary_contact = get_post_meta($previous_institution_id, 'ins_company_primary_contact', true);
-            if ($primary_contact == $user_id) {
+            if ($primary_contact == $user_id || $primary_contact == $mem_userid) {
                 delete_post_meta($previous_institution_id, 'ins_company_primary_contact');
             }
+
+            // Remove da lista de managed institutions da instituição anterior (v1.66.0)
+            Eau_User_Institution_Helper::remove_managed_institution($user_id, $previous_institution_id, false);
         }
 
         // Update user metadata
         update_user_meta($user_id, 'mem_membercompanyname', $new_company_id);
-        update_user_meta($user_id, 'mem_type', $options['member_type']);
+
+        // Novo sistema (v1.66.0): Separação de papéis do sistema vs administração de instituição
+        if ($options['member_type'] === 'institutionAdmin') {
+            // Não altera mem_type - preserva papel original (superAdmin, Admin, member, etc.)
+            // Usa o novo sistema de managed institutions
+            Eau_User_Institution_Helper::add_managed_institution($user_id, $new_institution_id);
+        } else {
+            // Para outros tipos (member, non-member), só altera mem_type se:
+            // - Não for superAdmin ou Admin (preserva papéis administrativos)
+            $roles_to_preserve = array('superAdmin', 'Admin');
+            if (!in_array($previous_member_type, $roles_to_preserve)) {
+                update_user_meta($user_id, 'mem_type', $options['member_type']);
+            }
+        }
+
+        // v1.67.1 - Define membership status como 'active' quando transferido para uma instituição
+        $current_membership_status = get_user_meta($user_id, 'mem_membership_status', true);
+        if (empty($current_membership_status) || $current_membership_status === 'inactive') {
+            update_user_meta($user_id, 'mem_membership_status', 'active');
+        }
 
         // Set as primary contact of new institution if requested
         if ($options['set_as_primary_contact']) {
-            update_post_meta($new_institution_id, 'ins_company_primary_contact', $user_id);
+            $mem_userid = get_user_meta($user_id, 'mem_userid', true);
+            if (!empty($mem_userid)) {
+                update_post_meta($new_institution_id, 'ins_company_primary_contact', $mem_userid);
+            }
         }
 
         // Log transfer to history
@@ -391,29 +451,23 @@ class Eau_Member_Institution_Service {
     /**
      * Get all institution admins
      *
+     * @since 1.66.0 - Atualizado para usar o novo sistema de separação de papéis
      * @param int $institution_id Institution post ID
      * @return array Array of user objects
      */
     public static function get_institution_admins($institution_id) {
-        $company_id = get_post_meta($institution_id, 'ins_company_id', true);
-        if (empty($company_id)) {
+        // Usa o helper para obter os user IDs (combina novo sistema + legado + primary contact)
+        $user_ids = Eau_User_Institution_Helper::get_institution_admin_user_ids($institution_id);
+
+        if (empty($user_ids)) {
             return array();
         }
 
+        // Retorna os objetos de usuário
         return get_users(array(
-            'meta_query' => array(
-                'relation' => 'AND',
-                array(
-                    'key' => 'mem_membercompanyname',
-                    'value' => $company_id,
-                    'compare' => '=',
-                ),
-                array(
-                    'key' => 'mem_type',
-                    'value' => 'institutionAdmin',
-                    'compare' => '=',
-                ),
-            ),
+            'include' => $user_ids,
+            'orderby' => 'display_name',
+            'order' => 'ASC',
         ));
     }
 

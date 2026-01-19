@@ -25,6 +25,7 @@ class Eau_Settings {
      */
     const OPTION_ACTIVITY_APPROVAL = 'eau_activity_approval_mode';
     const OPTION_MEMBER_TAGS = 'eau_member_tags';
+    const OPTION_EMAIL_MIGRATION_EXEMPT = 'eau_email_migration_exempt_emails';
 
     /**
      * Approval modes
@@ -376,6 +377,41 @@ class Eau_Settings {
 
                 <!-- Tab: System -->
                 <div class="eau-settings-tab-panel" data-tab-content="system">
+                    <!-- Email Migration Exemptions -->
+                    <div class="eau-settings-section">
+                        <div class="eau-settings-section-header">
+                            <div class="eau-settings-section-icon">
+                                <i data-lucide="mail-x"></i>
+                            </div>
+                            <div class="eau-settings-section-title">
+                                <h3>Email Migration Exemptions</h3>
+                                <p>Emails that should bypass the personal email update requirement</p>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-body">
+                            <div class="eau-form-field">
+                                <label class="eau-form-label">Exempt Email Addresses</label>
+                                <textarea
+                                    class="eau-form-textarea"
+                                    id="eau-email-migration-exempt"
+                                    name="email_migration_exempt"
+                                    rows="4"
+                                    placeholder="email1@example.com, email2@example.com"
+                                ><?php echo esc_textarea(self::get_email_migration_exempt_raw()); ?></textarea>
+                                <p class="eau-form-hint">Enter email addresses separated by commas. These users will not be redirected to the email update page.</p>
+                            </div>
+                        </div>
+
+                        <div class="eau-settings-section-footer">
+                            <button type="button" class="eau-btn eau-btn-primary" id="eau-save-email-exempt-btn">
+                                <i data-lucide="save"></i>
+                                Save Exemptions
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- System Pages -->
                     <div class="eau-settings-section">
                         <div class="eau-settings-section-header">
                             <div class="eau-settings-section-icon">
@@ -453,6 +489,51 @@ class Eau_Settings {
      */
     public static function is_auto_approval() {
         return self::get_activity_approval_mode() === self::APPROVAL_AUTO;
+    }
+
+    /**
+     * Retorna a lista de emails isentos da migração de email (como string raw)
+     *
+     * @since 1.66.8
+     * @return string Lista de emails separados por vírgula
+     */
+    public static function get_email_migration_exempt_raw() {
+        return get_option(self::OPTION_EMAIL_MIGRATION_EXEMPT, '');
+    }
+
+    /**
+     * Retorna a lista de emails isentos da migração de email (como array)
+     *
+     * @since 1.66.8
+     * @return array Array de emails em lowercase
+     */
+    public static function get_email_migration_exempt_list() {
+        $raw = self::get_email_migration_exempt_raw();
+        if (empty($raw)) {
+            return array();
+        }
+
+        // Separa por vírgula, limpa espaços, converte para lowercase
+        $emails = array_map(function($email) {
+            return strtolower(trim($email));
+        }, explode(',', $raw));
+
+        // Remove entradas vazias
+        return array_filter($emails, function($email) {
+            return !empty($email) && is_email($email);
+        });
+    }
+
+    /**
+     * Verifica se um email está na lista de isentos
+     *
+     * @since 1.66.8
+     * @param string $email Email a verificar
+     * @return bool True se o email está na lista de isentos
+     */
+    public static function is_email_exempt_from_migration($email) {
+        $exempt_list = self::get_email_migration_exempt_list();
+        return in_array(strtolower(trim($email)), $exempt_list);
     }
 
     /**

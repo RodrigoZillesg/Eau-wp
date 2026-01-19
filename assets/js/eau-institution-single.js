@@ -76,6 +76,7 @@
             // Member management events
             if (eauInstitutionSingleData.canEditMembers) {
                 self.bindMemberManagementEvents();
+                self.bindRemoveMemberModalEvents(); // v1.67.4
             }
 
             // Primary contact events (only for restricted editors)
@@ -522,7 +523,7 @@
             // Add expanded content if not exists
             if (!$row.find('.eau-member-expanded').length) {
                 const member = $row.data('member');
-                const canEditRestricted = eauInstitutionSingleData.canEditRestricted;
+                const canManageAdmins = eauInstitutionSingleData.canManageAdmins;
                 const isAdmin = member.type === 'institutionAdmin';
 
                 let expandedHtml = `
@@ -558,7 +559,7 @@
                             </div>
                         </div>
                         <div class="eau-member-actions">
-                            ${canEditRestricted ? `
+                            ${canManageAdmins ? `
                                 <button type="button" class="eau-btn eau-btn-sm ${isAdmin ? 'eau-btn-warning eau-is-admin' : 'eau-btn-primary'} eau-btn-make-admin">
                                     <i data-lucide="${isAdmin ? 'user-minus' : 'user-plus'}"></i>
                                     ${isAdmin ? 'Remove Admin' : 'Make Admin'}
@@ -747,6 +748,8 @@
                         }
                         // Reload members to reflect changes
                         self.loadMembers();
+                        // Refresh admins section
+                        self.refreshAdminsSection();
                     } else {
                         if (typeof EauNotifications !== 'undefined') {
                             EauNotifications.error(response.data?.message || 'Failed to update member.');
@@ -809,6 +812,8 @@
                         }
                         // Reload members to reflect changes
                         self.loadMembers();
+                        // Refresh admins section
+                        self.refreshAdminsSection();
                     } else {
                         if (typeof EauNotifications !== 'undefined') {
                             EauNotifications.error(response.data?.message || 'Failed to update member.');
@@ -824,35 +829,147 @@
         },
 
         /**
-         * Confirm and remove member
+         * Refresh the Institution Administrators section
+         */
+        refreshAdminsSection: function() {
+            const self = this;
+            const $section = $('.eau-institution-admins-section');
+
+            if ($section.length === 0) {
+                return;
+            }
+
+            // Find the content area (after the header)
+            const $header = $section.find('.eau-section-header');
+            const $content = $section.find('.eau-admins-grid, .eau-admins-empty');
+
+            $.ajax({
+                url: eauInstitutionSingleData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_institution_admins',
+                    nonce: eauInstitutionSingleData.nonce,
+                    institution_id: self.institutionId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Remove old content
+                        $content.remove();
+
+                        // Add new content after header
+                        $header.after(response.data.html);
+
+                        // Update count in header
+                        const $countSpan = $header.find('.eau-admin-count');
+                        if (response.data.count > 0) {
+                            if ($countSpan.length) {
+                                $countSpan.text('(' + response.data.count + ')');
+                            } else {
+                                $header.find('h2').append(' <span class="eau-admin-count">(' + response.data.count + ')</span>');
+                            }
+                        } else {
+                            $countSpan.remove();
+                        }
+
+                        // Re-initialize Lucide icons
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                    }
+                }
+            });
+        },
+
+        // v1.67.4 - State for remove member modal
+        removeMemberData: null,
+
+        /**
+         * Confirm and remove member - Opens modal with reason field
+         * @since 1.67.4 Now uses modal instead of confirm dialog
          */
         confirmRemoveMember: function(memberId, memberName) {
             const self = this;
 
-            if (typeof EauNotifications !== 'undefined' && EauNotifications.confirm) {
-                EauNotifications.confirm({
-                    title: 'Remove Member from Institution',
-                    message: `Are you sure you want to remove <strong>${memberName}</strong> from this institution?<br><br>They will become a "non-member" and will need to request membership again to rejoin any institution.`,
-                    confirmText: 'Yes, Remove Member',
-                    cancelText: 'Cancel',
-                    type: 'danger',
-                    onConfirm: function() {
-                        self.doRemoveMember(memberId);
-                    }
-                });
-            } else {
-                // Fallback to native confirm
-                if (confirm(`Are you sure you want to remove "${memberName}" from this institution?\n\nThey will become a "non-member" and will need to request membership again to rejoin any institution.`)) {
-                    self.doRemoveMember(memberId);
-                }
+            // Get the member data from the row
+            const $row = $(`.eau-member-row[data-member-id="${memberId}"]`);
+            const memberData = $row.data('member') || {};
+            const memberEmail = memberData.email || '';
+
+            // Store member data for later use
+            self.removeMemberData = {
+                id: memberId,
+                name: memberName,
+                email: memberEmail
+            };
+
+            // Populate the modal
+            $('#eau-remove-member-name').text(memberName);
+            $('#eau-remove-member-email').text(memberEmail);
+            $('#eau-remove-member-reason').val('');
+
+            // Show the modal
+            $('#eau-remove-member-modal-overlay').fadeIn(200);
+
+            // Reinitialize Lucide icons in modal
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
             }
         },
 
         /**
-         * Execute remove member action
+         * Bind remove member modal events
+         * @since 1.67.4
          */
-        doRemoveMember: function(memberId) {
+        bindRemoveMemberModalEvents: function() {
             const self = this;
+
+            // Close modal on overlay click
+            $(document).on('click', '#eau-remove-member-modal-overlay', function(e) {
+                if ($(e.target).is('#eau-remove-member-modal-overlay')) {
+                    self.closeRemoveMemberModal();
+                }
+            });
+
+            // Close modal on close button click
+            $(document).on('click', '#eau-remove-member-modal [data-action="close"]', function() {
+                self.closeRemoveMemberModal();
+            });
+
+            // Close modal on Escape key
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape' && $('#eau-remove-member-modal-overlay').is(':visible')) {
+                    self.closeRemoveMemberModal();
+                }
+            });
+
+            // Confirm remove member
+            $(document).on('click', '#eau-confirm-remove-member-btn', function() {
+                if (self.removeMemberData) {
+                    const reason = $('#eau-remove-member-reason').val().trim();
+                    self.doRemoveMember(self.removeMemberData.id, reason);
+                }
+            });
+        },
+
+        /**
+         * Close remove member modal
+         * @since 1.67.4
+         */
+        closeRemoveMemberModal: function() {
+            $('#eau-remove-member-modal-overlay').fadeOut(200);
+            this.removeMemberData = null;
+        },
+
+        /**
+         * Execute remove member action
+         * @since 1.67.4 Now accepts reason parameter
+         */
+        doRemoveMember: function(memberId, reason) {
+            const self = this;
+
+            // Disable the button while processing
+            const $btn = $('#eau-confirm-remove-member-btn');
+            $btn.prop('disabled', true).html('<i data-lucide="loader-2" class="eau-icon-spin"></i> Removing...');
 
             $.ajax({
                 url: eauInstitutionSingleData.ajaxUrl,
@@ -861,10 +978,14 @@
                     action: 'eau_remove_member_from_institution',
                     nonce: eauInstitutionSingleData.nonce,
                     member_id: memberId,
-                    institution_id: self.institutionId
+                    institution_id: self.institutionId,
+                    reason: reason || ''
                 },
                 success: function(response) {
                     if (response.success) {
+                        // Close modal
+                        self.closeRemoveMemberModal();
+
                         if (typeof EauNotifications !== 'undefined') {
                             EauNotifications.success(response.data.message);
                         }
@@ -890,6 +1011,13 @@
                 error: function() {
                     if (typeof EauNotifications !== 'undefined') {
                         EauNotifications.error('An error occurred. Please try again.');
+                    }
+                },
+                complete: function() {
+                    // Re-enable button and restore text
+                    $btn.prop('disabled', false).html('<i data-lucide="user-x"></i> Remove Member');
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
                     }
                 }
             });
@@ -1248,9 +1376,55 @@
         }
     };
 
+    // Expose globally for AJAX reinitalization
+    window.EauInstitutionSingleController = EauInstitutionSingle;
+
+    /**
+     * Reinitialize for embedded/AJAX loaded content
+     * Called from My Institution page when loading institution details via AJAX
+     *
+     * @param {number} institutionId
+     * @param {object} config - Configuration object with ajaxUrl, nonce, canEdit, etc.
+     */
+    EauInstitutionSingle.reinit = function(institutionId, config) {
+        const $container = $('.eau-institution-single-container');
+        if ($container.length === 0) return false;
+
+        // Update institution ID
+        this.institutionId = institutionId || $container.data('institution-id');
+        if (!this.institutionId) return false;
+
+        // Update config if provided
+        if (config) {
+            window.eauInstitutionSingleData = Object.assign({}, window.eauInstitutionSingleData || {}, config);
+        }
+
+        // Reset state
+        this.currentPage = 1;
+        this.searchTerm = '';
+        this.statusFilter = '';
+        this.expandedMemberId = null;
+
+        // Rebind events (only if not already bound)
+        if (!this._eventsBound) {
+            this.bindEvents();
+            this._eventsBound = true;
+        }
+
+        // Load members
+        this.loadMembers();
+
+        return true;
+    };
+
     // Initialize when document is ready
     $(document).ready(function() {
         EauInstitutionSingle.init();
+
+        // Mark events as bound if init was successful
+        if (EauInstitutionSingle.institutionId) {
+            EauInstitutionSingle._eventsBound = true;
+        }
 
         // Re-initialize Lucide icons
         if (typeof lucide !== 'undefined') {

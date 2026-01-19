@@ -270,29 +270,66 @@ class Eau_Members_Ajax {
     /**
      * Pega o label amigável do mem_type (JetEngine)
      *
-     * @param string $mem_type mem_type do usuário
-     * @return string Label amigável
+     * @since 1.66.2 - Suporte a múltiplos tipos
+     * @param string|array $mem_type mem_type do usuário (string ou array)
+     * @return string Label amigável (múltiplos tipos separados por vírgula)
      */
     private static function get_mem_type_label($mem_type) {
         $labels = array(
             'superAdmin' => 'Super Admin',
             'Admin' => 'Admin',
-            'institutionAdmin' => 'Institution Admin',
-            'Member' => 'Member',
+            'institutionAdmin' => 'Inst. Admin',
+            'member' => 'Member',
+            'non-member' => 'Non-Member',
+            'Member' => 'Member', // Legado
         );
 
-        return isset($labels[$mem_type]) ? $labels[$mem_type] : (!empty($mem_type) ? $mem_type : 'Member');
+        // Normaliza para array
+        if (is_array($mem_type)) {
+            $types = $mem_type;
+        } elseif (!empty($mem_type)) {
+            $types = array($mem_type);
+        } else {
+            return 'Member';
+        }
+
+        // Mapeia para labels
+        $type_labels = array();
+        foreach ($types as $type) {
+            if (isset($labels[$type])) {
+                $type_labels[] = $labels[$type];
+            } elseif (!empty($type)) {
+                $type_labels[] = $type;
+            }
+        }
+
+        return !empty($type_labels) ? implode(', ', $type_labels) : 'Member';
     }
 
     /**
      * Pega a classe CSS do mem_type
      *
-     * @param string $mem_type mem_type do usuário
+     * @since 1.66.2 - Suporte a múltiplos tipos
+     * @param string|array $mem_type mem_type do usuário (string ou array)
      * @return string Classe CSS
      */
     private static function get_mem_type_class($mem_type) {
-        if (in_array($mem_type, array('superAdmin', 'Admin', 'institutionAdmin'))) {
-            return 'eau-user-type-admin';
+        $admin_types = array('superAdmin', 'Admin', 'institutionAdmin');
+
+        // Normaliza para array
+        if (is_array($mem_type)) {
+            $types = $mem_type;
+        } elseif (!empty($mem_type)) {
+            $types = array($mem_type);
+        } else {
+            return 'eau-user-type-member';
+        }
+
+        // Se qualquer tipo é admin, retorna classe admin
+        foreach ($types as $type) {
+            if (in_array($type, $admin_types)) {
+                return 'eau-user-type-admin';
+            }
         }
 
         return 'eau-user-type-member';
@@ -462,7 +499,10 @@ class Eau_Members_Ajax {
                 continue;
             }
 
-            $data['meta'][$key] = is_array($value) ? $value[0] : $value;
+            // get_user_meta sem key retorna array de arrays
+            // maybe_unserialize para suportar campos que armazenam arrays (ex: mem_type)
+            $raw_value = is_array($value) ? $value[0] : $value;
+            $data['meta'][$key] = maybe_unserialize($raw_value);
         }
 
         wp_send_json_success($data);
@@ -503,6 +543,50 @@ class Eau_Members_Ajax {
             } else {
                 // É um meta field
                 $sanitized_key = sanitize_key($key);
+
+                // Tratamento especial para mem_type (v1.66.0, v1.66.2 - suporte a múltiplos tipos)
+                if ($sanitized_key === 'mem_type') {
+                    // Converte para array se necessário
+                    $new_types = is_array($value) ? $value : array($value);
+                    $new_types = array_filter(array_map('sanitize_text_field', $new_types));
+
+                    // Pega tipos atuais como array
+                    $current_types = Eau_User_Institution_Helper::get_user_types($user_id);
+
+                    // Valida permissões para cada tipo
+                    $allowed_types = \EauSystem\Eau_Members_Settings::get_allowed_user_types();
+                    foreach ($new_types as $type) {
+                        if (!isset($allowed_types[$type])) {
+                            wp_send_json_error(array('message' => "You are not allowed to assign the type: $type"));
+                        }
+                    }
+
+                    // Se está adicionando institutionAdmin, também adiciona ao novo sistema
+                    if (in_array('institutionAdmin', $new_types)) {
+                        // Verifica se o usuário está linkado a uma instituição
+                        $company_id = get_user_meta($user_id, 'mem_membercompanyname', true);
+                        if (empty($company_id)) {
+                            wp_send_json_error(array('message' => 'Cannot set as Institution Admin: user is not linked to any institution.'));
+                        }
+
+                        // Busca a instituição pelo company_id
+                        $institution = Eau_Member_Institution_Service::get_institution_by_company_id($company_id);
+                        if ($institution) {
+                            // Usa o novo sistema para adicionar à lista de managed institutions
+                            Eau_User_Institution_Helper::add_managed_institution($user_id, $institution->ID);
+                        }
+                    } else {
+                        // Se removeu institutionAdmin, limpa managed institutions
+                        if (in_array('institutionAdmin', $current_types)) {
+                            delete_user_meta($user_id, 'mem_managed_institutions');
+                        }
+                    }
+
+                    // Atualiza o mem_type como array
+                    update_user_meta($user_id, 'mem_type', $new_types);
+
+                    continue; // Não processa mais este campo
+                }
 
                 // Tratamento especial para mem_tags (array de slugs)
                 if ($sanitized_key === 'mem_tags') {

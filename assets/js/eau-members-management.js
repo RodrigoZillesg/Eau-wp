@@ -1,6 +1,6 @@
 /**
  * EAU System - Members Management JS
- * Versão: 1.10.4
+ * Versão: 1.10.5
  */
 
 (function($) {
@@ -1452,6 +1452,42 @@
                 }
 
                 fieldHTML += `</div>`;
+            } else if (inputType === 'user_type' || inputType === 'user_type_multi') {
+                // User Types checkboxes (mem_type) with permission-based options
+                // Suporta múltiplos tipos simultâneos
+                fieldHTML += `<div class="eau-form-field eau-form-field-span-2">`;
+                fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
+
+                // Normaliza o valor para array
+                let selectedTypes = [];
+                if (Array.isArray(value)) {
+                    selectedTypes = value;
+                } else if (value) {
+                    selectedTypes = [value];
+                }
+
+                if (!isView && !readonly && fieldConfig.options && Object.keys(fieldConfig.options).length > 0) {
+                    fieldHTML += `<div class="eau-user-types-checkboxes">`;
+                    Object.entries(fieldConfig.options).forEach(([optValue, optLabel]) => {
+                        const checked = selectedTypes.includes(optValue) ? 'checked' : '';
+                        const id = `eau-user-type-${optValue}`;
+                        fieldHTML += `
+                            <label class="eau-checkbox-label" for="${id}">
+                                <input type="checkbox" id="${id}" name="${fieldName}[]" value="${optValue}" ${checked}>
+                                <span class="eau-checkbox-text">${optLabel}</span>
+                            </label>
+                        `;
+                    });
+                    fieldHTML += `</div>`;
+                } else {
+                    // View mode or no options available (no permission)
+                    const displayLabels = selectedTypes.map(type =>
+                        fieldConfig.options && fieldConfig.options[type] ? fieldConfig.options[type] : type
+                    ).join(', ') || 'Member';
+                    fieldHTML += `<input type="text" class="eau-form-input" value="${displayLabels}" readonly>`;
+                }
+
+                fieldHTML += `</div>`;
             } else {
                 // Input text, email, etc
                 fieldHTML += `<div class="eau-form-field">`;
@@ -1498,10 +1534,19 @@
             const formData = $form.serializeArray();
             const fields = {};
 
-            // Converte para objeto
+            // Converte para objeto, suportando campos array (checkboxes múltiplos)
             formData.forEach(function(item) {
                 if (item.name !== 'user_id') {
-                    fields[item.name] = item.value;
+                    // Se o nome termina com [], é um campo array (múltiplos valores)
+                    if (item.name.endsWith('[]')) {
+                        const baseName = item.name.slice(0, -2); // Remove o []
+                        if (!fields[baseName]) {
+                            fields[baseName] = [];
+                        }
+                        fields[baseName].push(item.value);
+                    } else {
+                        fields[item.name] = item.value;
+                    }
                 }
             });
 
@@ -1552,9 +1597,18 @@
             const formData = $form.serializeArray();
             const dataObj = {};
 
-            // Converte para objeto
+            // Converte para objeto, suportando campos array (checkboxes múltiplos)
             formData.forEach(function(item) {
-                dataObj[item.name] = item.value;
+                // Se o nome termina com [], é um campo array (múltiplos valores)
+                if (item.name.endsWith('[]')) {
+                    const baseName = item.name.slice(0, -2); // Remove o []
+                    if (!dataObj[baseName]) {
+                        dataObj[baseName] = [];
+                    }
+                    dataObj[baseName].push(item.value);
+                } else {
+                    dataObj[item.name] = item.value;
+                }
             });
 
             // Se user_login não estiver presente, gera automaticamente do email
