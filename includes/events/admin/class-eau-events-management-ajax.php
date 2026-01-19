@@ -41,6 +41,7 @@ class Eau_Events_Management_Ajax {
         add_action('wp_ajax_eau_get_event_registrations', array(__CLASS__, 'get_event_registrations'));
         add_action('wp_ajax_eau_update_registration_status', array(__CLASS__, 'update_registration_status'));
         add_action('wp_ajax_eau_export_event_registrations', array(__CLASS__, 'export_event_registrations'));
+        add_action('wp_ajax_eau_upload_material_file', array(__CLASS__, 'upload_material_file'));
     }
 
     /**
@@ -62,8 +63,12 @@ class Eau_Events_Management_Ajax {
         $per_page = isset($_POST['per_page']) ? absint($_POST['per_page']) : 20;
         $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
         $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
-        $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'start_datetime';
-        $order = isset($_POST['order']) ? strtoupper(sanitize_text_field($_POST['order'])) : 'ASC';
+        $date_filter = isset($_POST['date_filter']) ? sanitize_text_field($_POST['date_filter']) : '';
+        $event_category = isset($_POST['event_category']) ? absint($_POST['event_category']) : 0;
+        $cpd_category = isset($_POST['cpd_category']) ? absint($_POST['cpd_category']) : 0;
+        $location = isset($_POST['location']) ? sanitize_text_field($_POST['location']) : '';
+        $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'id';
+        $order = isset($_POST['order']) ? strtoupper(sanitize_text_field($_POST['order'])) : 'DESC';
 
         // Query args
         $args = array(
@@ -78,8 +83,90 @@ class Eau_Events_Management_Ajax {
             $args['s'] = $search;
         }
 
+        // Meta query array
+        $meta_query = array();
+
+        // Date filter
+        if (!empty($date_filter)) {
+            $current_datetime = current_time('Y-m-d\TH:i');
+
+            switch ($date_filter) {
+                case 'upcoming':
+                    $meta_query[] = array(
+                        'key'     => 'evt_start_datetime',
+                        'value'   => $current_datetime,
+                        'compare' => '>=',
+                        'type'    => 'DATETIME',
+                    );
+                    break;
+                case 'past':
+                    $meta_query[] = array(
+                        'key'     => 'evt_start_datetime',
+                        'value'   => $current_datetime,
+                        'compare' => '<',
+                        'type'    => 'DATETIME',
+                    );
+                    break;
+                case 'this_week':
+                    $week_start = date('Y-m-d\T00:00', strtotime('monday this week'));
+                    $week_end = date('Y-m-d\T23:59', strtotime('sunday this week'));
+                    $meta_query[] = array(
+                        'key'     => 'evt_start_datetime',
+                        'value'   => array($week_start, $week_end),
+                        'compare' => 'BETWEEN',
+                        'type'    => 'DATETIME',
+                    );
+                    break;
+                case 'this_month':
+                    $month_start = date('Y-m-01\T00:00');
+                    $month_end = date('Y-m-t\T23:59');
+                    $meta_query[] = array(
+                        'key'     => 'evt_start_datetime',
+                        'value'   => array($month_start, $month_end),
+                        'compare' => 'BETWEEN',
+                        'type'    => 'DATETIME',
+                    );
+                    break;
+            }
+        }
+
+        // Event category filter
+        if ($event_category > 0) {
+            $meta_query[] = array(
+                'key'     => 'evt_event_category',
+                'value'   => $event_category,
+                'compare' => '=',
+            );
+        }
+
+        // CPD category filter
+        if ($cpd_category > 0) {
+            $meta_query[] = array(
+                'key'     => 'evt_cpd_category',
+                'value'   => $cpd_category,
+                'compare' => '=',
+            );
+        }
+
+        // Location (city) filter
+        if (!empty($location)) {
+            $meta_query[] = array(
+                'key'     => 'evt_city',
+                'value'   => $location,
+                'compare' => '=',
+            );
+        }
+
+        // Apply meta query
+        if (!empty($meta_query)) {
+            $args['meta_query'] = $meta_query;
+        }
+
         // Order
-        if ($orderby === 'start_datetime') {
+        if ($orderby === 'id') {
+            $args['orderby'] = 'ID';
+            $args['order'] = $order;
+        } elseif ($orderby === 'start_datetime') {
             $args['meta_key'] = 'evt_start_datetime';
             $args['orderby'] = 'meta_value';
             $args['order'] = $order;
@@ -195,7 +282,7 @@ class Eau_Events_Management_Ajax {
         $prefix = Config\META_PREFIX;
 
         // Text fields
-        $text_fields = array('short_description', 'start_datetime', 'end_datetime', 'timezone', 'event_type', 'venue_name', 'address', 'city', 'state', 'postal_code', 'country', 'early_bird_end_date', 'visibility');
+        $text_fields = array('short_description', 'start_datetime', 'end_datetime', 'timezone', 'event_type', 'venue_name', 'address', 'city', 'state', 'postal_code', 'country', 'visibility', 'materials');
         foreach ($text_fields as $f) {
             if (isset($_POST[$f]) && $_POST[$f] !== '') {
                 update_post_meta($event_id, $prefix . $f, sanitize_text_field($_POST[$f]));
@@ -203,7 +290,7 @@ class Eau_Events_Management_Ajax {
         }
 
         // Numbers (allow empty values to delete meta)
-        $numbers = array('image_id', 'capacity', 'member_price', 'early_bird_price', 'cpd_points', 'cpd_category');
+        $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'cpd_points', 'cpd_category', 'event_category');
         foreach ($numbers as $f) {
             if (isset($_POST[$f])) {
                 if ($_POST[$f] !== '' && $_POST[$f] !== null) {
@@ -220,9 +307,12 @@ class Eau_Events_Management_Ajax {
             update_post_meta($event_id, $prefix . $f, isset($_POST[$f]) && $_POST[$f] ? '1' : '');
         }
 
-        // URL
+        // URLs
         if (isset($_POST['virtual_url']) && $_POST['virtual_url'] !== '') {
             update_post_meta($event_id, $prefix . 'virtual_url', esc_url_raw($_POST['virtual_url']));
+        }
+        if (isset($_POST['recording_url']) && $_POST['recording_url'] !== '') {
+            update_post_meta($event_id, $prefix . 'recording_url', esc_url_raw($_POST['recording_url']));
         }
 
         // WYSIWYG
@@ -271,7 +361,7 @@ class Eau_Events_Management_Ajax {
         $prefix = Config\META_PREFIX;
 
         // Text fields
-        $text_fields = array('short_description', 'start_datetime', 'end_datetime', 'timezone', 'event_type', 'venue_name', 'address', 'city', 'state', 'postal_code', 'country', 'early_bird_end_date', 'visibility');
+        $text_fields = array('short_description', 'start_datetime', 'end_datetime', 'timezone', 'event_type', 'venue_name', 'address', 'city', 'state', 'postal_code', 'country', 'visibility', 'materials');
         foreach ($text_fields as $f) {
             if (isset($_POST[$f])) {
                 update_post_meta($event_id, $prefix . $f, sanitize_text_field($_POST[$f]));
@@ -279,7 +369,7 @@ class Eau_Events_Management_Ajax {
         }
 
         // Numbers
-        $numbers = array('image_id', 'capacity', 'member_price', 'early_bird_price', 'cpd_points', 'cpd_category');
+        $numbers = array('image_id', 'capacity', 'member_price', 'non_member_price', 'cpd_points', 'cpd_category', 'event_category');
         foreach ($numbers as $f) {
             if (isset($_POST[$f])) {
                 $val = $_POST[$f];
@@ -297,9 +387,12 @@ class Eau_Events_Management_Ajax {
             update_post_meta($event_id, $prefix . $f, isset($_POST[$f]) && $_POST[$f] ? '1' : '');
         }
 
-        // URL
+        // URLs
         if (isset($_POST['virtual_url'])) {
             update_post_meta($event_id, $prefix . 'virtual_url', esc_url_raw($_POST['virtual_url']));
+        }
+        if (isset($_POST['recording_url'])) {
+            update_post_meta($event_id, $prefix . 'recording_url', esc_url_raw($_POST['recording_url']));
         }
 
         // WYSIWYG
@@ -825,6 +918,110 @@ class Eau_Events_Management_Ajax {
         wp_send_json_success(array(
             'csv' => $csv,
             'filename' => $filename,
+        ));
+    }
+
+    /**
+     * AJAX: Upload de arquivo de material suplementar
+     *
+     * @since  1.68.5
+     * @return void
+     */
+    public static function upload_material_file() {
+        check_ajax_referer('eau_events_management_nonce', 'nonce');
+
+        // Verifica permissão
+        if (!self::can_manage_events()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        // Verifica se arquivo foi enviado
+        if (empty($_FILES['file'])) {
+            wp_send_json_error(array('message' => 'No file uploaded'));
+        }
+
+        $file = $_FILES['file'];
+
+        // Verifica erro de upload
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $error_messages = array(
+                UPLOAD_ERR_INI_SIZE => 'File is too large',
+                UPLOAD_ERR_FORM_SIZE => 'File is too large',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            );
+            $message = isset($error_messages[$file['error']]) ? $error_messages[$file['error']] : 'Upload error';
+            wp_send_json_error(array('message' => $message));
+        }
+
+        // Verifica tamanho (10MB máximo)
+        $max_size = 10 * 1024 * 1024;
+        if ($file['size'] > $max_size) {
+            wp_send_json_error(array('message' => 'File is too large. Maximum size is 10MB.'));
+        }
+
+        // Verifica extensão permitida
+        $allowed_extensions = array('pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'jpg', 'jpeg', 'png', 'gif');
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowed_extensions)) {
+            wp_send_json_error(array('message' => 'File type not allowed. Allowed types: ' . implode(', ', $allowed_extensions)));
+        }
+
+        // Faz upload para a Media Library
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        // Usa wp_handle_upload diretamente
+        $upload_overrides = array(
+            'test_form' => false,
+            'mimes' => array(
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls' => 'application/vnd.ms-excel',
+                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'ppt' => 'application/vnd.ms-powerpoint',
+                'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'zip' => 'application/zip',
+                'rar' => 'application/x-rar-compressed',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+            ),
+        );
+
+        $movefile = wp_handle_upload($file, $upload_overrides);
+
+        if (isset($movefile['error'])) {
+            wp_send_json_error(array('message' => $movefile['error']));
+        }
+
+        // Cria attachment na Media Library
+        $attachment = array(
+            'guid' => $movefile['url'],
+            'post_mime_type' => $movefile['type'],
+            'post_title' => preg_replace('/\.[^.]+$/', '', basename($file['name'])),
+            'post_content' => '',
+            'post_status' => 'inherit',
+        );
+
+        $attach_id = wp_insert_attachment($attachment, $movefile['file']);
+
+        if (is_wp_error($attach_id)) {
+            wp_send_json_error(array('message' => 'Failed to save attachment'));
+        }
+
+        // Gera metadata para o attachment
+        $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
+        wp_update_attachment_metadata($attach_id, $attach_data);
+
+        wp_send_json_success(array(
+            'url' => $movefile['url'],
+            'filename' => basename($file['name']),
+            'attachment_id' => $attach_id,
         ));
     }
 

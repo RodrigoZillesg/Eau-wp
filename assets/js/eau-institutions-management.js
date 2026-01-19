@@ -91,10 +91,17 @@
             $('.eau-filters-apply').on('click', this.handleApplyFilters.bind(this));
             $('.eau-filters-clear').on('click', this.handleClearFilters.bind(this));
 
-            // Bulk Delete (apenas para super admin)
+            // Bulk Delete (apenas para super admin) - both legacy header button and new bar button
             if (eauInstitutionsData.isSuperAdmin) {
                 $('#eau-bulk-delete-institutions').on('click', this.handleBulkDelete.bind(this));
+                $('#eau-bulk-delete-bar').on('click', this.handleBulkDelete.bind(this));
             }
+
+            // Bulk Change Type (v1.68.7)
+            $('#eau-bulk-change-type-btn').on('click', this.handleBulkChangeType.bind(this));
+
+            // Bulk Actions Bar - Close button (clear selection)
+            $('#eau-bulk-actions-close').on('click', this.clearSelection.bind(this));
         },
 
         /**
@@ -279,13 +286,20 @@
                 self.selectedIds.push($(this).val());
             });
 
-            // Mostrar/ocultar botão de deleção em massa (apenas para super admin)
-            if (eauInstitutionsData.isSuperAdmin) {
-                if (this.selectedIds.length > 0) {
-                    $('#eau-bulk-delete-institutions').addClass('eau-visible');
-                } else {
-                    $('#eau-bulk-delete-institutions').removeClass('eau-visible');
+            // Atualiza contador e visibilidade da barra flutuante
+            const count = this.selectedIds.length;
+            $('#eau-bulk-actions-count').text(count);
+            $('#eau-bulk-actions-label').text(count === 1 ? 'institution selected' : 'institutions selected');
+
+            if (count > 0) {
+                $('#eau-bulk-actions-bar').addClass('eau-visible');
+                // Reinicializa ícones Lucide na barra
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
                 }
+            } else {
+                $('#eau-bulk-actions-bar').removeClass('eau-visible');
+                $('#eau-bulk-type-select').val('');
             }
         },
 
@@ -874,8 +888,11 @@
                 html += `
                     <select class="eau-form-select" name="ins_type">
                         <option value="">Select Type</option>
-                        <option value="College" ${data.ins_type === 'College' ? 'selected' : ''}>College</option>
-                        <option value="Corporate affiliate" ${data.ins_type === 'Corporate affiliate' ? 'selected' : ''}>Corporate Affiliate</option>
+                        <option value="Member College" ${data.ins_type === 'Member College' ? 'selected' : ''}>Member College</option>
+                        <option value="Associate Member - Professional Affiliate Institutions" ${data.ins_type === 'Associate Member - Professional Affiliate Institutions' ? 'selected' : ''}>Associate Member - Professional Affiliate Institutions</option>
+                        <option value="Associate Member - Access Members" ${data.ins_type === 'Associate Member - Access Members' ? 'selected' : ''}>Associate Member - Access Members</option>
+                        <option value="Associate Member - International Members" ${data.ins_type === 'Associate Member - International Members' ? 'selected' : ''}>Associate Member - International Members</option>
+                        <option value="Corporate Affiliate" ${data.ins_type === 'Corporate Affiliate' ? 'selected' : ''}>Corporate Affiliate</option>
                     </select>
                 `;
             } else {
@@ -1404,11 +1421,74 @@
                         success: function(response) {
                             if (response.success) {
                                 EauNotifications.success('Deleted!', response.data.message);
-                                self.selectedIds = [];
+                                self.clearSelection();
                                 self.loadInstitutions();
-                                $('#eau-bulk-delete-institutions').removeClass('eau-visible');
                             } else {
                                 EauNotifications.error('Error', response.data.message || 'Failed to delete institutions');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Clear all selections (v1.68.7)
+         */
+        clearSelection: function() {
+            // Desmarca todos os checkboxes
+            $('.eau-row-checkbox').prop('checked', false);
+            $('.eau-select-all').prop('checked', false);
+
+            // Limpa o array e atualiza a UI
+            this.selectedIds = [];
+            this.updateSelectedIds();
+        },
+
+        /**
+         * Handle bulk change institution type (v1.68.7)
+         */
+        handleBulkChangeType: function() {
+            const self = this;
+            const newType = $('#eau-bulk-type-select').val();
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('No Selection', 'Please select institutions to update.');
+                return;
+            }
+
+            if (!newType) {
+                EauNotifications.warning('No Type Selected', 'Please select an institution type.');
+                return;
+            }
+
+            const count = this.selectedIds.length;
+            EauNotifications.confirm({
+                title: 'Change Institution Type?',
+                message: `Are you sure you want to change the type of ${count} institution(s) to "${newType}"?`,
+                type: 'warning',
+                confirmText: 'Change Type',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauInstitutionsData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_bulk_change_institution_type',
+                            nonce: eauInstitutionsData.nonce,
+                            ids: self.selectedIds,
+                            new_type: newType
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Updated!', response.data.message);
+                                self.clearSelection();
+                                self.loadInstitutions();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to update institutions');
                             }
                         },
                         error: function() {

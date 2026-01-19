@@ -106,6 +106,16 @@ function get_cpd_categories_from_db() {
 }
 
 /**
+ * Retorna categorias de eventos do banco de dados
+ *
+ * @since  1.68.0
+ * @return array Array de categorias com id, category_serial, category_name
+ */
+function get_event_categories_from_db() {
+    return \EauSystem\Eau_Event_Categories_Database::get_all_for_select();
+}
+
+/**
  * Converte array para formato JetEngine
  *
  * @since  1.28.0

@@ -24,11 +24,31 @@ while (have_posts()) : the_post();
     $full_date = Helper::format_date($data['start_obj'], 'l j F Y \a\t h:i a');
     $iso_date = $data['start_obj'] ? $data['start_obj']->format('c') : '';
 
+    // Timezone formatting
+    $timezone_value = $meta['timezone'] ?: 'Australia/Sydney';
+    $timezone_label = '';
+    $timezone_abbr = '';
+    try {
+        $tz = new \DateTimeZone($timezone_value);
+        $timezones_list = \EauSystem\Events\Config\get_timezones();
+        $timezone_label = isset($timezones_list[$timezone_value]) ? $timezones_list[$timezone_value] : $timezone_value;
+        if ($data['start_obj']) {
+            $timezone_abbr = $data['start_obj']->format('T'); // e.g., AEDT, AEST
+        }
+    } catch (\Exception $e) {
+        $timezone_label = $timezone_value;
+    }
+
     // Registration check
     $is_registered = Eau_Event_Registrations_Ajax::is_user_registered(get_the_ID());
     $current_registrations = Eau_Event_Registrations_Ajax::count_registrations(get_the_ID());
     $capacity = intval($meta['capacity']);
     $spots_left = $capacity > 0 ? max(0, $capacity - $current_registrations) : null;
+
+    // Visibility and pricing
+    $visibility = $meta['visibility'] ?: 'public';
+    $user_price = Helper::get_user_price(get_the_ID());
+    $can_register = Helper::can_user_register(get_the_ID());
 
     // User data for pre-fill
     $user_name = '';
@@ -37,6 +57,17 @@ while (have_posts()) : the_post();
         $current_user = wp_get_current_user();
         $user_name = $current_user->display_name;
         $user_email = $current_user->user_email;
+    }
+
+    // Get event category name (v1.68.9)
+    $event_category_name = '';
+    if (!empty($meta['event_category'])) {
+        global $wpdb;
+        $cat_table = $wpdb->prefix . 'eau_event_categories';
+        $event_category_name = $wpdb->get_var($wpdb->prepare(
+            "SELECT category_name FROM $cat_table WHERE id = %d",
+            intval($meta['event_category'])
+        ));
     }
 ?>
 
@@ -59,6 +90,13 @@ while (have_posts()) : the_post();
 
                 <h1 class="eau-event-title"><?php echo esc_html($data['title']); ?></h1>
 
+                <?php if ($event_category_name) : ?>
+                    <div class="eau-event-category-badge">
+                        <?php echo Helper::icon('tag', 14); ?>
+                        <span><?php echo esc_html($event_category_name); ?></span>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Date & Location Info -->
                 <div class="eau-event-info-grid">
                     <div class="eau-event-info-item">
@@ -66,7 +104,17 @@ while (have_posts()) : the_post();
                         <div class="eau-event-info-content">
                             <span class="eau-event-info-label"><?php _e('Date & Time', 'eau-system'); ?></span>
                             <span class="eau-event-info-value"><?php echo esc_html($date_display); ?></span>
-                            <span class="eau-event-info-subvalue"><?php echo esc_html($time_display); ?></span>
+                            <span class="eau-event-info-subvalue">
+                                <?php echo esc_html($time_display); ?>
+                                <?php if ($timezone_abbr || $timezone_label) : ?>
+                                    <span class="eau-event-timezone">
+                                        (<?php echo esc_html($timezone_abbr ?: $timezone_label); ?>)
+                                    </span>
+                                <?php endif; ?>
+                            </span>
+                            <?php if ($timezone_label && $timezone_abbr) : ?>
+                                <span class="eau-event-info-timezone-full"><?php echo esc_html($timezone_label); ?></span>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="eau-event-info-item">
@@ -128,7 +176,13 @@ while (have_posts()) : the_post();
             <aside class="eau-event-sidebar">
                 <div class="eau-event-price-card">
                     <div class="eau-event-price-header">
-                        <span class="eau-event-price-label"><?php _e('Member Price', 'eau-system'); ?></span>
+                        <?php if ($visibility === 'members') : ?>
+                            <span class="eau-event-visibility-badge eau-visibility-members">
+                                <?php echo Helper::icon('lock', 14); ?>
+                                <?php _e('Members Only', 'eau-system'); ?>
+                            </span>
+                        <?php endif; ?>
+                        <span class="eau-event-price-label"><?php echo esc_html($user_price['label']); ?></span>
                         <?php if ($data['is_live']) : ?>
                             <div class="eau-event-live-badge">
                                 <span class="eau-live-dot"></span>
@@ -136,9 +190,20 @@ while (have_posts()) : the_post();
                             </div>
                         <?php endif; ?>
                     </div>
-                    <span class="eau-event-price-value <?php echo $data['price']['is_free'] ? 'eau-event-price-free' : ''; ?>">
-                        <?php echo esc_html($data['price']['display']); ?>
+                    <span class="eau-event-price-value <?php echo $user_price['amount'] == 0 ? 'eau-event-price-free' : ''; ?>">
+                        <?php echo esc_html($user_price['display']); ?>
                     </span>
+
+                    <?php
+                    // Show member discount info for non-members on public events
+                    $member_price = floatval(get_post_meta(get_the_ID(), 'evt_member_price', true));
+                    if ($visibility === 'public' && !$user_price['is_member'] && $member_price < $user_price['amount']) :
+                    ?>
+                        <p class="eau-event-member-discount">
+                            <?php printf(__('Members pay only $%s', 'eau-system'), number_format($member_price, 2)); ?>
+                            <a href="<?php echo esc_url(home_url('/dashboard/my-institution/')); ?>"><?php _e('Join an Institution', 'eau-system'); ?></a>
+                        </p>
+                    <?php endif; ?>
 
                     <?php if ($capacity > 0) : ?>
                         <div class="eau-event-capacity">
@@ -184,6 +249,19 @@ while (have_posts()) : the_post();
                                 <?php echo Helper::icon('check-circle', 20); ?>
                                 <?php _e("You're registered!", 'eau-system'); ?>
                             </div>
+                        <?php elseif (!$can_register['can_register']) : ?>
+                            <div class="eau-event-cannot-register">
+                                <p class="eau-event-cannot-register-message"><?php echo esc_html($can_register['message']); ?></p>
+                                <?php if ($can_register['reason'] === 'login_required') : ?>
+                                    <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="eau-btn eau-btn-primary eau-btn-full">
+                                        <?php _e('Log In to Register', 'eau-system'); ?>
+                                    </a>
+                                <?php elseif ($can_register['reason'] === 'members_only') : ?>
+                                    <a href="<?php echo esc_url(home_url('/membership-selection/')); ?>" class="eau-btn eau-btn-secondary eau-btn-full">
+                                        <?php _e('Become a Member', 'eau-system'); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         <?php elseif ($spots_left === 0) : ?>
                             <button class="eau-btn eau-btn-secondary eau-btn-full" disabled>
                                 <?php _e('Event Full', 'eau-system'); ?>
@@ -211,6 +289,173 @@ while (have_posts()) : the_post();
                         </div>
                     <?php else : ?>
                         <div class="eau-event-past-badge"><?php _e('This event has ended', 'eau-system'); ?></div>
+
+                        <?php
+                        // Recording and Materials Section (v1.68.10)
+                        // Allow purchase of access for users who didn't register
+                        $has_recording = !empty($meta['recording_url']);
+                        $has_materials = !empty($meta['materials']);
+
+                        if ($has_recording || $has_materials) :
+                            // Determine if user can purchase/access resources
+                            $can_access_resources = false;
+                            $can_purchase_access = false;
+                            $purchase_price = 0;
+                            $access_reason = '';
+
+                            if (!is_user_logged_in()) {
+                                $access_reason = 'login_required';
+                            } elseif ($is_registered) {
+                                // Already registered = full access
+                                $can_access_resources = true;
+                            } else {
+                                // Not registered - check if can purchase access
+                                $can_register_check = Helper::can_user_register(get_the_ID());
+
+                                if ($can_register_check['can_register']) {
+                                    // User type is compatible with event visibility
+                                    $can_purchase_access = true;
+                                    $purchase_price = $user_price['amount'];
+                                } else {
+                                    // Can't access (e.g., members only event for non-member)
+                                    $access_reason = $can_register_check['reason'];
+                                }
+                            }
+                        ?>
+                            <div class="eau-event-resources-section">
+                                <?php if (!is_user_logged_in()) : ?>
+                                    <!-- Not logged in message -->
+                                    <div class="eau-event-resources-locked">
+                                        <?php echo Helper::icon('lock', 18); ?>
+                                        <span><?php _e('Log in to access event resources', 'eau-system'); ?></span>
+                                        <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="eau-btn eau-btn-sm eau-btn-primary">
+                                            <?php _e('Log In', 'eau-system'); ?>
+                                        </a>
+                                    </div>
+                                <?php elseif ($can_access_resources) : ?>
+                                    <!-- Show resources for registered attendees -->
+                                    <h4 class="eau-event-resources-title">
+                                        <?php echo Helper::icon('folder-open', 18); ?>
+                                        <?php _e('Event Resources', 'eau-system'); ?>
+                                    </h4>
+
+                                    <?php if ($has_recording) : ?>
+                                        <div class="eau-event-resource-item">
+                                            <a href="<?php echo esc_url($meta['recording_url']); ?>" target="_blank" class="eau-event-recording-link">
+                                                <?php echo Helper::icon('play-circle', 20); ?>
+                                                <span><?php _e('Watch Recording', 'eau-system'); ?></span>
+                                                <?php echo Helper::icon('external-link', 14); ?>
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($has_materials) :
+                                        // Parse materials - can be JSON array or newline-separated URLs
+                                        $materials_list = array();
+                                        $materials_data = $meta['materials'];
+
+                                        // Try to decode as JSON first
+                                        $decoded = json_decode($materials_data, true);
+                                        if (is_array($decoded)) {
+                                            $materials_list = $decoded;
+                                        } else {
+                                            // Legacy format: newline-separated URLs
+                                            $urls = array_filter(array_map('trim', explode("\n", $materials_data)));
+                                            foreach ($urls as $url) {
+                                                $materials_list[] = array(
+                                                    'type' => 'url',
+                                                    'url' => $url,
+                                                    'name' => basename(parse_url($url, PHP_URL_PATH)) ?: $url,
+                                                );
+                                            }
+                                        }
+
+                                        if (!empty($materials_list)) :
+                                    ?>
+                                        <div class="eau-event-materials-list">
+                                            <span class="eau-event-materials-label"><?php _e('Supplementary Materials:', 'eau-system'); ?></span>
+                                            <?php foreach ($materials_list as $material) :
+                                                $material_url = isset($material['url']) ? $material['url'] : '';
+                                                $material_name = isset($material['name']) ? $material['name'] : basename($material_url);
+                                                $material_type = isset($material['type']) ? $material['type'] : 'url';
+
+                                                // Determine icon based on file extension
+                                                $ext = strtolower(pathinfo($material_name, PATHINFO_EXTENSION));
+                                                $icon = 'file';
+                                                if (in_array($ext, array('pdf'))) $icon = 'file-text';
+                                                elseif (in_array($ext, array('doc', 'docx'))) $icon = 'file-text';
+                                                elseif (in_array($ext, array('xls', 'xlsx'))) $icon = 'file-spreadsheet';
+                                                elseif (in_array($ext, array('ppt', 'pptx'))) $icon = 'file-presentation';
+                                                elseif (in_array($ext, array('zip', 'rar'))) $icon = 'file-archive';
+                                                elseif (in_array($ext, array('jpg', 'jpeg', 'png', 'gif'))) $icon = 'image';
+                                                elseif ($material_type === 'url') $icon = 'link';
+                                            ?>
+                                                <a href="<?php echo esc_url($material_url); ?>" target="_blank" class="eau-event-material-link">
+                                                    <?php echo Helper::icon($icon, 16); ?>
+                                                    <span><?php echo esc_html($material_name); ?></span>
+                                                    <?php echo Helper::icon('download', 14); ?>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+
+                                <?php elseif ($can_purchase_access) : ?>
+                                    <!-- Can purchase access to recording/materials -->
+                                    <div class="eau-event-purchase-access">
+                                        <h4 class="eau-event-resources-title">
+                                            <?php echo Helper::icon('video', 18); ?>
+                                            <?php _e('Recording Available', 'eau-system'); ?>
+                                        </h4>
+                                        <p class="eau-event-purchase-desc">
+                                            <?php _e('Get access to the event recording and supplementary materials.', 'eau-system'); ?>
+                                        </p>
+                                        <div class="eau-event-purchase-price">
+                                            <span class="eau-purchase-price-label"><?php echo esc_html($user_price['label']); ?>:</span>
+                                            <span class="eau-purchase-price-value"><?php echo esc_html($user_price['display']); ?></span>
+                                        </div>
+                                        <?php if ($purchase_price <= 0) : ?>
+                                            <!-- Free access -->
+                                            <button class="eau-btn eau-btn-primary eau-btn-full eau-event-get-access-btn" data-event-id="<?php echo esc_attr($data['id']); ?>">
+                                                <?php echo Helper::icon('unlock', 18); ?>
+                                                <?php _e('Get Free Access', 'eau-system'); ?>
+                                            </button>
+                                        <?php else : ?>
+                                            <!-- Paid access -->
+                                            <button class="eau-btn eau-btn-primary eau-btn-full eau-event-purchase-access-btn" data-event-id="<?php echo esc_attr($data['id']); ?>" data-price="<?php echo esc_attr($purchase_price); ?>">
+                                                <?php echo Helper::icon('credit-card', 18); ?>
+                                                <?php printf(__('Purchase Access - %s', 'eau-system'), esc_html($user_price['display'])); ?>
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // Show member discount info for non-members
+                                        $member_price = floatval(get_post_meta(get_the_ID(), 'evt_member_price', true));
+                                        if ($visibility === 'public' && !$user_price['is_member'] && $member_price < $purchase_price) :
+                                        ?>
+                                            <p class="eau-event-member-discount-small">
+                                                <?php printf(__('Members pay only %s', 'eau-system'), '$' . number_format($member_price, 2)); ?>
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
+
+                                <?php else : ?>
+                                    <!-- Cannot access (e.g., members only event) -->
+                                    <div class="eau-event-resources-locked">
+                                        <?php echo Helper::icon('lock', 18); ?>
+                                        <?php if ($access_reason === 'members_only') : ?>
+                                            <span><?php _e('This recording is available for members only', 'eau-system'); ?></span>
+                                            <a href="<?php echo esc_url(home_url('/dashboard/my-institution/')); ?>" class="eau-btn eau-btn-sm eau-btn-secondary">
+                                                <?php _e('Join an Institution', 'eau-system'); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            <span><?php _e('You do not have access to this content', 'eau-system'); ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+
                     <?php endif; ?>
 
                     <!-- CPD Link - only show after event ended for eligible users -->
@@ -220,17 +465,6 @@ while (have_posts()) : the_post();
                         </a>
                     <?php endif; ?>
 
-                    <!-- Share & Save -->
-                    <div class="eau-event-actions">
-                        <button class="eau-btn eau-btn-outline eau-event-share-btn" data-url="<?php echo esc_url(get_permalink()); ?>" data-title="<?php echo esc_attr($data['title']); ?>">
-                            <?php echo Helper::icon('share', 16); ?>
-                            <?php _e('Share', 'eau-system'); ?>
-                        </button>
-                        <button class="eau-btn eau-btn-outline eau-event-save-btn" data-event-id="<?php echo esc_attr($data['id']); ?>">
-                            <?php echo Helper::icon('heart', 16); ?>
-                            <?php _e('Save', 'eau-system'); ?>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Organizer Card -->

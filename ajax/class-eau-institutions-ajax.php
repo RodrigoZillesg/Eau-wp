@@ -19,6 +19,9 @@ class Eau_Institutions_Ajax {
         // Bulk delete institutions (apenas super admin)
         add_action('wp_ajax_eau_bulk_delete_institutions', array(__CLASS__, 'bulk_delete_institutions'));
 
+        // Bulk change institution type (v1.68.7)
+        add_action('wp_ajax_eau_bulk_change_institution_type', array(__CLASS__, 'bulk_change_institution_type'));
+
         // Update institution
         add_action('wp_ajax_eau_update_institution', array(__CLASS__, 'update_institution'));
 
@@ -195,7 +198,7 @@ class Eau_Institutions_Ajax {
             }
         }
 
-        // Filtro de institution_type (ins_type - College ou Corporate affiliate)
+        // Filtro de institution_type (ins_type)
         if (!empty($args['institution_type'])) {
             if ($args['institution_type'] === 'not_defined') {
                 // Buscar onde ins_type está vazio ou não existe
@@ -409,7 +412,15 @@ class Eau_Institutions_Ajax {
         // Tipo
         $type_html = '-';
         if (!empty($institution_type)) {
-            $type_class = $institution_type === 'College' ? 'eau-type-badge-college' : 'eau-type-badge-corporate';
+            // Define classe CSS baseada no tipo de instituição
+            $type_class = 'eau-type-badge-default';
+            if (strpos($institution_type, 'Member College') !== false || $institution_type === 'College') {
+                $type_class = 'eau-type-badge-college';
+            } elseif (strpos($institution_type, 'Corporate') !== false) {
+                $type_class = 'eau-type-badge-corporate';
+            } elseif (strpos($institution_type, 'Associate') !== false) {
+                $type_class = 'eau-type-badge-associate';
+            }
             $type_html = sprintf(
                 '<span class="eau-type-badge %s">%s</span>',
                 esc_attr($type_class),
@@ -1062,6 +1073,95 @@ class Eau_Institutions_Ajax {
         wp_send_json_success(array(
             'message' => $message,
             'deleted_count' => $deleted_count,
+            'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Change Institution Type
+     *
+     * @since 1.68.7
+     */
+    public static function bulk_change_institution_type() {
+        // Verifica nonce
+        check_ajax_referer('eau_institutions_nonce', 'nonce');
+
+        // Verifica se usuário está logado
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array(
+                'message' => 'You must be logged in to perform this action.'
+            ));
+        }
+
+        // Pega IDs das instituições
+        $institution_ids = isset($_POST['ids']) ? array_map('absint', $_POST['ids']) : array();
+        $new_type = isset($_POST['new_type']) ? sanitize_text_field($_POST['new_type']) : '';
+
+        if (empty($institution_ids)) {
+            wp_send_json_error(array(
+                'message' => 'No institutions selected.'
+            ));
+        }
+
+        if (empty($new_type)) {
+            wp_send_json_error(array(
+                'message' => 'No institution type selected.'
+            ));
+        }
+
+        // Valida se o tipo é válido
+        $valid_types = \EauSystem\Eau_Institutions_Management::get_institution_type_options();
+        if (!isset($valid_types[$new_type])) {
+            wp_send_json_error(array(
+                'message' => 'Invalid institution type selected.'
+            ));
+        }
+
+        $updated_count = 0;
+        $failed_count = 0;
+        $failed_institutions = array();
+
+        foreach ($institution_ids as $post_id) {
+            // Verifica se é uma instituição válida
+            $post = get_post($post_id);
+            if (!$post || $post->post_type !== 'institutions') {
+                $failed_count++;
+                $failed_institutions[] = $post ? $post->post_title : "ID: $post_id";
+                continue;
+            }
+
+            // Atualiza o meta field ins_type
+            $updated = update_post_meta($post_id, 'ins_type', $new_type);
+
+            // update_post_meta retorna false se o valor for igual ao anterior, mas ainda é sucesso
+            // Verificamos se o valor foi realmente atualizado
+            $current_type = get_post_meta($post_id, 'ins_type', true);
+            if ($current_type === $new_type) {
+                $updated_count++;
+            } else {
+                $failed_count++;
+                $failed_institutions[] = $post->post_title;
+            }
+        }
+
+        // Prepara mensagem de resposta
+        $message = sprintf(
+            '%d institution(s) updated to "%s".',
+            $updated_count,
+            $new_type
+        );
+
+        if ($failed_count > 0) {
+            $message .= sprintf(
+                ' %d institution(s) could not be updated: %s',
+                $failed_count,
+                implode(', ', $failed_institutions)
+            );
+        }
+
+        wp_send_json_success(array(
+            'message' => $message,
+            'updated_count' => $updated_count,
             'failed_count' => $failed_count,
         ));
     }

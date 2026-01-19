@@ -176,6 +176,121 @@ class Eau_Events_Helper {
     }
 
     /**
+     * Verifica se usuário atual é membro (qualquer tipo de membro ativo)
+     *
+     * @since  1.68.0
+     * @return bool
+     */
+    public static function is_member() {
+        if (!is_user_logged_in()) return false;
+        $mem_type = get_user_meta(get_current_user_id(), 'mem_type', true);
+        return in_array($mem_type, array('member', 'Admin', 'superAdmin', 'institutionAdmin'));
+    }
+
+    /**
+     * Retorna o preço aplicável para o usuário atual
+     *
+     * @since  1.68.0
+     * @param  int $event_id
+     * @return array ['amount' => float, 'label' => string, 'is_member' => bool, 'display' => string]
+     */
+    public static function get_user_price($event_id) {
+        $member_price = floatval(get_post_meta($event_id, 'evt_member_price', true));
+        $non_member_price = floatval(get_post_meta($event_id, 'evt_non_member_price', true));
+        $visibility = get_post_meta($event_id, 'evt_visibility', true) ?: 'public';
+
+        // Se é evento somente para membros, retorna preço de membro
+        if ($visibility === 'members') {
+            return array(
+                'amount' => $member_price,
+                'label' => __('Member Price', 'eau-system'),
+                'is_member' => true,
+                'display' => $member_price > 0 ? '$' . number_format($member_price, 2) : __('Free', 'eau-system'),
+            );
+        }
+
+        // Para eventos públicos, verifica tipo do usuário
+        $is_member = self::is_member();
+        $price = $is_member ? $member_price : $non_member_price;
+        $label = $is_member ? __('Member Price', 'eau-system') : __('Non-Member Price', 'eau-system');
+
+        return array(
+            'amount' => $price,
+            'label' => $label,
+            'is_member' => $is_member,
+            'display' => $price > 0 ? '$' . number_format($price, 2) : __('Free', 'eau-system'),
+        );
+    }
+
+    /**
+     * Verifica se usuário pode se inscrever no evento
+     *
+     * @since  1.68.0
+     * @param  int $event_id
+     * @return array ['can_register' => bool, 'reason' => string, 'message' => string]
+     */
+    public static function can_user_register($event_id) {
+        $visibility = get_post_meta($event_id, 'evt_visibility', true) ?: 'public';
+
+        // Precisa estar logado para se inscrever
+        if (!is_user_logged_in()) {
+            return array(
+                'can_register' => false,
+                'reason' => 'login_required',
+                'message' => __('Please log in to register for this event.', 'eau-system'),
+            );
+        }
+
+        // Se é público, qualquer logado pode (exceto com membership cancelado/suspenso)
+        if ($visibility === 'public') {
+            // Verificar se membership não está explicitamente inativo
+            if (\EauSystem\Eau_User_Institution_Helper::is_membership_inactive()) {
+                $status = \EauSystem\Eau_User_Institution_Helper::get_membership_status();
+                $messages = array(
+                    'cancelled' => __('Your membership has been cancelled. Please contact support.', 'eau-system'),
+                    'suspended' => __('Your membership is suspended. Please contact support.', 'eau-system'),
+                    'expired' => __('Your membership has expired. Please renew your membership.', 'eau-system'),
+                );
+                return array(
+                    'can_register' => false,
+                    'reason' => 'membership_' . $status,
+                    'message' => isset($messages[$status]) ? $messages[$status] : __('Your membership is not active.', 'eau-system'),
+                );
+            }
+            return array('can_register' => true, 'reason' => 'allowed', 'message' => '');
+        }
+
+        // Se é somente membros, verificar se é membro ativo
+        if ($visibility === 'members') {
+            if (!self::is_member()) {
+                return array(
+                    'can_register' => false,
+                    'reason' => 'members_only',
+                    'message' => __('This event is for members only. Please become a member to register.', 'eau-system'),
+                );
+            }
+
+            // Verificar se membership está ativo
+            if (\EauSystem\Eau_User_Institution_Helper::is_membership_inactive()) {
+                return array(
+                    'can_register' => false,
+                    'reason' => 'membership_inactive',
+                    'message' => __('Your membership is not active. Please renew to register.', 'eau-system'),
+                );
+            }
+
+            return array('can_register' => true, 'reason' => 'allowed', 'message' => '');
+        }
+
+        // Private events - não permitido por padrão
+        return array(
+            'can_register' => false,
+            'reason' => 'private_event',
+            'message' => __('This event is by invitation only.', 'eau-system'),
+        );
+    }
+
+    /**
      * Renderiza ícone SVG
      *
      * @since  1.28.2
@@ -199,6 +314,7 @@ class Eau_Events_Helper {
             'building' => '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line>',
             'alert-circle' => '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
             'video' => '<polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>',
+            'lock' => '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>',
         );
 
         $path = $icons[$name] ?? '';

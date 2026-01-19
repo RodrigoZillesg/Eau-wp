@@ -60,10 +60,6 @@ class Eau_Institutions_Management {
                 </div>
                 <div class="eau-page-header-actions">
                     <?php if (Eau_User_Institution_Helper::is_super_admin()): ?>
-                        <button class="eau-btn eau-btn-danger" id="eau-bulk-delete-institutions" style="display: none;">
-                            <i data-lucide="trash-2"></i>
-                            Delete Selected
-                        </button>
                         <button class="eau-btn eau-btn-danger" id="eau-delete-all-filtered-institutions">
                             <i data-lucide="trash-2"></i>
                             Delete All Filtered
@@ -110,6 +106,41 @@ class Eau_Institutions_Management {
 
             <!-- Modals -->
             <?php echo self::render_modals(); ?>
+
+            <!-- Bulk Actions Bar (v1.68.7) - Floating bar that appears when items are selected -->
+            <div class="eau-bulk-actions-bar" id="eau-bulk-actions-bar">
+                <div class="eau-bulk-actions-info">
+                    <span class="eau-bulk-actions-count" id="eau-bulk-actions-count">0</span>
+                    <span class="eau-bulk-actions-label">institutions selected</span>
+                </div>
+                <div class="eau-bulk-actions-buttons">
+                    <div class="eau-bulk-action-group">
+                        <label class="eau-bulk-action-label">Change Type:</label>
+                        <select class="eau-form-select eau-bulk-type-select" id="eau-bulk-type-select">
+                            <option value="">Select Type...</option>
+                            <?php foreach (self::get_institution_type_options() as $value => $label): ?>
+                                <?php if ($value !== 'not_defined'): ?>
+                                <option value="<?php echo esc_attr($value); ?>"><?php echo esc_html($label); ?></option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="eau-btn eau-btn-primary eau-btn-sm" id="eau-bulk-change-type-btn">
+                            <i data-lucide="check"></i>
+                            Apply
+                        </button>
+                    </div>
+                    <?php if (Eau_User_Institution_Helper::is_super_admin()): ?>
+                    <div class="eau-bulk-action-divider"></div>
+                    <button class="eau-btn eau-btn-danger eau-btn-sm" id="eau-bulk-delete-bar">
+                        <i data-lucide="trash-2"></i>
+                        Delete
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <button class="eau-bulk-actions-close" id="eau-bulk-actions-close" title="Clear selection">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
 
         </div>
         <?php
@@ -377,6 +408,23 @@ class Eau_Institutions_Management {
     }
 
     /**
+     * Retorna as opções de tipo de instituição
+     *
+     * @since 1.68.6
+     * @return array
+     */
+    public static function get_institution_type_options() {
+        return array(
+            'Member College' => 'Member College',
+            'Associate Member - Professional Affiliate Institutions' => 'Associate Member - Professional Affiliate Institutions',
+            'Associate Member - Access Members' => 'Associate Member - Access Members',
+            'Associate Member - International Members' => 'Associate Member - International Members',
+            'Corporate Affiliate' => 'Corporate Affiliate',
+            'not_defined' => 'Not Defined',
+        );
+    }
+
+    /**
      * Renderiza o painel de filtros
      *
      * @return string HTML dos filtros
@@ -398,11 +446,7 @@ class Eau_Institutions_Management {
                     'key' => 'institution_type',
                     'label' => 'Institution Type',
                     'type' => 'select',
-                    'options' => array(
-                        'College' => 'College',
-                        'Corporate affiliate' => 'Corporate Affiliate',
-                        'not_defined' => 'Not Defined',
-                    ),
+                    'options' => self::get_institution_type_options(),
                     'placeholder' => 'All Types',
                 ),
                 array(

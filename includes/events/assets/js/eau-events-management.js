@@ -14,8 +14,12 @@
         perPage: 20,
         searchTerm: '',
         statusFilter: '',
-        orderBy: 'start_datetime',
-        order: 'ASC',
+        dateFilter: '',
+        eventCategoryFilter: '',
+        cpdCategoryFilter: '',
+        locationFilter: '',
+        orderBy: 'id',
+        order: 'DESC',
         quillEditor: null,
 
         /**
@@ -104,6 +108,34 @@
                 this.loadEvents();
             });
 
+            // Date filter
+            $('#eau-events-date-filter').on('change', (e) => {
+                this.dateFilter = e.target.value;
+                this.currentPage = 1;
+                this.loadEvents();
+            });
+
+            // Event category filter
+            $('#eau-events-category-filter').on('change', (e) => {
+                this.eventCategoryFilter = e.target.value;
+                this.currentPage = 1;
+                this.loadEvents();
+            });
+
+            // CPD category filter
+            $('#eau-events-cpd-filter').on('change', (e) => {
+                this.cpdCategoryFilter = e.target.value;
+                this.currentPage = 1;
+                this.loadEvents();
+            });
+
+            // Location filter
+            $('#eau-events-location-filter').on('change', (e) => {
+                this.locationFilter = e.target.value;
+                this.currentPage = 1;
+                this.loadEvents();
+            });
+
             // Sortable columns
             $(document).on('click', '.eau-sortable', (e) => {
                 const $th = $(e.currentTarget);
@@ -186,7 +218,14 @@
             });
 
             $(document).on('click', '#eau-modal-save', () => {
-                this.saveEvent();
+                if (this.validateForm()) {
+                    this.saveEvent();
+                }
+            });
+
+            // Real-time validation on required fields
+            $(document).on('input change', '#eau-edit-title, #eau-edit-start_datetime, #eau-edit-end_datetime', () => {
+                this.updateSaveButtonState();
             });
 
             // Modal tabs
@@ -212,8 +251,16 @@
                 this.toggleLocationFields(e.target.value);
             });
 
+            // Visibility select - show/hide non-member price field
+            $(document).on('change', '#eau-edit-visibility', (e) => {
+                this.toggleNonMemberPriceField(e.target.value);
+            });
+
             // Media Upload Component Events
             this.bindMediaUploadEvents();
+
+            // Materials (Supplementary) Component Events
+            this.bindMaterialsEvents();
 
             // Force links with eau-no-lightbox class to open in new tab (bypass any lightbox plugins)
             $(document).on('click', '.eau-no-lightbox', function(e) {
@@ -240,7 +287,7 @@
          */
         loadEvents: function() {
             const $tbody = $('#eau-events-tbody');
-            $tbody.html('<tr><td colspan="6" class="eau-loading-cell"><div class="eau-skeleton-row"></div></td></tr>');
+            $tbody.html('<tr><td colspan="7" class="eau-loading-cell"><div class="eau-skeleton-row"></div></td></tr>');
 
             $.ajax({
                 url: eauEventsManagement.ajaxUrl,
@@ -252,6 +299,10 @@
                     per_page: this.perPage,
                     search: this.searchTerm,
                     status: this.statusFilter,
+                    date_filter: this.dateFilter,
+                    event_category: this.eventCategoryFilter,
+                    cpd_category: this.cpdCategoryFilter,
+                    location: this.locationFilter,
                     orderby: this.orderBy,
                     order: this.order
                 },
@@ -260,12 +311,12 @@
                         this.renderTable(response.data.rows);
                         this.renderPagination(response.data);
                     } else {
-                        $tbody.html('<tr><td colspan="6" class="eau-empty-cell">Error loading events</td></tr>');
+                        $tbody.html('<tr><td colspan="7" class="eau-empty-cell">Error loading events</td></tr>');
                     }
                     lucide.createIcons();
                 },
                 error: () => {
-                    $tbody.html('<tr><td colspan="6" class="eau-empty-cell">Error loading events</td></tr>');
+                    $tbody.html('<tr><td colspan="7" class="eau-empty-cell">Error loading events</td></tr>');
                 }
             });
         },
@@ -277,7 +328,7 @@
             const $tbody = $('#eau-events-tbody');
 
             if (!rows || rows.length === 0) {
-                $tbody.html('<tr><td colspan="6" class="eau-empty-cell">No events found</td></tr>');
+                $tbody.html('<tr><td colspan="7" class="eau-empty-cell">No events found</td></tr>');
                 return;
             }
 
@@ -288,6 +339,7 @@
 
                 html += `
                     <tr data-slug="${this.escapeHtml(row.slug)}">
+                        <td class="eau-event-id-cell">${row.id}</td>
                         <td class="eau-event-title-cell">
                             <span class="eau-event-title">${this.escapeHtml(row.title)}</span>
                         </td>
@@ -402,6 +454,12 @@
             // Clear image - using Eau Media Upload component
             this.clearMediaUpload($('#eau-edit-image_id-wrapper'));
 
+            // Clear materials list
+            this.loadMaterials('');
+
+            // Clear recording URL
+            $('#eau-edit-recording_url').val('');
+
             // Initialize Quill lazily (only when modal opens)
             this.initQuillEditor();
 
@@ -413,6 +471,9 @@
 
             // Show correct location fields for default type
             this.toggleLocationFields('in-person');
+
+            // Show non-member price field for default visibility (public)
+            this.toggleNonMemberPriceField('public');
 
             // Show "Publish immediately" option in create mode
             $('.eau-publish-immediately-field').show();
@@ -428,6 +489,8 @@
                 $modalBody.removeClass('eau-modal-loading');
                 $modalFooter.removeClass('eau-modal-loading');
                 lucide.createIcons();
+                // Update save button state (should be disabled initially)
+                this.updateSaveButtonState();
             }, 1000);
         },
 
@@ -523,11 +586,15 @@
             $('#eau-edit-virtual_url').val(event.virtual_url || '');
             $('#eau-edit-capacity').val(event.capacity || '');
             $('#eau-edit-member_price').val(event.member_price || '');
-            $('#eau-edit-early_bird_price').val(event.early_bird_price || '');
-            $('#eau-edit-early_bird_end_date').val(event.early_bird_end_date || '');
+            $('#eau-edit-non_member_price').val(event.non_member_price || '');
             $('#eau-edit-cpd_points').val(event.cpd_points || '');
             $('#eau-edit-cpd_category').val(event.cpd_category || '');
+            $('#eau-edit-event_category').val(event.event_category || '');
             $('#eau-edit-visibility').val(event.visibility || 'public');
+            $('#eau-edit-recording_url').val(event.recording_url || '');
+
+            // Materials - load into list
+            this.loadMaterials(event.materials || '');
 
             // Radio buttons
             const eventType = event.event_type || 'in-person';
@@ -535,6 +602,10 @@
 
             // Toggle location fields based on event type
             this.toggleLocationFields(eventType);
+
+            // Toggle non-member price field based on visibility
+            const visibility = event.visibility || 'public';
+            this.toggleNonMemberPriceField(visibility);
 
             // Checkboxes
             $('#eau-edit-require_approval').prop('checked', event.require_approval === '1');
@@ -582,6 +653,20 @@
                 default:
                     $virtualFields.hide();
                     $inPersonFields.show();
+            }
+        },
+
+        /**
+         * Toggle non-member price field based on visibility
+         * Only shows for public events
+         */
+        toggleNonMemberPriceField: function(visibility) {
+            const $nonMemberPriceField = $('.eau-non-member-price-field');
+
+            if (visibility === 'public') {
+                $nonMemberPriceField.show();
+            } else {
+                $nonMemberPriceField.hide();
             }
         },
 
@@ -942,6 +1027,411 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+
+        /**
+         * Materials list state
+         */
+        materialsList: [],
+
+        /**
+         * Bind materials events
+         */
+        bindMaterialsEvents: function() {
+            const self = this;
+
+            // Materials tabs
+            $(document).on('click', '.eau-materials-tab', function() {
+                const tab = $(this).data('tab');
+                $('.eau-materials-tab').removeClass('active');
+                $(this).addClass('active');
+
+                $('.eau-materials-panel').removeClass('active');
+                if (tab === 'url') {
+                    $('.eau-materials-url-panel').addClass('active');
+                } else if (tab === 'upload') {
+                    $('.eau-materials-upload-panel').addClass('active');
+                }
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+
+            // Add URL button
+            $(document).on('click', '.eau-materials-add-url-btn', function() {
+                const $input = $('.eau-materials-url-input');
+                const url = $input.val().trim();
+
+                if (url) {
+                    self.addMaterial({ type: 'url', url: url, name: self.getFileNameFromUrl(url) });
+                    $input.val('');
+                }
+            });
+
+            // Enter key on URL input
+            $(document).on('keypress', '.eau-materials-url-input', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('.eau-materials-add-url-btn').click();
+                }
+            });
+
+            // Browse button for file upload
+            $(document).on('click', '.eau-materials-browse-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $('#eau-materials-file-input').click();
+            });
+
+            // Click on dropzone
+            $(document).on('click', '#eau-materials-dropzone', function(e) {
+                if ($(e.target).closest('.eau-materials-browse-btn').length || $(e.target).is('input[type="file"]')) {
+                    return;
+                }
+                e.preventDefault();
+                $('#eau-materials-file-input').click();
+            });
+
+            // File input change
+            $(document).on('change', '#eau-materials-file-input', function() {
+                const files = this.files;
+                for (let i = 0; i < files.length; i++) {
+                    self.uploadMaterialFile(files[i]);
+                }
+                $(this).val('');
+            });
+
+            // Drag and drop
+            $(document).on('dragover dragenter', '#eau-materials-dropzone', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('drag-active');
+            });
+
+            $(document).on('dragleave drop', '#eau-materials-dropzone', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('drag-active');
+            });
+
+            $(document).on('drop', '#eau-materials-dropzone', function(e) {
+                const files = e.originalEvent.dataTransfer.files;
+                for (let i = 0; i < files.length; i++) {
+                    self.uploadMaterialFile(files[i]);
+                }
+            });
+
+            // Remove material
+            $(document).on('click', '.eau-material-remove', function() {
+                const index = $(this).closest('.eau-material-item').data('index');
+                self.removeMaterial(index);
+            });
+        },
+
+        /**
+         * Add material to list
+         */
+        addMaterial: function(material) {
+            this.materialsList.push(material);
+            this.renderMaterialsList();
+            this.updateMaterialsHiddenField();
+        },
+
+        /**
+         * Remove material from list
+         */
+        removeMaterial: function(index) {
+            this.materialsList.splice(index, 1);
+            this.renderMaterialsList();
+            this.updateMaterialsHiddenField();
+        },
+
+        /**
+         * Render materials list
+         */
+        renderMaterialsList: function() {
+            const $list = $('#eau-materials-list');
+            $list.empty();
+
+            if (this.materialsList.length === 0) {
+                $list.html('<div class="eau-materials-empty">No materials added yet</div>');
+                return;
+            }
+
+            this.materialsList.forEach((material, index) => {
+                const icon = this.getMaterialIcon(material.name || material.url);
+                const displayName = material.name || this.getFileNameFromUrl(material.url);
+
+                $list.append(`
+                    <div class="eau-material-item" data-index="${index}">
+                        <div class="eau-material-icon">
+                            <i data-lucide="${icon}"></i>
+                        </div>
+                        <div class="eau-material-info">
+                            <a href="${this.escapeHtml(material.url)}" target="_blank" class="eau-material-name">${this.escapeHtml(displayName)}</a>
+                            <span class="eau-material-type">${material.type === 'url' ? 'External URL' : 'Uploaded file'}</span>
+                        </div>
+                        <button type="button" class="eau-material-remove" title="Remove">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                `);
+            });
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Update hidden field with materials JSON
+         */
+        updateMaterialsHiddenField: function() {
+            const json = JSON.stringify(this.materialsList);
+            $('#eau-edit-materials').val(json);
+        },
+
+        /**
+         * Load materials from JSON string (used when editing)
+         */
+        loadMaterials: function(jsonString) {
+            this.materialsList = [];
+
+            if (!jsonString) {
+                this.renderMaterialsList();
+                return;
+            }
+
+            try {
+                // Check if it's already JSON array
+                if (jsonString.startsWith('[')) {
+                    this.materialsList = JSON.parse(jsonString);
+                } else {
+                    // Legacy format: URLs separated by newlines
+                    const urls = jsonString.split('\n').filter(u => u.trim());
+                    urls.forEach(url => {
+                        this.materialsList.push({
+                            type: 'url',
+                            url: url.trim(),
+                            name: this.getFileNameFromUrl(url.trim())
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn('Could not parse materials:', e);
+                this.materialsList = [];
+            }
+
+            this.renderMaterialsList();
+        },
+
+        /**
+         * Upload material file
+         */
+        uploadMaterialFile: function(file) {
+            const self = this;
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (file.size > maxSize) {
+                this.showToast(`File "${file.name}" is too large. Max size is 10MB.`, 'error');
+                return;
+            }
+
+            const $dropzone = $('#eau-materials-dropzone');
+            const $progress = $dropzone.find('.eau-materials-upload-progress');
+            const $content = $dropzone.find('.eau-materials-dropzone-content');
+            const $fill = $dropzone.find('.eau-materials-progress-fill');
+            const $text = $dropzone.find('.eau-materials-progress-text');
+
+            $content.hide();
+            $progress.show();
+            $fill.css('width', '0%');
+            $text.text('Uploading... 0%');
+
+            const formData = new FormData();
+            formData.append('action', 'eau_upload_material_file');
+            formData.append('nonce', eauEventsManagement.nonce);
+            formData.append('file', file);
+
+            $.ajax({
+                url: eauEventsManagement.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const pct = Math.round((e.loaded / e.total) * 100);
+                            $fill.css('width', pct + '%');
+                            $text.text('Uploading... ' + pct + '%');
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    $progress.hide();
+                    $content.show();
+
+                    if (response.success) {
+                        self.addMaterial({
+                            type: 'upload',
+                            url: response.data.url,
+                            name: response.data.filename
+                        });
+                        self.showToast('File uploaded successfully', 'success');
+                    } else {
+                        self.showToast(response.data?.message || 'Upload failed', 'error');
+                    }
+                },
+                error: function() {
+                    $progress.hide();
+                    $content.show();
+                    self.showToast('Upload failed. Please try again.', 'error');
+                }
+            });
+        },
+
+        /**
+         * Get file name from URL
+         */
+        getFileNameFromUrl: function(url) {
+            try {
+                const urlObj = new URL(url);
+                const pathname = urlObj.pathname;
+                const filename = pathname.split('/').pop();
+                return decodeURIComponent(filename) || url;
+            } catch (e) {
+                return url.split('/').pop() || url;
+            }
+        },
+
+        /**
+         * Get material icon based on file extension
+         */
+        getMaterialIcon: function(filename) {
+            const ext = (filename || '').split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': 'file-text',
+                'doc': 'file-text',
+                'docx': 'file-text',
+                'xls': 'file-spreadsheet',
+                'xlsx': 'file-spreadsheet',
+                'ppt': 'presentation',
+                'pptx': 'presentation',
+                'zip': 'file-archive',
+                'rar': 'file-archive',
+                'jpg': 'image',
+                'jpeg': 'image',
+                'png': 'image',
+                'gif': 'image',
+                'mp4': 'video',
+                'mp3': 'music',
+            };
+            return icons[ext] || 'file';
+        },
+
+        /**
+         * Required fields configuration
+         */
+        requiredFields: [
+            { id: '#eau-edit-title', name: 'Event Title', tab: 'basic-info' },
+            { id: '#eau-edit-start_datetime', name: 'Start Date/Time', tab: 'basic-info' },
+            { id: '#eau-edit-end_datetime', name: 'End Date/Time', tab: 'basic-info' }
+        ],
+
+        /**
+         * Validate form before saving
+         * @return {boolean} True if valid, false otherwise
+         */
+        validateForm: function() {
+            const missingFields = [];
+
+            this.requiredFields.forEach(field => {
+                const $field = $(field.id);
+                const value = $field.val()?.trim();
+
+                // Remove previous error styling
+                $field.removeClass('eau-field-error');
+                $field.siblings('.eau-field-error-msg').remove();
+
+                if (!value) {
+                    missingFields.push(field);
+                    // Add error styling
+                    $field.addClass('eau-field-error');
+                }
+            });
+
+            if (missingFields.length > 0) {
+                // Build error message
+                const fieldNames = missingFields.map(f => f.name).join(', ');
+                this.showToast(`Please fill in required fields: ${fieldNames}`, 'error');
+
+                // Go to the tab with the first error
+                const firstErrorTab = missingFields[0].tab;
+                $(`.eau-modal-tab-btn[data-tab="${firstErrorTab}"]`).click();
+
+                // Focus on first error field
+                $(missingFields[0].id).focus();
+
+                return false;
+            }
+
+            // Additional validation: end date should be after start date
+            const startDate = new Date($('#eau-edit-start_datetime').val());
+            const endDate = new Date($('#eau-edit-end_datetime').val());
+
+            if (endDate < startDate) {
+                this.showToast('End date/time must be after start date/time', 'error');
+                $('#eau-edit-end_datetime').addClass('eau-field-error').focus();
+                $(`.eau-modal-tab-btn[data-tab="basic-info"]`).click();
+                return false;
+            }
+
+            return true;
+        },
+
+        /**
+         * Update save button state based on form validation
+         * Also updates tooltip with missing fields
+         */
+        updateSaveButtonState: function() {
+            const $saveBtn = $('#eau-modal-save');
+            const missingFields = [];
+
+            this.requiredFields.forEach(field => {
+                const value = $(field.id).val()?.trim();
+                if (!value) {
+                    missingFields.push(field.name);
+                }
+            });
+
+            if (missingFields.length === 0) {
+                $saveBtn.prop('disabled', false).removeClass('eau-btn-disabled');
+                $saveBtn.removeAttr('title');
+                // Remove tooltip wrapper if exists
+                if ($saveBtn.parent().hasClass('eau-btn-tooltip-wrapper')) {
+                    $saveBtn.unwrap();
+                }
+            } else {
+                $saveBtn.prop('disabled', true).addClass('eau-btn-disabled');
+                const tooltipText = 'Missing required fields: ' + missingFields.join(', ');
+                $saveBtn.attr('title', tooltipText);
+
+                // Wrap button in tooltip container if not already wrapped
+                if (!$saveBtn.parent().hasClass('eau-btn-tooltip-wrapper')) {
+                    $saveBtn.wrap('<div class="eau-btn-tooltip-wrapper"></div>');
+                }
+                // Update or create tooltip element
+                let $tooltip = $saveBtn.siblings('.eau-btn-tooltip');
+                if ($tooltip.length === 0) {
+                    $saveBtn.after('<div class="eau-btn-tooltip">' + tooltipText + '</div>');
+                } else {
+                    $tooltip.text(tooltipText);
+                }
+            }
         },
 
         /**

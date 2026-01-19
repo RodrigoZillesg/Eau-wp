@@ -23,6 +23,7 @@
             this.initFilterForm();
             this.initRegistrationModal();
             this.initJoinButton();
+            this.initPurchaseAccess();
         },
 
         /**
@@ -312,6 +313,114 @@
                 select.addEventListener('change', () => {
                     filterForm.submit();
                 });
+            });
+        },
+
+        /**
+         * Initialize purchase access buttons (v1.68.10)
+         */
+        initPurchaseAccess: function() {
+            const self = this;
+
+            // Free access button
+            const freeAccessBtn = document.querySelector('.eau-event-get-access-btn');
+            if (freeAccessBtn) {
+                freeAccessBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.handlePurchaseAccess(this, false);
+                });
+            }
+
+            // Paid access button
+            const paidAccessBtn = document.querySelector('.eau-event-purchase-access-btn');
+            if (paidAccessBtn) {
+                paidAccessBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.handlePurchaseAccess(this, true);
+                });
+            }
+        },
+
+        /**
+         * Handle purchase access request (v1.68.10)
+         */
+        handlePurchaseAccess: function(button, isPaid) {
+            const self = this;
+            const eventId = button.dataset.eventId;
+            const originalText = button.innerHTML;
+
+            if (!eventId) {
+                self.showToast('Invalid event.', 'error');
+                return;
+            }
+
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = `
+                <svg class="eau-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+                </svg>
+                ${isPaid ? 'Processing...' : 'Granting access...'}
+            `;
+
+            // Add spinner animation
+            if (!document.querySelector('#eau-spinner-styles')) {
+                const style = document.createElement('style');
+                style.id = 'eau-spinner-styles';
+                style.textContent = `
+                    @keyframes eauSpin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                    .eau-spinner {
+                        animation: eauSpin 1s linear infinite;
+                        margin-right: 8px;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Get nonce from page
+            const nonceEl = document.getElementById('eau-reg-nonce');
+            const nonce = nonceEl ? nonceEl.value : (typeof eauEventsFrontendData !== 'undefined' ? eauEventsFrontendData.nonce : '');
+
+            const formData = new FormData();
+            formData.append('action', 'eau_purchase_recording_access');
+            formData.append('event_id', eventId);
+            formData.append('nonce', nonce);
+
+            fetch(eauEventsFrontendData.ajaxUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (data.success) {
+                    if (data.data.redirect && data.data.checkout_url) {
+                        // Redirect to payment
+                        self.showToast(data.data.message, 'info');
+                        setTimeout(() => {
+                            window.location.href = data.data.checkout_url;
+                        }, 1000);
+                    } else {
+                        // Free access granted - reload page
+                        self.showToast(data.data.message, 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    }
+                } else {
+                    self.showToast(data.data.message || 'An error occurred.', 'error');
+                }
+            })
+            .catch(error => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+                self.showToast('An error occurred. Please try again.', 'error');
             });
         },
 

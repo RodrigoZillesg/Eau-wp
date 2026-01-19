@@ -39,12 +39,14 @@ function get_meta_fields() {
         'virtual_url'         => 'string',
         'capacity'            => 'integer',
         'member_price'        => 'number',
-        'early_bird_price'    => 'number',
-        'early_bird_end_date' => 'string',
+        'non_member_price'    => 'number',
         'cpd_points'          => 'number',
         'cpd_category'        => 'integer',
+        'event_category'      => 'integer',
         'visibility'          => 'string',
         'require_approval'    => 'boolean',
+        'recording_url'       => 'string',
+        'materials'           => 'string',
     );
 }
 
@@ -72,12 +74,14 @@ function get_defaults() {
         'virtual_url'         => '',
         'capacity'            => '',
         'member_price'        => '0',
-        'early_bird_price'    => '',
-        'early_bird_end_date' => '',
+        'non_member_price'    => '0',
         'cpd_points'          => '1',
         'cpd_category'        => '',
+        'event_category'      => '',
         'visibility'          => DEFAULT_VISIBILITY,
         'require_approval'    => '',
+        'recording_url'       => '',
+        'materials'           => '',
     );
 }
 

@@ -81,12 +81,14 @@ body .eau-events-management-container button {
    ========================================================================== */
 
 .eau-events-management-container {
-    max-width: 1280px;
+    max-width: 100%;
+    width: 100%;
     margin: 0 auto;
     padding: 32px 16px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow: visible !important;
     position: relative !important;
+    box-sizing: border-box !important;
 }
 
 @media (min-width: 640px) {
@@ -273,14 +275,17 @@ button.eau-btn-primary {
     margin-bottom: 24px;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
 }
 
-@media (min-width: 640px) {
-    .eau-events-management-container .eau-search-filters-bar {
-        flex-direction: row;
-    }
+.eau-events-management-container .eau-search-filters-bar .eau-filter-select-wrapper {
+    flex-shrink: 0;
+}
+
+.eau-events-management-container .eau-search-filters-bar .eau-filter-select {
+    min-width: 120px !important;
 }
 
 .eau-events-management-container .eau-search-wrapper {
@@ -368,13 +373,53 @@ button.eau-btn-primary {
     border: 1px solid var(--eau-gray-100);
     border-radius: 8px;
     box-shadow: none;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: visible;
+    max-width: 100%;
 }
 
 .eau-events-management-container .eau-data-table {
     width: 100%;
     border-collapse: collapse;
     border-spacing: 0;
+    table-layout: fixed;
+}
+
+/* Column widths - 7 columns: ID, Event, Date, Location, Capacity, Status, Actions */
+.eau-events-management-container .eau-data-table th:nth-child(1),
+.eau-events-management-container .eau-data-table td:nth-child(1) {
+    width: 60px; /* ID */
+}
+.eau-events-management-container .eau-data-table th:nth-child(2),
+.eau-events-management-container .eau-data-table td:nth-child(2) {
+    width: 25%; /* Event title */
+}
+.eau-events-management-container .eau-data-table th:nth-child(3),
+.eau-events-management-container .eau-data-table td:nth-child(3) {
+    width: 15%; /* Date */
+}
+.eau-events-management-container .eau-data-table th:nth-child(4),
+.eau-events-management-container .eau-data-table td:nth-child(4) {
+    width: 15%; /* Location */
+}
+.eau-events-management-container .eau-data-table th:nth-child(5),
+.eau-events-management-container .eau-data-table td:nth-child(5) {
+    width: 10%; /* Capacity */
+}
+.eau-events-management-container .eau-data-table th:nth-child(6),
+.eau-events-management-container .eau-data-table td:nth-child(6) {
+    width: 10%; /* Status */
+}
+.eau-events-management-container .eau-data-table th:nth-child(7),
+.eau-events-management-container .eau-data-table td:nth-child(7) {
+    width: 130px; /* Actions */
+}
+
+/* ID column styling */
+.eau-event-id-cell {
+    font-size: 13px !important;
+    color: var(--eau-gray-500) !important;
+    font-family: monospace !important;
 }
 
 .eau-events-management-container .eau-data-table thead {
@@ -448,10 +493,19 @@ button.eau-btn-primary {
    Table Cells
    ========================================================================== */
 
+.eau-event-title-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .eau-event-title-cell .eau-event-title {
     font-size: 14px;
     font-weight: 500;
     color: var(--eau-gray-900);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .eau-event-date-cell {
@@ -582,10 +636,7 @@ button.eau-btn-primary {
     clip: auto !important;
 }
 
-/* Force all parent elements to allow dropdown overflow */
-.eau-events-management-container,
-.eau-events-management-container .eau-data-table-wrapper,
-.eau-events-management-container .eau-data-table,
+/* Allow dropdown overflow within table cells */
 .eau-events-management-container .eau-data-table thead,
 .eau-events-management-container .eau-data-table tbody,
 .eau-events-management-container .eau-data-table tr,
@@ -816,7 +867,7 @@ button.eau-dropdown-item:hover {
 }
 
 #eau-event-edit-modal .eau-modal-title {
-    font-size: 22px !important;
+    font-size: 1.125rem !important; /* 18px */
     font-weight: 600 !important;
     color: #111827 !important;
     margin: 0 !important;
@@ -956,11 +1007,18 @@ button.eau-dropdown-item:hover {
 }
 
 #eau-event-edit-modal .eau-form-section-title {
-    font-size: 15px !important;
+    font-size: 0.875rem !important; /* 14px */
     font-weight: 600 !important;
     color: #111827 !important;
     margin: 8px 0 0 0 !important;
     padding: 0 !important;
+}
+
+#eau-event-edit-modal .eau-form-hint {
+    font-size: 0.75rem !important; /* 12px */
+    color: #6b7280 !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
 }
 
 #eau-event-edit-modal .eau-form-input,
@@ -1084,6 +1142,40 @@ button.eau-dropdown-item:hover {
 #eau-event-edit-modal .eau-modal-footer .eau-btn-secondary svg {
     width: 18px !important;
     height: 18px !important;
+}
+
+/* Button disabled state */
+#eau-event-edit-modal .eau-modal-footer .eau-btn-primary:disabled,
+#eau-event-edit-modal .eau-modal-footer .eau-btn-primary.eau-btn-disabled {
+    background: #9ca3af !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+}
+
+#eau-event-edit-modal .eau-modal-footer .eau-btn-primary:disabled:hover,
+#eau-event-edit-modal .eau-modal-footer .eau-btn-primary.eau-btn-disabled:hover {
+    background: #9ca3af !important;
+}
+
+/* ==========================================================================
+   Form Validation Errors
+   ========================================================================== */
+
+#eau-event-edit-modal .eau-field-error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+#eau-event-edit-modal .eau-field-error:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
+}
+
+/* Required field indicator */
+#eau-event-edit-modal .eau-form-label .required,
+#eau-event-edit-modal .eau-required-indicator {
+    color: #dc2626 !important;
+    margin-left: 2px !important;
 }
 
 /* ==========================================================================
@@ -1434,6 +1526,70 @@ button.eau-btn-secondary {
     .eau-data-table-wrapper {
         overflow-x: auto;
     }
+}
+
+/* ==========================================================================
+   Tooltip for Disabled Button
+   ========================================================================== */
+
+.eau-btn-tooltip-wrapper {
+    position: relative !important;
+    display: inline-block !important;
+}
+
+.eau-btn-tooltip {
+    position: absolute !important;
+    bottom: calc(100% + 8px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: #1f2937 !important;
+    color: #ffffff !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    white-space: nowrap !important;
+    z-index: 1000 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    max-width: 300px !important;
+    white-space: normal !important;
+    text-align: center !important;
+}
+
+.eau-btn-tooltip::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    border-width: 6px !important;
+    border-style: solid !important;
+    border-color: #1f2937 transparent transparent transparent !important;
+}
+
+.eau-btn-tooltip-wrapper:hover .eau-btn-tooltip {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* ==========================================================================
+   Dropdown Menu - Position Above for Last Rows
+   ========================================================================== */
+
+/* Position dropdown above for last 3 rows */
+.eau-events-management-container .eau-data-table tbody tr:nth-last-child(-n+3) .eau-dropdown-menu {
+    top: auto !important;
+    bottom: 100% !important;
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Ensure table wrapper allows overflow */
+.eau-events-management-container .eau-data-table-wrapper {
+    overflow: visible !important;
 }
 
 /* ==========================================================================
@@ -2156,5 +2312,340 @@ button.eau-btn-secondary {
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+}
+
+/* ==========================================================================
+   Supplementary Materials Component (v1.68.5)
+   ========================================================================== */
+
+/* Materials List */
+.eau-materials-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+}
+
+.eau-materials-empty {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px !important;
+    background: #f9fafb !important;
+    border: 1px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    color: #9ca3af !important;
+    font-size: 13px !important;
+}
+
+/* Material Item */
+.eau-material-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 10px 14px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-material-item:hover {
+    border-color: #d1d5db !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.eau-material-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    background: #f3f4f6 !important;
+    border-radius: 8px !important;
+    color: #6b7280 !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-material-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.eau-material-icon.eau-material-icon-pdf {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+.eau-material-icon.eau-material-icon-doc {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+}
+
+.eau-material-icon.eau-material-icon-xls {
+    background: #ecfdf5 !important;
+    color: #059669 !important;
+}
+
+.eau-material-icon.eau-material-icon-ppt {
+    background: #fff7ed !important;
+    color: #ea580c !important;
+}
+
+.eau-material-icon.eau-material-icon-image {
+    background: #faf5ff !important;
+    color: #9333ea !important;
+}
+
+.eau-material-icon.eau-material-icon-zip {
+    background: #fefce8 !important;
+    color: #ca8a04 !important;
+}
+
+.eau-material-icon.eau-material-icon-url {
+    background: #f0f9ff !important;
+    color: #0284c7 !important;
+}
+
+.eau-material-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+}
+
+.eau-material-name {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.eau-material-name a {
+    color: #005eb8 !important;
+    text-decoration: none !important;
+}
+
+.eau-material-name a:hover {
+    text-decoration: underline !important;
+}
+
+.eau-material-type {
+    font-size: 11px !important;
+    color: #9ca3af !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.eau-material-remove {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: #9ca3af !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    opacity: 0 !important;
+}
+
+.eau-material-item:hover .eau-material-remove {
+    opacity: 1 !important;
+}
+
+.eau-material-remove:hover {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+.eau-material-remove svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Materials Add Section */
+.eau-materials-add-section {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+/* Materials Tabs */
+.eau-materials-tabs {
+    display: flex !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+}
+
+.eau-materials-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 10px 16px !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    margin-bottom: -1px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-materials-tab:hover {
+    color: #374151 !important;
+}
+
+.eau-materials-tab.active {
+    color: #005eb8 !important;
+    border-bottom-color: #005eb8 !important;
+    background: #ffffff !important;
+}
+
+.eau-materials-tab svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Materials Panels */
+.eau-materials-panel {
+    display: none !important;
+    padding: 16px !important;
+}
+
+.eau-materials-panel.active {
+    display: block !important;
+}
+
+/* URL Input Row */
+.eau-materials-input-row {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.eau-materials-url-input {
+    flex: 1 !important;
+}
+
+.eau-materials-add-url-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+}
+
+.eau-materials-add-url-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Materials Dropzone */
+.eau-materials-dropzone {
+    border: 2px dashed #d1d5db !important;
+    border-radius: 8px !important;
+    padding: 32px 20px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    background: #fafafa !important;
+}
+
+.eau-materials-dropzone:hover,
+.eau-materials-dropzone.eau-dragover {
+    border-color: #005eb8 !important;
+    background: #f0f7ff !important;
+}
+
+.eau-materials-dropzone-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.eau-materials-dropzone-content > svg {
+    width: 40px !important;
+    height: 40px !important;
+    color: #9ca3af !important;
+}
+
+.eau-materials-dropzone:hover .eau-materials-dropzone-content > svg,
+.eau-materials-dropzone.eau-dragover .eau-materials-dropzone-content > svg {
+    color: #005eb8 !important;
+}
+
+.eau-materials-dropzone-content > span {
+    font-size: 14px !important;
+    color: #6b7280 !important;
+}
+
+.eau-materials-browse-btn {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    color: #005eb8 !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    text-decoration: underline !important;
+}
+
+.eau-materials-browse-btn:hover {
+    color: #004a91 !important;
+}
+
+.eau-materials-dropzone-hint {
+    font-size: 12px !important;
+    color: #9ca3af !important;
+}
+
+/* Upload Progress */
+.eau-materials-upload-progress {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 20px !important;
+}
+
+.eau-materials-progress-bar {
+    width: 100% !important;
+    max-width: 300px !important;
+    height: 8px !important;
+    background: #e5e7eb !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+}
+
+.eau-materials-progress-fill {
+    height: 100% !important;
+    background: #005eb8 !important;
+    border-radius: 4px !important;
+    transition: width 0.2s ease !important;
+    width: 0% !important;
+}
+
+.eau-materials-progress-text {
+    font-size: 13px !important;
+    color: #6b7280 !important;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .eau-materials-input-row {
+        flex-direction: column !important;
+    }
+
+    .eau-materials-add-url-btn {
+        width: 100% !important;
+        justify-content: center !important;
     }
 }

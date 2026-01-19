@@ -43,6 +43,9 @@ class Eau_Event_Registrations_Ajax {
 
         // Cancelar registro
         add_action('wp_ajax_eau_cancel_registration', array(__CLASS__, 'cancel_registration'));
+
+        // Compra de acesso à gravação de evento passado (v1.68.10)
+        add_action('wp_ajax_eau_purchase_recording_access', array(__CLASS__, 'purchase_recording_access'));
     }
 
     /**
@@ -101,6 +104,12 @@ class Eau_Event_Registrations_Ajax {
             wp_send_json_error(array('message' => __('Event not found.', 'eau-system')));
         }
 
+        // Verificar se pode se inscrever baseado na visibilidade (v1.68.0)
+        $can_register = \EauSystem\Events\Frontend\Eau_Events_Helper::can_user_register($event_id);
+        if (!$can_register['can_register']) {
+            wp_send_json_error(array('message' => $can_register['message']));
+        }
+
         // Verificar se já está registrado (mesmo email para mesmo evento)
         $existing = self::get_existing_registration($event_id, $attendee_email);
         if ($existing) {
@@ -140,8 +149,9 @@ class Eau_Event_Registrations_Ajax {
             wp_send_json_error(array('message' => __('Error creating registration.', 'eau-system')));
         }
 
-        // Verificar se evento é gratuito
-        $event_price = floatval(get_post_meta($event_id, 'evt_member_price', true) ?: 0);
+        // Determinar preço correto baseado na visibilidade e tipo de usuário (v1.68.0)
+        $user_price = \EauSystem\Events\Frontend\Eau_Events_Helper::get_user_price($event_id);
+        $event_price = $user_price['amount'];
         $is_free_event = ($event_price <= 0);
         $payment_status = $is_free_event ? 'free' : 'pending';
 
@@ -153,6 +163,8 @@ class Eau_Event_Registrations_Ajax {
         update_post_meta($post_id, $prefix . 'member_type', $member_type);
         update_post_meta($post_id, $prefix . 'status', Config\DEFAULT_STATUS);
         update_post_meta($post_id, $prefix . 'payment_status', $payment_status);
+        update_post_meta($post_id, $prefix . 'price_paid', $event_price);
+        update_post_meta($post_id, $prefix . 'price_type', $user_price['is_member'] ? 'member' : 'non_member');
         update_post_meta($post_id, $prefix . 'attended', '0');
         update_post_meta($post_id, $prefix . 'activity_created', '0');
 
@@ -423,5 +435,207 @@ class Eau_Event_Registrations_Ajax {
         }
 
         return true;
+    }
+
+    /**
+     * Processa compra de acesso à gravação de evento passado
+     *
+     * @since  1.68.10
+     * @return void
+     */
+    public static function purchase_recording_access() {
+        check_ajax_referer('eau_event_registration', 'nonce');
+
+        // Precisa estar logado
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => __('You must be logged in to purchase access.', 'eau-system')));
+        }
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+
+        if (!$event_id) {
+            wp_send_json_error(array('message' => __('Invalid event.', 'eau-system')));
+        }
+
+        // Verificar se evento existe
+        $event = get_post($event_id);
+        if (!$event || $event->post_type !== 'eau_event') {
+            wp_send_json_error(array('message' => __('Event not found.', 'eau-system')));
+        }
+
+        // Verificar se tem gravação disponível
+        $recording_url = get_post_meta($event_id, 'evt_recording_url', true);
+        $materials = get_post_meta($event_id, 'evt_materials', true);
+        if (empty($recording_url) && empty($materials)) {
+            wp_send_json_error(array('message' => __('No recording or materials available for this event.', 'eau-system')));
+        }
+
+        // Verificar se usuário já tem acesso (já registrado)
+        $current_user = wp_get_current_user();
+        $existing = self::get_user_registration($event_id, $current_user->ID);
+        if ($existing) {
+            wp_send_json_error(array('message' => __('You already have access to this event.', 'eau-system')));
+        }
+
+        // Verificar se pode comprar acesso (visibilidade compatível com tipo de usuário)
+        $can_register = \EauSystem\Events\Frontend\Eau_Events_Helper::can_user_register($event_id);
+        if (!$can_register['can_register']) {
+            wp_send_json_error(array('message' => $can_register['message']));
+        }
+
+        // Determinar preço e tipo de membro
+        $user_price = \EauSystem\Events\Frontend\Eau_Events_Helper::get_user_price($event_id);
+        $price = $user_price['amount'];
+        $is_free = ($price <= 0);
+
+        // Determinar tipo de membro
+        $member_type = 'non_member';
+        $mem_type = get_user_meta($current_user->ID, 'mem_type', true);
+        if (in_array($mem_type, array('member', 'Admin', 'superAdmin', 'institutionAdmin'))) {
+            $member_type = 'member';
+        }
+
+        // Se é gratuito, criar registro direto
+        if ($is_free) {
+            $registration_id = self::create_recording_access_registration($event_id, $current_user, $member_type, 0, 'free');
+
+            if (is_wp_error($registration_id)) {
+                wp_send_json_error(array('message' => __('Error creating access. Please try again.', 'eau-system')));
+            }
+
+            wp_send_json_success(array(
+                'message'         => __('Access granted! You can now view the recording and materials.', 'eau-system'),
+                'registration_id' => $registration_id,
+                'redirect'        => false,
+            ));
+        }
+
+        // Se é pago, criar registro com status pending e redirecionar para pagamento
+        $registration_id = self::create_recording_access_registration($event_id, $current_user, $member_type, $price, 'pending');
+
+        if (is_wp_error($registration_id)) {
+            wp_send_json_error(array('message' => __('Error creating access. Please try again.', 'eau-system')));
+        }
+
+        // Criar produto WooCommerce temporário ou usar lógica de pagamento existente
+        // Por agora, vamos retornar os dados para pagamento
+        wp_send_json_success(array(
+            'message'         => __('Processing payment...', 'eau-system'),
+            'registration_id' => $registration_id,
+            'price'           => $price,
+            'redirect'        => true,
+            'checkout_url'    => self::get_recording_checkout_url($registration_id, $event_id, $price),
+        ));
+    }
+
+    /**
+     * Cria registro de acesso à gravação
+     *
+     * @since  1.68.10
+     * @param  int      $event_id    Event ID
+     * @param  \WP_User $user        User object
+     * @param  string   $member_type Member type (member/non_member)
+     * @param  float    $price       Price paid
+     * @param  string   $status      Payment status (free/pending/paid)
+     * @return int|\WP_Error
+     */
+    private static function create_recording_access_registration($event_id, $user, $member_type, $price, $status) {
+        $event = get_post($event_id);
+        $prefix = Config\META_PREFIX;
+
+        $post_title = $user->display_name . ' - ' . $event->post_title . ' (Recording Access)';
+
+        $post_id = wp_insert_post(array(
+            'post_type'   => Config\POST_TYPE,
+            'post_title'  => $post_title,
+            'post_status' => 'publish',
+        ));
+
+        if (is_wp_error($post_id)) {
+            return $post_id;
+        }
+
+        // Salvar meta dados
+        update_post_meta($post_id, $prefix . 'attendee_name', $user->display_name);
+        update_post_meta($post_id, $prefix . 'attendee_email', $user->user_email);
+        update_post_meta($post_id, $prefix . 'event_id', $event_id);
+        update_post_meta($post_id, $prefix . 'registration_date', current_time('Y-m-d\TH:i'));
+        update_post_meta($post_id, $prefix . 'member_type', $member_type);
+        update_post_meta($post_id, $prefix . 'status', $status);
+        update_post_meta($post_id, $prefix . 'payment_status', $status);
+        update_post_meta($post_id, $prefix . 'price_paid', $price);
+        update_post_meta($post_id, $prefix . 'price_type', $member_type);
+        update_post_meta($post_id, $prefix . 'attended', '0');
+        update_post_meta($post_id, $prefix . 'activity_created', '0');
+        update_post_meta($post_id, $prefix . 'user_id', $user->ID);
+        update_post_meta($post_id, $prefix . 'access_type', 'recording'); // Marca como acesso a gravação
+
+        // Salvar mem_userid
+        $mem_userid = get_user_meta($user->ID, 'mem_userid', true);
+        if (!empty($mem_userid)) {
+            update_post_meta($post_id, $prefix . 'mem_userid', $mem_userid);
+        }
+
+        return $post_id;
+    }
+
+    /**
+     * Gera URL de checkout para acesso à gravação
+     *
+     * @since  1.68.10
+     * @param  int   $registration_id Registration ID
+     * @param  int   $event_id        Event ID
+     * @param  float $price           Price
+     * @return string
+     */
+    private static function get_recording_checkout_url($registration_id, $event_id, $price) {
+        // Verifica se WooCommerce está ativo
+        if (!function_exists('wc_get_checkout_url')) {
+            // Fallback: retorna URL de pagamento genérica ou página do evento
+            return add_query_arg(array(
+                'recording_payment' => $registration_id,
+                'event_id'          => $event_id,
+            ), home_url('/dashboard/payments/'));
+        }
+
+        // Cria sessão de pagamento para processamento posterior
+        // O produto será adicionado ao carrinho via hook
+        WC()->session->set('eau_recording_access', array(
+            'registration_id' => $registration_id,
+            'event_id'        => $event_id,
+            'price'           => $price,
+        ));
+
+        return add_query_arg(array(
+            'eau_recording_access' => $registration_id,
+        ), wc_get_checkout_url());
+    }
+
+    /**
+     * Verifica se usuário tem acesso à gravação de um evento
+     *
+     * @since  1.68.10
+     * @param  int $event_id Event ID
+     * @param  int $user_id  User ID (opcional)
+     * @return bool
+     */
+    public static function has_recording_access($event_id, $user_id = null) {
+        if ($user_id === null) {
+            if (!is_user_logged_in()) {
+                return false;
+            }
+            $user_id = get_current_user_id();
+        }
+
+        $registration = self::get_user_registration($event_id, $user_id);
+        if (!$registration) {
+            return false;
+        }
+
+        $prefix = Config\META_PREFIX;
+        $status = get_post_meta($registration->ID, $prefix . 'status', true);
+
+        // Acesso concedido se status é paid ou free
+        return in_array($status, array('paid', 'free'));
     }
 }

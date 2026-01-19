@@ -86,6 +86,12 @@ class Eau_Events_Management {
             <?php echo self::render_stats_cards($stats); ?>
 
             <!-- Search and Filters -->
+            <?php
+            // Get filter options
+            $event_categories = Config\get_event_categories_from_db();
+            $cpd_categories = self::get_cpd_categories();
+            $locations = self::get_unique_locations();
+            ?>
             <div class="eau-search-filters-bar">
                 <div class="eau-search-wrapper">
                     <i data-lucide="search"></i>
@@ -103,6 +109,45 @@ class Eau_Events_Management {
                         <option value="draft">Draft</option>
                     </select>
                 </div>
+                <div class="eau-filter-select-wrapper">
+                    <select id="eau-events-date-filter" class="eau-filter-select">
+                        <option value="">All Dates</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                    </select>
+                </div>
+                <div class="eau-filter-select-wrapper">
+                    <select id="eau-events-category-filter" class="eau-filter-select">
+                        <option value="">All Categories</option>
+                        <?php foreach ($event_categories as $cat) : ?>
+                            <option value="<?php echo esc_attr($cat['id']); ?>">
+                                <?php echo esc_html($cat['category_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="eau-filter-select-wrapper">
+                    <select id="eau-events-cpd-filter" class="eau-filter-select">
+                        <option value="">All CPD</option>
+                        <?php foreach ($cpd_categories as $cat) : ?>
+                            <option value="<?php echo esc_attr($cat['id']); ?>">
+                                <?php echo esc_html($cat['category_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="eau-filter-select-wrapper">
+                    <select id="eau-events-location-filter" class="eau-filter-select">
+                        <option value="">All Locations</option>
+                        <?php foreach ($locations as $loc) : ?>
+                            <option value="<?php echo esc_attr($loc); ?>">
+                                <?php echo esc_html($loc); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
 
             <!-- Events Table -->
@@ -110,6 +155,10 @@ class Eau_Events_Management {
                 <table class="eau-data-table" id="eau-events-table">
                     <thead>
                         <tr>
+                            <th class="eau-sortable eau-col-id" data-sort="id">
+                                ID
+                                <i data-lucide="chevrons-up-down"></i>
+                            </th>
                             <th class="eau-sortable" data-sort="title">
                                 Event
                                 <i data-lucide="chevrons-up-down"></i>
@@ -159,6 +208,9 @@ class Eau_Events_Management {
 
         // Get CPD categories from eau_activity_categories table
         $cpd_categories = self::get_cpd_categories();
+
+        // Get Event categories from eau_event_categories table
+        $event_categories = Config\get_event_categories_from_db();
 
         ob_start();
         ?>
@@ -341,27 +393,33 @@ class Eau_Events_Management {
                         <!-- Tab: Capacity & Pricing -->
                         <div class="eau-modal-tab-content" data-tab="pricing">
                             <div class="eau-form-grid">
-                                <div class="eau-form-field eau-form-field-span-2">
+                                <div class="eau-form-field">
                                     <label class="eau-form-label">Event Capacity</label>
                                     <input type="number" name="capacity" id="eau-edit-capacity" class="eau-form-input" min="0" placeholder="50">
                                     <p class="eau-form-hint">Leave empty for unlimited</p>
                                 </div>
-                                <div class="eau-form-field eau-form-field-span-2">
-                                    <label class="eau-form-label">Price ($)</label>
-                                    <input type="number" name="member_price" id="eau-edit-member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
-                                    <p class="eau-form-hint">Leave 0 for free events</p>
+                                <div class="eau-form-field">
+                                    <label class="eau-form-label">Event Visibility</label>
+                                    <select name="visibility" id="eau-edit-visibility" class="eau-form-select">
+                                        <?php foreach ($visibility_options as $key => $label) : ?>
+                                            <option value="<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <p class="eau-form-hint">Who can see and register for this event</p>
                                 </div>
 
                                 <div class="eau-form-field eau-form-field-span-2">
-                                    <p class="eau-form-section-title">Early Bird Pricing (Optional)</p>
+                                    <p class="eau-form-section-title">Pricing</p>
                                 </div>
                                 <div class="eau-form-field">
-                                    <label class="eau-form-label">Early Bird Price ($)</label>
-                                    <input type="number" name="early_bird_price" id="eau-edit-early_bird_price" class="eau-form-input" min="0" step="0.01">
+                                    <label class="eau-form-label">Member Price ($)</label>
+                                    <input type="number" name="member_price" id="eau-edit-member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
+                                    <p class="eau-form-hint">Price for members. Leave 0 for free.</p>
                                 </div>
-                                <div class="eau-form-field">
-                                    <label class="eau-form-label">Early Bird End Date</label>
-                                    <input type="datetime-local" name="early_bird_end_date" id="eau-edit-early_bird_end_date" class="eau-form-input">
+                                <div class="eau-form-field eau-non-member-price-field">
+                                    <label class="eau-form-label">Non-Member Price ($)</label>
+                                    <input type="number" name="non_member_price" id="eau-edit-non_member_price" class="eau-form-input" min="0" step="0.01" placeholder="0">
+                                    <p class="eau-form-hint">Price for non-members. Only applies to public events.</p>
                                 </div>
                             </div>
                         </div>
@@ -369,6 +427,24 @@ class Eau_Events_Management {
                         <!-- Tab: CPD & Settings -->
                         <div class="eau-modal-tab-content" data-tab="settings">
                             <div class="eau-form-grid">
+                                <!-- Event Category Section -->
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <p class="eau-form-section-title">Event Category</p>
+                                </div>
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <label class="eau-form-label">Event Category</label>
+                                    <select name="event_category" id="eau-edit-event_category" class="eau-form-select">
+                                        <option value="">Select category</option>
+                                        <?php foreach ($event_categories as $cat) : ?>
+                                            <option value="<?php echo esc_attr($cat['id']); ?>">
+                                                <?php echo esc_html($cat['category_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <p class="eau-form-hint">Categorize this event for filtering and organization</p>
+                                </div>
+
+                                <!-- CPD Section -->
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <p class="eau-form-section-title">CPD Settings</p>
                                 </div>
@@ -388,22 +464,67 @@ class Eau_Events_Management {
                                     </select>
                                 </div>
 
+                                <!-- Materials & Recording Section -->
                                 <div class="eau-form-field eau-form-field-span-2">
-                                    <p class="eau-form-section-title">Visibility Settings</p>
+                                    <p class="eau-form-section-title">Materials & Recording</p>
+                                    <p class="eau-form-hint">Add supplementary materials and recording link for registered attendees</p>
                                 </div>
                                 <div class="eau-form-field eau-form-field-span-2">
-                                    <label class="eau-form-label">Event Visibility</label>
-                                    <select name="visibility" id="eau-edit-visibility" class="eau-form-select">
-                                        <?php foreach ($visibility_options as $key => $label) : ?>
-                                            <option value="<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <label class="eau-form-label">Recording URL</label>
+                                    <input type="url" name="recording_url" id="eau-edit-recording_url" class="eau-form-input" placeholder="https://...">
+                                    <p class="eau-form-hint">Link to the event recording (YouTube, Vimeo, etc.). Only visible to registered attendees.</p>
+                                </div>
+                                <div class="eau-form-field eau-form-field-span-2" id="eau-edit-materials-wrapper">
+                                    <label class="eau-form-label">Supplementary Materials</label>
+                                    <div class="eau-materials-list" id="eau-materials-list">
+                                        <!-- Materials will be added dynamically here -->
+                                    </div>
+                                    <div class="eau-materials-add-section">
+                                        <div class="eau-materials-tabs">
+                                            <button type="button" class="eau-materials-tab active" data-tab="url">
+                                                <i data-lucide="link"></i> Add URL
+                                            </button>
+                                            <button type="button" class="eau-materials-tab" data-tab="upload">
+                                                <i data-lucide="upload"></i> Upload File
+                                            </button>
+                                        </div>
+                                        <div class="eau-materials-panel eau-materials-url-panel active">
+                                            <div class="eau-materials-input-row">
+                                                <input type="text" class="eau-form-input eau-materials-url-input" placeholder="https://example.com/document.pdf">
+                                                <button type="button" class="eau-btn eau-btn-secondary eau-materials-add-url-btn">
+                                                    <i data-lucide="plus"></i> Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="eau-materials-panel eau-materials-upload-panel">
+                                            <div class="eau-materials-dropzone" id="eau-materials-dropzone">
+                                                <input type="file" id="eau-materials-file-input" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.jpg,.jpeg,.png,.gif">
+                                                <div class="eau-materials-dropzone-content">
+                                                    <i data-lucide="upload-cloud"></i>
+                                                    <span>Drag & drop files or <button type="button" class="eau-materials-browse-btn">Browse</button></span>
+                                                    <span class="eau-materials-dropzone-hint">PDF, DOC, XLS, PPT, ZIP, Images (Max 10MB each)</span>
+                                                </div>
+                                                <div class="eau-materials-upload-progress" style="display:none;">
+                                                    <div class="eau-materials-progress-bar"><div class="eau-materials-progress-fill"></div></div>
+                                                    <span class="eau-materials-progress-text">Uploading... 0%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="materials" id="eau-edit-materials" value="">
+                                    <p class="eau-form-hint">Add supplementary materials (documents, presentations, etc.). Only visible to registered attendees.</p>
+                                </div>
+
+                                <!-- Other Settings Section -->
+                                <div class="eau-form-field eau-form-field-span-2">
+                                    <p class="eau-form-section-title">Other Settings</p>
                                 </div>
                                 <div class="eau-form-field eau-form-field-span-2">
                                     <label class="eau-checkbox-label">
                                         <input type="checkbox" name="require_approval" id="eau-edit-require_approval" value="1">
                                         Require approval for registrations
                                     </label>
+                                    <p class="eau-form-hint">If enabled, registrations will need manual approval before confirmation</p>
                                 </div>
 
                                 <div class="eau-form-field eau-form-field-span-2 eau-publish-immediately-field" style="display: none;">
@@ -632,5 +753,31 @@ class Eau_Events_Management {
      */
     private static function get_cpd_categories() {
         return Config\get_cpd_categories_from_db();
+    }
+
+    /**
+     * Obtém lista única de localizações dos eventos
+     *
+     * @since  1.68.4
+     * @return array Lista de cidades únicas
+     */
+    private static function get_unique_locations() {
+        global $wpdb;
+
+        $post_type = Config\POST_TYPE;
+
+        $results = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT pm.meta_value
+             FROM {$wpdb->postmeta} pm
+             INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+             WHERE p.post_type = %s
+             AND p.post_status IN ('publish', 'draft')
+             AND pm.meta_key = 'evt_city'
+             AND pm.meta_value != ''
+             ORDER BY pm.meta_value ASC",
+            $post_type
+        ));
+
+        return $results ?: array();
     }
 }

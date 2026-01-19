@@ -388,7 +388,7 @@ class Eau_Dashboard {
                 </a>
                 <?php endif; ?>
 
-                <!-- Active Events (visible to all users except non-member) -->
+                <!-- Active Events (visible to all users) -->
                 <?php if (!$is_non_member): ?>
                 <a href="/events/" class="eau-dashboard-card-link">
                     <div class="eau-dashboard-card eau-card-purple">
@@ -400,6 +400,32 @@ class Eau_Dashboard {
                                     <span class="eau-card-pending eau-card-next-event">
                                         Next: <?php echo esc_html($stats['next_event']['title']); ?> - <?php echo esc_html($stats['next_event']['date']); ?>
                                     </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="eau-card-icon">
+                            <i data-lucide="calendar"></i>
+                        </div>
+                    </div>
+                </a>
+                <?php else: ?>
+                <!-- Available Events (for non-members - public events only) -->
+                <?php
+                $public_events_count = self::get_public_events_count();
+                $next_public_event = self::get_next_public_event();
+                ?>
+                <a href="/events/" class="eau-dashboard-card-link">
+                    <div class="eau-dashboard-card eau-card-purple">
+                        <div class="eau-card-content">
+                            <h3 class="eau-card-title">Available Events</h3>
+                            <div class="eau-card-stats">
+                                <span class="eau-card-number"><?php echo number_format($public_events_count); ?></span>
+                                <?php if (!empty($next_public_event)): ?>
+                                    <span class="eau-card-pending eau-card-next-event">
+                                        Next: <?php echo esc_html($next_public_event['title']); ?> - <?php echo esc_html($next_public_event['date']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="eau-card-active">Open to all users</span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -1098,6 +1124,96 @@ class Eau_Dashboard {
         );
 
         return intval($count);
+    }
+
+    /**
+     * Conta eventos públicos ativos (para non-members)
+     *
+     * @since 1.68.6
+     * @return int
+     */
+    private static function get_public_events_count() {
+        global $wpdb;
+        $now = current_time('Y-m-d H:i:s');
+
+        // Conta eventos públicos futuros
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(DISTINCT p.ID)
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm_date ON p.ID = pm_date.post_id AND pm_date.meta_key = %s
+                LEFT JOIN {$wpdb->postmeta} pm_vis ON p.ID = pm_vis.post_id AND pm_vis.meta_key = %s
+                WHERE p.post_type = %s
+                AND p.post_status = %s
+                AND pm_date.meta_value >= %s
+                AND (pm_vis.meta_value = %s OR pm_vis.meta_value IS NULL OR pm_vis.meta_value = '')",
+                'evt_start_datetime',
+                'evt_visibility',
+                'eau_event',
+                'publish',
+                $now,
+                'public'
+            )
+        );
+
+        return intval($count);
+    }
+
+    /**
+     * Retorna o próximo evento público agendado (para non-members)
+     *
+     * @since 1.68.6
+     * @return array|null Array com 'title' e 'date' ou null se não houver
+     */
+    private static function get_next_public_event() {
+        global $wpdb;
+        $now = current_time('Y-m-d H:i:s');
+
+        // Busca o próximo evento público
+        $event = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT p.ID, p.post_title, pm_date.meta_value as start_datetime
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm_date ON p.ID = pm_date.post_id AND pm_date.meta_key = %s
+                LEFT JOIN {$wpdb->postmeta} pm_vis ON p.ID = pm_vis.post_id AND pm_vis.meta_key = %s
+                WHERE p.post_type = %s
+                AND p.post_status = %s
+                AND pm_date.meta_value >= %s
+                AND (pm_vis.meta_value = %s OR pm_vis.meta_value IS NULL OR pm_vis.meta_value = '')
+                ORDER BY pm_date.meta_value ASC
+                LIMIT 1",
+                'evt_start_datetime',
+                'evt_visibility',
+                'eau_event',
+                'publish',
+                $now,
+                'public'
+            )
+        );
+
+        if (!$event) {
+            return null;
+        }
+
+        // Formata a data para exibição
+        $date_formatted = '';
+        if (!empty($event->start_datetime)) {
+            $timestamp = strtotime($event->start_datetime);
+            if ($timestamp) {
+                $date_formatted = date_i18n('M j', $timestamp);
+            }
+        }
+
+        // Trunca título se necessário
+        $title = $event->post_title;
+        if (strlen($title) > 25) {
+            $title = substr($title, 0, 25) . '...';
+        }
+
+        return array(
+            'title' => $title,
+            'date' => $date_formatted,
+        );
     }
 
     /**

@@ -20,6 +20,9 @@ $event_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
 // CPD categories from database
 $cpd_categories = \EauSystem\Shared\get_cpd_categories();
 
+// Check if user can see members-only events
+$show_members_only = Helper::is_member();
+
 // Base query args
 $base_args = array(
     'post_type' => 'eau_event',
@@ -31,6 +34,17 @@ $base_args = array(
 
 if (!empty($search)) $base_args['s'] = $search;
 
+// Visibility filter - only show public events to non-members
+$visibility_filter = array();
+if (!$show_members_only) {
+    // Non-members: only see public events
+    $visibility_filter = array(
+        'relation' => 'OR',
+        array('key' => 'evt_visibility', 'value' => 'public', 'compare' => '='),
+        array('key' => 'evt_visibility', 'compare' => 'NOT EXISTS'),
+    );
+}
+
 // Upcoming events: end_datetime >= now (evento ainda não terminou)
 $upcoming_meta = array(
     'relation' => 'AND',
@@ -41,6 +55,10 @@ if ($category > 0) {
 }
 if (!empty($event_type)) {
     $upcoming_meta[] = array('key' => 'evt_event_type', 'value' => $event_type, 'compare' => '=');
+}
+// Add visibility filter for non-members
+if (!$show_members_only && !empty($visibility_filter)) {
+    $upcoming_meta[] = $visibility_filter;
 }
 
 $upcoming_args = array_merge($base_args, array(
@@ -58,6 +76,10 @@ if ($category > 0) {
 }
 if (!empty($event_type)) {
     $past_meta[] = array('key' => 'evt_event_type', 'value' => $event_type, 'compare' => '=');
+}
+// Add visibility filter for non-members
+if (!$show_members_only && !empty($visibility_filter)) {
+    $past_meta[] = $visibility_filter;
 }
 
 $past_args = array_merge($base_args, array(

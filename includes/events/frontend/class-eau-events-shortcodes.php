@@ -491,10 +491,8 @@ class Eau_Events_Shortcodes {
      * @return string HTML renderizado
      */
     public static function render_archive($atts) {
-        // Se usuário está logado, verifica se membership está ativo (v1.51.53)
-        if (is_user_logged_in() && !\EauSystem\Eau_User_Institution_Helper::is_membership_active()) {
-            return \EauSystem\Components\Eau_Access_Denied::membership_inactive();
-        }
+        // Removido bloqueio de membership - non-members podem ver eventos públicos (v1.68.5)
+        // A filtragem de visibilidade é feita na query dentro de render_archive_content()
 
         $atts = shortcode_atts(array(
             'show_filters' => 'true',
@@ -532,6 +530,20 @@ class Eau_Events_Shortcodes {
         // CPD categories from database
         $cpd_categories = \EauSystem\Shared\get_cpd_categories();
 
+        // Check if user can see members-only events (v1.68.5)
+        $show_members_only = Helper::is_member();
+
+        // Visibility filter - only show public events to non-members
+        $visibility_filter = array();
+        if (!$show_members_only) {
+            // Non-members: only see public events
+            $visibility_filter = array(
+                'relation' => 'OR',
+                array('key' => 'evt_visibility', 'value' => 'public', 'compare' => '='),
+                array('key' => 'evt_visibility', 'compare' => 'NOT EXISTS'),
+            );
+        }
+
         // Base query args
         $base_args = array(
             'post_type' => 'eau_event',
@@ -554,6 +566,10 @@ class Eau_Events_Shortcodes {
         if (!empty($event_type)) {
             $upcoming_meta[] = array('key' => 'evt_event_type', 'value' => $event_type, 'compare' => '=');
         }
+        // Add visibility filter for non-members (v1.68.5)
+        if (!$show_members_only && !empty($visibility_filter)) {
+            $upcoming_meta[] = $visibility_filter;
+        }
 
         $upcoming_args = array_merge($base_args, array(
             'order' => 'ASC',
@@ -570,6 +586,10 @@ class Eau_Events_Shortcodes {
         }
         if (!empty($event_type)) {
             $past_meta[] = array('key' => 'evt_event_type', 'value' => $event_type, 'compare' => '=');
+        }
+        // Add visibility filter for non-members (v1.68.5)
+        if (!$show_members_only && !empty($visibility_filter)) {
+            $past_meta[] = $visibility_filter;
         }
 
         $past_args = array_merge($base_args, array(

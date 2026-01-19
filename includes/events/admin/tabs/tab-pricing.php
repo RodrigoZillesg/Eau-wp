@@ -3,7 +3,7 @@
  * Events Admin - Tab: Capacity & Pricing
  *
  * Renderiza a aba de capacidade e preços do evento.
- * Inclui campos para capacidade, preços e configurações de guests.
+ * Inclui campos para capacidade, preços e configurações de visibilidade.
  *
  * @package    EauSystem
  * @subpackage Events\Admin\Tabs
@@ -23,9 +23,9 @@ if (!defined('WPINC')) {
  *
  * Campos incluídos:
  * - Capacity (number, 0 = unlimited)
- * - Price (number, step 0.01)
- * - Early Bird Price (number, step 0.01)
- * - Early Bird End Date (datetime-local)
+ * - Visibility (select: public, members, private)
+ * - Member Price (number, step 0.01)
+ * - Non-Member Price (number, step 0.01) - only for public events
  *
  * @since  1.28.0
  * @param  array $meta Array com valores dos meta fields
@@ -37,38 +37,45 @@ function render_pricing($meta) {
     <div class="eau-tab-panel" id="tab-pricing">
         <div class="eau-form-grid">
             <!-- Capacity -->
-            <div class="eau-form-field eau-form-field-span-2">
+            <div class="eau-form-field">
                 <label class="eau-form-label"><?php _e('Event Capacity', 'eau-system'); ?></label>
                 <input type="number" name="<?php echo $p; ?>capacity" class="eau-form-input"
                        value="<?php echo esc_attr($meta['capacity']); ?>" min="0">
                 <p class="eau-form-hint"><?php _e('Leave empty for unlimited', 'eau-system'); ?></p>
             </div>
 
+            <!-- Visibility -->
+            <div class="eau-form-field">
+                <label class="eau-form-label"><?php _e('Event Visibility', 'eau-system'); ?></label>
+                <select name="<?php echo $p; ?>visibility" id="eau-edit-visibility" class="eau-form-select">
+                    <?php foreach (Config\get_visibility_options() as $key => $label) : ?>
+                        <option value="<?php echo esc_attr($key); ?>" <?php selected($meta['visibility'], $key); ?>>
+                            <?php echo esc_html($label); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="eau-form-hint"><?php _e('Who can see and register for this event', 'eau-system'); ?></p>
+            </div>
+
+            <!-- Pricing Section -->
+            <div class="eau-form-field eau-form-field-span-2">
+                <h4 class="eau-form-section-title"><?php _e('Pricing', 'eau-system'); ?></h4>
+            </div>
+
             <!-- Member Price -->
-            <div class="eau-form-field eau-form-field-span-2">
-                <label class="eau-form-label"><?php _e('Price ($)', 'eau-system'); ?></label>
-                <input type="number" name="<?php echo $p; ?>member_price" class="eau-form-input"
+            <div class="eau-form-field">
+                <label class="eau-form-label"><?php _e('Member Price ($)', 'eau-system'); ?></label>
+                <input type="number" name="<?php echo $p; ?>member_price" id="eau-edit-member_price" class="eau-form-input"
                        value="<?php echo esc_attr($meta['member_price']); ?>" min="0" step="0.01">
-                <p class="eau-form-hint"><?php _e('Leave 0 for free events', 'eau-system'); ?></p>
+                <p class="eau-form-hint"><?php _e('Price for members. Leave 0 for free.', 'eau-system'); ?></p>
             </div>
 
-            <!-- Early Bird Section -->
-            <div class="eau-form-field eau-form-field-span-2">
-                <h4 class="eau-form-section-title"><?php _e('Early Bird (Optional)', 'eau-system'); ?></h4>
-            </div>
-
-            <!-- Early Bird Price -->
-            <div class="eau-form-field">
-                <label class="eau-form-label"><?php _e('Early Bird Price ($)', 'eau-system'); ?></label>
-                <input type="number" name="<?php echo $p; ?>early_bird_price" id="<?php echo $p; ?>early_bird_price"
-                       class="eau-form-input" value="<?php echo esc_attr($meta['early_bird_price']); ?>" min="0" step="0.01">
-            </div>
-
-            <!-- Early Bird End -->
-            <div class="eau-form-field">
-                <label class="eau-form-label"><?php _e('Early Bird End Date', 'eau-system'); ?></label>
-                <input type="datetime-local" name="<?php echo $p; ?>early_bird_end_date" id="<?php echo $p; ?>early_bird_end_date"
-                       class="eau-form-input" value="<?php echo esc_attr($meta['early_bird_end_date']); ?>">
+            <!-- Non-Member Price (only for public events) -->
+            <div class="eau-form-field eau-non-member-price-field">
+                <label class="eau-form-label"><?php _e('Non-Member Price ($)', 'eau-system'); ?></label>
+                <input type="number" name="<?php echo $p; ?>non_member_price" id="eau-edit-non_member_price" class="eau-form-input"
+                       value="<?php echo esc_attr($meta['non_member_price']); ?>" min="0" step="0.01">
+                <p class="eau-form-hint"><?php _e('Price for non-members. Only applies to public events.', 'eau-system'); ?></p>
             </div>
         </div>
     </div>
