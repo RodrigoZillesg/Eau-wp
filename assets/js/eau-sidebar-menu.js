@@ -4,6 +4,7 @@
  * Controla a abertura/fechamento do menu lateral
  *
  * @since 1.56.0
+ * @updated 1.68.11
  */
 
 (function($) {
@@ -19,13 +20,26 @@
 
         // State
         isOpen: false,
+        initialized: false,
 
         /**
          * Initialize the sidebar menu
          */
         init: function() {
+            // Prevent double initialization
+            if (this.initialized) {
+                return;
+            }
+
             this.cacheElements();
+
+            // Only proceed if elements exist
+            if (this.$hamburger.length === 0) {
+                return;
+            }
+
             this.bindEvents();
+            this.initialized = true;
         },
 
         /**
@@ -208,6 +222,13 @@
     $(document).ready(function() {
         EauSidebarMenu.init();
     });
+
+    // Also initialize if document is already complete (for late-loaded scripts)
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(function() {
+            EauSidebarMenu.init();
+        }, 1);
+    }
 
     // Expose to global scope for external access
     window.EauSidebarMenu = EauSidebarMenu;

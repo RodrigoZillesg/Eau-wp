@@ -212,7 +212,9 @@
     border-radius: 9999px !important;
 }
 
-.eau-badge-college {
+/* Institution Type Badges (v1.68.10) */
+.eau-badge-college,
+.eau-badge-member-college {
     background: rgba(16, 185, 129, 0.2) !important;
     color: #ecfdf5 !important;
     border: 1px solid rgba(16, 185, 129, 0.4) !important;
@@ -222,6 +224,30 @@
     background: rgba(139, 92, 246, 0.2) !important;
     color: #f5f3ff !important;
     border: 1px solid rgba(139, 92, 246, 0.4) !important;
+}
+
+.eau-badge-professional {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #eff6ff !important;
+    border: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+.eau-badge-access {
+    background: rgba(249, 115, 22, 0.2) !important;
+    color: #fff7ed !important;
+    border: 1px solid rgba(249, 115, 22, 0.4) !important;
+}
+
+.eau-badge-international {
+    background: rgba(236, 72, 153, 0.2) !important;
+    color: #fdf2f8 !important;
+    border: 1px solid rgba(236, 72, 153, 0.4) !important;
+}
+
+.eau-badge-default {
+    background: rgba(156, 163, 175, 0.2) !important;
+    color: #f3f4f6 !important;
+    border: 1px solid rgba(156, 163, 175, 0.4) !important;
 }
 
 .eau-badge-active {

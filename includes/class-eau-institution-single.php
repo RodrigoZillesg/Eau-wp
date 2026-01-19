@@ -276,11 +276,7 @@ class Eau_Institution_Single {
         $can_edit_restricted = self::user_can_edit_restricted_fields();
 
         // Opções para selects
-        $type_options = array(
-            '' => 'Select Type',
-            'College' => 'College',
-            'Corporate affiliate' => 'Corporate Affiliate',
-        );
+        $type_options = self::get_institution_type_options();
         $status_options = array(
             'active' => 'Active',
             'pending' => 'Pending',
@@ -357,11 +353,11 @@ class Eau_Institution_Single {
                                 <?php echo self::editable_field('ins_type', $institution_type, array(
                                     'type' => 'select',
                                     'placeholder' => 'Select type',
-                                    'display_value' => !empty($institution_type) ? '<span class="eau-badge eau-badge-type ' . ($institution_type === 'College' ? 'eau-badge-college' : 'eau-badge-corporate') . '">' . esc_html($institution_type) . '</span>' : '<span class="eau-badge eau-badge-empty">Add Type</span>',
+                                    'display_value' => !empty($institution_type) ? '<span class="eau-badge eau-badge-type ' . self::get_institution_type_badge_class($institution_type) . '">' . esc_html($institution_type) . '</span>' : '<span class="eau-badge eau-badge-empty">Add Type</span>',
                                     'select_options' => $type_options,
                                 )); ?>
                             <?php elseif (!empty($institution_type)): ?>
-                                <span class="eau-badge eau-badge-type <?php echo $institution_type === 'College' ? 'eau-badge-college' : 'eau-badge-corporate'; ?>">
+                                <span class="eau-badge eau-badge-type <?php echo esc_attr(self::get_institution_type_badge_class($institution_type)); ?>">
                                     <?php echo esc_html($institution_type); ?>
                                 </span>
                             <?php endif; ?>
@@ -951,11 +947,7 @@ class Eau_Institution_Single {
         $can_edit_restricted = self::user_can_edit_restricted_fields();
 
         // Opções para selects
-        $type_options = array(
-            '' => 'Select Type',
-            'College' => 'College',
-            'Corporate affiliate' => 'Corporate Affiliate',
-        );
+        $type_options = self::get_institution_type_options();
         $status_options = array(
             'active' => 'Active',
             'pending' => 'Pending',
@@ -1024,11 +1016,11 @@ class Eau_Institution_Single {
                                 <?php echo self::editable_field('ins_type', $institution_type, array(
                                     'type' => 'select',
                                     'placeholder' => 'Select type',
-                                    'display_value' => !empty($institution_type) ? '<span class="eau-badge eau-badge-type ' . ($institution_type === 'College' ? 'eau-badge-college' : 'eau-badge-corporate') . '">' . esc_html($institution_type) . '</span>' : '<span class="eau-badge eau-badge-empty">Add Type</span>',
+                                    'display_value' => !empty($institution_type) ? '<span class="eau-badge eau-badge-type ' . self::get_institution_type_badge_class($institution_type) . '">' . esc_html($institution_type) . '</span>' : '<span class="eau-badge eau-badge-empty">Add Type</span>',
                                     'select_options' => $type_options,
                                 )); ?>
                             <?php elseif (!empty($institution_type)): ?>
-                                <span class="eau-badge eau-badge-type <?php echo $institution_type === 'College' ? 'eau-badge-college' : 'eau-badge-corporate'; ?>">
+                                <span class="eau-badge eau-badge-type <?php echo esc_attr(self::get_institution_type_badge_class($institution_type)); ?>">
                                     <?php echo esc_html($institution_type); ?>
                                 </span>
                             <?php endif; ?>
@@ -1938,7 +1930,7 @@ class Eau_Institution_Single {
                 return '<a href="tel:' . esc_attr($value) . '">' . esc_html($value) . '</a>';
 
             case 'ins_type':
-                $badge_class = $value === 'College' ? 'eau-badge-college' : 'eau-badge-corporate';
+                $badge_class = self::get_institution_type_badge_class($value);
                 return '<span class="eau-badge eau-badge-type ' . $badge_class . '">' . esc_html($value) . '</span>';
 
             case 'ins_status':
@@ -2050,6 +2042,41 @@ class Eau_Institution_Single {
             'PE' => 'Peru',
             'OTHER' => 'Other',
         );
+    }
+
+    /**
+     * Retorna opções de tipo de instituição
+     *
+     * @since 1.68.10
+     * @return array
+     */
+    public static function get_institution_type_options() {
+        return array(
+            '' => 'Select Type',
+            'Member College' => 'Member College',
+            'Associate Member - Professional Affiliate Institutions' => 'Associate Member - Professional Affiliate Institutions',
+            'Associate Member - Access Members' => 'Associate Member - Access Members',
+            'Associate Member - International Members' => 'Associate Member - International Members',
+            'Corporate Affiliate' => 'Corporate Affiliate',
+        );
+    }
+
+    /**
+     * Retorna classe CSS do badge baseado no tipo de instituição
+     *
+     * @since 1.68.10
+     * @param string $type Tipo da instituição
+     * @return string Classe CSS
+     */
+    public static function get_institution_type_badge_class($type) {
+        $classes = array(
+            'Member College' => 'eau-badge-member-college',
+            'Associate Member - Professional Affiliate Institutions' => 'eau-badge-professional',
+            'Associate Member - Access Members' => 'eau-badge-access',
+            'Associate Member - International Members' => 'eau-badge-international',
+            'Corporate Affiliate' => 'eau-badge-corporate',
+        );
+        return isset($classes[$type]) ? $classes[$type] : 'eau-badge-default';
     }
 
     /**
