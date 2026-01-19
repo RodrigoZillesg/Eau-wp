@@ -1,0 +1,676 @@
+/**
+ * Email Update Page Styles
+ *
+ * @since 1.62.0
+ */
+
+/* ==========================================================================
+   LOCKED MODE - Hide all navigation when updating email
+   ========================================================================== */
+
+/* Hide header, sidebar, menu, footer - everything except the email update form */
+body.eau-email-update-locked header,
+body.eau-email-update-locked .site-header,
+body.eau-email-update-locked .eau-header,
+body.eau-email-update-locked nav,
+body.eau-email-update-locked .navigation,
+body.eau-email-update-locked .main-navigation,
+body.eau-email-update-locked .eau-sidebar,
+body.eau-email-update-locked .eau-sidebar-menu,
+body.eau-email-update-locked .sidebar,
+body.eau-email-update-locked aside,
+body.eau-email-update-locked footer,
+body.eau-email-update-locked .site-footer,
+body.eau-email-update-locked .eau-footer,
+body.eau-email-update-locked .menu,
+body.eau-email-update-locked .wp-block-navigation,
+body.eau-email-update-locked #masthead,
+body.eau-email-update-locked #colophon,
+body.eau-email-update-locked .elementor-location-header,
+body.eau-email-update-locked .elementor-location-footer,
+/* Jestarter theme specific */
+body.eau-email-update-locked #jestarter-header,
+body.eau-email-update-locked .jestart-header,
+body.eau-email-update-locked .jestart-header-wrapper,
+body.eau-email-update-locked #jestart-footer,
+body.eau-email-update-locked .jestart-footer,
+body.eau-email-update-locked .jestart-footer-wrapper,
+/* Generic selectors */
+body.eau-email-update-locked [class*="header"],
+body.eau-email-update-locked [class*="footer"],
+body.eau-email-update-locked [id*="header"],
+body.eau-email-update-locked [id*="footer"],
+body.eau-email-update-locked [class*="nav-menu"],
+body.eau-email-update-locked [class*="navbar"],
+body.eau-email-update-locked [class*="mobile-menu"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Exceptions - don't hide these (higher specificity) */
+body.eau-email-update-locked .eau-email-update-container .eau-email-update-header,
+body.eau-email-update-locked .eau-email-update-container .eau-modal-header,
+body.eau-email-update-locked .eau-email-update-container .eau-radio-card-header {
+    display: block !important;
+    visibility: visible !important;
+}
+
+body.eau-email-update-locked .eau-email-update-container .eau-email-update-footer {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Keep the email update card header flex for icon alignment */
+body.eau-email-update-locked .eau-email-update-card .eau-radio-card-header {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+/* Make the content area full screen */
+body.eau-email-update-locked .site-content,
+body.eau-email-update-locked .content-area,
+body.eau-email-update-locked main,
+body.eau-email-update-locked #content,
+body.eau-email-update-locked .entry-content,
+body.eau-email-update-locked article {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Remove any margins/paddings from body/html */
+body.eau-email-update-locked {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.eau-email-update-locked #page,
+body.eau-email-update-locked .site {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ==========================================================================
+   Container & Card
+   ========================================================================== */
+
+.eau-email-update-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    padding: 3rem 1rem !important;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%) !important;
+    z-index: 999999 !important;
+    overflow-y: auto !important;
+}
+
+/* Center card vertically when it fits in viewport */
+@media (min-height: 700px) {
+    .eau-email-update-container {
+        align-items: center !important;
+        padding: 2rem 1rem !important;
+    }
+}
+
+.eau-email-update-card {
+    width: 100% !important;
+    max-width: 520px !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden !important;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.eau-email-update-header {
+    padding: 2rem 2rem 1.5rem !important;
+    text-align: center !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.eau-email-update-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-radius: 16px !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.eau-email-update-icon i,
+.eau-email-update-icon svg {
+    width: 32px !important;
+    height: 32px !important;
+    color: #ffffff !important;
+    stroke-width: 1.5 !important;
+}
+
+.eau-email-update-icon.eau-icon-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.eau-email-update-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+    line-height: 1.3 !important;
+}
+
+.eau-email-update-subtitle {
+    font-size: 0.9375rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+}
+
+/* ==========================================================================
+   Body
+   ========================================================================== */
+
+.eau-email-update-body {
+    padding: 1.5rem 2rem 2rem !important;
+}
+
+/* Current Email Display */
+.eau-email-update-current {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+    padding: 1rem !important;
+    background: #f9fafb !important;
+    border-radius: 10px !important;
+    margin-bottom: 1.5rem !important;
+    text-align: center !important;
+}
+
+.eau-email-update-label {
+    font-size: 0.8125rem !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.eau-email-update-value {
+    font-size: 1.0625rem !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+    word-break: break-all !important;
+}
+
+/* Institutional Email Warning */
+.eau-email-institutional-warning {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    margin-top: 0.5rem !important;
+    padding: 0.375rem 0.75rem !important;
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+}
+
+.eau-email-institutional-warning i,
+.eau-email-institutional-warning svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   Radio Card Options
+   ========================================================================== */
+
+.eau-email-update-form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+}
+
+.eau-radio-card {
+    display: block !important;
+    cursor: pointer !important;
+}
+
+.eau-radio-card input[type="radio"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.eau-radio-card-content {
+    padding: 1.25rem !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-radio-card:hover .eau-radio-card-content {
+    border-color: #d1d5db !important;
+    background: #f9fafb !important;
+}
+
+.eau-radio-card input[type="radio"]:checked + .eau-radio-card-content {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+}
+
+.eau-radio-card-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+.eau-radio-indicator {
+    width: 20px !important;
+    height: 20px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+}
+
+.eau-radio-indicator::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0) !important;
+    width: 10px !important;
+    height: 10px !important;
+    background: #2563eb !important;
+    border-radius: 50% !important;
+    transition: transform 0.2s ease !important;
+}
+
+.eau-radio-card input[type="radio"]:checked + .eau-radio-card-content .eau-radio-indicator {
+    border-color: #2563eb !important;
+}
+
+.eau-radio-card input[type="radio"]:checked + .eau-radio-card-content .eau-radio-indicator::after {
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.eau-radio-title {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+}
+
+.eau-radio-card-description {
+    margin: 0.5rem 0 0 2rem !important;
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    line-height: 1.5 !important;
+}
+
+.eau-radio-card-body {
+    margin-top: 1rem !important;
+    padding-left: 2rem !important;
+}
+
+/* ==========================================================================
+   Form Fields
+   ========================================================================== */
+
+.eau-form-field {
+    margin-bottom: 1rem !important;
+}
+
+.eau-form-field:last-child {
+    margin-bottom: 0 !important;
+}
+
+.eau-form-label {
+    display: block !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 0.375rem !important;
+}
+
+.eau-form-input {
+    width: 100% !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.9375rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-form-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-form-input::placeholder {
+    color: #9ca3af !important;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.eau-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.eau-btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+}
+
+.eau-btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.eau-btn-primary:active,
+.eau-btn-primary:focus {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+    transform: translateY(0) !important;
+    outline: none !important;
+}
+
+.eau-btn-primary:disabled {
+    background: #9ca3af !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.eau-btn-secondary {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+}
+
+.eau-btn-secondary:hover {
+    background: #e5e7eb !important;
+}
+
+.eau-btn-secondary:active,
+.eau-btn-secondary:focus {
+    background: #e5e7eb !important;
+    outline: none !important;
+}
+
+.eau-btn-link {
+    background: transparent !important;
+    color: #2563eb !important;
+    padding: 0.5rem !important;
+}
+
+.eau-btn-link:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline !important;
+}
+
+.eau-btn-link:disabled {
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+}
+
+.eau-btn-lg {
+    padding: 1rem 2rem !important;
+    font-size: 1rem !important;
+}
+
+.eau-btn-full {
+    width: 100% !important;
+}
+
+/* Loading state - hidden by default, shown via JS */
+.btn-loading {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* When button is in loading state, hide text and show loading */
+.eau-btn.is-loading .btn-text {
+    display: none !important;
+}
+
+.eau-btn.is-loading .btn-loading {
+    display: flex !important;
+}
+
+.spin {
+    animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Verification Step
+   ========================================================================== */
+
+.eau-verification-step {
+    text-align: center !important;
+}
+
+.eau-verification-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 56px !important;
+    height: 56px !important;
+    background: #dcfce7 !important;
+    border-radius: 50% !important;
+    margin-bottom: 1rem !important;
+}
+
+.eau-verification-icon i,
+.eau-verification-icon svg {
+    width: 28px !important;
+    height: 28px !important;
+    color: #16a34a !important;
+}
+
+.eau-verification-title {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.eau-verification-subtitle {
+    font-size: 0.9375rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+
+.eau-verification-email {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #2563eb !important;
+    margin: 0.25rem 0 1.5rem 0 !important;
+    word-break: break-all !important;
+}
+
+.eau-verification-form {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Code Input */
+.eau-code-input-container {
+    margin-bottom: 1rem !important;
+}
+
+.eau-code-input {
+    width: 100% !important;
+    max-width: 200px !important;
+    padding: 1rem !important;
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    letter-spacing: 8px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 12px !important;
+    background: #f9fafb !important;
+    color: #111827 !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-code-input:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.eau-code-input::placeholder {
+    color: #d1d5db !important;
+    letter-spacing: 8px !important;
+}
+
+/* Resend Container */
+.eau-resend-container {
+    padding: 1rem 0 !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.eau-resend-container .eau-text-muted {
+    margin: 0 0 0.25rem 0 !important;
+}
+
+/* Back Container */
+.eau-back-container {
+    padding-top: 1rem !important;
+}
+
+.eau-back-container .eau-btn i,
+.eau-back-container .eau-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.eau-email-update-footer {
+    padding: 1rem 2rem !important;
+    background: #f9fafb !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.eau-email-update-footer .eau-text-muted {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.8125rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+    text-align: center !important;
+}
+
+.eau-email-update-footer .eau-text-muted i,
+.eau-email-update-footer .eau-text-muted svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+}
+
+.eau-text-muted {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 576px) {
+    .eau-email-update-container {
+        padding: 1rem !important;
+        min-height: auto !important;
+    }
+
+    .eau-email-update-card {
+        border-radius: 12px !important;
+    }
+
+    .eau-email-update-header {
+        padding: 1.5rem 1.25rem 1.25rem !important;
+    }
+
+    .eau-email-update-icon {
+        width: 56px !important;
+        height: 56px !important;
+        border-radius: 14px !important;
+    }
+
+    .eau-email-update-icon i,
+    .eau-email-update-icon svg {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .eau-email-update-title {
+        font-size: 1.25rem !important;
+    }
+
+    .eau-email-update-subtitle {
+        font-size: 0.875rem !important;
+    }
+
+    .eau-email-update-body {
+        padding: 1.25rem !important;
+    }
+
+    .eau-radio-card-content {
+        padding: 1rem !important;
+    }
+
+    .eau-radio-card-body {
+        padding-left: 1.75rem !important;
+    }
+
+    .eau-email-update-footer {
+        padding: 0.875rem 1.25rem !important;
+    }
+
+    .eau-code-input {
+        font-size: 1.5rem !important;
+        letter-spacing: 6px !important;
+    }
+}

@@ -135,6 +135,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const editId = urlParams.get('edit');
             const statusFilter = urlParams.get('status');
+            const institutionFilter = urlParams.get('institution');
 
             // Apply status filter from URL
             if (statusFilter) {
@@ -150,6 +151,35 @@
                 // Remove the parameter from URL to avoid re-applying on refresh
                 const url = new URL(window.location);
                 url.searchParams.delete('status');
+                window.history.replaceState({}, document.title, url);
+
+                // Reset to first page
+                this.currentPage = 1;
+            }
+
+            // Apply institution filter from URL (used when clicking members count from /manage-institutions/)
+            if (institutionFilter) {
+                // Set the filter value (ensure it's a string for consistency)
+                this.filters.institution = institutionFilter;
+
+                // Update the select element with the institution ID
+                const $institutionSelect = $('#eau-filter-institution');
+                if ($institutionSelect.length > 0) {
+                    $institutionSelect.val(institutionFilter);
+
+                    // If the value wasn't found in the select, try with different formats
+                    if ($institutionSelect.val() !== institutionFilter) {
+                        // Try as integer
+                        $institutionSelect.val(parseInt(institutionFilter, 10));
+                    }
+                }
+
+                // Show the filters panel
+                $('#eau-filters-panel').addClass('active');
+
+                // Remove the parameter from URL to avoid re-applying on refresh
+                const url = new URL(window.location);
+                url.searchParams.delete('institution');
                 window.history.replaceState({}, document.title, url);
 
                 // Reset to first page
@@ -330,6 +360,14 @@
                 self.filterPopoverTags($(this).val());
             });
 
+            // Reset Email Migration Status (v1.62.0)
+            $(document).on('click', '.eau-btn-reset-email', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const userId = $(this).data('user-id');
+                self.resetEmailMigration(userId);
+            });
+
             // Table Sorting
             $(document).on('click', '.eau-sortable', function() {
                 const columnKey = $(this).data('key');
@@ -436,6 +474,7 @@
                         <td class="eau-table-td" data-label="USER TYPE">${row.user_type}</td>
                         <td class="eau-table-td" data-label="POSITION">${row.position || '<span class="eau-text-muted">-</span>'}</td>
                         <td class="eau-table-td" data-label="STATUS">${row.status}</td>
+                        <td class="eau-table-td" data-label="EMAIL">${row.email_status || '<span class="eau-text-muted">-</span>'}</td>
                         <td class="eau-table-td eau-table-td-actions">
                             <div class="eau-table-actions">
                                 ${eauMembersData.canManageTags ? `
@@ -641,6 +680,43 @@
                                 self.loadMembers(); // Reload table
                             } else {
                                 EauNotifications.error('Error', response.data.message || 'Failed to delete member');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again.');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Reset email migration status (v1.62.0)
+         */
+        resetEmailMigration: function(userId) {
+            const self = this;
+
+            EauNotifications.confirm({
+                title: 'Reset Email Migration?',
+                message: 'This will reset the email migration status to "pending". The user will need to update their email again on next login.',
+                type: 'warning',
+                confirmText: 'Reset',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauMembersData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_reset_email_migration',
+                            nonce: eauMembersData.nonce,
+                            user_id: userId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Success', response.data.message);
+                                self.loadMembers(); // Reload table
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to reset email migration status');
                             }
                         },
                         error: function() {

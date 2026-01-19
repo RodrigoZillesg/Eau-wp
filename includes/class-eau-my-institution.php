@@ -67,10 +67,12 @@ class Eau_My_Institution {
                 </div>
             </div>
 
-            <!-- Stats Cards -->
+            <!-- Stats Cards (hidden for regular members) -->
+            <?php if ($mem_type !== 'Member'): ?>
             <div class="eau-my-institution-stats" id="eau-my-institution-stats">
                 <?php echo Eau_Skeleton::stats_cards(2); ?>
             </div>
+            <?php endif; ?>
 
             <!-- Current Institution Section -->
             <div class="eau-section" id="eau-current-institution-section">

@@ -161,8 +161,11 @@
                         </td>
                         <td class="eau-table-td" data-label="INSTITUTION">${row.institution}</td>
                         <td class="eau-table-td" data-label="CODE">${row.code}</td>
+                        <td class="eau-table-td" data-label="TYPE">${row.type}</td>
                         <td class="eau-table-td" data-label="CONTACT">${row.contact}</td>
                         <td class="eau-table-td" data-label="MEMBERS">${row.members}</td>
+                        <td class="eau-table-td" data-label="START DATE">${row.start_date}</td>
+                        <td class="eau-table-td" data-label="EXPIRE DATE">${row.expire_date}</td>
                         <td class="eau-table-td" data-label="STATUS">${row.status}</td>
                         <td class="eau-table-td eau-table-td-actions">
                             <div class="eau-table-actions">
@@ -195,7 +198,7 @@
         getEmptyState: function() {
             return `
                 <tr class="eau-table-empty">
-                    <td colspan="7" style="text-align: center; padding: 3rem;">
+                    <td colspan="10" style="text-align: center; padding: 3rem;">
                         <i data-lucide="inbox" style="width: 3rem; height: 3rem; color: #d1d5db; margin-bottom: 1rem;"></i>
                         <p style="color: #6b7280; margin: 0;">No institutions found</p>
                     </td>
@@ -218,8 +221,11 @@
             const columnMap = {
                 'institution': 'ins_company_name',
                 'code': 'ins_company_id',
+                'type': 'ins_type',
                 'contact': 'ins_company_email',
                 'members': 'members_count',
+                'start_date': 'ins_member_start_date',
+                'expire_date': 'ins_member_expire_date',
                 'status': 'ins_status'
             };
 
@@ -274,9 +280,9 @@
             // Mostrar/ocultar botão de deleção em massa (apenas para super admin)
             if (eauInstitutionsData.isSuperAdmin) {
                 if (this.selectedIds.length > 0) {
-                    $('#eau-bulk-delete-institutions').show();
+                    $('#eau-bulk-delete-institutions').addClass('eau-visible');
                 } else {
-                    $('#eau-bulk-delete-institutions').hide();
+                    $('#eau-bulk-delete-institutions').removeClass('eau-visible');
                 }
             }
         },
@@ -316,13 +322,11 @@
 
         /**
          * View Institution
+         * Opens the dedicated Institution Single Page in a new tab
          */
         viewInstitution: function(institutionId) {
-            const self = this;
-
-            // Abre modal e carrega dados
-            this.openModal('eau-modal-view');
-            this.loadInstitutionDetails(institutionId, 'view');
+            // Open the institution single page in a new tab
+            window.open('/institution/' + institutionId + '/', '_blank');
         },
 
         /**
@@ -729,6 +733,7 @@
                 _ID: '',
                 ins_company_name: '',
                 ins_company_id: '',
+                ins_type: '',
                 ins_company_email: '',
                 ins_company_company_phone: '',
                 ins_company_company_address_line_1: '',
@@ -858,6 +863,24 @@
                 </div>
             `;
 
+            // Institution Type
+            html += `
+                <div class="eau-form-field">
+                    <label class="eau-form-label">Institution Type</label>
+            `;
+            if (!isView) {
+                html += `
+                    <select class="eau-form-select" name="ins_type">
+                        <option value="">Select Type</option>
+                        <option value="College" ${data.ins_type === 'College' ? 'selected' : ''}>College</option>
+                        <option value="Corporate affiliate" ${data.ins_type === 'Corporate affiliate' ? 'selected' : ''}>Corporate Affiliate</option>
+                    </select>
+                `;
+            } else {
+                html += `<input type="text" class="eau-form-input" value="${data.ins_type || '-'}" readonly>`;
+            }
+            html += `</div>`;
+
             // Email
             html += `
                 <div class="eau-form-field">
@@ -943,6 +966,11 @@
 
             html += '</div></form>';
 
+            // Add members list for View mode
+            if (isView && data.members && data.members.length > 0) {
+                html += this.renderMembersList(data.members, data._ID);
+            }
+
             $('#' + modalId + '-body').html(html);
 
             // Re-initialize Lucide icons
@@ -954,6 +982,80 @@
             if (!isView) {
                 this.bindLogoUploadEvents();
             }
+        },
+
+        /**
+         * Render members list for View Institution modal
+         */
+        renderMembersList: function(members, institutionId) {
+            const self = this;
+
+            let html = `
+                <div class="eau-members-section">
+                    <div class="eau-members-section-header">
+                        <h3 class="eau-members-section-title">
+                            <i data-lucide="users"></i>
+                            Institution Members (${members.length}${members.length >= 50 ? '+' : ''})
+                        </h3>
+                        <a href="/dashboard/manage-members/?institution=${institutionId}" target="_blank" class="eau-btn eau-btn-sm eau-btn-secondary">
+                            <i data-lucide="external-link"></i>
+                            View All
+                        </a>
+                    </div>
+                    <div class="eau-members-list">
+                        <table class="eau-members-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            members.forEach(function(member) {
+                const statusClass = member.status === 'active' ? 'eau-status-badge-active' : 'eau-status-badge-inactive';
+                const typeLabel = member.type || '-';
+
+                html += `
+                    <tr>
+                        <td>
+                            <a href="/dashboard/manage-members/?edit=${member.id}" target="_blank" class="eau-member-link">
+                                ${self.escapeHtml(member.name)}
+                            </a>
+                        </td>
+                        <td>${self.escapeHtml(member.email)}</td>
+                        <td>${self.escapeHtml(typeLabel)}</td>
+                        <td><span class="eau-status-badge ${statusClass}">${self.escapeHtml(member.status)}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            return html;
+        },
+
+        /**
+         * Escape HTML special characters
+         */
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
         },
 
         /**
@@ -1302,7 +1404,7 @@
                                 EauNotifications.success('Deleted!', response.data.message);
                                 self.selectedIds = [];
                                 self.loadInstitutions();
-                                $('#eau-bulk-delete-institutions').hide();
+                                $('#eau-bulk-delete-institutions').removeClass('eau-visible');
                             } else {
                                 EauNotifications.error('Error', response.data.message || 'Failed to delete institutions');
                             }

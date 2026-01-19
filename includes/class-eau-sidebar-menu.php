@@ -314,8 +314,8 @@ class Eau_Sidebar_Menu {
             'icon' => self::get_icon('log-out'),
         );
 
-        // WP Admin Panel - apenas para quem tem acesso ao admin
-        if (current_user_can('read')) {
+        // WP Admin Panel - apenas para administradores do WordPress
+        if (current_user_can('manage_options')) {
             $items[] = array(
                 'label' => 'Panel',
                 'url' => admin_url(),

@@ -415,4 +415,20 @@ class Eau_Filters {
             'other' => 'Other',
         );
     }
+
+    /**
+     * Get email migration status options for filters
+     *
+     * @since 1.62.0
+     * @return array Associative array of status_value => status_label
+     */
+    public static function get_email_migration_status_options() {
+        return array(
+            'pending' => 'Pending',
+            'awaiting_verification' => 'Awaiting Verification',
+            'verified' => 'Verified',
+            'skipped' => 'Skipped',
+            'not_set' => 'Not Set (Needs Migration)',
+        );
+    }
 }

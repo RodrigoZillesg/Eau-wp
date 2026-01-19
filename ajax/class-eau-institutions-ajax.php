@@ -48,6 +48,7 @@ class Eau_Institutions_Ajax {
         $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
         $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : '';
         $membership_type = isset($_POST['membership_type']) ? sanitize_text_field($_POST['membership_type']) : '';
+        $institution_type = isset($_POST['institution_type']) ? sanitize_text_field($_POST['institution_type']) : '';
         $created_date_from = isset($_POST['created_date_from']) ? sanitize_text_field($_POST['created_date_from']) : '';
         $created_date_to = isset($_POST['created_date_to']) ? sanitize_text_field($_POST['created_date_to']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'title';
@@ -60,6 +61,7 @@ class Eau_Institutions_Ajax {
             'search' => $search,
             'status' => $status,
             'membership_type' => $membership_type,
+            'institution_type' => $institution_type,
             'created_date_from' => $created_date_from,
             'created_date_to' => $created_date_to,
             'orderby' => $orderby,
@@ -95,6 +97,7 @@ class Eau_Institutions_Ajax {
             'search' => '',
             'status' => '',
             'membership_type' => '',
+            'institution_type' => '',
             'created_date_from' => '',
             'created_date_to' => '',
             'orderby' => 'title',
@@ -103,7 +106,7 @@ class Eau_Institutions_Ajax {
         $args = wp_parse_args($args, $defaults);
 
         // Campos que precisam de ordenação manual (meta fields ou calculados)
-        $manual_sort_fields = array('ins_company_name', 'ins_company_id', 'ins_company_email', 'ins_status', 'members_count');
+        $manual_sort_fields = array('ins_company_name', 'ins_company_id', 'ins_company_email', 'ins_status', 'ins_type', 'members_count', 'ins_member_start_date', 'ins_member_expire_date');
         $needs_manual_sort = in_array($args['orderby'], $manual_sort_fields);
 
         // Build WP_Query arguments
@@ -158,27 +161,52 @@ class Eau_Institutions_Ajax {
             }
         }
 
-        // Filtro de membership_type (ins_type)
+        // Filtro de membership_type (ins_membership_type - para tipo de membership da instituição)
         if (!empty($args['membership_type'])) {
             if ($args['membership_type'] === 'none') {
                 // Instituições sem membership type definido
                 $meta_query[] = array(
                     'relation' => 'OR',
                     array(
-                        'key' => 'ins_type',
+                        'key' => 'ins_membership_type',
                         'compare' => 'NOT EXISTS',
                     ),
                     array(
-                        'key' => 'ins_type',
+                        'key' => 'ins_membership_type',
                         'value' => '',
                         'compare' => '=',
                     ),
                 );
             } else {
                 $meta_query[] = array(
-                    'key' => 'ins_type',
+                    'key' => 'ins_membership_type',
                     'value' => $args['membership_type'],
                     'compare' => '=',
+                );
+            }
+        }
+
+        // Filtro de institution_type (ins_type - College ou Corporate affiliate)
+        if (!empty($args['institution_type'])) {
+            if ($args['institution_type'] === 'not_defined') {
+                // Buscar onde ins_type está vazio ou não existe
+                $meta_query[] = array(
+                    'relation' => 'OR',
+                    array(
+                        'key' => 'ins_type',
+                        'value' => '',
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key' => 'ins_type',
+                        'compare' => 'NOT EXISTS',
+                    ),
+                );
+            } else {
+                $meta_query[] = array(
+                    'key' => 'ins_type',
+                    'value' => $args['institution_type'],
+                    'compare' => 'LIKE',
                 );
             }
         }
@@ -223,6 +251,10 @@ class Eau_Institutions_Ajax {
                 $institution->ins_company_email = get_post_meta($institution->ID, 'ins_company_email', true);
                 $institution->ins_status = get_post_meta($institution->ID, 'ins_status', true) ?: 'active';
 
+                // Date fields for sorting
+                $institution->ins_member_start_date = get_post_meta($institution->ID, 'ins_member_start_date', true) ?: '';
+                $institution->ins_member_expire_date = get_post_meta($institution->ID, 'ins_member_expire_date', true) ?: '';
+
                 // Campos calculados
                 if ($args['orderby'] === 'members_count') {
                     $institution->members_count = self::count_institution_members($institution->ins_company_id);
@@ -238,6 +270,11 @@ class Eau_Institutions_Ajax {
                 // Ordenação numérica para members_count
                 if ($field === 'members_count') {
                     $comparison = $val_a - $val_b;
+                } elseif ($field === 'ins_member_start_date' || $field === 'ins_member_expire_date') {
+                    // Ordenação por data (converte para timestamp)
+                    $time_a = !empty($val_a) ? strtotime($val_a) : 0;
+                    $time_b = !empty($val_b) ? strtotime($val_b) : 0;
+                    $comparison = $time_a - $time_b;
                 } else {
                     // Ordenação alfabética para outros campos (case-insensitive)
                     $comparison = strcasecmp($val_a, $val_b);
@@ -311,6 +348,7 @@ class Eau_Institutions_Ajax {
         $company_email = get_post_meta($post->ID, 'ins_company_email', true);
         $company_phone = get_post_meta($post->ID, 'ins_company_company_phone', true);
         $institution_status = get_post_meta($post->ID, 'ins_status', true) ?: 'active';
+        $institution_type = get_post_meta($post->ID, 'ins_type', true) ?: '';
 
         // Nome da instituição
         $institution_html = sprintf(
@@ -323,6 +361,17 @@ class Eau_Institutions_Ajax {
             '<span class="eau-institution-code">%s</span>',
             esc_html($company_id ?: '-')
         );
+
+        // Tipo
+        $type_html = '-';
+        if (!empty($institution_type)) {
+            $type_class = $institution_type === 'College' ? 'eau-type-badge-college' : 'eau-type-badge-corporate';
+            $type_html = sprintf(
+                '<span class="eau-type-badge %s">%s</span>',
+                esc_attr($type_class),
+                esc_html($institution_type)
+            );
+        }
 
         // Contact (email e telefone)
         $contact_parts = array();
@@ -343,11 +392,60 @@ class Eau_Institutions_Ajax {
         $contact_html = !empty($contact_parts) ? implode('<br>', $contact_parts) : '-';
 
         // Número de membros (conta usuários com mem_membercompanyname = company_id)
+        // Link que abre a single da instituição e rola para a seção de membros
         $members_count = self::count_institution_members($company_id);
+        $members_url = home_url('/institution/' . $post->ID . '/#eau-members-section');
         $members_html = sprintf(
-            '<span class="eau-members-count">%d</span>',
+            '<a href="%s" target="_blank" class="eau-members-count" title="View members of this institution">%d</a>',
+            esc_url($members_url),
             $members_count
         );
+
+        // Start Date
+        $start_date = get_post_meta($post->ID, 'ins_member_start_date', true);
+        $start_date_html = '-';
+        if (!empty($start_date)) {
+            $start_date_html = esc_html(date('d/m/Y', strtotime($start_date)));
+        }
+
+        // Expire Date (com indicador de status)
+        $expire_date = get_post_meta($post->ID, 'ins_member_expire_date', true);
+        $expire_date_html = '-';
+        if (!empty($expire_date)) {
+            $expire_timestamp = strtotime($expire_date);
+            $now = time();
+            $days_until = floor(($expire_timestamp - $now) / (60 * 60 * 24));
+
+            $expire_class = '';
+            $expire_label = '';
+
+            if ($days_until < 0) {
+                $expire_class = 'eau-expire-expired';
+                $expire_label = 'Expired';
+            } elseif ($days_until <= 30) {
+                $expire_class = 'eau-expire-critical';
+                $expire_label = $days_until . 'd';
+            } elseif ($days_until <= 60) {
+                $expire_class = 'eau-expire-warning';
+                $expire_label = $days_until . 'd';
+            } elseif ($days_until <= 90) {
+                $expire_class = 'eau-expire-attention';
+                $expire_label = $days_until . 'd';
+            }
+
+            $expire_date_formatted = date('d/m/Y', $expire_timestamp);
+
+            if (!empty($expire_class)) {
+                $expire_date_html = sprintf(
+                    '<span class="eau-expire-cell %s">%s <span class="eau-expire-indicator">%s</span></span>',
+                    esc_attr($expire_class),
+                    esc_html($expire_date_formatted),
+                    esc_html($expire_label)
+                );
+            } else {
+                $expire_date_html = esc_html($expire_date_formatted);
+            }
+        }
 
         // Status
         $status_lower = strtolower($institution_status);
@@ -365,8 +463,11 @@ class Eau_Institutions_Ajax {
             '_id' => $post->ID,
             'institution' => $institution_html,
             'code' => $code_html,
+            'type' => $type_html,
             'contact' => $contact_html,
             'members' => $members_html,
+            'start_date' => $start_date_html,
+            'expire_date' => $expire_date_html,
             'status' => $status_html,
             'actions' => $actions_html,
         );
@@ -480,6 +581,7 @@ class Eau_Institutions_Ajax {
             'post_title' => $post->post_title,
             'ins_company_id' => isset($meta_fields['ins_company_id'][0]) ? $meta_fields['ins_company_id'][0] : '',
             'ins_company_name' => isset($meta_fields['ins_company_name'][0]) ? $meta_fields['ins_company_name'][0] : '',
+            'ins_type' => isset($meta_fields['ins_type'][0]) ? $meta_fields['ins_type'][0] : '',
             'ins_company_email' => isset($meta_fields['ins_company_email'][0]) ? $meta_fields['ins_company_email'][0] : '',
             'ins_company_company_phone' => isset($meta_fields['ins_company_company_phone'][0]) ? $meta_fields['ins_company_company_phone'][0] : '',
             'ins_company_company_address_line_1' => isset($meta_fields['ins_company_company_address_line_1'][0]) ? $meta_fields['ins_company_company_address_line_1'][0] : '',
@@ -496,7 +598,61 @@ class Eau_Institutions_Ajax {
         $company_id = $institution['ins_company_id'];
         $institution['members_count'] = self::count_institution_members($company_id);
 
+        // Adiciona lista de membros (para o modal de View)
+        $institution['members'] = self::get_institution_members($company_id);
+
         wp_send_json_success($institution);
+    }
+
+    /**
+     * Obtém lista de membros de uma instituição
+     *
+     * @param string $company_code Código da instituição
+     * @return array Lista de membros formatada
+     */
+    private static function get_institution_members($company_code) {
+        if (empty($company_code)) {
+            return array();
+        }
+
+        $args = array(
+            'meta_query' => array(
+                array(
+                    'key' => 'mem_membercompanyname',
+                    'value' => $company_code,
+                    'compare' => '=',
+                ),
+            ),
+            'number' => 50, // Limita a 50 membros para não sobrecarregar
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+        );
+
+        $user_query = new \WP_User_Query($args);
+        $users = $user_query->get_results();
+
+        $members = array();
+        foreach ($users as $user) {
+            $first_name = get_user_meta($user->ID, 'first_name', true);
+            $last_name = get_user_meta($user->ID, 'last_name', true);
+            $full_name = trim($first_name . ' ' . $last_name);
+            if (empty($full_name)) {
+                $full_name = $user->display_name;
+            }
+
+            $mem_type = get_user_meta($user->ID, 'mem_type', true);
+            $mem_status = get_user_meta($user->ID, 'mem_status', true) ?: 'active';
+
+            $members[] = array(
+                'id' => $user->ID,
+                'name' => $full_name,
+                'email' => $user->user_email,
+                'type' => $mem_type,
+                'status' => $mem_status,
+            );
+        }
+
+        return $members;
     }
 
     /**
@@ -526,6 +682,7 @@ class Eau_Institutions_Ajax {
         $allowed_fields = array(
             'ins_company_id',
             'ins_company_name',
+            'ins_type',
             'ins_company_email',
             'ins_company_company_phone',
             'ins_company_company_address_line_1',
@@ -583,6 +740,7 @@ class Eau_Institutions_Ajax {
         // Pega dados
         $company_name = isset($_POST['ins_company_name']) ? sanitize_text_field($_POST['ins_company_name']) : '';
         $company_id = isset($_POST['ins_company_id']) ? sanitize_text_field($_POST['ins_company_id']) : '';
+        $institution_type = isset($_POST['ins_type']) ? sanitize_text_field($_POST['ins_type']) : '';
         $email = isset($_POST['ins_company_email']) ? sanitize_email($_POST['ins_company_email']) : '';
         $phone = isset($_POST['ins_company_company_phone']) ? sanitize_text_field($_POST['ins_company_company_phone']) : '';
         $address = isset($_POST['ins_company_company_address_line_1']) ? sanitize_text_field($_POST['ins_company_company_address_line_1']) : '';
@@ -636,6 +794,7 @@ class Eau_Institutions_Ajax {
         // Adiciona meta fields
         update_post_meta($post_id, 'ins_company_id', $company_id);
         update_post_meta($post_id, 'ins_company_name', $company_name);
+        update_post_meta($post_id, 'ins_type', $institution_type);
         update_post_meta($post_id, 'ins_company_email', $email);
         update_post_meta($post_id, 'ins_company_company_phone', $phone);
         update_post_meta($post_id, 'ins_company_company_address_line_1', $address);

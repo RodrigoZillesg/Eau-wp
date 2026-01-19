@@ -832,3 +832,84 @@
         flex-direction: column;
     }
 }
+
+/* ==========================================================================
+   Email Migration Status Badges (v1.62.0)
+   ========================================================================== */
+
+.eau-email-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    white-space: nowrap !important;
+}
+
+.eau-email-status-not-set {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.eau-email-status-pending {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.eau-email-status-awaiting {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+}
+
+.eau-email-status-verified {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+.eau-email-status-skipped {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+.eau-email-status-exempt {
+    background: #f3e8ff !important;
+    color: #7c3aed !important;
+}
+
+/* Reset Email Button */
+.eau-btn-reset-email {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    padding: 0 !important;
+    margin-left: 0.25rem !important;
+    background: transparent !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    color: #6b7280 !important;
+    vertical-align: middle !important;
+}
+
+.eau-btn-reset-email:hover {
+    background: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+    color: #374151 !important;
+}
+
+.eau-btn-reset-email:active,
+.eau-btn-reset-email:focus {
+    background: #e5e7eb !important;
+    outline: none !important;
+}
+
+.eau-btn-reset-email svg,
+.eau-btn-reset-email i {
+    width: 12px !important;
+    height: 12px !important;
+}

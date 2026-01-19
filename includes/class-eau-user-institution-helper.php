@@ -452,6 +452,7 @@ class Eau_User_Institution_Helper {
             'position' => '',
             'registered_date_from' => '',
             'registered_date_to' => '',
+            'email_migration' => '',
             'orderby' => 'display_name',
             'order' => 'ASC',
         );
@@ -560,6 +561,19 @@ class Eau_User_Institution_Helper {
         if (!empty($args['position'])) {
             $join[] = "INNER JOIN {$wpdb->usermeta} um_position ON u.ID = um_position.user_id AND um_position.meta_key = 'mem_memberposition'";
             $where[] = $wpdb->prepare("um_position.meta_value = %s", $args['position']);
+        }
+
+        // Filtro por email migration status (v1.62.0)
+        if (!empty($args['email_migration'])) {
+            if ($args['email_migration'] === 'not_set') {
+                // Users without email migration status set
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_email_mig ON u.ID = um_email_mig.user_id AND um_email_mig.meta_key = 'mem_email_migration_status'";
+                $where[] = "(um_email_mig.meta_value IS NULL OR um_email_mig.meta_value = '')";
+            } else {
+                // Specific status
+                $join[] = "INNER JOIN {$wpdb->usermeta} um_email_mig ON u.ID = um_email_mig.user_id AND um_email_mig.meta_key = 'mem_email_migration_status'";
+                $where[] = $wpdb->prepare("um_email_mig.meta_value = %s", $args['email_migration']);
+            }
         }
 
         // Monta query de contagem

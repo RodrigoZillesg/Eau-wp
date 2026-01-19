@@ -48,6 +48,13 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institutions-management.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-institutions-ajax.php';
 
+        // Institution Single Page (v1.63.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institution-single.php';
+
+        // Institution Meta Sync and Expiration Cron (v1.63.2)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institutions-meta-sync.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institutions-expiration-cron.php';
+
         // Activities Management (v1.29.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-activities-management.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-activities-ajax.php';
@@ -106,6 +113,14 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-service.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-events.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-membership.php';
+
+        // Email Migration System (v1.62.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email-migration/class-eau-email-migration-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email-migration/class-eau-email-migration.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email-migration/class-eau-email-migration-replacer.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email-migration/class-eau-email-update-page.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email-migration/class-eau-email-migration-ajax.php';
+
         // My Institution (v1.44.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-institution-requests-database.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-my-institution.php';
@@ -246,7 +261,8 @@ class Eau_System {
             body:not(.eau-styles-loaded) .eau-events-management,
             body:not(.eau-styles-loaded) .eau-registration-form,
             body:not(.eau-styles-loaded) .eau-membership-selection,
-            body:not(.eau-styles-loaded) .eau-membership-applications {
+            body:not(.eau-styles-loaded) .eau-membership-applications,
+            body:not(.eau-styles-loaded) .eau-institution-single-container {
                 opacity: 0;
             }
 
@@ -266,7 +282,8 @@ class Eau_System {
             body.eau-styles-loaded .eau-events-management,
             body.eau-styles-loaded .eau-registration-form,
             body.eau-styles-loaded .eau-membership-selection,
-            body.eau-styles-loaded .eau-membership-applications {
+            body.eau-styles-loaded .eau-membership-applications,
+            body.eau-styles-loaded .eau-institution-single-container {
                 opacity: 1;
                 transition: opacity 0.2s ease-in;
             }
@@ -369,6 +386,9 @@ class Eau_System {
         Eau_Dashboard::register_shortcode();
         Eau_Members_Management::register_shortcode();
         Eau_Institutions_Management::register_shortcode();
+        Eau_Institution_Single::init();
+        Eau_Institutions_Meta_Sync::init();
+        Eau_Institutions_Expiration_Cron::init();
         Eau_Activities_Management::register_shortcode();
         Eau_Categories_Management::register_shortcode();
         Eau_My_Cpds::register_shortcode();
@@ -385,6 +405,9 @@ class Eau_System {
         Eau_Payments_Management::init();
         Eau_My_Payments::register_shortcode();
         Eau_Sidebar_Menu::register_shortcode();
+
+        // Email Migration System (v1.62.0)
+        EmailMigration\Eau_Email_Migration::register();
 
         // Registra AJAX handlers
         \EauSystem\Ajax\Eau_Members_Ajax::register_handlers();

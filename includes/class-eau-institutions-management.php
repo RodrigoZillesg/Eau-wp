@@ -311,6 +311,11 @@ class Eau_Institutions_Management {
                     'sortable' => true,
                 ),
                 array(
+                    'key' => 'type',
+                    'label' => 'TYPE',
+                    'sortable' => true,
+                ),
+                array(
                     'key' => 'contact',
                     'label' => 'CONTACT',
                     'sortable' => true,
@@ -318,6 +323,16 @@ class Eau_Institutions_Management {
                 array(
                     'key' => 'members',
                     'label' => 'MEMBERS',
+                    'sortable' => true,
+                ),
+                array(
+                    'key' => 'start_date',
+                    'label' => 'START DATE',
+                    'sortable' => true,
+                ),
+                array(
+                    'key' => 'expire_date',
+                    'label' => 'EXPIRE DATE',
                     'sortable' => true,
                 ),
                 array(
@@ -375,11 +390,15 @@ class Eau_Institutions_Management {
                     'placeholder' => 'All Status',
                 ),
                 array(
-                    'key' => 'membership_type',
-                    'label' => 'Membership Type',
+                    'key' => 'institution_type',
+                    'label' => 'Institution Type',
                     'type' => 'select',
-                    'options' => Eau_Filters::get_membership_type_options(),
-                    'placeholder' => 'All Membership Types',
+                    'options' => array(
+                        'College' => 'College',
+                        'Corporate affiliate' => 'Corporate Affiliate',
+                        'not_defined' => 'Not Defined',
+                    ),
+                    'placeholder' => 'All Types',
                 ),
                 array(
                     'key' => 'created_date',

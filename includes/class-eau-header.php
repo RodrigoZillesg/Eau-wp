@@ -38,6 +38,12 @@ class Eau_Header {
      * @return bool
      */
     public static function is_system_page() {
+        // Check for Institution Single Page (rewrite rule)
+        $institution_id = get_query_var('eau_institution_id');
+        if (!empty($institution_id)) {
+            return true;
+        }
+
         if (!is_page()) {
             return false;
         }

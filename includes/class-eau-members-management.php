@@ -285,6 +285,10 @@ class Eau_Members_Management {
                     'key' => 'status',
                     'label' => 'STATUS',
                 ),
+                array(
+                    'key' => 'email_status',
+                    'label' => 'EMAIL',
+                ),
             ),
             'actions' => array('view', 'edit', 'delete'),
             'selectable' => true,
@@ -373,6 +377,13 @@ class Eau_Members_Management {
                     'type' => 'select',
                     'options' => Eau_Filters::get_member_tag_options(),
                     'placeholder' => 'All Tags',
+                ),
+                array(
+                    'key' => 'email_migration',
+                    'label' => 'Email Migration',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_email_migration_status_options(),
+                    'placeholder' => 'All Email Status',
                 ),
             ),
         );

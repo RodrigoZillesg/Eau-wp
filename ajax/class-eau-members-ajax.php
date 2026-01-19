@@ -63,6 +63,9 @@ class Eau_Members_Ajax {
 
         // Bulk remove ALL tags from members
         add_action('wp_ajax_eau_bulk_remove_all_tags', array(__CLASS__, 'bulk_remove_all_tags'));
+
+        // Reset email migration status (v1.62.0)
+        add_action('wp_ajax_eau_reset_email_migration', array(__CLASS__, 'reset_email_migration'));
     }
 
     /**
@@ -84,6 +87,7 @@ class Eau_Members_Ajax {
         $position = isset($_POST['position']) ? sanitize_text_field($_POST['position']) : '';
         $registered_date_from = isset($_POST['registered_date_from']) ? sanitize_text_field($_POST['registered_date_from']) : '';
         $registered_date_to = isset($_POST['registered_date_to']) ? sanitize_text_field($_POST['registered_date_to']) : '';
+        $email_migration = isset($_POST['email_migration']) ? sanitize_text_field($_POST['email_migration']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'display_name';
         $order = isset($_POST['order']) ? sanitize_text_field($_POST['order']) : 'ASC';
 
@@ -103,6 +107,7 @@ class Eau_Members_Ajax {
             'position' => $position,
             'registered_date_from' => $registered_date_from,
             'registered_date_to' => $registered_date_to,
+            'email_migration' => $email_migration,
             'orderby' => $orderby,
             'order' => $order,
         ));
@@ -208,6 +213,10 @@ class Eau_Members_Ajax {
             esc_html(ucfirst($user['status']))
         );
 
+        // Email Migration Status (v1.62.0)
+        $email_migration_status = get_user_meta($user['ID'], \EauSystem\EmailMigration\Eau_Email_Migration_Database::META_MIGRATION_STATUS, true);
+        $email_status_html = self::format_email_migration_status($user['ID'], $email_migration_status);
+
         // Actions - os botões serão renderizados pelo JavaScript
         $actions_html = ''; // Vazio - o JS renderiza os botões com data-id
 
@@ -219,8 +228,10 @@ class Eau_Members_Ajax {
             'user_type' => $user_type_html,
             'position' => $position_html,
             'status' => $status_html,
+            'email_status' => $email_status_html,
             'actions' => $actions_html,
             'member_tags' => implode(',', $member_tags), // Slugs das tags separadas por vírgula
+            'email_migration_status' => $email_migration_status, // Raw status for JS
         );
     }
 
@@ -1255,5 +1266,107 @@ class Eau_Members_Ajax {
             'updated_count' => $updated_count,
             'failed_count' => $failed_count,
         ));
+    }
+
+    /**
+     * Format email migration status for display in table
+     *
+     * @since 1.62.0
+     * @param int $user_id User ID
+     * @param string $status Migration status
+     * @return string HTML
+     */
+    private static function format_email_migration_status($user_id, $status) {
+        // Check if user is exempt (superAdmin or Admin)
+        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        if (in_array($mem_type, array('superAdmin', 'Admin'))) {
+            return '<span class="eau-email-status-badge eau-email-status-exempt">Exempt</span>';
+        }
+
+        // Status mapping
+        $status_config = array(
+            'pending' => array(
+                'label' => 'Pending',
+                'class' => 'eau-email-status-pending',
+                'show_reset' => false,
+            ),
+            'awaiting_verification' => array(
+                'label' => 'Awaiting',
+                'class' => 'eau-email-status-awaiting',
+                'show_reset' => true,
+            ),
+            'verified' => array(
+                'label' => 'Verified',
+                'class' => 'eau-email-status-verified',
+                'show_reset' => true,
+            ),
+            'skipped' => array(
+                'label' => 'Skipped',
+                'class' => 'eau-email-status-skipped',
+                'show_reset' => true,
+            ),
+        );
+
+        // Default for empty/not set
+        if (empty($status) || !isset($status_config[$status])) {
+            $html = '<span class="eau-email-status-badge eau-email-status-not-set">Not Set</span>';
+            return $html;
+        }
+
+        $config = $status_config[$status];
+        $html = sprintf(
+            '<span class="eau-email-status-badge %s">%s</span>',
+            esc_attr($config['class']),
+            esc_html($config['label'])
+        );
+
+        // Add reset button if applicable
+        if ($config['show_reset'] && (Eau_User_Institution_Helper::is_super_admin() || Eau_User_Institution_Helper::is_admin())) {
+            $html .= sprintf(
+                ' <button type="button" class="eau-btn-icon eau-btn-reset-email" data-user-id="%d" title="Reset email migration status">
+                    <i data-lucide="rotate-ccw"></i>
+                </button>',
+                esc_attr($user_id)
+            );
+        }
+
+        return $html;
+    }
+
+    /**
+     * AJAX: Reset email migration status
+     *
+     * @since 1.62.0
+     */
+    public static function reset_email_migration() {
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verify permission (superAdmin or Admin only)
+        if (!Eau_User_Institution_Helper::is_super_admin() && !Eau_User_Institution_Helper::is_admin()) {
+            wp_send_json_error(array('message' => 'You do not have permission to reset email migration status.'));
+        }
+
+        $user_id = isset($_POST['user_id']) ? absint($_POST['user_id']) : 0;
+
+        if (!$user_id) {
+            wp_send_json_error(array('message' => 'Invalid user ID.'));
+        }
+
+        // Check if user exists
+        $user = get_userdata($user_id);
+        if (!$user) {
+            wp_send_json_error(array('message' => 'User not found.'));
+        }
+
+        // Reset using the Email Migration class
+        $result = \EauSystem\EmailMigration\Eau_Email_Migration::reset_user_migration($user_id);
+
+        if ($result === true) {
+            wp_send_json_success(array(
+                'message' => sprintf('Email migration status reset for %s.', $user->display_name),
+            ));
+        } else {
+            wp_send_json_error(array('message' => 'Failed to reset email migration status.'));
+        }
     }
 }

@@ -39,6 +39,15 @@
     gap: 0.75rem !important;
 }
 
+/* Bulk delete button - hidden by default, shown via JS when items selected */
+#eau-bulk-delete-institutions {
+    display: none !important;
+}
+
+#eau-bulk-delete-institutions.eau-visible {
+    display: inline-flex !important;
+}
+
 /* Institution Cell */
 .eau-institution-cell {
     display: flex;
@@ -63,8 +72,8 @@
     font-weight: 500;
 }
 
-/* Members Count */
-.eau-members-count {
+/* Members Count - Link to /manage-members/ with filter */
+a.eau-members-count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -75,20 +84,283 @@
     font-size: 0.875rem;
     font-weight: 600;
     min-width: 2.5rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Form Grid - Span 2 para campos grandes */
+a.eau-members-count:hover {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+a.eau-members-count:active,
+a.eau-members-count:focus,
+a.eau-members-count:visited {
+    background-color: #eff6ff;
+    color: #1e40af;
+    text-decoration: none;
+    outline: none;
+}
+
+/* Institution Type Badges */
+.eau-type-badge {
+    display: inline-block !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+}
+
+.eau-type-badge-college {
+    background-color: #dbeafe !important;
+    color: #1e40af !important;
+}
+
+.eau-type-badge-corporate {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+/* ==========================================================================
+   Expire Date Column Styles
+   ========================================================================== */
+
+.eau-expire-cell {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+.eau-expire-indicator {
+    display: inline-block !important;
+    padding: 0.125rem 0.375rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+}
+
+/* Expired - Red */
+.eau-expire-expired {
+    color: #991b1b !important;
+}
+
+.eau-expire-expired .eau-expire-indicator {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+/* Critical - 30 days or less - Red */
+.eau-expire-critical {
+    color: #991b1b !important;
+}
+
+.eau-expire-critical .eau-expire-indicator {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+/* Warning - 31-60 days - Orange */
+.eau-expire-warning {
+    color: #92400e !important;
+}
+
+.eau-expire-warning .eau-expire-indicator {
+    background: #fffbeb !important;
+    color: #d97706 !important;
+}
+
+/* Attention - 61-90 days - Yellow */
+.eau-expire-attention {
+    color: #854d0e !important;
+}
+
+.eau-expire-attention .eau-expire-indicator {
+    background: #fefce8 !important;
+    color: #ca8a04 !important;
+}
+
+/* ==========================================================================
+   MODAL HEIGHT FIXES - Full Height Modals
+   ========================================================================== */
+
+/* Modal position and size - occupy most of the screen */
+.eau-institutions-management-container .eau-modal-overlay > .eau-modal {
+    top: calc(70px + 1rem) !important;
+    transform: translateX(-50%) !important;
+    height: calc(100vh - 70px - 2rem) !important;
+    max-height: calc(100vh - 70px - 2rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Modal body - flex grow to fill available space */
+.eau-institutions-management-container .eau-modal-body {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    padding: 1.5rem !important;
+    min-height: 0 !important;
+}
+
+/* Modal header fixed at top */
+.eau-institutions-management-container .eau-modal-header {
+    flex: 0 0 auto !important;
+}
+
+/* Modal footer fixed at bottom */
+.eau-institutions-management-container .eau-modal-footer {
+    flex: 0 0 auto !important;
+}
+
+/* Form Grid - 3 columns in modals */
+.eau-institutions-management-container .eau-modal .eau-form-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+}
+
+/* Form Grid - Span 2 para campos médios */
 .eau-form-field-span-2 {
     grid-column: span 2;
 }
 
+/* Form Grid - Span 3 para campos que ocupam toda a largura */
+.eau-institutions-management-container .eau-modal .eau-form-field-span-2 {
+    grid-column: span 3 !important;
+}
+
 /* Responsivo */
+@media (max-width: 992px) {
+    /* Back to 2 columns on medium screens */
+    .eau-institutions-management-container .eau-modal .eau-form-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .eau-institutions-management-container .eau-modal .eau-form-field-span-2 {
+        grid-column: span 2 !important;
+    }
+}
+
 @media (max-width: 768px) {
     .eau-institutions-management-container {
         padding: 1rem;
     }
 
-    .eau-form-field-span-2 {
-        grid-column: span 1;
+    /* Back to 1 column on small screens */
+    .eau-institutions-management-container .eau-modal .eau-form-grid {
+        grid-template-columns: 1fr !important;
     }
+
+    .eau-institutions-management-container .eau-modal .eau-form-field-span-2,
+    .eau-form-field-span-2 {
+        grid-column: span 1 !important;
+    }
+}
+
+/* ==========================================================================
+   MEMBERS SECTION IN VIEW MODAL
+   ========================================================================== */
+
+.eau-members-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.eau-members-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.eau-members-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.eau-members-section-title i {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+.eau-members-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+/* Mini table for members */
+.eau-members-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.eau-members-mini-table thead {
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    z-index: 1;
+}
+
+.eau-members-mini-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-members-mini-table td {
+    padding: 0.75rem 1rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.eau-members-mini-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.eau-members-mini-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Member link */
+.eau-member-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.eau-member-link:hover {
+    text-decoration: underline;
+    color: #1d4ed8;
+}
+
+/* Small button variant */
+.eau-btn-sm {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    gap: 0.375rem !important;
+}
+
+.eau-btn-sm i {
+    width: 14px !important;
+    height: 14px !important;
 }

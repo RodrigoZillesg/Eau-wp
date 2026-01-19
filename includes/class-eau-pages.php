@@ -25,8 +25,9 @@ class Eau_Pages {
      * Versão atual da estrutura de páginas
      * Incrementar quando adicionar novas páginas
      * v1.0.1 - Removed manage-categories (integrated into Settings)
+     * v1.0.2 - Added update-email page for Email Migration (v1.62.0)
      */
-    const PAGES_VERSION = '1.0.1';
+    const PAGES_VERSION = '1.0.2';
 
     /**
      * Definição de todas as páginas do sistema
@@ -79,6 +80,13 @@ class Eau_Pages {
                 'shortcode' => '[eau_system_presentation]',
                 'parent'    => null,
                 'order'     => 6,
+            ),
+            'update-email' => array(
+                'title'     => 'Update Email',
+                'slug'      => 'update-email',
+                'shortcode' => '[eau_email_update]',
+                'parent'    => null,
+                'order'     => 7,
             ),
 
             // ===================================
