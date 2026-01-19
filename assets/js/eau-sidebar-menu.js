@@ -2,21 +2,21 @@
  * Eau Sidebar Menu JavaScript
  *
  * Controla a abertura/fechamento do menu lateral
+ * Usa JavaScript nativo para evitar conflitos com outros plugins
  *
  * @since 1.56.0
- * @updated 1.68.11
+ * @updated 1.68.12
  */
 
-(function($) {
+(function() {
     'use strict';
 
-    const EauSidebarMenu = {
+    var EauSidebarMenu = {
         // Elements
-        $hamburger: null,
-        $sidebar: null,
-        $overlay: null,
-        $closeBtn: null,
-        $body: null,
+        hamburger: null,
+        sidebar: null,
+        overlay: null,
+        closeBtn: null,
 
         // State
         isOpen: false,
@@ -34,77 +34,75 @@
             this.cacheElements();
 
             // Only proceed if elements exist
-            if (this.$hamburger.length === 0) {
+            if (!this.hamburger) {
                 return;
             }
 
             this.bindEvents();
             this.initialized = true;
+            console.log('EauSidebarMenu initialized successfully');
         },
 
         /**
          * Cache DOM elements
          */
         cacheElements: function() {
-            this.$hamburger = $('#eau-hamburger-btn');
-            this.$sidebar = $('#eau-sidebar');
-            this.$overlay = $('#eau-sidebar-overlay');
-            this.$closeBtn = $('#eau-sidebar-close');
-            this.$body = $('body');
+            this.hamburger = document.getElementById('eau-hamburger-btn');
+            this.sidebar = document.getElementById('eau-sidebar');
+            this.overlay = document.getElementById('eau-sidebar-overlay');
+            this.closeBtn = document.getElementById('eau-sidebar-close');
         },
 
         /**
          * Bind event handlers
          */
         bindEvents: function() {
-            const self = this;
+            var self = this;
 
-            // Hamburger button click
-            this.$hamburger.on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                self.toggle();
-            });
+            // Hamburger button click - use native addEventListener
+            if (this.hamburger) {
+                this.hamburger.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.toggle();
+                }, false);
+            }
 
             // Close button click
-            this.$closeBtn.on('click', function(e) {
-                e.preventDefault();
-                self.close();
-            });
+            if (this.closeBtn) {
+                this.closeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.close();
+                }, false);
+            }
 
             // Overlay click
-            this.$overlay.on('click', function(e) {
-                e.preventDefault();
-                self.close();
-            });
+            if (this.overlay) {
+                this.overlay.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.close();
+                }, false);
+            }
 
             // Close on Escape key
-            $(document).on('keydown', function(e) {
+            document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && self.isOpen) {
                     self.close();
                 }
-            });
-
-            // Prevent scroll on sidebar when at limits
-            this.$sidebar.on('touchmove', function(e) {
-                e.stopPropagation();
-            });
+            }, false);
 
             // Close when clicking a link (for SPA-like behavior)
-            this.$sidebar.on('click', '.eau-sidebar-link', function() {
-                // Small delay to allow navigation
-                setTimeout(function() {
-                    self.close();
-                }, 100);
-            });
-
-            // Handle window resize
-            $(window).on('resize', this.debounce(function() {
-                // Optional: close sidebar on resize to desktop
-                // if (window.innerWidth > 1024 && self.isOpen) {
-                //     self.close();
-                // }
-            }, 250));
+            if (this.sidebar) {
+                this.sidebar.addEventListener('click', function(e) {
+                    var target = e.target.closest('.eau-sidebar-link');
+                    if (target) {
+                        // Small delay to allow navigation
+                        setTimeout(function() {
+                            self.close();
+                        }, 100);
+                    }
+                }, false);
+            }
         },
 
         /**
@@ -125,20 +123,19 @@
             this.isOpen = true;
 
             // Add active classes
-            this.$sidebar.addClass('active');
-            this.$overlay.addClass('active');
-            this.$body.addClass('eau-sidebar-open');
+            if (this.sidebar) this.sidebar.classList.add('active');
+            if (this.overlay) this.overlay.classList.add('active');
+            document.body.classList.add('eau-sidebar-open');
 
             // Update ARIA
-            this.$hamburger.attr('aria-expanded', 'true');
+            if (this.hamburger) this.hamburger.setAttribute('aria-expanded', 'true');
 
             // Focus management - focus first link after opening
-            setTimeout(() => {
-                this.$sidebar.find('.eau-sidebar-link').first().focus();
+            var self = this;
+            setTimeout(function() {
+                var firstLink = self.sidebar ? self.sidebar.querySelector('.eau-sidebar-link') : null;
+                if (firstLink) firstLink.focus();
             }, 300);
-
-            // Trap focus inside sidebar
-            this.trapFocus();
         },
 
         /**
@@ -148,89 +145,39 @@
             this.isOpen = false;
 
             // Remove active classes
-            this.$sidebar.removeClass('active');
-            this.$overlay.removeClass('active');
-            this.$body.removeClass('eau-sidebar-open');
+            if (this.sidebar) this.sidebar.classList.remove('active');
+            if (this.overlay) this.overlay.classList.remove('active');
+            document.body.classList.remove('eau-sidebar-open');
 
             // Update ARIA
-            this.$hamburger.attr('aria-expanded', 'false');
+            if (this.hamburger) this.hamburger.setAttribute('aria-expanded', 'false');
 
             // Return focus to hamburger button
-            this.$hamburger.focus();
-
-            // Release focus trap
-            this.releaseFocusTrap();
-        },
-
-        /**
-         * Trap focus inside sidebar when open
-         */
-        trapFocus: function() {
-            const self = this;
-            const $sidebar = this.$sidebar;
-            const $focusableElements = $sidebar.find('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            const $firstFocusable = $focusableElements.first();
-            const $lastFocusable = $focusableElements.last();
-
-            $sidebar.on('keydown.focusTrap', function(e) {
-                if (e.key === 'Tab') {
-                    if (e.shiftKey) {
-                        // Shift + Tab
-                        if (document.activeElement === $firstFocusable[0]) {
-                            e.preventDefault();
-                            $lastFocusable.focus();
-                        }
-                    } else {
-                        // Tab
-                        if (document.activeElement === $lastFocusable[0]) {
-                            e.preventDefault();
-                            $firstFocusable.focus();
-                        }
-                    }
-                }
-            });
-        },
-
-        /**
-         * Release focus trap
-         */
-        releaseFocusTrap: function() {
-            this.$sidebar.off('keydown.focusTrap');
-        },
-
-        /**
-         * Debounce utility function
-         *
-         * @param {Function} func Function to debounce
-         * @param {number} wait Wait time in ms
-         * @returns {Function} Debounced function
-         */
-        debounce: function(func, wait) {
-            let timeout;
-            return function(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func.apply(this, args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
+            if (this.hamburger) this.hamburger.focus();
         }
     };
 
-    // Initialize on document ready
-    $(document).ready(function() {
-        EauSidebarMenu.init();
-    });
-
-    // Also initialize if document is already complete (for late-loaded scripts)
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(function() {
+    // Initialize function that can be called multiple times safely
+    function initSidebarMenu() {
+        try {
             EauSidebarMenu.init();
-        }, 1);
+        } catch (e) {
+            console.error('EauSidebarMenu init error:', e);
+        }
     }
+
+    // Initialize on DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSidebarMenu);
+    } else {
+        // DOM already loaded, init immediately
+        initSidebarMenu();
+    }
+
+    // Also try to initialize after a small delay (backup for edge cases)
+    setTimeout(initSidebarMenu, 100);
 
     // Expose to global scope for external access
     window.EauSidebarMenu = EauSidebarMenu;
 
-})(jQuery);
+})();
