@@ -2,25 +2,66 @@
  * Eau Sidebar Menu JavaScript
  *
  * Controla a abertura/fechamento do menu lateral
- * Usa JavaScript nativo para evitar conflitos com outros plugins
+ * Usa Event Delegation para funcionar mesmo com elementos carregados dinamicamente
  *
  * @since 1.56.0
- * @updated 1.68.12
+ * @updated 1.68.13
  */
 
 (function() {
     'use strict';
 
     var EauSidebarMenu = {
-        // Elements
-        hamburger: null,
-        sidebar: null,
-        overlay: null,
-        closeBtn: null,
-
         // State
         isOpen: false,
         initialized: false,
+        retryCount: 0,
+        maxRetries: 20,
+
+        /**
+         * Get the first visible element matching selector
+         */
+        getVisibleElement: function(selector) {
+            var elements = document.querySelectorAll(selector);
+            for (var i = 0; i < elements.length; i++) {
+                var el = elements[i];
+                var rect = el.getBoundingClientRect();
+                var style = window.getComputedStyle(el);
+                if (rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden') {
+                    return el;
+                }
+            }
+            // Fallback to first element if none are "visible"
+            return elements.length > 0 ? elements[0] : null;
+        },
+
+        /**
+         * Get hamburger button
+         */
+        getHamburger: function() {
+            return this.getVisibleElement('#eau-hamburger-btn');
+        },
+
+        /**
+         * Get sidebar
+         */
+        getSidebar: function() {
+            return this.getVisibleElement('#eau-sidebar');
+        },
+
+        /**
+         * Get overlay
+         */
+        getOverlay: function() {
+            return this.getVisibleElement('#eau-sidebar-overlay');
+        },
+
+        /**
+         * Get close button
+         */
+        getCloseBtn: function() {
+            return this.getVisibleElement('#eau-sidebar-close');
+        },
 
         /**
          * Initialize the sidebar menu
@@ -28,61 +69,66 @@
         init: function() {
             // Prevent double initialization
             if (this.initialized) {
-                return;
+                return true;
             }
 
-            this.cacheElements();
+            var hamburger = this.getHamburger();
+            var sidebar = this.getSidebar();
 
-            // Only proceed if elements exist
-            if (!this.hamburger) {
-                return;
+            // Check if essential elements exist
+            if (!hamburger || !sidebar) {
+                return false;
             }
 
             this.bindEvents();
             this.initialized = true;
             console.log('EauSidebarMenu initialized successfully');
+            return true;
         },
 
         /**
-         * Cache DOM elements
-         */
-        cacheElements: function() {
-            this.hamburger = document.getElementById('eau-hamburger-btn');
-            this.sidebar = document.getElementById('eau-sidebar');
-            this.overlay = document.getElementById('eau-sidebar-overlay');
-            this.closeBtn = document.getElementById('eau-sidebar-close');
-        },
-
-        /**
-         * Bind event handlers
+         * Bind event handlers using Event Delegation
          */
         bindEvents: function() {
             var self = this;
 
-            // Hamburger button click - use native addEventListener
-            if (this.hamburger) {
-                this.hamburger.addEventListener('click', function(e) {
+            // Use event delegation on document for all clicks
+            // This ensures it works even if elements are added dynamically
+            document.addEventListener('click', function(e) {
+                // Check if clicked on hamburger button or its children
+                var hamburger = e.target.closest('#eau-hamburger-btn');
+                if (hamburger) {
                     e.preventDefault();
                     e.stopPropagation();
                     self.toggle();
-                }, false);
-            }
+                    return;
+                }
 
-            // Close button click
-            if (this.closeBtn) {
-                this.closeBtn.addEventListener('click', function(e) {
+                // Check if clicked on close button
+                var closeBtn = e.target.closest('#eau-sidebar-close');
+                if (closeBtn) {
                     e.preventDefault();
                     self.close();
-                }, false);
-            }
+                    return;
+                }
 
-            // Overlay click
-            if (this.overlay) {
-                this.overlay.addEventListener('click', function(e) {
+                // Check if clicked on overlay
+                var overlay = e.target.closest('#eau-sidebar-overlay');
+                if (overlay && e.target === overlay) {
                     e.preventDefault();
                     self.close();
-                }, false);
-            }
+                    return;
+                }
+
+                // Check if clicked on a sidebar link
+                var sidebarLink = e.target.closest('.eau-sidebar-link');
+                if (sidebarLink && self.isOpen) {
+                    // Small delay to allow navigation
+                    setTimeout(function() {
+                        self.close();
+                    }, 100);
+                }
+            }, true); // Use capture phase to ensure we get the event first
 
             // Close on Escape key
             document.addEventListener('keydown', function(e) {
@@ -90,19 +136,6 @@
                     self.close();
                 }
             }, false);
-
-            // Close when clicking a link (for SPA-like behavior)
-            if (this.sidebar) {
-                this.sidebar.addEventListener('click', function(e) {
-                    var target = e.target.closest('.eau-sidebar-link');
-                    if (target) {
-                        // Small delay to allow navigation
-                        setTimeout(function() {
-                            self.close();
-                        }, 100);
-                    }
-                }, false);
-            }
         },
 
         /**
@@ -120,20 +153,30 @@
          * Open the sidebar
          */
         open: function() {
+            var sidebar = this.getSidebar();
+            var overlay = this.getOverlay();
+            var hamburger = this.getHamburger();
+
             this.isOpen = true;
 
-            // Add active classes
-            if (this.sidebar) this.sidebar.classList.add('active');
-            if (this.overlay) this.overlay.classList.add('active');
+            // Add active classes to ALL matching elements (in case of duplicates)
+            document.querySelectorAll('#eau-sidebar').forEach(function(el) {
+                el.classList.add('active');
+            });
+            document.querySelectorAll('#eau-sidebar-overlay').forEach(function(el) {
+                el.classList.add('active');
+            });
             document.body.classList.add('eau-sidebar-open');
 
-            // Update ARIA
-            if (this.hamburger) this.hamburger.setAttribute('aria-expanded', 'true');
+            // Update ARIA on all hamburger buttons
+            document.querySelectorAll('#eau-hamburger-btn').forEach(function(el) {
+                el.setAttribute('aria-expanded', 'true');
+            });
 
             // Focus management - focus first link after opening
             var self = this;
             setTimeout(function() {
-                var firstLink = self.sidebar ? self.sidebar.querySelector('.eau-sidebar-link') : null;
+                var firstLink = sidebar ? sidebar.querySelector('.eau-sidebar-link') : null;
                 if (firstLink) firstLink.focus();
             }, 300);
         },
@@ -142,25 +185,39 @@
          * Close the sidebar
          */
         close: function() {
+            var hamburger = this.getHamburger();
+
             this.isOpen = false;
 
-            // Remove active classes
-            if (this.sidebar) this.sidebar.classList.remove('active');
-            if (this.overlay) this.overlay.classList.remove('active');
+            // Remove active classes from ALL matching elements (in case of duplicates)
+            document.querySelectorAll('#eau-sidebar').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('#eau-sidebar-overlay').forEach(function(el) {
+                el.classList.remove('active');
+            });
             document.body.classList.remove('eau-sidebar-open');
 
-            // Update ARIA
-            if (this.hamburger) this.hamburger.setAttribute('aria-expanded', 'false');
+            // Update ARIA on all hamburger buttons
+            document.querySelectorAll('#eau-hamburger-btn').forEach(function(el) {
+                el.setAttribute('aria-expanded', 'false');
+            });
 
             // Return focus to hamburger button
-            if (this.hamburger) this.hamburger.focus();
+            if (hamburger) hamburger.focus();
         }
     };
 
-    // Initialize function that can be called multiple times safely
+    // Initialize function with retry mechanism
     function initSidebarMenu() {
         try {
-            EauSidebarMenu.init();
+            var success = EauSidebarMenu.init();
+            if (!success && EauSidebarMenu.retryCount < EauSidebarMenu.maxRetries) {
+                EauSidebarMenu.retryCount++;
+                // Exponential backoff: 100ms, 200ms, 400ms, etc. (max 2 seconds)
+                var delay = Math.min(100 * Math.pow(1.5, EauSidebarMenu.retryCount), 2000);
+                setTimeout(initSidebarMenu, delay);
+            }
         } catch (e) {
             console.error('EauSidebarMenu init error:', e);
         }
@@ -173,9 +230,6 @@
         // DOM already loaded, init immediately
         initSidebarMenu();
     }
-
-    // Also try to initialize after a small delay (backup for edge cases)
-    setTimeout(initSidebarMenu, 100);
 
     // Expose to global scope for external access
     window.EauSidebarMenu = EauSidebarMenu;
