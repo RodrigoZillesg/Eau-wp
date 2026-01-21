@@ -286,14 +286,29 @@
    Payment Modal - Professional UI/UX Design v1.51.4
    ========================================================================== */
 
-/* Modal Base */
-#eau-payment-modal {
+/* Modal Base - Aproveita melhor a altura da tela */
+.eau-modal-overlay > #eau-payment-modal {
     max-width: 700px !important;
+    height: calc(100vh - 160px) !important;
+    max-height: calc(100vh - 160px) !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
-#eau-payment-modal .eau-modal-body {
+.eau-modal-overlay > #eau-payment-modal .eau-modal-header {
+    flex-shrink: 0 !important;
+}
+
+.eau-modal-overlay > #eau-payment-modal .eau-modal-body {
     padding: 1.5rem !important;
     background: #f8fafc !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+}
+
+.eau-modal-overlay > #eau-payment-modal .eau-modal-footer {
+    flex-shrink: 0 !important;
 }
 
 /* Modal Title */

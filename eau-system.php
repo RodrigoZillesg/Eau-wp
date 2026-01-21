@@ -3,7 +3,7 @@
  * Plugin Name: Eau System
  * Plugin URI: https://platty.com.br
  * Description: Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
- * Version: 1.68.13
+ * Version: 1.71.3
  * Author: Platty / Rodrigo Zillesg
  * Author URI: https://platty.com.br
  * Text Domain: eau-system
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define constantes do plugin
-define('EAU_SYSTEM_VERSION', '1.68.13');
+define('EAU_SYSTEM_VERSION', '1.71.3');
 define('EAU_SYSTEM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EAU_SYSTEM_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EAU_SYSTEM_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -87,6 +87,15 @@ register_activation_hook(__FILE__, function() {
 
     // Cria tabela de log de Email Migration (v1.62.0)
     \EauSystem\EmailMigration\Eau_Email_Migration_Database::create_table();
+
+    // Cria tabelas de Coupons (v1.69.0)
+    \EauSystem\Coupons\Eau_Coupons_Database::create_tables();
+
+    // Cria tabela de logs do Fat Zebra (v1.70.0)
+    \EauSystem\FatZebra\FatZebra::activate();
+
+    // Cria tabela de compras de cursos (v1.70.0)
+    \EauSystem\Checkout\Eau_Course_Purchases::create_table();
 
     // Cria Post Type OpenLearning no JetEngine
     \EauSystem\Eau_OpenLearning_Post_Type::save_to_jet_engine();
