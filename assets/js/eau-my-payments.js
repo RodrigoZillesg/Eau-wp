@@ -20,6 +20,7 @@
         order: 'DESC',
         search: '',
         paymentType: '',
+        status: '',
         year: '',
 
         // Table selectors (based on Eau_Data_Table component)
@@ -65,11 +66,25 @@
                 self.loadPayments();
             });
 
+            // Status filter (v1.71.0)
+            $('#eau-my-payments-filters').on('change', 'select[name="status"]', function() {
+                self.status = $(this).val();
+                self.currentPage = 1;
+                self.loadPayments();
+            });
+
             // Year filter
             $('#eau-my-payments-filters').on('change', 'select[name="year"]', function() {
                 self.year = $(this).val();
                 self.currentPage = 1;
                 self.loadPayments();
+            });
+
+            // Pay Now button (v1.71.0)
+            $(document).on('click', '.eau-action-pay', function() {
+                const paymentType = $(this).data('type');
+                const itemId = $(this).data('item-id');
+                self.goToCheckout(paymentType, itemId);
             });
 
             // Sort columns
@@ -92,7 +107,8 @@
             // View payment details
             $(document).on('click', '.eau-action-view', function() {
                 const paymentId = $(this).data('id');
-                self.openPaymentDetail(paymentId);
+                const paymentType = $(this).data('type');
+                self.openPaymentDetail(paymentId, paymentType);
             });
 
             // Download receipt from table
@@ -165,12 +181,13 @@
 
         /**
          * Renders stats cards
+         * @updated 1.71.0 - Added pending and course payments
          */
         renderStats: function(data) {
-            $('#stat-total-payments .eau-stat-card-number').text(data.total_payments);
-            $('#stat-total-paid .eau-stat-card-number').text(data.total_paid_fmt);
-            $('#stat-event-payments .eau-stat-card-number').text(data.event_payments);
-            $('#stat-membership-payments .eau-stat-card-number').text(data.membership_payments);
+            $('#stat-pending-payments .eau-stat-card-number').text(data.pending_payments_fmt || '$0.00');
+            $('#stat-total-paid .eau-stat-card-number').text(data.total_paid_fmt || '$0.00');
+            $('#stat-event-payments .eau-stat-card-number').text(data.event_payments || 0);
+            $('#stat-course-payments .eau-stat-card-number').text(data.course_payments || 0);
         },
 
         /**
@@ -192,6 +209,7 @@
                     per_page: this.perPage,
                     search: this.search,
                     payment_type: this.paymentType,
+                    status: this.status,
                     year: this.year,
                     order_by: this.orderBy,
                     order: this.order
@@ -243,6 +261,7 @@
 
         /**
          * Renders payments table
+         * @updated 1.71.0 - Added Pay Now button for pending payments
          */
         renderPayments: function(rows) {
             const self = this;
@@ -256,21 +275,41 @@
             let html = '';
 
             rows.forEach(function(row) {
+                const isPending = row.payment_status === 'pending';
+                const isFailed = row.payment_status === 'failed';
+                const canPay = (isPending || isFailed) && row.item_id;
+
                 html += '<tr class="eau-table-row" data-id="' + row.id + '">';
                 html += '<td class="eau-table-td" data-label="DATE">' + row.date + '</td>';
                 html += '<td class="eau-table-td" data-label="TYPE"><span class="eau-badge ' + row.type_class + '">' + row.type_label + '</span></td>';
                 html += '<td class="eau-table-td eau-truncate" data-label="REFERENCE" title="' + self.escapeHtml(row.reference) + '">' + row.reference + '</td>';
                 html += '<td class="eau-table-td eau-amount" data-label="AMOUNT"><strong>' + row.amount_fmt + '</strong></td>';
-                html += '<td class="eau-table-td" data-label="METHOD">' + row.method + '</td>';
                 html += '<td class="eau-table-td" data-label="STATUS"><span class="eau-badge ' + row.status_class + '">' + row.status + '</span></td>';
                 html += '<td class="eau-table-td eau-table-td-actions">';
                 html += '<div class="eau-table-actions">';
-                html += '<button type="button" class="eau-action-btn eau-action-view" data-id="' + row.id + '" title="View Details">';
+
+                // Pay Now button for pending/failed payments (v1.71.0)
+                if (canPay) {
+                    html += '<button type="button" class="eau-btn eau-btn-primary eau-btn-sm eau-action-pay" ';
+                    html += 'data-type="' + row.payment_type + '" data-item-id="' + row.item_id + '" ';
+                    html += 'title="' + (isFailed ? eauMyPayments.i18n.retryPayment : eauMyPayments.i18n.payNow) + '">';
+                    html += '<i data-lucide="credit-card" style="width:14px;height:14px;"></i> ';
+                    html += (isFailed ? eauMyPayments.i18n.retryPayment : eauMyPayments.i18n.payNow);
+                    html += '</button>';
+                }
+
+                // View details button
+                html += '<button type="button" class="eau-action-btn eau-action-view" data-id="' + row.id + '" data-type="' + row.payment_type + '" title="' + eauMyPayments.i18n.viewDetails + '">';
                 html += '<i data-lucide="eye"></i>';
                 html += '</button>';
-                html += '<button type="button" class="eau-action-btn eau-action-receipt" data-id="' + row.id + '" data-type="' + row.payment_type + '" title="Download Receipt">';
-                html += '<i data-lucide="file-text"></i>';
-                html += '</button>';
+
+                // Receipt button (only for completed payments)
+                if (row.payment_status === 'completed') {
+                    html += '<button type="button" class="eau-action-btn eau-action-receipt" data-id="' + row.id + '" data-type="' + row.payment_type + '" title="Download Receipt">';
+                    html += '<i data-lucide="file-text"></i>';
+                    html += '</button>';
+                }
+
                 html += '</div>';
                 html += '</td>';
                 html += '</tr>';
@@ -425,12 +464,13 @@
         /**
          * Opens payment detail modal
          */
-        openPaymentDetail: function(paymentId) {
+        openPaymentDetail: function(paymentId, paymentType) {
             const self = this;
             const modal = $('#eau-payment-detail-modal-overlay');
 
-            // Store current payment ID for receipt download
+            // Store current payment ID and type for receipt download
             modal.data('current-payment-id', paymentId);
+            modal.data('payment-type', paymentType);
 
             // Show modal with loading state
             modal.fadeIn(200);
@@ -441,7 +481,8 @@
                 data: {
                     action: 'eau_get_my_payment_detail',
                     nonce: eauMyPayments.nonce,
-                    payment_id: paymentId
+                    payment_id: paymentId,
+                    payment_type: paymentType
                 },
                 success: function(response) {
                     if (response.success) {
@@ -460,6 +501,7 @@
 
         /**
          * Populates payment detail modal
+         * @updated 1.71.3 - Support for different payment statuses
          */
         populatePaymentModal: function(data) {
             // Type badge
@@ -468,8 +510,10 @@
             // Amount
             $('#eau-mp-amount').text(data.amount_fmt);
 
-            // Status
-            $('#eau-mp-status').html('<span class="eau-badge eau-badge-success">Confirmed</span>');
+            // Status - use returned status or default to Confirmed
+            const statusLabel = data.status_label || 'Confirmed';
+            const statusClass = data.status_class || 'eau-badge-success';
+            $('#eau-mp-status').html('<span class="eau-badge ' + statusClass + '">' + statusLabel + '</span>');
 
             // Date
             $('#eau-mp-date').text(data.date);
@@ -489,19 +533,26 @@
             }
 
             // Notes
-            if (data.notes) {
+            if (data.notes && !data.is_pending) {
                 $('#eau-mp-notes').text(data.notes);
                 $('#eau-mp-notes-section').show();
             } else {
                 $('#eau-mp-notes-section').hide();
             }
 
-            // Receipt link
+            // Receipt section - hide for pending payments
             if (data.receipt_url) {
                 $('#eau-mp-receipt-link').attr('href', data.receipt_url);
                 $('#eau-mp-receipt-section').show();
             } else {
                 $('#eau-mp-receipt-section').hide();
+            }
+
+            // Download receipt button - only show for completed payments
+            if (data.status === 'completed' || (!data.is_pending && !data.status)) {
+                $('#eau-mp-download-receipt-btn').show();
+            } else {
+                $('#eau-mp-download-receipt-btn').hide();
             }
 
             // Store data for receipt download
@@ -545,6 +596,34 @@
                 '&nonce=' + eauMyPayments.nonce;
 
             window.open(receiptUrl, '_blank');
+        },
+
+        /**
+         * Navigate to checkout page for pending payment (v1.71.0)
+         *
+         * @param {string} paymentType - event or course
+         * @param {number} itemId - Registration ID or Purchase ID
+         */
+        goToCheckout: function(paymentType, itemId) {
+            if (!eauMyPayments.checkoutUrl) {
+                EauNotifications.error('Checkout page not configured');
+                return;
+            }
+
+            let checkoutUrl = eauMyPayments.checkoutUrl;
+            const separator = checkoutUrl.indexOf('?') > -1 ? '&' : '?';
+
+            if (paymentType === 'event') {
+                checkoutUrl += separator + 'type=event&reg_id=' + itemId;
+            } else if (paymentType === 'course') {
+                checkoutUrl += separator + 'type=course&purchase_id=' + itemId;
+            } else {
+                EauNotifications.error('Invalid payment type');
+                return;
+            }
+
+            // Redirect to checkout
+            window.location.href = checkoutUrl;
         },
 
         /**

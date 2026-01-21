@@ -75,8 +75,8 @@ class Eau_My_Institution {
         // - usuários com membership ativo
         // - admins e institutionAdmins
         $user_id = get_current_user_id();
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-        $is_non_member = ($mem_type === 'non-member');
+        // v1.72.5: Usa helper para verificar non-member (suporta múltiplos tipos)
+        $is_non_member = Eau_User_Institution_Helper::is_non_member($user_id);
         $is_linked_to_institution = !empty(Eau_User_Institution_Helper::get_user_institution($user_id));
 
         // Permite acesso se:

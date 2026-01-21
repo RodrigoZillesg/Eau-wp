@@ -43,6 +43,29 @@
    Payment Detail Modal
    ======================================== */
 
+/* Modal Base - Aproveita melhor a altura da tela */
+.eau-modal-overlay > #eau-payment-detail-modal {
+    max-width: 600px !important;
+    height: calc(100vh - 160px) !important;
+    max-height: calc(100vh - 160px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.eau-modal-overlay > #eau-payment-detail-modal .eau-modal-header {
+    flex-shrink: 0 !important;
+}
+
+.eau-modal-overlay > #eau-payment-detail-modal .eau-modal-body {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+}
+
+.eau-modal-overlay > #eau-payment-detail-modal .eau-modal-footer {
+    flex-shrink: 0 !important;
+}
+
 /* Payment Header */
 .eau-mp-payment-header {
     display: flex;

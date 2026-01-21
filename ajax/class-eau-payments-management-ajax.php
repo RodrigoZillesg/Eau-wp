@@ -2,14 +2,15 @@
 /**
  * Payments Management AJAX Handlers
  *
- * Refatorado para mostrar FATURAS (registrations/applications) ao invés de pagamentos.
- * Segue o padrão de Event Registrations onde a tabela mostra inscrições/applications
+ * Refatorado para mostrar FATURAS (registrations/purchases) ao invés de pagamentos.
+ * Segue o padrão de Event Registrations onde a tabela mostra inscrições/purchases
  * pendentes de pagamento, e o admin pode adicionar pagamentos a cada fatura.
  *
  * @package    EauSystem
  * @subpackage Ajax
  * @since      1.50.1
  * @updated    1.51.0 - Refatorado para mostrar faturas
+ * @updated    1.71.0 - Adicionado suporte para cursos, removido membership UI
  */
 
 namespace EauSystem\Ajax;
@@ -90,7 +91,7 @@ class Eau_Payments_Management_Ajax {
 
         $invoices = array();
 
-        // Get Event Registrations (if not filtered to membership only)
+        // Get Event Registrations (if not filtered to course only)
         if (empty($invoice_type) || $invoice_type === 'event') {
             $event_invoices = self::get_event_registrations($search, $payment_status);
             $invoices = array_merge($invoices, $event_invoices);
@@ -100,13 +101,19 @@ class Eau_Payments_Management_Ajax {
             $invoices = array_merge($invoices, $imported_events);
         }
 
-        // Get Membership Applications (if not filtered to event only)
-        if (empty($invoice_type) || $invoice_type === 'membership') {
+        // Get Course Purchases (v1.71.0)
+        if (empty($invoice_type) || $invoice_type === 'course') {
+            $course_invoices = self::get_course_purchases($search, $payment_status);
+            $invoices = array_merge($invoices, $course_invoices);
+        }
+
+        // Get Membership Applications (historical data, kept for backwards compatibility)
+        // Only show if no filter or if specifically filtering for membership (legacy)
+        if (empty($invoice_type)) {
             $membership_invoices = self::get_membership_applications($search, $payment_status);
             $invoices = array_merge($invoices, $membership_invoices);
 
             // Also get imported membership payments (v1.53.2)
-            // This includes both 'membership' and 'legacy' payment types
             $imported_membership = self::get_imported_payments($search, $payment_status, 'membership');
             $invoices = array_merge($invoices, $imported_membership);
 
@@ -233,6 +240,109 @@ class Eau_Payments_Management_Ajax {
                 'status_class'    => $status_class,
                 'date'            => date('M j, Y', strtotime($reg_date)),
                 'date_raw'        => $reg_date,
+            );
+        }
+
+        return $invoices;
+    }
+
+    /**
+     * Busca Course Purchases como faturas (v1.71.0)
+     *
+     * @since  1.71.0
+     * @param  string $search Search term
+     * @param  string $payment_status Filter by payment status
+     * @return array
+     */
+    private static function get_course_purchases($search = '', $payment_status = '') {
+        global $wpdb;
+
+        $invoices = array();
+        $table = $wpdb->prefix . 'eau_course_purchases';
+
+        // Check if table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table) {
+            return $invoices;
+        }
+
+        $where = "WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_like = '%' . $wpdb->esc_like($search) . '%';
+            // We'll filter by user info after getting results
+        }
+
+        $purchases = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC", ARRAY_A);
+
+        foreach ($purchases as $purchase) {
+            $user = get_userdata($purchase['user_id']);
+            $user_name = $user ? $user->display_name : __('Unknown User', 'eau-system');
+            $user_email = $user ? $user->user_email : '';
+
+            // Apply search filter
+            if (!empty($search)) {
+                $search_lower = strtolower($search);
+                if (
+                    strpos(strtolower($user_name), $search_lower) === false &&
+                    strpos(strtolower($user_email), $search_lower) === false
+                ) {
+                    continue;
+                }
+            }
+
+            // Get course info
+            $course = get_post($purchase['course_id']);
+            $course_title = $course ? $course->post_title : __('Unknown Course', 'eau-system');
+            $amount = floatval($purchase['amount']);
+            $status = $purchase['status'];
+
+            // Map status to payment status
+            $pay_status = $status;
+            if ($status === 'paid') {
+                $pay_status = 'paid';
+                $total_paid = $amount;
+            } elseif ($status === 'pending' || $status === 'processing') {
+                $pay_status = 'pending';
+                $total_paid = 0;
+            } elseif ($status === 'failed') {
+                $pay_status = 'pending'; // Show as pending so they can retry
+                $total_paid = 0;
+            } else {
+                $total_paid = 0;
+            }
+
+            $balance = max(0, $amount - $total_paid);
+
+            // Filter by payment status if specified
+            if (!empty($payment_status) && $pay_status !== $payment_status) {
+                continue;
+            }
+
+            $status_label = self::get_payment_status_label($pay_status);
+            $status_class = self::get_payment_status_class($pay_status);
+
+            $invoices[] = array(
+                'id'              => $purchase['id'],
+                'invoice_type'    => 'course',
+                'type_label'      => __('Course', 'eau-system'),
+                'type_class'      => 'eau-badge-blue',
+                'member_name'     => esc_html($user_name),
+                'member_email'    => esc_html($user_email),
+                'user_id'         => $purchase['user_id'],
+                'reference'       => esc_html($course_title),
+                'reference_id'    => $purchase['course_id'],
+                'amount_due'      => $amount,
+                'amount_due_fmt'  => '$' . number_format($amount, 2),
+                'amount_paid'     => $total_paid,
+                'amount_paid_fmt' => '$' . number_format($total_paid, 2),
+                'balance'         => $balance,
+                'balance_fmt'     => '$' . number_format($balance, 2),
+                'payment_status'  => $pay_status,
+                'status_label'    => $status_label,
+                'status_class'    => $status_class,
+                'date'            => date('M j, Y', strtotime($purchase['created_at'])),
+                'date_raw'        => $purchase['created_at'],
+                'transaction_id'  => $purchase['transaction_id'],
             );
         }
 
@@ -1020,6 +1130,7 @@ class Eau_Payments_Management_Ajax {
 
         // Get all invoices to calculate stats (including imported payments)
         $event_invoices = self::get_event_registrations('', '');
+        $course_invoices = self::get_course_purchases('', '');
         $membership_invoices = self::get_membership_applications('', '');
 
         // Get imported payments (v1.53.2)
@@ -1030,7 +1141,7 @@ class Eau_Payments_Management_Ajax {
         $pending_count = 0;
         $paid_count = 0;
 
-        $all_invoices = array_merge($event_invoices, $membership_invoices, $imported_payments);
+        $all_invoices = array_merge($event_invoices, $course_invoices, $membership_invoices, $imported_payments);
 
         foreach ($all_invoices as $invoice) {
             $total_due += $invoice['amount_due'];
@@ -1048,6 +1159,7 @@ class Eau_Payments_Management_Ajax {
             'total_paid'       => $total_paid,
             'total_balance'    => $total_due - $total_paid,
             'event_count'      => count($event_invoices),
+            'course_count'     => count($course_invoices),
             'membership_count' => count($membership_invoices),
             'imported_count'   => count($imported_payments),
             'pending_count'    => $pending_count,

@@ -95,7 +95,7 @@
                 self.syncCourses();
             });
 
-            // Bulk visibility buttons
+            // Bulk visibility buttons (old header buttons - keeping for backwards compatibility)
             $('#eau-bulk-visible').on('click', function(e) {
                 e.preventDefault();
                 self.bulkSetVisibility(true);
@@ -104,6 +104,31 @@
             $('#eau-bulk-hidden').on('click', function(e) {
                 e.preventDefault();
                 self.bulkSetVisibility(false);
+            });
+
+            // Bulk actions bar - Close button
+            $('#eau-bulk-actions-close').on('click', this.clearSelection.bind(this));
+
+            // Bulk actions bar - Visibility buttons
+            $('#eau-bulk-set-visible').on('click', function(e) {
+                e.preventDefault();
+                self.bulkSetVisibility(true);
+            });
+
+            $('#eau-bulk-set-hidden').on('click', function(e) {
+                e.preventDefault();
+                self.bulkSetVisibility(false);
+            });
+
+            // Bulk actions bar - Featured buttons
+            $('#eau-bulk-set-featured').on('click', function(e) {
+                e.preventDefault();
+                self.bulkSetFeatured(true);
+            });
+
+            $('#eau-bulk-set-not-featured').on('click', function(e) {
+                e.preventDefault();
+                self.bulkSetFeatured(false);
             });
         },
 
@@ -427,7 +452,7 @@
         },
 
         /**
-         * Update selected IDs
+         * Update selected IDs and show/hide bulk actions bar
          */
         updateSelectedIds: function() {
             this.selectedIds = [];
@@ -435,12 +460,31 @@
                 OpenLearningManagement.selectedIds.push($(this).val());
             });
 
-            // Show/hide bulk action buttons using class (CSS uses !important)
-            if (this.selectedIds.length > 0) {
-                $('#eau-bulk-visible, #eau-bulk-hidden').addClass('eau-show');
+            // Update bulk actions bar
+            const count = this.selectedIds.length;
+            $('#eau-bulk-actions-count').text(count);
+            $('#eau-bulk-actions-label').text(count === 1 ? 'course selected' : 'courses selected');
+
+            if (count > 0) {
+                $('#eau-bulk-actions-bar').addClass('eau-visible');
             } else {
-                $('#eau-bulk-visible, #eau-bulk-hidden').removeClass('eau-show');
+                $('#eau-bulk-actions-bar').removeClass('eau-visible');
             }
+
+            // Re-initialize Lucide icons for the bar
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Clear selection
+         */
+        clearSelection: function() {
+            $('.eau-row-checkbox').prop('checked', false);
+            $('#courses-table-select-all, .eau-table-select-all-header').prop('checked', false);
+            this.selectedIds = [];
+            $('#eau-bulk-actions-bar').removeClass('eau-visible');
         },
 
         /**
@@ -560,7 +604,52 @@
                         success: function(response) {
                             if (response.success) {
                                 EauNotifications.success('Updated', response.data.message);
-                                self.selectedIds = [];
+                                self.clearSelection();
+                                self.loadCourses();
+                            } else {
+                                EauNotifications.error('Error', response.data.message);
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Bulk set featured (v1.72.5)
+         */
+        bulkSetFeatured: function(featured) {
+            const self = this;
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('Warning', 'Please select courses first');
+                return;
+            }
+
+            const action = featured ? 'set as featured' : 'remove from featured';
+            EauNotifications.confirm({
+                title: 'Bulk Update',
+                message: `Are you sure you want to ${action} ${this.selectedIds.length} selected course(s)?`,
+                type: 'info',
+                confirmText: 'Yes, update',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauOpenLearningMgmtData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_openlearning_mgmt_bulk_featured',
+                            nonce: eauOpenLearningMgmtData.nonce,
+                            course_ids: self.selectedIds,
+                            featured: featured
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Updated', response.data.message);
+                                self.clearSelection();
                                 self.loadCourses();
                             } else {
                                 EauNotifications.error('Error', response.data.message);

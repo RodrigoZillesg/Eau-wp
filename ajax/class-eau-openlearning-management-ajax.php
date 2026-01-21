@@ -28,6 +28,9 @@ class Eau_OpenLearning_Management_Ajax {
         // Bulk update visibility
         add_action('wp_ajax_eau_openlearning_mgmt_bulk_visibility', array(__CLASS__, 'handle_bulk_visibility'));
 
+        // Bulk update featured (v1.72.5)
+        add_action('wp_ajax_eau_openlearning_mgmt_bulk_featured', array(__CLASS__, 'handle_bulk_featured'));
+
         // Get stats for the management page
         add_action('wp_ajax_eau_openlearning_mgmt_get_stats', array(__CLASS__, 'handle_get_stats'));
 
@@ -409,6 +412,45 @@ class Eau_OpenLearning_Management_Ajax {
 
         wp_send_json_success(array(
             'message' => $updated_count . ' courses updated successfully',
+            'updated_count' => $updated_count,
+        ));
+    }
+
+    /**
+     * Bulk set featured status (v1.72.5)
+     */
+    public static function handle_bulk_featured() {
+        // Verifica nonce
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'eau_openlearning_management_nonce')) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+        }
+
+        // Verifica permissão
+        if (!Eau_User_Institution_Helper::has_admin_access()) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $course_ids = isset($_POST['course_ids']) ? array_map('absint', (array) $_POST['course_ids']) : array();
+        $featured = isset($_POST['featured']) ? filter_var($_POST['featured'], FILTER_VALIDATE_BOOLEAN) : false;
+
+        if (empty($course_ids)) {
+            wp_send_json_error(array('message' => 'No courses selected'));
+        }
+
+        $meta_prefix = Eau_OpenLearning_Post_Type::META_PREFIX;
+        $updated_count = 0;
+
+        foreach ($course_ids as $course_id) {
+            $post = get_post($course_id);
+            if ($post && $post->post_type === Eau_OpenLearning_Post_Type::POST_TYPE) {
+                update_post_meta($course_id, $meta_prefix . 'is_featured', $featured ? 'true' : '');
+                $updated_count++;
+            }
+        }
+
+        $status_text = $featured ? 'featured' : 'removed from featured';
+        wp_send_json_success(array(
+            'message' => $updated_count . ' courses ' . $status_text . ' successfully',
             'updated_count' => $updated_count,
         ));
     }

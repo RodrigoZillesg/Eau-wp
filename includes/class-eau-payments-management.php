@@ -2,17 +2,18 @@
 /**
  * Payments Management Page
  *
- * Unified invoices management page for events and membership.
- * Shows registrations and applications (invoices) with payment management.
+ * Unified invoices management page for events and courses.
+ * Shows registrations and course purchases (invoices) with payment management.
  *
  * Refatorado para seguir o padrão de Event Registrations:
- * - Tabela mostra FATURAS (registrations/applications), não pagamentos
+ * - Tabela mostra FATURAS (registrations/purchases), não pagamentos
  * - Modal permite adicionar pagamentos a uma fatura existente
  *
  * @package    EauSystem
  * @subpackage Includes
  * @since      1.50.1
  * @updated    1.51.0 - Refatorado para mostrar faturas
+ * @updated    1.71.0 - Removido membership, adicionado cursos
  */
 
 namespace EauSystem;
@@ -33,7 +34,7 @@ if (!defined('WPINC')) {
 /**
  * Class Eau_Payments_Management
  *
- * Renderiza a página de gestão de faturas (eventos + membership).
+ * Renderiza a página de gestão de faturas (eventos + cursos).
  *
  * @since 1.50.1
  */
@@ -122,15 +123,22 @@ class Eau_Payments_Management {
             true
         );
 
+        // Get checkout URL
+        $checkout_page_id = get_option('eau_checkout_page_id');
+        $checkout_url = $checkout_page_id ? get_permalink($checkout_page_id) : home_url('/checkout/');
+
         // Localize script
         wp_localize_script('eau-payments-management', 'eauPaymentsManagement', array(
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce'   => wp_create_nonce('eau_payments_management_nonce'),
-            'i18n'    => array(
-                'confirmDelete' => __('Are you sure you want to delete this payment?', 'eau-system'),
-                'loading'       => __('Loading...', 'eau-system'),
-                'noResults'     => __('No invoices found', 'eau-system'),
-                'error'         => __('An error occurred', 'eau-system'),
+            'ajaxUrl'     => admin_url('admin-ajax.php'),
+            'nonce'       => wp_create_nonce('eau_payments_management_nonce'),
+            'checkoutUrl' => $checkout_url,
+            'i18n'        => array(
+                'confirmDelete'    => __('Are you sure you want to delete this payment?', 'eau-system'),
+                'loading'          => __('Loading...', 'eau-system'),
+                'noResults'        => __('No invoices found', 'eau-system'),
+                'error'            => __('An error occurred', 'eau-system'),
+                'linkCopied'       => __('Payment link copied to clipboard!', 'eau-system'),
+                'copyLinkError'    => __('Failed to copy link', 'eau-system'),
             ),
         ));
     }
@@ -190,7 +198,7 @@ class Eau_Payments_Management {
         <div class="eau-page-header">
             <div class="eau-page-header-title">
                 <h1><?php esc_html_e('Payments Management', 'eau-system'); ?></h1>
-                <p class="eau-page-header-subtitle"><?php esc_html_e('Manage event registrations and membership payments', 'eau-system'); ?></p>
+                <p class="eau-page-header-subtitle"><?php esc_html_e('Manage event registrations and course payments', 'eau-system'); ?></p>
             </div>
             <div class="eau-page-header-actions">
                 <button type="button" class="eau-btn eau-btn-secondary" id="eau-import-csv-btn">
@@ -250,9 +258,9 @@ class Eau_Payments_Management {
                     'label'   => __('Type', 'eau-system'),
                     'type'    => 'select',
                     'options' => array(
-                        ''           => __('All Types', 'eau-system'),
-                        'event'      => __('Event', 'eau-system'),
-                        'membership' => __('Membership', 'eau-system'),
+                        ''       => __('All Types', 'eau-system'),
+                        'event'  => __('Event', 'eau-system'),
+                        'course' => __('Course', 'eau-system'),
                     ),
                 ),
                 array(

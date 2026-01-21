@@ -1930,3 +1930,636 @@ button.eau-reg-btn-confirm:disabled {
     max-height: calc(90vh - 160px);
     overflow-y: auto;
 }
+
+/* ================================================
+   REGISTRATION TYPE SELECTOR (v1.69.0)
+   ================================================ */
+
+.eau-reg-type-selector {
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--eau-gray-50);
+    border-radius: var(--eau-border-radius);
+    border: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-type-options {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.eau-reg-type-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 12px;
+    background: var(--eau-white);
+    border: 2px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.eau-reg-type-option:hover {
+    border-color: var(--eau-primary);
+    background: #f8fafc;
+}
+
+.eau-reg-type-option.selected {
+    border-color: var(--eau-primary);
+    background: #eff6ff;
+}
+
+.eau-reg-type-option input[type="radio"] {
+    display: none;
+}
+
+.eau-reg-type-icon {
+    font-size: 24px;
+}
+
+.eau-reg-type-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+    text-align: center;
+}
+
+/* ================================================
+   MEMBER SELECTION (v1.69.0)
+   ================================================ */
+
+.eau-reg-member-selection {
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--eau-gray-50);
+    border-radius: var(--eau-border-radius);
+    border: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-institution-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--eau-white);
+    border-radius: var(--eau-border-radius);
+    margin-bottom: 12px;
+    border: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-institution-logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--eau-gray-100);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.eau-reg-institution-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.eau-reg-institution-logo .eau-reg-info-icon {
+    font-size: 20px;
+}
+
+.eau-reg-institution-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-700);
+}
+
+.eau-reg-member-list {
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--eau-white);
+    border: 1px solid var(--eau-gray-200);
+    border-radius: var(--eau-border-radius);
+}
+
+.eau-reg-member-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--eau-gray-100);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.eau-reg-member-item:last-child {
+    border-bottom: none;
+}
+
+.eau-reg-member-item:hover {
+    background: var(--eau-gray-50);
+}
+
+.eau-reg-member-item.selected {
+    background: #eff6ff;
+}
+
+.eau-reg-member-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.eau-reg-member-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--eau-primary);
+}
+
+.eau-reg-member-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.eau-reg-member-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--eau-gray-800);
+}
+
+.eau-reg-member-email {
+    font-size: 12px;
+    color: var(--eau-gray-500);
+}
+
+.eau-reg-member-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.eau-reg-member-badge.registered {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.eau-reg-member-badge.you {
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-weight: 500;
+}
+
+/* Current user highlight */
+.eau-reg-member-item.current-user {
+    background: #f0f9ff;
+    border-left: 3px solid var(--eau-primary);
+}
+
+.eau-reg-member-item.current-user:not(.disabled):hover {
+    background: #e0f2fe;
+}
+
+.eau-reg-member-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 0;
+    font-size: 13px;
+    color: var(--eau-gray-600);
+}
+
+.eau-reg-member-loading {
+    padding: 12px;
+}
+
+/* ================================================
+   COUPON SECTION (v1.69.0)
+   ================================================ */
+
+.eau-reg-coupon-section {
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--eau-gray-50);
+    border-radius: var(--eau-border-radius);
+    border: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-coupon-input-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.eau-reg-coupon-input-wrapper input {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1px solid var(--eau-gray-300);
+    border-radius: var(--eau-border-radius);
+    background: var(--eau-white);
+}
+
+.eau-reg-coupon-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--eau-primary);
+    box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1);
+}
+
+.eau-reg-btn-apply {
+    padding: 0 20px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    background: var(--eau-primary);
+    color: var(--eau-white);
+    border: none;
+    border-radius: var(--eau-border-radius);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.eau-reg-btn-apply:hover {
+    background: #004fa3;
+}
+
+.eau-reg-btn-apply:disabled {
+    background: var(--eau-gray-300);
+    cursor: not-allowed;
+}
+
+.eau-reg-coupon-result {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.eau-reg-coupon-result.success {
+    color: var(--eau-success);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.eau-reg-coupon-result.error {
+    color: var(--eau-error);
+}
+
+.eau-reg-coupon-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #ecfdf5;
+    border: 1px solid var(--eau-success);
+    border-radius: var(--eau-border-radius);
+    margin-top: 10px;
+}
+
+.eau-reg-coupon-applied-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #047857;
+}
+
+.eau-reg-coupon-remove {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: var(--eau-gray-500) !important;
+    cursor: pointer !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-reg-coupon-remove:hover {
+    background: #fee2e2 !important;
+    color: var(--eau-error) !important;
+}
+
+.eau-reg-coupon-remove:active,
+.eau-reg-coupon-remove:focus,
+.eau-reg-coupon-remove:visited {
+    background: #fee2e2 !important;
+    color: var(--eau-error) !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* ================================================
+   PRICE SUMMARY (v1.69.0)
+   ================================================ */
+
+.eau-reg-price-summary {
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--eau-gray-50);
+    border-radius: var(--eau-border-radius);
+    border: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--eau-gray-600);
+}
+
+.eau-reg-price-row:not(:last-child) {
+    border-bottom: 1px solid var(--eau-gray-200);
+}
+
+.eau-reg-discount-row {
+    color: var(--eau-success);
+}
+
+.eau-discount-amount {
+    font-weight: 500;
+}
+
+.eau-reg-total-row {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--eau-gray-900);
+}
+
+/* Section title */
+.eau-reg-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--eau-gray-700);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Skeleton loading */
+.eau-skeleton {
+    background: linear-gradient(90deg, var(--eau-gray-200) 25%, var(--eau-gray-100) 50%, var(--eau-gray-200) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ================================================
+   FORCED STYLES FOR REGISTRATION MODAL (v1.69.1)
+   ================================================ */
+
+/* Force all modal text to use our font */
+.eau-reg-modal,
+.eau-reg-modal *,
+.eau-reg-modal-container,
+.eau-reg-modal-container * {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Force modal header styles */
+.eau-reg-modal-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 20px 24px !important;
+    border-bottom: 1px solid var(--eau-gray-200) !important;
+    background: #fff !important;
+}
+
+.eau-reg-modal-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: var(--eau-gray-900) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.4 !important;
+}
+
+.eau-reg-modal-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    background: var(--eau-gray-100) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    color: var(--eau-gray-500) !important;
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+    transition: all 0.15s ease !important;
+}
+
+.eau-reg-modal-close:hover {
+    background: var(--eau-gray-200) !important;
+    color: var(--eau-gray-700) !important;
+}
+
+/* Force modal body styles */
+.eau-reg-modal-body {
+    padding: 24px !important;
+    background: #fff !important;
+}
+
+/* Force modal footer styles */
+.eau-reg-modal-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--eau-gray-200) !important;
+    background: var(--eau-gray-50) !important;
+}
+
+/* Force buttons in modal footer - override ALL theme styles */
+.eau-reg-modal-footer button,
+.eau-reg-modal-footer .eau-reg-btn-cancel,
+.eau-reg-modal-footer .eau-reg-btn-confirm,
+.eau-reg-modal button.eau-reg-btn-cancel,
+.eau-reg-modal button.eau-reg-btn-confirm {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-cancel,
+.eau-reg-modal button.eau-reg-btn-cancel {
+    background: #fff !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-cancel:hover,
+.eau-reg-modal button.eau-reg-btn-cancel:hover {
+    background: #f9fafb !important;
+    border-color: #9ca3af !important;
+    color: #111827 !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-cancel:active,
+.eau-reg-modal-footer .eau-reg-btn-cancel:focus,
+.eau-reg-modal button.eau-reg-btn-cancel:active,
+.eau-reg-modal button.eau-reg-btn-cancel:focus {
+    background: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+    color: #111827 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-confirm,
+.eau-reg-modal button.eau-reg-btn-confirm {
+    background: #005EB8 !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-confirm:hover,
+.eau-reg-modal button.eau-reg-btn-confirm:hover {
+    background: #004a93 !important;
+    color: #fff !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-confirm:active,
+.eau-reg-modal-footer .eau-reg-btn-confirm:focus,
+.eau-reg-modal button.eau-reg-btn-confirm:active,
+.eau-reg-modal button.eau-reg-btn-confirm:focus {
+    background: #003d7a !important;
+    color: #fff !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-reg-modal-footer .eau-reg-btn-confirm:disabled,
+.eau-reg-modal button.eau-reg-btn-confirm:disabled {
+    background: #9ca3af !important;
+    color: #fff !important;
+    cursor: not-allowed !important;
+}
+
+/* Force input styles in modal */
+.eau-reg-modal input[type="text"],
+.eau-reg-modal input[type="email"],
+.eau-reg-modal textarea,
+.eau-reg-field input,
+.eau-reg-field textarea {
+    width: 100% !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    color: #111827 !important;
+    background: #fff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.eau-reg-modal input[type="text"]:focus,
+.eau-reg-modal input[type="email"]:focus,
+.eau-reg-modal textarea:focus,
+.eau-reg-field input:focus,
+.eau-reg-field textarea:focus {
+    outline: none !important;
+    border-color: #005EB8 !important;
+    box-shadow: 0 0 0 3px rgba(0, 94, 184, 0.1) !important;
+}
+
+/* Force label styles */
+.eau-reg-modal label,
+.eau-reg-field label {
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 6px !important;
+}
+
+/* Force checkbox styles */
+.eau-reg-modal input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    accent-color: #005EB8 !important;
+    cursor: pointer !important;
+}
+
+/* Force Apply button styles */
+.eau-reg-btn-apply,
+button.eau-reg-btn-apply {
+    padding: 0 20px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    background: #005EB8 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: background 0.2s ease !important;
+}
+
+.eau-reg-btn-apply:hover,
+button.eau-reg-btn-apply:hover {
+    background: #004a93 !important;
+}
+
+.eau-reg-btn-apply:active,
+.eau-reg-btn-apply:focus,
+button.eau-reg-btn-apply:active,
+button.eau-reg-btn-apply:focus {
+    background: #003d7a !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.eau-reg-btn-apply:disabled,
+button.eau-reg-btn-apply:disabled {
+    background: #9ca3af !important;
+    cursor: not-allowed !important;
+}

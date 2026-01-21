@@ -654,36 +654,19 @@ class Eau_My_Cpds {
     }
 
     /**
-     * Pega os anos disponíveis com atividades para o usuário
+     * Pega os anos disponíveis para o filtro
+     * Retorna todos os anos de 2015 até o ano atual (v1.72.5)
      *
-     * @param int $user_id ID do usuário
+     * @param int $user_id ID do usuário (não usado mais, mantido para compatibilidade)
      * @return array Anos disponíveis
      */
     private static function get_available_years($user_id) {
-        global $wpdb;
+        $current_year = (int) date('Y');
+        $start_year = 2015;
 
-        $mem_userid = get_user_meta($user_id, 'mem_userid', true);
-
-        if (empty($mem_userid)) {
-            return array(date('Y'));
-        }
-
-        $years = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT YEAR(p.post_date) as year
-            FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-            WHERE p.post_type = 'activitie'
-            AND p.post_status = 'publish'
-            AND pm.meta_key = 'act_user_id'
-            AND pm.meta_value = %s
-            ORDER BY year DESC",
-            $mem_userid
-        ));
-
-        // Garante que o ano atual está sempre disponível
-        $current_year = date('Y');
-        if (!in_array($current_year, $years)) {
-            array_unshift($years, $current_year);
+        $years = array();
+        for ($year = $current_year; $year >= $start_year; $year--) {
+            $years[] = $year;
         }
 
         return $years;

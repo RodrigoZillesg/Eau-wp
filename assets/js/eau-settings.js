@@ -18,6 +18,8 @@
         activeTab: 'general',
         categoriesLoaded: false,
         eventCategoriesLoaded: false,
+        couponsLoaded: false,
+        paymentGatewayLoaded: false,
 
         /**
          * Initialize controller
@@ -81,6 +83,22 @@
                 }
             }
 
+            // Lazy load Coupons when tab is activated (v1.69.0)
+            if (tab === 'coupons' && !this.couponsLoaded) {
+                this.couponsLoaded = true;
+                if (typeof EauCouponsController !== 'undefined') {
+                    EauCouponsController.init();
+                }
+            }
+
+            // Lazy load Payment Gateway when tab is activated (v1.70.0)
+            if (tab === 'payment-gateway' && !this.paymentGatewayLoaded) {
+                this.paymentGatewayLoaded = true;
+                if (typeof EauPaymentGatewayController !== 'undefined') {
+                    EauPaymentGatewayController.init();
+                }
+            }
+
             // Re-init Lucide icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
@@ -91,7 +109,7 @@
          * Restore tab from localStorage (v1.60.0)
          */
         restoreTab: function() {
-            const validTabs = ['general', 'cpd-categories', 'event-categories', 'tags', 'import', 'system'];
+            const validTabs = ['general', 'cpd-categories', 'event-categories', 'tags', 'coupons', 'import', 'system'];
 
             // Check URL hash first
             const hash = window.location.hash.substring(1);
@@ -3209,5 +3227,1122 @@
 
     // Make EauEventCategoriesController globally accessible for lazy loading
     window.EauEventCategoriesController = EauEventCategoriesController;
+
+    // ============================================
+    // Coupons Controller (v1.69.0)
+    // ============================================
+
+    const EauCouponsController = {
+
+        // State
+        currentPage: 1,
+        perPage: 20,
+        searchTerm: '',
+        statusFilter: '',
+        orderBy: 'created_at',
+        order: 'DESC',
+        editingCouponId: null,
+        eventsCache: [],
+
+        /**
+         * Initialize
+         */
+        init: function() {
+            this.bindEvents();
+            this.loadCoupons();
+        },
+
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+
+            // Search
+            $('#eau-coupons-search').on('input', this.debounce(function(e) {
+                self.searchTerm = $(e.target).val();
+                self.currentPage = 1;
+                self.loadCoupons();
+            }, 300));
+
+            // Status filter
+            $('#eau-coupons-status-filter').on('change', function() {
+                self.statusFilter = $(this).val();
+                self.currentPage = 1;
+                self.loadCoupons();
+            });
+
+            // Add Coupon
+            $('#eau-add-coupon').on('click', this.handleAddCoupon.bind(this));
+
+            // Table actions (delegated)
+            $(document).on('click', '#coupons-table .eau-action-view', this.handleViewCoupon.bind(this));
+            $(document).on('click', '#coupons-table .eau-action-edit', this.handleEditCoupon.bind(this));
+            $(document).on('click', '#coupons-table .eau-action-delete', this.handleDeleteCoupon.bind(this));
+
+            // Modal close
+            $(document).on('click', '#eau-coupon-modal-view-overlay .eau-modal-close, #eau-coupon-modal-view-overlay [data-modal-action="close"]', function() {
+                self.closeModal('eau-coupon-modal-view');
+            });
+            $(document).on('click', '#eau-coupon-modal-edit-overlay .eau-modal-close, #eau-coupon-modal-edit-overlay [data-modal-action="close"]', function() {
+                self.closeModal('eau-coupon-modal-edit');
+            });
+            $(document).on('click', '#eau-coupon-modal-add-overlay .eau-modal-close, #eau-coupon-modal-add-overlay [data-modal-action="close"]', function() {
+                self.closeModal('eau-coupon-modal-add');
+            });
+            $(document).on('click', '#eau-coupon-modal-delete-overlay .eau-modal-close, #eau-coupon-modal-delete-overlay [data-modal-action="close"]', function() {
+                self.closeModal('eau-coupon-modal-delete');
+            });
+
+            // Modal save
+            $(document).on('click', '#eau-coupon-modal-edit-overlay [data-modal-action="save"]', this.handleSaveCoupon.bind(this));
+            $(document).on('click', '#eau-coupon-modal-add-overlay [data-modal-action="create"]', this.handleCreateCoupon.bind(this));
+            $(document).on('click', '#eau-coupon-modal-delete-overlay [data-modal-action="delete"]', this.handleConfirmDelete.bind(this));
+
+            // Event scope toggle
+            $(document).on('change', 'input[name="event_scope"]', function() {
+                const scope = $(this).val();
+                if (scope === 'specific') {
+                    $('#coupon-events-selector').show();
+                    self.loadEvents();
+                } else {
+                    $('#coupon-events-selector').hide();
+                }
+            });
+
+            // Sortable columns
+            $(document).on('click', '#coupons-table .eau-table-th.eau-sortable', this.handleSort.bind(this));
+
+            // Pagination
+            $(document).on('click', '#eau-coupons-pagination .eau-pagination-btn', function(e) {
+                e.preventDefault();
+                if ($(this).is(':disabled') || $(this).hasClass('eau-pagination-active')) {
+                    return;
+                }
+                const page = parseInt($(this).data('page'));
+                self.currentPage = page;
+                self.loadCoupons();
+            });
+
+            // Copy coupon code on click
+            $(document).on('click', '.eau-coupon-code-copy', function(e) {
+                e.stopPropagation();
+                const code = $(this).data('code');
+                const $el = $(this);
+
+                // Function to show success feedback
+                const showCopiedFeedback = function() {
+                    const originalText = $el.text();
+                    $el.text('Copied!');
+                    $el.addClass('eau-coupon-copied');
+
+                    setTimeout(function() {
+                        $el.text(originalText);
+                        $el.removeClass('eau-coupon-copied');
+                    }, 1500);
+                };
+
+                // Try modern clipboard API first (only available on HTTPS)
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(code).then(function() {
+                        showCopiedFeedback();
+                    }).catch(function() {
+                        // Fallback if clipboard API fails
+                        self.copyToClipboardFallback(code);
+                        showCopiedFeedback();
+                    });
+                } else {
+                    // Fallback for HTTP or older browsers
+                    self.copyToClipboardFallback(code);
+                    showCopiedFeedback();
+                }
+            });
+        },
+
+        /**
+         * Handle sort
+         */
+        handleSort: function(e) {
+            const $th = $(e.currentTarget);
+            const column = $th.data('key');
+
+            if (!$th.hasClass('eau-sortable')) return;
+
+            if (this.orderBy === column) {
+                this.order = this.order === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                this.orderBy = column;
+                this.order = 'ASC';
+            }
+
+            this.loadCoupons();
+        },
+
+        /**
+         * Load coupons
+         */
+        loadCoupons: function() {
+            const self = this;
+
+            this.showSkeleton();
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_coupons',
+                    nonce: eauSettingsData.couponsNonce,
+                    page: this.currentPage,
+                    per_page: this.perPage,
+                    search: this.searchTerm,
+                    status: this.statusFilter,
+                    orderby: this.orderBy,
+                    order: this.order
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.renderCoupons(response.data.coupons);
+                        self.renderPagination(response.data);
+                        self.loadStats();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load coupons');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load coupons');
+                },
+                complete: function() {
+                    self.hideSkeleton();
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            });
+        },
+
+        /**
+         * Load stats
+         */
+        loadStats: function() {
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_coupons_stats',
+                    nonce: eauSettingsData.couponsNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.updateStatsCards(response.data.stats);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Update stats cards
+         */
+        updateStatsCards: function(stats) {
+            const $container = $('#coupons-container');
+            $container.find('.eau-stat-card').eq(0).find('.eau-stat-number').text(stats.total);
+            $container.find('.eau-stat-card').eq(1).find('.eau-stat-number').text(stats.active);
+            $container.find('.eau-stat-card').eq(2).find('.eau-stat-number').text(stats.inactive);
+            $container.find('.eau-stat-card').eq(3).find('.eau-stat-number').text('$' + parseFloat(stats.total_discount).toFixed(2));
+        },
+
+        /**
+         * Render coupons
+         */
+        renderCoupons: function(coupons) {
+            const tbody = $('#coupons-table tbody');
+            tbody.empty();
+
+            if (coupons.length === 0) {
+                tbody.html(`
+                    <tr class="eau-table-empty">
+                        <td colspan="7" class="eau-table-td" style="text-align: center;">
+                            <div class="eau-empty-state">
+                                <i data-lucide="ticket"></i>
+                                <p>No coupons found</p>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            coupons.forEach(coupon => {
+                const statusClass = this.getStatusClass(coupon.status);
+                const statusLabel = coupon.status.charAt(0).toUpperCase() + coupon.status.slice(1);
+
+                const row = `
+                    <tr class="eau-table-tr" data-id="${coupon.id}">
+                        <td class="eau-table-td">
+                            <code class="eau-coupon-code-copy" data-code="${coupon.code}" title="Click to copy">${coupon.code}</code>
+                        </td>
+                        <td class="eau-table-td">
+                            ${coupon.formatted_discount}
+                        </td>
+                        <td class="eau-table-td">
+                            ${coupon.usage_count}${coupon.usage_limit ? '/' + coupon.usage_limit : ''}
+                        </td>
+                        <td class="eau-table-td">
+                            <span class="eau-validity-text">${coupon.validity_description}</span>
+                        </td>
+                        <td class="eau-table-td">
+                            <span class="eau-status-badge ${statusClass}">${statusLabel}</span>
+                        </td>
+                        <td class="eau-table-td">
+                            ${coupon.created_at_formatted}
+                        </td>
+                        <td class="eau-table-td eau-table-actions">
+                            <button class="eau-action-btn eau-action-view" data-id="${coupon.id}" title="View">
+                                <i data-lucide="eye"></i>
+                            </button>
+                            <button class="eau-action-btn eau-action-edit" data-id="${coupon.id}" title="Edit">
+                                <i data-lucide="pencil"></i>
+                            </button>
+                            <button class="eau-action-btn eau-action-delete" data-id="${coupon.id}" title="Delete">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        },
+
+        /**
+         * Get status class
+         */
+        getStatusClass: function(status) {
+            switch (status) {
+                case 'active': return 'eau-status-active';
+                case 'inactive': return 'eau-status-inactive';
+                case 'expired': return 'eau-status-expired';
+                default: return '';
+            }
+        },
+
+        /**
+         * Render pagination
+         */
+        renderPagination: function(data) {
+            const $pagination = $('#eau-coupons-pagination');
+            $pagination.empty();
+
+            if (data.total_pages <= 1) return;
+
+            let html = '<div class="eau-pagination">';
+
+            // Previous button
+            html += `<button class="eau-pagination-btn" data-page="${data.page - 1}" ${data.page <= 1 ? 'disabled' : ''}>
+                <i data-lucide="chevron-left"></i>
+            </button>`;
+
+            // Page numbers
+            const maxPages = 5;
+            let startPage = Math.max(1, data.page - Math.floor(maxPages / 2));
+            let endPage = Math.min(data.total_pages, startPage + maxPages - 1);
+
+            if (endPage - startPage < maxPages - 1) {
+                startPage = Math.max(1, endPage - maxPages + 1);
+            }
+
+            if (startPage > 1) {
+                html += `<button class="eau-pagination-btn" data-page="1">1</button>`;
+                if (startPage > 2) {
+                    html += '<span class="eau-pagination-dots">...</span>';
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="eau-pagination-btn ${i === data.page ? 'eau-pagination-active' : ''}" data-page="${i}">${i}</button>`;
+            }
+
+            if (endPage < data.total_pages) {
+                if (endPage < data.total_pages - 1) {
+                    html += '<span class="eau-pagination-dots">...</span>';
+                }
+                html += `<button class="eau-pagination-btn" data-page="${data.total_pages}">${data.total_pages}</button>`;
+            }
+
+            // Next button
+            html += `<button class="eau-pagination-btn" data-page="${data.page + 1}" ${data.page >= data.total_pages ? 'disabled' : ''}>
+                <i data-lucide="chevron-right"></i>
+            </button>`;
+
+            html += '</div>';
+
+            $pagination.html(html);
+        },
+
+        /**
+         * Handle view coupon
+         */
+        handleViewCoupon: function(e) {
+            e.preventDefault();
+            const id = $(e.currentTarget).data('id');
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_coupon',
+                    nonce: eauSettingsData.couponsNonce,
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showViewModal(response.data.coupon);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load coupon');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load coupon');
+                }
+            });
+        },
+
+        /**
+         * Show view modal
+         */
+        showViewModal: function(coupon) {
+            const statusClass = this.getStatusClass(coupon.status);
+            const statusLabel = coupon.status.charAt(0).toUpperCase() + coupon.status.slice(1);
+
+            let eventsHtml = '';
+            if (coupon.event_scope === 'specific' && coupon.event_names && coupon.event_names.length > 0) {
+                eventsHtml = coupon.event_names.map(e => `<span class="eau-tag">${e.title}</span>`).join(' ');
+            } else if (coupon.event_scope === 'all') {
+                eventsHtml = '<span class="eau-tag">All Events</span>';
+            } else {
+                eventsHtml = '<span class="eau-text-muted">No events selected</span>';
+            }
+
+            const html = `
+                <div class="eau-coupon-view">
+                    <div class="eau-form-grid" style="gap: 1.5rem;">
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Coupon Code</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                <code style="font-size: 1.2em; font-weight: 600;">${coupon.code}</code>
+                            </div>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Status</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                <span class="eau-status-badge ${statusClass}">${statusLabel}</span>
+                            </div>
+                        </div>
+                        ${coupon.description ? `
+                        <div class="eau-form-field" style="grid-column: 1 / -1;">
+                            <label class="eau-form-label">Description</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                ${coupon.description}
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Discount</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                ${coupon.formatted_discount}
+                            </div>
+                        </div>
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Usage</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                ${coupon.usage_description}
+                            </div>
+                        </div>
+                        <div class="eau-form-field" style="grid-column: 1 / -1;">
+                            <label class="eau-form-label">Validity</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                ${coupon.validity_description}
+                            </div>
+                        </div>
+                        ${coupon.min_order_value ? `
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Min Order Value</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                $${parseFloat(coupon.min_order_value).toFixed(2)}
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${coupon.max_discount ? `
+                        <div class="eau-form-field">
+                            <label class="eau-form-label">Max Discount</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                $${parseFloat(coupon.max_discount).toFixed(2)}
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div class="eau-form-field" style="grid-column: 1 / -1;">
+                            <label class="eau-form-label">Applies To</label>
+                            <div class="eau-form-static" style="padding: 0.75rem; background: #f9fafb; border-radius: 8px;">
+                                ${eventsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#eau-coupon-modal-view-body').html(html);
+            this.openModal('eau-coupon-modal-view');
+        },
+
+        /**
+         * Handle edit coupon
+         */
+        handleEditCoupon: function(e) {
+            e.preventDefault();
+            const id = $(e.currentTarget).data('id');
+            const self = this;
+
+            this.editingCouponId = id;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_coupon',
+                    nonce: eauSettingsData.couponsNonce,
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showEditModal(response.data.coupon);
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to load coupon');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to load coupon');
+                }
+            });
+        },
+
+        /**
+         * Show edit modal
+         */
+        showEditModal: function(coupon) {
+            const html = this.getCouponFormHtml(coupon);
+            $('#eau-coupon-modal-edit-body').html(html);
+            this.openModal('eau-coupon-modal-edit');
+
+            // If specific events, load events and select
+            if (coupon.event_scope === 'specific') {
+                $('#coupon-events-selector').show();
+                this.loadEvents(coupon.events);
+            }
+        },
+
+        /**
+         * Handle add coupon
+         */
+        handleAddCoupon: function(e) {
+            e.preventDefault();
+            this.editingCouponId = null;
+            const html = this.getCouponFormHtml();
+            $('#eau-coupon-modal-add-body').html(html);
+            this.openModal('eau-coupon-modal-add');
+        },
+
+        /**
+         * Get coupon form HTML
+         */
+        getCouponFormHtml: function(coupon = null) {
+            const isEdit = coupon !== null;
+
+            return `
+                <form id="coupon-form" class="eau-form-grid" style="gap: 1.5rem;">
+                    ${isEdit ? `<input type="hidden" name="id" value="${coupon.id}">` : ''}
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-code">Coupon Code <span class="eau-form-required">*</span></label>
+                        <input type="text" class="eau-form-input" id="coupon-code" name="code"
+                               value="${isEdit ? coupon.code : ''}"
+                               style="text-transform: uppercase;"
+                               placeholder="e.g., SUMMER20" required>
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-status">Status</label>
+                        <select class="eau-form-select" id="coupon-status" name="status">
+                            <option value="active" ${isEdit && coupon.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="inactive" ${isEdit && coupon.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="eau-form-field" style="grid-column: 1 / -1;">
+                        <label class="eau-form-label" for="coupon-description">Description</label>
+                        <input type="text" class="eau-form-input" id="coupon-description" name="description"
+                               value="${isEdit && coupon.description ? coupon.description : ''}"
+                               placeholder="Optional description for internal reference">
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-discount-type">Discount Type <span class="eau-form-required">*</span></label>
+                        <select class="eau-form-select" id="coupon-discount-type" name="discount_type">
+                            <option value="percentage" ${!isEdit || coupon.discount_type === 'percentage' ? 'selected' : ''}>Percentage (%)</option>
+                            <option value="fixed" ${isEdit && coupon.discount_type === 'fixed' ? 'selected' : ''}>Fixed Amount ($)</option>
+                        </select>
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-discount-value">Discount Value <span class="eau-form-required">*</span></label>
+                        <input type="number" class="eau-form-input" id="coupon-discount-value" name="discount_value"
+                               value="${isEdit ? coupon.discount_value : ''}"
+                               step="0.01" min="0" placeholder="e.g., 10" required>
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-min-order">Min Order Value ($)</label>
+                        <input type="number" class="eau-form-input" id="coupon-min-order" name="min_order_value"
+                               value="${isEdit && coupon.min_order_value ? coupon.min_order_value : ''}"
+                               step="0.01" min="0" placeholder="Optional">
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-max-discount">Max Discount ($)</label>
+                        <input type="number" class="eau-form-input" id="coupon-max-discount" name="max_discount"
+                               value="${isEdit && coupon.max_discount ? coupon.max_discount : ''}"
+                               step="0.01" min="0" placeholder="Optional (for %)">
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-valid-from">Valid From</label>
+                        <input type="datetime-local" class="eau-form-input" id="coupon-valid-from" name="valid_from"
+                               value="${isEdit && coupon.valid_from ? coupon.valid_from.replace(' ', 'T').slice(0, 16) : ''}">
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-valid-until">Valid Until</label>
+                        <input type="datetime-local" class="eau-form-input" id="coupon-valid-until" name="valid_until"
+                               value="${isEdit && coupon.valid_until ? coupon.valid_until.replace(' ', 'T').slice(0, 16) : ''}">
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-usage-limit">Usage Limit (Total)</label>
+                        <input type="number" class="eau-form-input" id="coupon-usage-limit" name="usage_limit"
+                               value="${isEdit && coupon.usage_limit ? coupon.usage_limit : ''}"
+                               min="0" placeholder="Unlimited">
+                    </div>
+
+                    <div class="eau-form-field">
+                        <label class="eau-form-label" for="coupon-usage-limit-per-user">Usage Limit (Per User)</label>
+                        <input type="number" class="eau-form-input" id="coupon-usage-limit-per-user" name="usage_limit_per_user"
+                               value="${isEdit ? coupon.usage_limit_per_user : '1'}"
+                               min="1" placeholder="1">
+                    </div>
+
+                    <div class="eau-form-field" style="grid-column: 1 / -1;">
+                        <label class="eau-form-label">Apply to Events</label>
+                        <div class="eau-radio-inline" style="display: flex; gap: 20px; margin-top: 8px;">
+                            <label class="eau-radio-label">
+                                <input type="radio" name="event_scope" value="all" ${!isEdit || coupon.event_scope === 'all' ? 'checked' : ''}>
+                                <span>All Events</span>
+                            </label>
+                            <label class="eau-radio-label">
+                                <input type="radio" name="event_scope" value="specific" ${isEdit && coupon.event_scope === 'specific' ? 'checked' : ''}>
+                                <span>Specific Events</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="eau-form-field" style="grid-column: 1 / -1; ${!isEdit || coupon.event_scope !== 'specific' ? 'display: none;' : ''}" id="coupon-events-selector">
+                        <label class="eau-form-label">Select Events</label>
+                        <div id="coupon-events-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px;">
+                            <div class="eau-skeleton" style="height: 30px; margin-bottom: 8px;"></div>
+                            <div class="eau-skeleton" style="height: 30px; margin-bottom: 8px;"></div>
+                            <div class="eau-skeleton" style="height: 30px;"></div>
+                        </div>
+                    </div>
+                </form>
+            `;
+        },
+
+        /**
+         * Load events for selection
+         */
+        loadEvents: function(selectedIds = []) {
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_get_events_for_coupon',
+                    nonce: eauSettingsData.couponsNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.eventsCache = response.data.events;
+                        self.renderEventsSelector(response.data.events, selectedIds);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Render events selector
+         */
+        renderEventsSelector: function(events, selectedIds = []) {
+            const $container = $('#coupon-events-list');
+
+            if (events.length === 0) {
+                $container.html('<p class="eau-text-muted">No events available</p>');
+                return;
+            }
+
+            let html = '';
+            events.forEach(event => {
+                const isSelected = selectedIds.includes(String(event.id)) || selectedIds.includes(event.id);
+                html += `
+                    <label class="eau-checkbox-label" style="display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f3f4f6;">
+                        <input type="checkbox" name="event_ids[]" value="${event.id}" ${isSelected ? 'checked' : ''}>
+                        <span style="margin-left: 10px;">
+                            <strong>${event.title}</strong>
+                            ${event.date ? `<span style="color: #6b7280; font-size: 12px;"> - ${event.date}</span>` : ''}
+                            <span style="color: #10b981; font-size: 12px; margin-left: 5px;">${event.price}</span>
+                        </span>
+                    </label>
+                `;
+            });
+
+            $container.html(html);
+        },
+
+        /**
+         * Handle create coupon
+         */
+        handleCreateCoupon: function(e) {
+            e.preventDefault();
+            this.saveCoupon('create');
+        },
+
+        /**
+         * Handle save coupon
+         */
+        handleSaveCoupon: function(e) {
+            e.preventDefault();
+            this.saveCoupon('update');
+        },
+
+        /**
+         * Save coupon
+         */
+        saveCoupon: function(mode) {
+            const self = this;
+            const $form = $('#coupon-form');
+
+            // Validation
+            const code = $form.find('[name="code"]').val();
+            const discountValue = $form.find('[name="discount_value"]').val();
+
+            if (!code || !discountValue) {
+                EauNotifications.error('Validation Error', 'Please fill in all required fields');
+                return;
+            }
+
+            // Collect form data
+            const data = {
+                action: mode === 'create' ? 'eau_create_coupon' : 'eau_update_coupon',
+                nonce: eauSettingsData.couponsNonce,
+                code: code,
+                description: $form.find('[name="description"]').val(),
+                discount_type: $form.find('[name="discount_type"]').val(),
+                discount_value: discountValue,
+                min_order_value: $form.find('[name="min_order_value"]').val(),
+                max_discount: $form.find('[name="max_discount"]').val(),
+                valid_from: $form.find('[name="valid_from"]').val(),
+                valid_until: $form.find('[name="valid_until"]').val(),
+                usage_limit: $form.find('[name="usage_limit"]').val(),
+                usage_limit_per_user: $form.find('[name="usage_limit_per_user"]').val() || 1,
+                status: $form.find('[name="status"]').val(),
+                event_scope: $form.find('[name="event_scope"]:checked').val(),
+                event_ids: []
+            };
+
+            // Collect selected events
+            $form.find('[name="event_ids[]"]:checked').each(function() {
+                data.event_ids.push($(this).val());
+            });
+
+            if (mode === 'update') {
+                data.id = $form.find('[name="id"]').val();
+            }
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success('Success', response.data.message);
+                        self.closeModal(mode === 'create' ? 'eau-coupon-modal-add' : 'eau-coupon-modal-edit');
+                        self.loadCoupons();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to save coupon');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to save coupon');
+                }
+            });
+        },
+
+        /**
+         * Handle delete coupon
+         */
+        handleDeleteCoupon: function(e) {
+            e.preventDefault();
+            const id = $(e.currentTarget).data('id');
+            this.editingCouponId = id;
+
+            $('#eau-coupon-modal-delete-body').html(`
+                <p style="color: #6b7280;">Are you sure you want to delete this coupon? This action cannot be undone.</p>
+            `);
+
+            this.openModal('eau-coupon-modal-delete');
+        },
+
+        /**
+         * Handle confirm delete
+         */
+        handleConfirmDelete: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_delete_coupon',
+                    nonce: eauSettingsData.couponsNonce,
+                    id: this.editingCouponId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success('Success', 'Coupon deleted successfully');
+                        self.closeModal('eau-coupon-modal-delete');
+                        self.loadCoupons();
+                    } else {
+                        EauNotifications.error('Error', response.data.message || 'Failed to delete coupon');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Error', 'Failed to delete coupon');
+                }
+            });
+        },
+
+        /**
+         * Open modal
+         */
+        openModal: function(modalId) {
+            const $overlay = $('#' + modalId + '-overlay');
+            $overlay.css('display', 'flex').hide().fadeIn(200);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Close modal
+         */
+        closeModal: function(modalId) {
+            if (modalId) {
+                $('#' + modalId + '-overlay').fadeOut(200);
+            } else {
+                $('.eau-modal-overlay').fadeOut(200);
+            }
+        },
+
+        /**
+         * Show skeleton
+         */
+        showSkeleton: function() {
+            $('#coupons-table-loading').show();
+        },
+
+        /**
+         * Hide skeleton
+         */
+        hideSkeleton: function() {
+            $('#coupons-table-loading').hide();
+        },
+
+        /**
+         * Copy to clipboard fallback (for HTTP or older browsers)
+         */
+        copyToClipboardFallback: function(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.warn('Fallback copy failed:', err);
+            }
+            document.body.removeChild(textarea);
+        },
+
+        /**
+         * Debounce helper
+         */
+        debounce: function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    // Make EauCouponsController globally accessible for lazy loading
+    window.EauCouponsController = EauCouponsController;
+
+    // ==========================================================================
+    // PAYMENT GATEWAY CONTROLLER (v1.70.0)
+    // ==========================================================================
+
+    /**
+     * Payment Gateway Settings Controller
+     *
+     * @since 1.70.0
+     */
+    const EauPaymentGatewayController = {
+
+        // State
+        settings: {},
+
+        /**
+         * Initialize controller
+         */
+        init: function() {
+            this.bindEvents();
+            this.loadSettings();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+
+            // Mode toggle
+            $('#eau-gateway-mode input[type="radio"]').on('change', function() {
+                const mode = $(this).val();
+                self.updateModeUI(mode);
+
+                // Update radio visual state
+                $('#eau-gateway-mode .eau-radio-option').removeClass('selected');
+                $(this).closest('.eau-radio-option').addClass('selected');
+            });
+
+            // Test connection
+            $('#eau-test-gateway-connection').on('click', function() {
+                self.testConnection();
+            });
+
+            // Save settings
+            $('#eau-save-gateway-settings').on('click', function() {
+                self.saveSettings();
+            });
+
+            // Copy webhook URL
+            $('#copy-webhook-url').on('click', function() {
+                const url = $('#webhook-url').val();
+                self.copyToClipboard(url);
+            });
+
+            // Generate webhook secret
+            $('#generate-webhook-secret').on('click', function() {
+                self.generateWebhookSecret();
+            });
+        },
+
+        /**
+         * Load current settings
+         */
+        loadSettings: function() {
+            const self = this;
+
+            // Settings are already loaded in HTML, just initialize UI
+            const isSandbox = $('#eau-gateway-mode input[value="sandbox"]').is(':checked');
+            this.updateModeUI(isSandbox ? 'sandbox' : 'production');
+        },
+
+        /**
+         * Update UI based on mode
+         */
+        updateModeUI: function(mode) {
+            if (mode === 'sandbox') {
+                $('#sandbox-credentials-section').show();
+                $('#production-credentials-section').hide();
+            } else {
+                $('#sandbox-credentials-section').show();
+                $('#production-credentials-section').show();
+            }
+        },
+
+        /**
+         * Test connection to Fat Zebra
+         */
+        testConnection: function() {
+            const self = this;
+            const $btn = $('#eau-test-gateway-connection');
+            const $status = $('#gateway-connection-status');
+
+            // Disable button
+            $btn.prop('disabled', true);
+            $btn.find('i').attr('data-lucide', 'loader-2').addClass('eau-spin');
+            lucide.createIcons();
+
+            $status.text('Testing...');
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_fatzebra_test_connection',
+                    nonce: eauSettingsData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $status.text('Connected').addClass('eau-text-success').removeClass('eau-text-danger');
+                        EauNotifications.success('Connection successful! Mode: ' + response.data.mode);
+                    } else {
+                        $status.text('Failed').addClass('eau-text-danger').removeClass('eau-text-success');
+                        EauNotifications.error('Connection failed: ' + response.data.message);
+                    }
+                },
+                error: function() {
+                    $status.text('Error').addClass('eau-text-danger');
+                    EauNotifications.error('Failed to test connection');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                    $btn.find('i').attr('data-lucide', 'plug').removeClass('eau-spin');
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        /**
+         * Save gateway settings
+         */
+        saveSettings: function() {
+            const self = this;
+            const $btn = $('#eau-save-gateway-settings');
+
+            // Gather settings
+            const settings = {
+                sandbox_mode: $('input[name="gateway_mode"]:checked').val() === 'sandbox',
+                sandbox_username: $('#sandbox-username').val(),
+                sandbox_token: $('#sandbox-token').val(),
+                production_username: $('#production-username').val(),
+                production_token: $('#production-token').val(),
+                webhook_secret: $('#webhook-secret').val()
+            };
+
+            // Disable button
+            $btn.prop('disabled', true);
+            $btn.find('i').attr('data-lucide', 'loader-2').addClass('eau-spin');
+            lucide.createIcons();
+
+            $.ajax({
+                url: eauSettingsData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_fatzebra_save_settings',
+                    nonce: eauSettingsData.nonce,
+                    ...settings
+                },
+                success: function(response) {
+                    if (response.success) {
+                        EauNotifications.success('Payment gateway settings saved successfully');
+
+                        // Update masked values
+                        if (settings.sandbox_token && settings.sandbox_token !== '********') {
+                            $('#sandbox-token').val('********');
+                        }
+                        if (settings.production_token && settings.production_token !== '********') {
+                            $('#production-token').val('********');
+                        }
+                        if (settings.webhook_secret && settings.webhook_secret !== '********') {
+                            $('#webhook-secret').val('********');
+                        }
+                    } else {
+                        EauNotifications.error('Failed to save settings: ' + response.data.message);
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Failed to save settings');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                    $btn.find('i').attr('data-lucide', 'save').removeClass('eau-spin');
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        /**
+         * Copy text to clipboard
+         */
+        copyToClipboard: function(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function() {
+                    EauNotifications.success('Copied to clipboard!');
+                });
+            } else {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                EauNotifications.success('Copied to clipboard!');
+            }
+        },
+
+        /**
+         * Generate random webhook secret
+         */
+        generateWebhookSecret: function() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let secret = '';
+            for (let i = 0; i < 32; i++) {
+                secret += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            $('#webhook-secret').val(secret);
+            EauNotifications.info('New webhook secret generated. Remember to save!');
+        }
+    };
+
+    // Make EauPaymentGatewayController globally accessible for lazy loading
+    window.EauPaymentGatewayController = EauPaymentGatewayController;
 
 })(jQuery);

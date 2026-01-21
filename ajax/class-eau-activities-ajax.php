@@ -21,6 +21,9 @@ class Eau_Activities_Ajax {
         // Bulk delete activities (apenas super admin)
         add_action('wp_ajax_eau_bulk_delete_activities', array(__CLASS__, 'bulk_delete_activities'));
 
+        // Bulk verify activities
+        add_action('wp_ajax_eau_bulk_verify_activities', array(__CLASS__, 'bulk_verify_activities'));
+
         // Get filtered activity IDs (para delete all filtered)
         add_action('wp_ajax_eau_get_filtered_activity_ids', array(__CLASS__, 'get_filtered_activity_ids'));
 
@@ -1148,6 +1151,75 @@ class Eau_Activities_Ajax {
         wp_send_json_success(array(
             'message' => $message,
             'deleted_count' => $deleted_count,
+            'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
+     * AJAX: Bulk Verify Activities (v1.72.5)
+     * Altera o status de verificação de múltiplas atividades
+     */
+    public static function bulk_verify_activities() {
+        // Verifica nonce
+        check_ajax_referer('eau_activities_nonce', 'nonce');
+
+        // Verifica permissão (superAdmin ou Admin)
+        if (!Eau_User_Institution_Helper::has_admin_access()) {
+            wp_send_json_error(array(
+                'message' => 'Permission denied. You do not have permission to verify activities.'
+            ));
+        }
+
+        // Pega IDs das atividades
+        $activity_ids = isset($_POST['ids']) ? array_map('absint', $_POST['ids']) : array();
+        $verified = isset($_POST['verified']) ? absint($_POST['verified']) : 0;
+
+        if (empty($activity_ids)) {
+            wp_send_json_error(array(
+                'message' => 'No activities selected.'
+            ));
+        }
+
+        $updated_count = 0;
+        $failed_count = 0;
+
+        foreach ($activity_ids as $post_id) {
+            // Verifica se é uma atividade válida
+            $post = get_post($post_id);
+            if (!$post || $post->post_type !== 'activitie') {
+                $failed_count++;
+                continue;
+            }
+
+            // Atualiza o meta de verificação
+            $result = update_post_meta($post_id, 'act_verified', $verified ? '1' : '0');
+
+            // update_post_meta retorna false se o valor não mudou, então verificamos de outra forma
+            $current_value = get_post_meta($post_id, 'act_verified', true);
+            if ($current_value === ($verified ? '1' : '0')) {
+                $updated_count++;
+            } else {
+                $failed_count++;
+            }
+        }
+
+        // Invalida TODOS os caches (bulk operation afeta múltiplos usuários)
+        \EauSystem\Eau_Activities_Stats_Cache::invalidate_all();
+
+        $status_text = $verified ? 'verified' : 'set to pending';
+        $message = sprintf(
+            '%d activity(ies) %s successfully.',
+            $updated_count,
+            $status_text
+        );
+
+        if ($failed_count > 0) {
+            $message .= sprintf(' %d activity(ies) could not be updated.', $failed_count);
+        }
+
+        wp_send_json_success(array(
+            'message' => $message,
+            'updated_count' => $updated_count,
             'failed_count' => $failed_count,
         ));
     }

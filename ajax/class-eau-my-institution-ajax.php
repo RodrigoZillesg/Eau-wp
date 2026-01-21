@@ -363,7 +363,6 @@ class Eau_My_Institution_Ajax {
         }
 
         $user_id = get_current_user_id();
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
 
         // Check if already linked to this institution
         $current_ids = self::get_user_institution_ids($user_id);
@@ -376,9 +375,10 @@ class Eau_My_Institution_Ajax {
             wp_send_json_error(array('message' => 'You already have a pending request for this institution'));
         }
 
-        // For regular members - check if they already have an institution
+        // v1.72.5: For regular members - check if they already have an institution
+        // Uses helper to support multiple types with prioritization
         $will_replace = false;
-        if ($mem_type === 'member' && !empty($current_ids)) {
+        if (Eau_User_Institution_Helper::is_member_only($user_id) && !empty($current_ids)) {
             $will_replace = true;
         }
 
@@ -677,7 +677,8 @@ class Eau_My_Institution_Ajax {
             return false;
         }
 
-        $user_mem_type = get_user_meta($user_id, 'mem_type', true);
+        // v1.72.5: Usa helper para verificar se é institution admin (suporta múltiplos tipos)
+        $is_user_institution_admin = Eau_User_Institution_Helper::is_institution_admin($user_id);
 
         // Get current institution for history
         $current_institution = Eau_User_Institution_Helper::get_user_institution($user_id);
@@ -696,7 +697,7 @@ class Eau_My_Institution_Ajax {
         // Start transaction-like operations
         $success = true;
 
-        if ($user_mem_type === 'institutionAdmin') {
+        if ($is_user_institution_admin) {
             // For institutionAdmin: add ins_company_primary_contact to new institution
             $mem_userid = get_user_meta($user_id, 'mem_userid', true);
             if (!empty($mem_userid)) {

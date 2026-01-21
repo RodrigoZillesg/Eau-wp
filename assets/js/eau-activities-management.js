@@ -94,10 +94,29 @@
 
             // Bulk Delete (apenas para super admin)
             if (eauActivitiesData.isSuperAdmin) {
-                $('#eau-bulk-delete-activities').on('click', this.handleBulkDelete.bind(this));
+                $('#eau-bulk-delete-bar').on('click', this.handleBulkDelete.bind(this));
                 $('#eau-delete-all-filtered-activities').on('click', this.handleDeleteAllFiltered.bind(this));
                 $('#eau-clean-orphan-activities').on('click', this.handleCleanOrphanActivities.bind(this));
             }
+
+            // Bulk actions bar - Close button
+            $('#eau-bulk-actions-close').on('click', this.clearSelection.bind(this));
+
+            // Bulk actions bar - Verify/Pending buttons
+            $('#eau-bulk-verify-yes').on('click', function(e) {
+                e.preventDefault();
+                self.handleBulkVerify(1);
+            });
+
+            $('#eau-bulk-verify-no').on('click', function(e) {
+                e.preventDefault();
+                self.handleBulkVerify(0);
+            });
+
+            // Bulk actions bar - Export CSV
+            $('#eau-bulk-export-csv').on('click', function(e) {
+                self.handleExportCSV(e);
+            });
 
             // Add activity
             $('#eau-add-activity').on('click', function(e) {
@@ -502,7 +521,7 @@
         },
 
         /**
-         * Update selected IDs
+         * Update selected IDs and show/hide bulk actions bar
          */
         updateSelectedIds: function() {
             const self = this;
@@ -512,14 +531,31 @@
                 self.selectedIds.push($(this).val());
             });
 
-            // Mostrar/ocultar botão de deleção em massa (apenas para super admin)
-            if (eauActivitiesData.isSuperAdmin) {
-                if (this.selectedIds.length > 0) {
-                    $('#eau-bulk-delete-activities').show();
-                } else {
-                    $('#eau-bulk-delete-activities').hide();
-                }
+            // Update bulk actions bar
+            const count = this.selectedIds.length;
+            $('#eau-bulk-actions-count').text(count);
+            $('#eau-bulk-actions-label').text(count === 1 ? 'activity selected' : 'activities selected');
+
+            if (count > 0) {
+                $('#eau-bulk-actions-bar').addClass('eau-visible');
+            } else {
+                $('#eau-bulk-actions-bar').removeClass('eau-visible');
             }
+
+            // Re-initialize Lucide icons for the bar
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Clear selection
+         */
+        clearSelection: function() {
+            $('.eau-row-checkbox').prop('checked', false);
+            $('#activities-table-select-all, .eau-table-select-all-header').prop('checked', false);
+            this.selectedIds = [];
+            $('#eau-bulk-actions-bar').removeClass('eau-visible');
         },
 
         /**
@@ -944,12 +980,60 @@
                         success: function(response) {
                             if (response.success) {
                                 EauNotifications.success('Deleted!', response.data.message);
-                                self.selectedIds = [];
+                                self.clearSelection();
                                 self.loadActivities();
                                 self.loadStats();
-                                $('#eau-bulk-delete-activities').hide();
                             } else {
                                 EauNotifications.error('Error', response.data.message || 'Failed to delete activities');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Handle bulk verify/unverify
+         */
+        handleBulkVerify: function(verifyValue) {
+            const self = this;
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('No Selection', 'Please select activities first.');
+                return;
+            }
+
+            const count = this.selectedIds.length;
+            const action = verifyValue === 1 ? 'verify' : 'set as pending';
+            const statusText = verifyValue === 1 ? 'Verified' : 'Pending';
+
+            EauNotifications.confirm({
+                title: verifyValue === 1 ? 'Verify Activities?' : 'Set Activities as Pending?',
+                message: `Are you sure you want to ${action} ${count} activity(ies)?`,
+                type: verifyValue === 1 ? 'success' : 'warning',
+                confirmText: verifyValue === 1 ? 'Verify' : 'Set Pending',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauActivitiesData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_bulk_verify_activities',
+                            nonce: eauActivitiesData.nonce,
+                            ids: self.selectedIds,
+                            verified: verifyValue
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Success!', `${count} activity(ies) set to ${statusText}.`);
+                                self.clearSelection();
+                                self.loadActivities();
+                                self.loadStats();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to update activities');
                             }
                         },
                         error: function() {

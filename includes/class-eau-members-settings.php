@@ -475,6 +475,22 @@ class Eau_Members_Settings {
                 'readonly' => false,
                 'order' => 99,
             ),
+            'mem_lifetime_member' => array(
+                'label' => 'Lifetime Member',
+                'field_type' => 'checkbox',
+                'enabled' => true,
+                'required' => false,
+                'readonly' => false,
+                'order' => 100,
+            ),
+            'mem_full_individual_member' => array(
+                'label' => 'Full Individual Member',
+                'field_type' => 'checkbox',
+                'enabled' => true,
+                'required' => false,
+                'readonly' => false,
+                'order' => 101,
+            ),
         );
 
         foreach ($known_meta as $key => $field) {

@@ -509,6 +509,118 @@ while (have_posts()) : the_post();
                 </div>
             </div>
 
+            <?php
+            // Check if user can register others from their institution
+            $can_register_others = false;
+            $user_institution = '';
+            $user_institution_name = '';
+            $user_institution_logo = '';
+            if (is_user_logged_in()) {
+                $user_institution = get_user_meta(get_current_user_id(), 'mem_membercompanyname', true);
+                if (!empty($user_institution)) {
+                    $can_register_others = true;
+                    // Resolve institution name (may be post ID or title)
+                    if (is_numeric($user_institution)) {
+                        $institution_post = get_post(intval($user_institution));
+                        if ($institution_post) {
+                            $user_institution_name = $institution_post->post_title;
+                            $user_institution_logo = get_post_meta(intval($user_institution), 'ins_logo', true);
+                        } else {
+                            $user_institution_name = $user_institution;
+                        }
+                    } else {
+                        $user_institution_name = $user_institution;
+                    }
+                }
+            }
+            ?>
+
+            <!-- Registration Type Selector (v1.69.0) -->
+            <?php if ($can_register_others) : ?>
+            <div class="eau-reg-type-selector">
+                <p class="eau-reg-section-title"><?php _e('Register for:', 'eau-system'); ?></p>
+                <div class="eau-reg-type-options">
+                    <label class="eau-reg-type-option selected">
+                        <input type="radio" name="registration_type" value="self" checked>
+                        <span class="eau-reg-type-icon">👤</span>
+                        <span class="eau-reg-type-text"><?php _e('Myself', 'eau-system'); ?></span>
+                    </label>
+                    <label class="eau-reg-type-option">
+                        <input type="radio" name="registration_type" value="others">
+                        <span class="eau-reg-type-icon">👥</span>
+                        <span class="eau-reg-type-text"><?php _e('Others from my institution', 'eau-system'); ?></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Member Selection Panel (v1.69.0) -->
+            <div class="eau-reg-member-selection" id="eau-member-selection" style="display: none;">
+                <p class="eau-reg-section-title"><?php _e('Select members to register:', 'eau-system'); ?></p>
+                <div class="eau-reg-institution-header">
+                    <div class="eau-reg-institution-logo">
+                        <img src="<?php echo !empty($user_institution_logo) ? esc_url($user_institution_logo) : ''; ?>"
+                             alt="<?php echo esc_attr($user_institution_name); ?>"
+                             style="<?php echo empty($user_institution_logo) ? 'display: none;' : ''; ?>">
+                        <span class="eau-reg-info-icon" style="<?php echo !empty($user_institution_logo) ? 'display: none;' : ''; ?>">🏢</span>
+                    </div>
+                    <span class="eau-reg-institution-name"><?php echo esc_html($user_institution_name); ?></span>
+                </div>
+                <div class="eau-reg-member-list" id="eau-member-list">
+                    <!-- Members loaded via AJAX -->
+                    <div class="eau-reg-member-loading">
+                        <div class="eau-skeleton" style="height: 40px; margin-bottom: 8px;"></div>
+                        <div class="eau-skeleton" style="height: 40px; margin-bottom: 8px;"></div>
+                        <div class="eau-skeleton" style="height: 40px;"></div>
+                    </div>
+                </div>
+                <div class="eau-reg-member-summary">
+                    <span><?php _e('Selected:', 'eau-system'); ?> <strong id="eau-selected-count">0</strong> <?php _e('member(s)', 'eau-system'); ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Coupon Code Field (v1.69.0) -->
+            <?php if ($user_price['amount'] > 0) : ?>
+            <div class="eau-reg-coupon-section">
+                <p class="eau-reg-section-title"><?php _e('Have a coupon code?', 'eau-system'); ?></p>
+                <div class="eau-reg-coupon-input-wrapper">
+                    <input type="text" id="eau-coupon-code" name="coupon_code" placeholder="<?php esc_attr_e('Enter coupon code', 'eau-system'); ?>" style="text-transform: uppercase;">
+                    <button type="button" id="eau-apply-coupon" class="eau-reg-btn-apply">
+                        <?php _e('Apply', 'eau-system'); ?>
+                    </button>
+                </div>
+                <div id="eau-coupon-result" class="eau-reg-coupon-result"></div>
+            </div>
+
+            <!-- Price Summary (v1.69.0) -->
+            <div class="eau-reg-price-summary" id="eau-price-summary">
+                <div class="eau-reg-price-row">
+                    <span><?php _e('Event Price:', 'eau-system'); ?></span>
+                    <span id="eau-unit-price"><?php echo esc_html($user_price['display']); ?></span>
+                </div>
+                <div class="eau-reg-price-row" id="eau-qty-row" style="display: none;">
+                    <span><?php _e('Quantity:', 'eau-system'); ?></span>
+                    <span id="eau-qty-value">1</span>
+                </div>
+                <div class="eau-reg-price-row" id="eau-subtotal-row" style="display: none;">
+                    <span><?php _e('Subtotal:', 'eau-system'); ?></span>
+                    <span id="eau-subtotal-value">$0.00</span>
+                </div>
+                <div class="eau-reg-price-row eau-reg-discount-row" id="eau-discount-row" style="display: none;">
+                    <span><?php _e('Discount:', 'eau-system'); ?></span>
+                    <span id="eau-discount-value" class="eau-discount-amount">-$0.00</span>
+                </div>
+                <div class="eau-reg-price-row eau-reg-total-row">
+                    <span><?php _e('Total:', 'eau-system'); ?></span>
+                    <span id="eau-total-value"><?php echo esc_html($user_price['display']); ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Hidden fields for coupon data -->
+            <input type="hidden" id="eau-coupon-id" name="coupon_id" value="">
+            <input type="hidden" id="eau-event-price" value="<?php echo esc_attr($user_price['amount']); ?>">
+
             <!-- Additional Information -->
             <div class="eau-reg-additional-info">
                 <p class="eau-reg-section-title"><?php _e('Additional Information (Optional)', 'eau-system'); ?></p>

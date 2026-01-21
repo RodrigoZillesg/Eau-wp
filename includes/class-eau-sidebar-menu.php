@@ -55,7 +55,8 @@ class Eau_Sidebar_Menu {
 
         $current_user = wp_get_current_user();
         $user_id = $current_user->ID;
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
+        // v1.72.5: Usa o tipo de maior autoridade para suportar múltiplos tipos
+        $mem_type = Eau_User_Institution_Helper::get_highest_permission_type($user_id);
 
         // Obtém nome para exibição
         $display_name = $current_user->display_name;

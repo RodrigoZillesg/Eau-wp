@@ -277,6 +277,15 @@
     font-weight: 500;
     background-color: #dbeafe;
     color: #1e40af;
+    margin-right: 0.375rem;
+    margin-bottom: 0.25rem;
+}
+
+/* v1.72.6: Container para múltiplos tipos */
+.eau-profile-types-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.25rem !important;
 }
 
 /* ============================================

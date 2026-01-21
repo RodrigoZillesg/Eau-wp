@@ -156,6 +156,65 @@ class Eau_User_Institution_Helper {
         return self::is_super_admin($user_id) || self::is_admin($user_id);
     }
 
+    /**
+     * Retorna o tipo de maior autoridade do usuário
+     *
+     * Hierarquia (do maior para o menor):
+     * 1. superAdmin
+     * 2. Admin
+     * 3. institutionAdmin
+     * 4. member
+     * 5. non-member
+     *
+     * @since 1.72.5 - Priorização correta de permissões
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return string O tipo de maior autoridade
+     */
+    public static function get_highest_permission_type($user_id = null) {
+        // Hierarquia de permissões (ordem decrescente de autoridade)
+        $hierarchy = array('superAdmin', 'Admin', 'institutionAdmin', 'member', 'non-member');
+
+        $types = self::get_user_types($user_id);
+
+        // Verifica também se é institution admin por outras vias
+        if (self::is_institution_admin($user_id) && !in_array('institutionAdmin', $types)) {
+            $types[] = 'institutionAdmin';
+        }
+
+        // Retorna o primeiro tipo encontrado na hierarquia
+        foreach ($hierarchy as $type) {
+            if (in_array($type, $types)) {
+                return $type;
+            }
+        }
+
+        // Fallback
+        return 'member';
+    }
+
+    /**
+     * Verifica se usuário é non-member
+     *
+     * @since 1.72.5
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se for non-member
+     */
+    public static function is_non_member($user_id = null) {
+        return self::user_has_type('non-member', $user_id);
+    }
+
+    /**
+     * Verifica se usuário é member regular (não admin, não institutionAdmin)
+     *
+     * @since 1.72.5
+     * @param int|null $user_id ID do usuário (null = usuário atual)
+     * @return bool True se for apenas member
+     */
+    public static function is_member_only($user_id = null) {
+        $highest = self::get_highest_permission_type($user_id);
+        return $highest === 'member';
+    }
+
     // =========================================================================
     // MANAGED INSTITUTIONS HELPERS (v1.66.0)
     // =========================================================================
@@ -740,6 +799,8 @@ class Eau_User_Institution_Helper {
             'registered_date_from' => '',
             'registered_date_to' => '',
             'email_migration' => '',
+            'lifetime_member' => '',
+            'full_individual_member' => '',
             'orderby' => 'display_name',
             'order' => 'ASC',
         );
@@ -863,6 +924,28 @@ class Eau_User_Institution_Helper {
             }
         }
 
+        // Filtro por Lifetime Member (v1.72.3)
+        if (!empty($args['lifetime_member'])) {
+            if ($args['lifetime_member'] === 'yes') {
+                $join[] = "INNER JOIN {$wpdb->usermeta} um_lifetime ON u.ID = um_lifetime.user_id AND um_lifetime.meta_key = 'mem_lifetime_member'";
+                $where[] = "um_lifetime.meta_value = '1'";
+            } elseif ($args['lifetime_member'] === 'no') {
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_lifetime ON u.ID = um_lifetime.user_id AND um_lifetime.meta_key = 'mem_lifetime_member'";
+                $where[] = "(um_lifetime.meta_value IS NULL OR um_lifetime.meta_value = '' OR um_lifetime.meta_value = '0')";
+            }
+        }
+
+        // Filtro por Full Individual Member (v1.72.3)
+        if (!empty($args['full_individual_member'])) {
+            if ($args['full_individual_member'] === 'yes') {
+                $join[] = "INNER JOIN {$wpdb->usermeta} um_fim ON u.ID = um_fim.user_id AND um_fim.meta_key = 'mem_full_individual_member'";
+                $where[] = "um_fim.meta_value = '1'";
+            } elseif ($args['full_individual_member'] === 'no') {
+                $join[] = "LEFT JOIN {$wpdb->usermeta} um_fim ON u.ID = um_fim.user_id AND um_fim.meta_key = 'mem_full_individual_member'";
+                $where[] = "(um_fim.meta_value IS NULL OR um_fim.meta_value = '' OR um_fim.meta_value = '0')";
+            }
+        }
+
         // Monta query de contagem
         $join_sql = !empty($join) ? implode(' ', array_unique($join)) : '';
         $where_sql = implode(' AND ', $where);
@@ -983,15 +1066,19 @@ class Eau_User_Institution_Helper {
      *
      * CORRETO: Filtra por TODAS as instituições que o admin gerencia
      *
+     * @since 1.72.6 - Prioriza has_admin_access() sobre is_institution_admin()
      * @return array Array com total, active, inactive, new_this_month
      */
     public static function get_users_stats() {
         global $wpdb;
 
         $current_user_id = get_current_user_id();
-        $is_institution_admin = self::is_institution_admin($current_user_id);
 
-        // Filtro por company_ids para Institution Admins
+        // v1.72.6: Admins veem tudo, não filtra
+        $is_admin = self::has_admin_access($current_user_id);
+        $is_institution_admin = !$is_admin && self::is_institution_admin($current_user_id);
+
+        // Filtro por company_ids para Institution Admins (NÃO para admins)
         $company_filter = '';
         $company_ids = array();
 

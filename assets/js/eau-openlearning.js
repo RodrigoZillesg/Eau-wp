@@ -43,6 +43,90 @@
                 const courseId = $(this).data('course-id');
                 self.launchSSO(courseId, $(this));
             });
+
+            // Course enroll buttons - redirect to checkout (v1.71.0)
+            $(document).on('click', '.eau-course-enroll-btn', function(e) {
+                e.preventDefault();
+                const courseId = $(this).data('course-id');
+                self.enrollCourse(courseId, $(this));
+            });
+        },
+
+        /**
+         * Enroll in a paid course (v1.71.0)
+         *
+         * Creates a purchase record and redirects to checkout
+         *
+         * @param {string} courseId - Course ID
+         * @param {jQuery} $button - Button element
+         */
+        enrollCourse: function(courseId, $button) {
+            const self = this;
+
+            // Set loading state
+            $button.addClass('eau-loading').prop('disabled', true);
+            const originalHtml = $button.html();
+            $button.html('<i data-lucide="loader-2" class="eau-spin"></i> Processing...');
+
+            // Recreate icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_openlearning_enroll_course',
+                    nonce: this.config.nonce,
+                    course_id: courseId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (response.data.requires_payment && response.data.checkout_url) {
+                            // Redirect to checkout
+                            self.showNotification(response.data.message || 'Redirecting to checkout...', 'info');
+                            setTimeout(function() {
+                                window.location.href = response.data.checkout_url;
+                            }, 500);
+                        } else if (response.data.already_purchased) {
+                            // Already purchased - reload to show access button
+                            self.showNotification(response.data.message || 'You already have access to this course.', 'info');
+                            $button.removeClass('eau-loading').prop('disabled', false);
+                            $button.html(originalHtml);
+                            if (typeof lucide !== 'undefined') {
+                                lucide.createIcons();
+                            }
+                            location.reload();
+                        } else {
+                            // Free course - message to user
+                            self.showNotification(response.data.message || 'This course is free!', 'success');
+                            $button.removeClass('eau-loading').prop('disabled', false);
+                            $button.html(originalHtml);
+                            if (typeof lucide !== 'undefined') {
+                                lucide.createIcons();
+                            }
+                        }
+                    } else {
+                        // Error
+                        $button.removeClass('eau-loading').prop('disabled', false);
+                        $button.html(originalHtml);
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                        self.showNotification(response.data.message || 'Failed to process enrollment', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('EauOpenLearning: Enrollment failed', error);
+                    $button.removeClass('eau-loading').prop('disabled', false);
+                    $button.html(originalHtml);
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                    self.showNotification('Failed to connect to server. Please try again.', 'error');
+                }
+            });
         },
 
         /**

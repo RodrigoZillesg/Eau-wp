@@ -61,10 +61,6 @@ class Eau_Activities_Management {
                 </div>
                 <div class="eau-page-header-actions">
                     <?php if (Eau_User_Institution_Helper::is_super_admin()): ?>
-                        <button class="eau-btn eau-btn-danger" id="eau-bulk-delete-activities" style="display: none;">
-                            <i data-lucide="trash-2"></i>
-                            Delete Selected
-                        </button>
                         <button class="eau-btn eau-btn-danger" id="eau-delete-all-filtered-activities">
                             <i data-lucide="trash-2"></i>
                             Delete All Filtered
@@ -109,6 +105,45 @@ class Eau_Activities_Management {
 
             <!-- Modals -->
             <?php echo self::render_modals(); ?>
+
+            <!-- Bulk Actions Bar (v1.72.5) - Floating bar that appears when items are selected -->
+            <div class="eau-bulk-actions-bar" id="eau-bulk-actions-bar">
+                <div class="eau-bulk-actions-info">
+                    <span class="eau-bulk-actions-count" id="eau-bulk-actions-count">0</span>
+                    <span class="eau-bulk-actions-label" id="eau-bulk-actions-label">activities selected</span>
+                </div>
+                <div class="eau-bulk-actions-buttons">
+                    <!-- Bulk Verify -->
+                    <div class="eau-bulk-action-group">
+                        <label class="eau-bulk-action-label">Verification:</label>
+                        <div class="eau-bulk-toggle-buttons">
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle" id="eau-bulk-verify-yes" data-action="verify" data-value="1">
+                                <i data-lucide="check-circle"></i> Verify
+                            </button>
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle-off" id="eau-bulk-verify-no" data-action="verify" data-value="0">
+                                <i data-lucide="clock"></i> Pending
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Export CSV -->
+                    <button class="eau-btn eau-btn-sm eau-btn-secondary" id="eau-bulk-export-csv">
+                        <i data-lucide="download"></i>
+                        Export Selected
+                    </button>
+
+                    <?php if (Eau_User_Institution_Helper::is_super_admin()): ?>
+                        <!-- Delete Selected (superAdmin only) -->
+                        <button class="eau-btn eau-btn-sm eau-btn-danger" id="eau-bulk-delete-bar">
+                            <i data-lucide="trash-2"></i>
+                            Delete Selected
+                        </button>
+                    <?php endif; ?>
+                </div>
+                <button class="eau-bulk-actions-close" id="eau-bulk-actions-close" title="Clear selection">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
 
         </div>
         <?php

@@ -108,6 +108,44 @@ class Eau_OpenLearning_Management {
             <!-- Modals -->
             <?php echo self::render_modals(); ?>
 
+            <!-- Bulk Actions Bar (v1.72.5) - Floating bar that appears when items are selected -->
+            <div class="eau-bulk-actions-bar" id="eau-bulk-actions-bar">
+                <div class="eau-bulk-actions-info">
+                    <span class="eau-bulk-actions-count" id="eau-bulk-actions-count">0</span>
+                    <span class="eau-bulk-actions-label" id="eau-bulk-actions-label">courses selected</span>
+                </div>
+                <div class="eau-bulk-actions-buttons">
+                    <!-- Visibility Toggle -->
+                    <div class="eau-bulk-action-group">
+                        <label class="eau-bulk-action-label">Visibility:</label>
+                        <div class="eau-bulk-toggle-buttons">
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle" id="eau-bulk-set-visible" data-action="visibility" data-value="visible">
+                                <i data-lucide="eye"></i> Visible
+                            </button>
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle-off" id="eau-bulk-set-hidden" data-action="visibility" data-value="hidden">
+                                <i data-lucide="eye-off"></i> Hidden
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Featured Toggle -->
+                    <div class="eau-bulk-action-group">
+                        <label class="eau-bulk-action-label">Featured:</label>
+                        <div class="eau-bulk-toggle-buttons">
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle" id="eau-bulk-set-featured" data-action="featured" data-value="1">
+                                <i data-lucide="star"></i> Yes
+                            </button>
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle-off" id="eau-bulk-set-not-featured" data-action="featured" data-value="0">
+                                <i data-lucide="star-off"></i> No
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button class="eau-bulk-actions-close" id="eau-bulk-actions-close" title="Clear selection">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
         </div>
         <?php
         return ob_get_clean();

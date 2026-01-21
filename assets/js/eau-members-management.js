@@ -384,6 +384,13 @@
                 // self.handleApplyFilters();
             });
 
+            // Toggle switch label update (v1.72.3)
+            $(document).on('change', '.eau-toggle-switch input[type="checkbox"]', function() {
+                const $toggle = $(this).closest('.eau-checkbox-toggle');
+                const $label = $toggle.find('.eau-toggle-label');
+                $label.text(this.checked ? 'Yes' : 'No');
+            });
+
             // Bulk Delete (apenas para super admin)
             if (eauMembersData.isSuperAdmin) {
                 $('#eau-bulk-delete-members').on('click', this.handleBulkDelete.bind(this));
@@ -403,6 +410,33 @@
                 if (tagName && userId) {
                     self.createTagInPopover(tagName, userId);
                 }
+            });
+
+            // ========== Bulk Actions Bar Events (v1.72.4) ==========
+
+            // Close bulk actions bar (clear selection)
+            $('#eau-bulk-actions-close').on('click', function() {
+                self.clearSelection();
+            });
+
+            // Bulk set flag buttons
+            $('#eau-bulk-lifetime-yes, #eau-bulk-lifetime-no, #eau-bulk-fim-yes, #eau-bulk-fim-no').on('click', function(e) {
+                e.preventDefault();
+                const flag = $(this).data('flag');
+                const value = $(this).data('value');
+                self.handleBulkSetFlag(flag, value);
+            });
+
+            // Bulk delete from bar (super admin only)
+            $('#eau-bulk-delete-bar').on('click', function(e) {
+                e.preventDefault();
+                self.handleBulkDelete();
+            });
+
+            // Bulk manage tags from bar
+            $('#eau-bulk-manage-tags-bar').on('click', function(e) {
+                e.preventDefault();
+                self.openBulkTagsModal();
             });
         },
 
@@ -574,7 +608,7 @@
         },
 
         /**
-         * Update selected IDs
+         * Update selected IDs and show/hide bulk actions bar (v1.72.4)
          */
         updateSelectedIds: function() {
             const self = this;
@@ -584,21 +618,23 @@
                 self.selectedIds.push($(this).val());
             });
 
-            // Mostrar/ocultar botões de ação em massa baseado na seleção
-            if (this.selectedIds.length > 0) {
-                // Mostra os botões removendo o style inline (deixa o CSS padrão funcionar)
-                if (eauMembersData.isSuperAdmin) {
-                    const deleteBtn = document.getElementById('eau-bulk-delete-members');
-                    if (deleteBtn) deleteBtn.style.removeProperty('display');
-                }
-                if (eauMembersData.canManageTags) {
-                    const tagsBtn = document.getElementById('eau-bulk-manage-tags');
-                    if (tagsBtn) tagsBtn.style.removeProperty('display');
+            // Update bulk actions bar count and visibility
+            const count = this.selectedIds.length;
+            $('#eau-bulk-actions-count').text(count);
+            $('#eau-bulk-actions-label').text(count === 1 ? 'member selected' : 'members selected');
+
+            if (count > 0) {
+                $('#eau-bulk-actions-bar').addClass('eau-visible');
+                // Reinitialize Lucide icons in the bar
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
                 }
             } else {
-                // Esconde os botões usando !important para sobrescrever o CSS
-                this.hideBulkActionButtons();
+                $('#eau-bulk-actions-bar').removeClass('eau-visible');
             }
+
+            // Legacy: hide old buttons (they are hidden by CSS now)
+            this.hideBulkActionButtons();
         },
 
         /**
@@ -1488,6 +1524,27 @@
                 }
 
                 fieldHTML += `</div>`;
+            } else if (inputType === 'checkbox') {
+                // Single checkbox (boolean flag) - e.g., Lifetime Member, Full Individual Member (v1.72.3)
+                const isChecked = value === '1' || value === 1 || value === true || value === 'true';
+                fieldHTML += `<div class="eau-form-field">`;
+                fieldHTML += `<label class="eau-form-label">${fieldConfig.label} ${requiredLabel}</label>`;
+
+                if (!isView && !readonly) {
+                    fieldHTML += `<div class="eau-checkbox-toggle">`;
+                    fieldHTML += `<label class="eau-toggle-switch">`;
+                    fieldHTML += `<input type="checkbox" name="${fieldName}" value="1" ${isChecked ? 'checked' : ''}>`;
+                    fieldHTML += `<span class="eau-toggle-slider"></span>`;
+                    fieldHTML += `</label>`;
+                    fieldHTML += `<span class="eau-toggle-label">${isChecked ? 'Yes' : 'No'}</span>`;
+                    fieldHTML += `</div>`;
+                } else {
+                    const displayValue = isChecked ? 'Yes' : 'No';
+                    const badgeClass = isChecked ? 'eau-badge-success' : 'eau-badge-muted';
+                    fieldHTML += `<span class="eau-view-badge ${badgeClass}">${displayValue}</span>`;
+                }
+
+                fieldHTML += `</div>`;
             } else {
                 // Input text, email, etc
                 fieldHTML += `<div class="eau-form-field">`;
@@ -1677,6 +1734,70 @@
                                 $('#eau-bulk-delete-members').hide();
                             } else {
                                 EauNotifications.error('Error', response.data.message || 'Failed to delete members');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Clear selection and hide bulk actions bar (v1.72.4)
+         */
+        clearSelection: function() {
+            // Uncheck all checkboxes
+            $('.eau-row-checkbox').prop('checked', false);
+            $('#members-table-select-all').prop('checked', false);
+
+            // Clear selection array
+            this.selectedIds = [];
+
+            // Hide bulk actions bar
+            $('#eau-bulk-actions-bar').removeClass('eau-visible');
+        },
+
+        /**
+         * Handle bulk set flag (Lifetime Member / Full Individual Member) (v1.72.4)
+         */
+        handleBulkSetFlag: function(flagName, flagValue) {
+            const self = this;
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('No Selection', 'Please select members to update.');
+                return;
+            }
+
+            const count = this.selectedIds.length;
+            const flagLabel = flagName === 'mem_lifetime_member' ? 'Lifetime Member' : 'Full Individual Member';
+            const valueLabel = flagValue === '1' ? 'Yes' : 'No';
+
+            EauNotifications.confirm({
+                title: `Set ${flagLabel}?`,
+                message: `Are you sure you want to set ${flagLabel} to "${valueLabel}" for ${count} member(s)?`,
+                type: 'warning',
+                confirmText: 'Apply',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauMembersData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_bulk_set_member_flag',
+                            nonce: eauMembersData.nonce,
+                            ids: self.selectedIds,
+                            flag_name: flagName,
+                            flag_value: flagValue
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Updated!', response.data.message);
+                                self.clearSelection();
+                                self.loadMembers();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to update members');
                             }
                         },
                         error: function() {

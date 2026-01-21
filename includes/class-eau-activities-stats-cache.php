@@ -145,18 +145,20 @@ class Eau_Activities_Stats_Cache {
     /**
      * Gera chave de cache única baseada no contexto do usuário
      *
+     * @since 1.72.5 - Usa helpers para suportar múltiplos tipos com priorização
      * @param int $user_id ID do usuário
      * @return string Chave de cache
      */
     private static function generate_cache_key($user_id) {
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-
-        if ($mem_type === 'superAdmin' || Eau_User_Institution_Helper::has_admin_access($user_id)) {
+        // v1.72.5: Usa helpers ao invés de verificação direta de string
+        // Isso garante que se um usuário é superAdmin E institutionAdmin,
+        // ele recebe o cache de admin (maior autoridade)
+        if (Eau_User_Institution_Helper::has_admin_access($user_id)) {
             // Super admin e admin vêem tudo: cache global
             return self::CACHE_PREFIX . 'global_admin';
         }
 
-        if ($mem_type === 'institutionAdmin') {
+        if (Eau_User_Institution_Helper::is_institution_admin($user_id)) {
             // Institution admin: cache por conjunto de instituições
             $company_ids = Eau_User_Institution_Helper::get_user_managed_company_ids($user_id);
             $companies_hash = md5(implode('_', $company_ids));

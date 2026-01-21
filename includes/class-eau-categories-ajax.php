@@ -22,6 +22,9 @@ class Eau_Categories_Ajax {
         // Delete category
         add_action('wp_ajax_eau_delete_category', array(__CLASS__, 'delete_category'));
 
+        // Bulk delete categories (v1.72.5)
+        add_action('wp_ajax_eau_bulk_delete_categories', array(__CLASS__, 'bulk_delete_categories'));
+
         // Sync categories from activities
         add_action('wp_ajax_eau_sync_categories', array(__CLASS__, 'sync_categories'));
 
@@ -47,7 +50,7 @@ class Eau_Categories_Ajax {
     public static function get_categories() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -97,7 +100,7 @@ class Eau_Categories_Ajax {
     public static function get_category() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -122,7 +125,7 @@ class Eau_Categories_Ajax {
     public static function save_category() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -172,7 +175,7 @@ class Eau_Categories_Ajax {
     public static function delete_category() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -192,12 +195,52 @@ class Eau_Categories_Ajax {
     }
 
     /**
+     * Bulk delete categories (v1.72.5)
+     */
+    public static function bulk_delete_categories() {
+        check_ajax_referer('eau_categories_nonce', 'nonce');
+
+        if (!Eau_Settings::can_access_settings()) {
+            wp_send_json_error(array('message' => 'Permissão negada.'), 403);
+        }
+
+        $ids = isset($_POST['ids']) ? array_map('intval', $_POST['ids']) : array();
+
+        if (empty($ids)) {
+            wp_send_json_error(array('message' => 'Nenhuma categoria selecionada.'), 400);
+        }
+
+        $deleted_count = 0;
+        $failed_count = 0;
+
+        foreach ($ids as $id) {
+            $result = Eau_Categories_Database::delete_category($id);
+            if ($result) {
+                $deleted_count++;
+            } else {
+                $failed_count++;
+            }
+        }
+
+        $message = sprintf('%d categoria(s) deletada(s) com sucesso.', $deleted_count);
+        if ($failed_count > 0) {
+            $message .= sprintf(' %d categoria(s) não puderam ser deletadas.', $failed_count);
+        }
+
+        wp_send_json_success(array(
+            'message' => $message,
+            'deleted_count' => $deleted_count,
+            'failed_count' => $failed_count,
+        ));
+    }
+
+    /**
      * Sync categories from activities
      */
     public static function sync_categories() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -217,7 +260,7 @@ class Eau_Categories_Ajax {
     public static function generate_category_serial() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -248,7 +291,7 @@ class Eau_Categories_Ajax {
     public static function get_categories_stats() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -283,7 +326,7 @@ class Eau_Categories_Ajax {
     public static function export_categories() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -300,7 +343,7 @@ class Eau_Categories_Ajax {
     public static function import_categories_analyze() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -351,7 +394,7 @@ class Eau_Categories_Ajax {
     public static function import_categories_execute() {
         check_ajax_referer('eau_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 

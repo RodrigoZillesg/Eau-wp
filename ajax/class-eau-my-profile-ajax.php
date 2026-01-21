@@ -34,6 +34,8 @@ class Eau_My_Profile_Ajax {
     /**
      * AJAX: Get My Profile
      * Retorna todos os dados do perfil do usuário logado
+     *
+     * @since 1.72.6 - Suporte a múltiplos tipos (array mem_types)
      */
     public static function get_my_profile() {
         // Verifica nonce
@@ -70,6 +72,10 @@ class Eau_My_Profile_Ajax {
         // Formata data de registro
         $registered_date = date_i18n('F Y', strtotime($user->user_registered));
 
+        // v1.72.6: Pega TODOS os tipos do usuário (suporte a múltiplos)
+        $all_types = Eau_User_Institution_Helper::get_user_types($user_id);
+        $all_type_labels = Eau_My_Profile::get_all_mem_type_labels($user_id);
+
         // Monta resposta
         $data = array(
             // Core fields
@@ -92,6 +98,10 @@ class Eau_My_Profile_Ajax {
             'mem_status' => $mem_status,
             'mem_userid' => $mem_userid,
             'mem_profile_photo' => $mem_profile_photo,
+
+            // v1.72.6: Múltiplos tipos
+            'mem_types' => $all_types,
+            'mem_type_labels' => $all_type_labels,
 
             // Computed fields
             'institution_name' => $institution_name,

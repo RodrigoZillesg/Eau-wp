@@ -139,6 +139,15 @@
                 self.downloadReceipt(invoiceId, invoiceType);
             });
 
+            // Copy payment link
+            $(document).on('click', '.eau-action-copy-link', function(e) {
+                e.preventDefault();
+                const btn = $(this);
+                const invoiceId = btn.data('id');
+                const invoiceType = btn.data('type');
+                self.copyPaymentLink(invoiceId, invoiceType, btn);
+            });
+
             // Modal close
             $(document).on('click', '[data-modal-action="close"], .eau-modal-overlay', function(e) {
                 if (e.target === this) {
@@ -526,11 +535,15 @@
                                 <button type="button" class="eau-action-btn eau-action-view" title="Manage Payments">
                                     <i data-lucide="credit-card"></i>
                                 </button>
-                                ${row.payment_status === 'paid' ? `
+                                ${row.payment_status !== 'paid' ? `
+                                <button type="button" class="eau-action-btn eau-action-copy-link" title="Copy Payment Link" data-id="${row.id}" data-type="${row.invoice_type}">
+                                    <i data-lucide="link"></i>
+                                </button>
+                                ` : `
                                 <button type="button" class="eau-action-btn eau-action-receipt" title="Download Receipt" data-id="${row.id}" data-type="${row.invoice_type}">
                                     <i data-lucide="file-text"></i>
                                 </button>
-                                ` : ''}
+                                `}
                             </div>
                         </td>
                     </tr>
@@ -1019,6 +1032,92 @@
 
             // Open in new tab
             window.open(receiptUrl, '_blank');
+        },
+
+        /**
+         * Copia o link de pagamento para a área de transferência
+         */
+        copyPaymentLink: function(invoiceId, invoiceType, btn) {
+            const self = this;
+
+            // Build checkout URL based on type
+            let checkoutUrl = eauPaymentsManagement.checkoutUrl;
+
+            // Add query parameters
+            if (invoiceType === 'event') {
+                checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + 'type=event&reg_id=' + invoiceId;
+            } else if (invoiceType === 'course') {
+                checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + 'type=course&purchase_id=' + invoiceId;
+            }
+
+            // Copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                // Modern API
+                navigator.clipboard.writeText(checkoutUrl).then(function() {
+                    self.showCopySuccess(btn);
+                }).catch(function() {
+                    self.fallbackCopyToClipboard(checkoutUrl, btn);
+                });
+            } else {
+                // Fallback for older browsers
+                self.fallbackCopyToClipboard(checkoutUrl, btn);
+            }
+        },
+
+        /**
+         * Mostra feedback visual de sucesso no botão de copiar
+         */
+        showCopySuccess: function(btn) {
+            const self = this;
+
+            // Store original icon
+            const originalIcon = btn.html();
+
+            // Change to checkmark icon with success color
+            btn.addClass('eau-copy-success');
+            btn.html('<i data-lucide="check"></i>');
+
+            // Re-initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Show toast notification
+            self.showSuccess(eauPaymentsManagement.i18n.linkCopied);
+
+            // Revert after 2 seconds
+            setTimeout(function() {
+                btn.removeClass('eau-copy-success');
+                btn.html(originalIcon);
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }, 2000);
+        },
+
+        /**
+         * Fallback para copiar texto em navegadores mais antigos
+         */
+        fallbackCopyToClipboard: function(text, btn) {
+            const self = this;
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                self.showCopySuccess(btn);
+            } catch (err) {
+                self.showError(eauPaymentsManagement.i18n.copyLinkError);
+            }
+
+            document.body.removeChild(textArea);
         },
 
         /**

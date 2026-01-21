@@ -572,8 +572,9 @@ class Eau_My_Profile {
     /**
      * Pega o label do mem_type
      *
-     * @param string $mem_type Tipo do membro
-     * @return string Label amigável
+     * @since 1.72.6 - Suporte a múltiplos tipos (array)
+     * @param string|array $mem_type Tipo do membro (pode ser string ou array)
+     * @return string Label amigável (concatenado se múltiplos)
      */
     public static function get_mem_type_label($mem_type) {
         $labels = array(
@@ -581,9 +582,57 @@ class Eau_My_Profile {
             'Admin' => 'Admin',
             'institutionAdmin' => 'Institution Admin',
             'Member' => 'Member',
+            'member' => 'Member',
+            'non-member' => 'Non-Member',
         );
 
+        // Se é array, retorna o tipo de maior autoridade
+        if (is_array($mem_type)) {
+            $highest = Eau_User_Institution_Helper::get_highest_permission_type();
+            return isset($labels[$highest]) ? $labels[$highest] : $highest;
+        }
+
         return isset($labels[$mem_type]) ? $labels[$mem_type] : (!empty($mem_type) ? $mem_type : 'Member');
+    }
+
+    /**
+     * Retorna array com todos os labels de tipos do usuário
+     *
+     * @since 1.72.6
+     * @since 1.72.7 - Inclui institutionAdmin mesmo quando vem de outras fontes (mem_managed_institutions, primary_contact)
+     * @param int|null $user_id ID do usuário (null = atual)
+     * @return array Array de labels
+     */
+    public static function get_all_mem_type_labels($user_id = null) {
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+
+        $labels_map = array(
+            'superAdmin' => 'Super Admin',
+            'Admin' => 'Admin',
+            'institutionAdmin' => 'Institution Admin',
+            'Member' => 'Member',
+            'member' => 'Member',
+            'non-member' => 'Non-Member',
+        );
+
+        $types = Eau_User_Institution_Helper::get_user_types($user_id);
+
+        // v1.72.7: Verifica se é institutionAdmin por outras vias (mem_managed_institutions, primary_contact)
+        // e adiciona ao array se ainda não estiver
+        if (Eau_User_Institution_Helper::is_institution_admin($user_id) && !in_array('institutionAdmin', $types)) {
+            $types[] = 'institutionAdmin';
+        }
+
+        $labels = array();
+
+        foreach ($types as $type) {
+            $labels[] = isset($labels_map[$type]) ? $labels_map[$type] : $type;
+        }
+
+        // Remove duplicatas (ex: 'Member' e 'member')
+        return array_unique($labels);
     }
 
     /**

@@ -46,6 +46,12 @@ class Eau_Event_Registrations_Ajax {
 
         // Compra de acesso à gravação de evento passado (v1.68.10)
         add_action('wp_ajax_eau_purchase_recording_access', array(__CLASS__, 'purchase_recording_access'));
+
+        // Buscar membros da instituição para registro múltiplo (v1.69.0)
+        add_action('wp_ajax_eau_get_institution_members_for_event', array(__CLASS__, 'get_institution_members_for_event'));
+
+        // Registro múltiplo para membros da instituição (v1.69.0)
+        add_action('wp_ajax_eau_register_multiple_for_event', array(__CLASS__, 'register_multiple_for_event'));
     }
 
     /**
@@ -195,12 +201,420 @@ class Eau_Event_Registrations_Ajax {
             update_post_meta($post_id, $prefix . 'additional_notes', $notes);
         }
 
+        // Processar cupom se fornecido (v1.69.0)
+        $coupon_code = isset($_POST['coupon_code']) ? sanitize_text_field($_POST['coupon_code']) : '';
+        if (!empty($coupon_code) && !$is_free_event) {
+            $coupon_result = self::apply_coupon_to_registration($post_id, $coupon_code, $event_id, $event_price, get_current_user_id());
+            if ($coupon_result['success']) {
+                // Atualizar preço pago com desconto
+                update_post_meta($post_id, $prefix . 'price_paid', $coupon_result['final_price']);
+                update_post_meta($post_id, $prefix . 'coupon_id', $coupon_result['coupon_id']);
+                update_post_meta($post_id, $prefix . 'coupon_code', $coupon_result['coupon_code']);
+                update_post_meta($post_id, $prefix . 'discount_applied', $coupon_result['discount_amount']);
+                update_post_meta($post_id, $prefix . 'original_price', $event_price);
+
+                // Atualizar payment_status se ficou gratuito
+                if ($coupon_result['final_price'] <= 0) {
+                    update_post_meta($post_id, $prefix . 'payment_status', 'free');
+                }
+            }
+        }
+
         // Envia email de confirmação
         \EauSystem\Email\Email_Events::send_registration_confirmation($post_id);
 
+        // Determinar se precisa redirecionar para checkout (v1.71.0)
+        // Recalcular preço final considerando cupom
+        $final_price = (float) get_post_meta($post_id, Config\META_PREFIX . 'price_paid', true);
+        $final_payment_status = get_post_meta($post_id, Config\META_PREFIX . 'payment_status', true);
+        $requires_payment = ($final_payment_status === 'pending' && $final_price > 0);
+
+        $response = array(
+            'message'          => __('Registration successful! You will receive a confirmation email shortly.', 'eau-system'),
+            'registration_id'  => $post_id,
+            'requires_payment' => $requires_payment,
+        );
+
+        // Se evento é pago, adicionar URL de checkout
+        if ($requires_payment) {
+            $checkout_page_id = \EauSystem\Eau_Pages::get_page_id('checkout');
+            $checkout_url = $checkout_page_id ? get_permalink($checkout_page_id) : home_url('/checkout/');
+            $response['checkout_url'] = add_query_arg(array(
+                'type'   => 'event',
+                'reg_id' => $post_id,
+            ), $checkout_url);
+            $response['message'] = __('Registration created! Redirecting to payment...', 'eau-system');
+        }
+
+        wp_send_json_success($response);
+    }
+
+    /**
+     * Registra múltiplos membros para um evento (v1.69.0)
+     *
+     * @since  1.69.0
+     * @return void
+     */
+    public static function register_multiple_for_event() {
+        check_ajax_referer('eau_event_registration', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => __('You must be logged in.', 'eau-system')));
+        }
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $member_ids = isset($_POST['member_ids']) ? array_map('absint', (array) $_POST['member_ids']) : array();
+        $coupon_code = isset($_POST['coupon_code']) ? sanitize_text_field($_POST['coupon_code']) : '';
+
+        if (!$event_id) {
+            wp_send_json_error(array('message' => __('Invalid event.', 'eau-system')));
+        }
+
+        if (empty($member_ids)) {
+            wp_send_json_error(array('message' => __('Please select at least one member.', 'eau-system')));
+        }
+
+        // Verificar se evento existe
+        $event = get_post($event_id);
+        if (!$event || $event->post_type !== 'eau_event') {
+            wp_send_json_error(array('message' => __('Event not found.', 'eau-system')));
+        }
+
+        // Verificar se usuário pode registrar outros (deve ser da mesma instituição)
+        $current_user_id = get_current_user_id();
+        $user_institution = get_user_meta($current_user_id, 'mem_membercompanyname', true);
+
+        if (empty($user_institution)) {
+            wp_send_json_error(array('message' => __('You must belong to an institution to register others.', 'eau-system')));
+        }
+
+        // Verificar capacidade
+        $capacity = get_post_meta($event_id, 'evt_capacity', true);
+        if ($capacity && intval($capacity) > 0) {
+            $current_registrations = self::count_registrations($event_id);
+            if (($current_registrations + count($member_ids)) > intval($capacity)) {
+                wp_send_json_error(array('message' => __('Not enough spots available for all selected members.', 'eau-system')));
+            }
+        }
+
+        // Obter preço do evento
+        $user_price = \EauSystem\Events\Frontend\Eau_Events_Helper::get_user_price($event_id);
+        $event_price = $user_price['amount'];
+        $total_price = $event_price * count($member_ids);
+        $is_free_event = ($event_price <= 0);
+
+        // Validar cupom se fornecido
+        $coupon_data = null;
+        $discount_per_person = 0;
+        if (!empty($coupon_code) && !$is_free_event) {
+            $validation = \EauSystem\Coupons\Eau_Coupons_Validator::validate_for_multiple(
+                $coupon_code,
+                $event_id,
+                $event_price,
+                count($member_ids),
+                $current_user_id
+            );
+
+            if (!$validation['valid']) {
+                wp_send_json_error(array('message' => $validation['error']));
+            }
+
+            $coupon_data = $validation['coupon'];
+            $total_discount = $validation['discount']['amount'];
+            $discount_per_person = $total_discount / count($member_ids);
+        }
+
+        $prefix = Config\META_PREFIX;
+        $registered_ids = array();
+        $failed_members = array();
+
+        // Registrar cada membro
+        foreach ($member_ids as $member_user_id) {
+            // Verificar se membro pertence à mesma instituição
+            $member_institution = get_user_meta($member_user_id, 'mem_membercompanyname', true);
+            if ($member_institution !== $user_institution) {
+                $failed_members[] = $member_user_id;
+                continue;
+            }
+
+            // Obter dados do membro
+            $member_user = get_userdata($member_user_id);
+            if (!$member_user) {
+                $failed_members[] = $member_user_id;
+                continue;
+            }
+
+            // Verificar se já está registrado
+            $existing = self::get_existing_registration($event_id, $member_user->user_email);
+            if ($existing) {
+                $failed_members[] = $member_user_id;
+                continue;
+            }
+
+            // Criar registro
+            $post_title = $member_user->display_name . ' - ' . $event->post_title;
+
+            $post_id = wp_insert_post(array(
+                'post_type'   => Config\POST_TYPE,
+                'post_title'  => $post_title,
+                'post_status' => 'publish',
+            ));
+
+            if (is_wp_error($post_id)) {
+                $failed_members[] = $member_user_id;
+                continue;
+            }
+
+            // Determinar tipo de membro
+            $member_type = 'member'; // Assumimos que todos são membros se estão na instituição
+
+            // Calcular preço final com desconto
+            $final_price = $event_price - $discount_per_person;
+            $payment_status = $is_free_event || $final_price <= 0 ? 'free' : 'pending';
+
+            // Salvar meta dados
+            update_post_meta($post_id, $prefix . 'attendee_name', $member_user->display_name);
+            update_post_meta($post_id, $prefix . 'attendee_email', $member_user->user_email);
+            update_post_meta($post_id, $prefix . 'event_id', $event_id);
+            update_post_meta($post_id, $prefix . 'registration_date', current_time('Y-m-d\TH:i'));
+            update_post_meta($post_id, $prefix . 'member_type', $member_type);
+            update_post_meta($post_id, $prefix . 'status', Config\DEFAULT_STATUS);
+            update_post_meta($post_id, $prefix . 'payment_status', $payment_status);
+            update_post_meta($post_id, $prefix . 'price_paid', $final_price);
+            update_post_meta($post_id, $prefix . 'price_type', 'member');
+            update_post_meta($post_id, $prefix . 'attended', '0');
+            update_post_meta($post_id, $prefix . 'activity_created', '0');
+            update_post_meta($post_id, $prefix . 'user_id', $member_user_id);
+            update_post_meta($post_id, $prefix . 'registered_by_user_id', $current_user_id);
+            update_post_meta($post_id, $prefix . 'registration_type', 'by_institution_member');
+
+            // Salvar mem_userid
+            $mem_userid = get_user_meta($member_user_id, 'mem_userid', true);
+            if (!empty($mem_userid)) {
+                update_post_meta($post_id, $prefix . 'mem_userid', $mem_userid);
+            }
+
+            // Salvar dados do cupom se aplicado
+            if ($coupon_data && $discount_per_person > 0) {
+                update_post_meta($post_id, $prefix . 'coupon_id', $coupon_data['id']);
+                update_post_meta($post_id, $prefix . 'coupon_code', $coupon_data['code']);
+                update_post_meta($post_id, $prefix . 'discount_applied', $discount_per_person);
+                update_post_meta($post_id, $prefix . 'original_price', $event_price);
+            }
+
+            // Envia email de confirmação
+            \EauSystem\Email\Email_Events::send_registration_confirmation($post_id);
+
+            $registered_ids[] = $post_id;
+        }
+
+        // Registrar uso do cupom (uma vez para todos os registros)
+        if ($coupon_data && !empty($registered_ids)) {
+            \EauSystem\Coupons\Eau_Coupons_Model::record_usage(array(
+                'coupon_id' => $coupon_data['id'],
+                'user_id' => $current_user_id,
+                'registration_id' => $registered_ids[0], // Primeiro registro
+                'event_id' => $event_id,
+                'discount_applied' => $coupon_data['discount']['amount'],
+                'original_price' => $total_price,
+                'final_price' => $total_price - $coupon_data['discount']['amount'],
+            ));
+        }
+
+        $total_registered = count($registered_ids);
+        $total_failed = count($failed_members);
+
+        if ($total_registered === 0) {
+            wp_send_json_error(array('message' => __('Failed to register any members. They may already be registered.', 'eau-system')));
+        }
+
+        $message = sprintf(
+            __('%d member(s) registered successfully!', 'eau-system'),
+            $total_registered
+        );
+
+        if ($total_failed > 0) {
+            $message .= ' ' . sprintf(
+                __('%d member(s) could not be registered (already registered or different institution).', 'eau-system'),
+                $total_failed
+            );
+        }
+
+        // Calcular valor total a pagar (v1.71.0)
+        $total_pending_amount = 0;
+        $pending_registration_ids = array();
+        foreach ($registered_ids as $reg_id) {
+            $reg_status = get_post_meta($reg_id, Config\META_PREFIX . 'payment_status', true);
+            $reg_price = (float) get_post_meta($reg_id, Config\META_PREFIX . 'price_paid', true);
+            if ($reg_status === 'pending' && $reg_price > 0) {
+                $total_pending_amount += $reg_price;
+                $pending_registration_ids[] = $reg_id;
+            }
+        }
+
+        $requires_payment = !empty($pending_registration_ids);
+
+        $response = array(
+            'message' => $message,
+            'registered_count' => $total_registered,
+            'failed_count' => $total_failed,
+            'registration_ids' => $registered_ids,
+            'requires_payment' => $requires_payment,
+        );
+
+        // Se tem pagamentos pendentes, adicionar URL de checkout (v1.71.0)
+        if ($requires_payment) {
+            $checkout_page_id = \EauSystem\Eau_Pages::get_page_id('checkout');
+            $checkout_url = $checkout_page_id ? get_permalink($checkout_page_id) : home_url('/checkout/');
+
+            // Para múltiplos registros, usar o primeiro como referência
+            // O webhook processará todos os registros do mesmo evento/usuário
+            $response['checkout_url'] = add_query_arg(array(
+                'type'    => 'event',
+                'reg_id'  => $pending_registration_ids[0],
+                'batch'   => implode(',', $pending_registration_ids),
+            ), $checkout_url);
+            $response['total_amount'] = $total_pending_amount;
+            $response['message'] = $message . ' ' . __('Redirecting to payment...', 'eau-system');
+        }
+
+        wp_send_json_success($response);
+    }
+
+    /**
+     * Aplica cupom a um registro (v1.69.0)
+     *
+     * @param int    $registration_id ID do registro
+     * @param string $coupon_code     Código do cupom
+     * @param int    $event_id        ID do evento
+     * @param float  $original_price  Preço original
+     * @param int    $user_id         ID do usuário
+     * @return array
+     */
+    private static function apply_coupon_to_registration($registration_id, $coupon_code, $event_id, $original_price, $user_id) {
+        $validation = \EauSystem\Coupons\Eau_Coupons_Validator::validate(
+            $coupon_code,
+            $event_id,
+            $original_price,
+            $user_id
+        );
+
+        if (!$validation['valid']) {
+            return array('success' => false, 'error' => $validation['error']);
+        }
+
+        $coupon = $validation['coupon'];
+        $discount = $validation['discount'];
+
+        // Registrar uso do cupom
+        \EauSystem\Coupons\Eau_Coupons_Model::record_usage(array(
+            'coupon_id' => $coupon['id'],
+            'user_id' => $user_id,
+            'registration_id' => $registration_id,
+            'event_id' => $event_id,
+            'discount_applied' => $discount['amount'],
+            'original_price' => $original_price,
+            'final_price' => $discount['final_total'],
+        ));
+
+        return array(
+            'success' => true,
+            'coupon_id' => $coupon['id'],
+            'coupon_code' => $coupon['code'],
+            'discount_amount' => $discount['amount'],
+            'final_price' => $discount['final_total'],
+        );
+    }
+
+    /**
+     * Busca membros da instituição para registro múltiplo (v1.69.0)
+     *
+     * @since  1.69.0
+     * @return void
+     */
+    public static function get_institution_members_for_event() {
+        check_ajax_referer('eau_event_registration', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => __('You must be logged in.', 'eau-system')));
+        }
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+
+        if (!$event_id) {
+            wp_send_json_error(array('message' => __('Invalid event.', 'eau-system')));
+        }
+
+        // Obter instituição do usuário atual
+        $current_user_id = get_current_user_id();
+        $user_institution = get_user_meta($current_user_id, 'mem_membercompanyname', true);
+
+        if (empty($user_institution)) {
+            wp_send_json_error(array('message' => __('You must belong to an institution.', 'eau-system')));
+        }
+
+        // Resolver nome da instituição (pode ser ID de post ou título)
+        $institution_name = $user_institution;
+        if (is_numeric($user_institution)) {
+            // Se for um ID, buscar o título do post
+            $institution_post = get_post(intval($user_institution));
+            if ($institution_post) {
+                $institution_name = $institution_post->post_title;
+            }
+        }
+
+        // Buscar logo da instituição
+        $institution_logo = '';
+        if (is_numeric($user_institution)) {
+            $institution_logo = get_post_meta(intval($user_institution), 'ins_logo', true);
+        }
+
+        // Buscar todos os membros da mesma instituição
+        $args = array(
+            'meta_query' => array(
+                array(
+                    'key' => 'mem_membercompanyname',
+                    'value' => $user_institution,
+                    'compare' => '=',
+                ),
+            ),
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+            'number' => 100, // Limitar a 100 membros
+        );
+
+        $users_query = new \WP_User_Query($args);
+        $users = $users_query->get_results();
+
+        // Obter preço do evento
+        $user_price = \EauSystem\Events\Frontend\Eau_Events_Helper::get_user_price($event_id);
+
+        // Preparar lista de membros (inclui o usuário logado)
+        $members = array();
+        foreach ($users as $user) {
+            // Verificar se já está registrado
+            $already_registered = self::get_existing_registration($event_id, $user->user_email) !== null;
+
+            // Marcar se é o usuário atual (para UI destacar)
+            $is_current_user = ($user->ID === $current_user_id);
+
+            $members[] = array(
+                'user_id' => $user->ID,
+                'name' => $user->display_name,
+                'email' => $user->user_email,
+                'already_registered' => $already_registered,
+                'is_current_user' => $is_current_user,
+            );
+        }
+
         wp_send_json_success(array(
-            'message'         => __('Registration successful! You will receive a confirmation email shortly.', 'eau-system'),
-            'registration_id' => $post_id,
+            'members' => $members,
+            'institution_name' => $institution_name,
+            'institution_id' => is_numeric($user_institution) ? intval($user_institution) : 0,
+            'institution_logo' => $institution_logo,
+            'event_price' => $user_price['amount'],
+            'price_display' => $user_price['display'],
+            'current_user_id' => $current_user_id,
         ));
     }
 
@@ -517,14 +931,19 @@ class Eau_Event_Registrations_Ajax {
             wp_send_json_error(array('message' => __('Error creating access. Please try again.', 'eau-system')));
         }
 
-        // Criar produto WooCommerce temporário ou usar lógica de pagamento existente
-        // Por agora, vamos retornar os dados para pagamento
+        // Redirecionar para página de checkout (v1.71.0)
+        $checkout_page_id = \EauSystem\Eau_Pages::get_page_id('checkout');
+        $checkout_url = $checkout_page_id ? get_permalink($checkout_page_id) : home_url('/checkout/');
+
         wp_send_json_success(array(
-            'message'         => __('Processing payment...', 'eau-system'),
+            'message'         => __('Redirecting to payment...', 'eau-system'),
             'registration_id' => $registration_id,
             'price'           => $price,
             'redirect'        => true,
-            'checkout_url'    => self::get_recording_checkout_url($registration_id, $event_id, $price),
+            'checkout_url'    => add_query_arg(array(
+                'type'   => 'event',
+                'reg_id' => $registration_id,
+            ), $checkout_url),
         ));
     }
 

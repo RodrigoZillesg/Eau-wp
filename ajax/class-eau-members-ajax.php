@@ -66,6 +66,9 @@ class Eau_Members_Ajax {
 
         // Reset email migration status (v1.62.0)
         add_action('wp_ajax_eau_reset_email_migration', array(__CLASS__, 'reset_email_migration'));
+
+        // Bulk set member flag (Lifetime Member / Full Individual Member) (v1.72.4)
+        add_action('wp_ajax_eau_bulk_set_member_flag', array(__CLASS__, 'bulk_set_member_flag'));
     }
 
     /**
@@ -88,6 +91,8 @@ class Eau_Members_Ajax {
         $registered_date_from = isset($_POST['registered_date_from']) ? sanitize_text_field($_POST['registered_date_from']) : '';
         $registered_date_to = isset($_POST['registered_date_to']) ? sanitize_text_field($_POST['registered_date_to']) : '';
         $email_migration = isset($_POST['email_migration']) ? sanitize_text_field($_POST['email_migration']) : '';
+        $lifetime_member = isset($_POST['lifetime_member']) ? sanitize_text_field($_POST['lifetime_member']) : '';
+        $full_individual_member = isset($_POST['full_individual_member']) ? sanitize_text_field($_POST['full_individual_member']) : '';
         $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'display_name';
         $order = isset($_POST['order']) ? sanitize_text_field($_POST['order']) : 'ASC';
 
@@ -108,6 +113,8 @@ class Eau_Members_Ajax {
             'registered_date_from' => $registered_date_from,
             'registered_date_to' => $registered_date_to,
             'email_migration' => $email_migration,
+            'lifetime_member' => $lifetime_member,
+            'full_individual_member' => $full_individual_member,
             'orderby' => $orderby,
             'order' => $order,
         ));
@@ -162,9 +169,26 @@ class Eau_Members_Ajax {
             $tags_badges_html .= '</div>';
         }
 
+        // Flags: Lifetime Member e Full Individual Member (v1.72.3)
+        $lifetime_member = get_user_meta($user['ID'], 'mem_lifetime_member', true);
+        $full_individual_member = get_user_meta($user['ID'], 'mem_full_individual_member', true);
+
+        $flags_badges_html = '';
+        if ($lifetime_member === '1' || $full_individual_member === '1') {
+            $flags_badges_html = '<div class="eau-member-flags-badges">';
+            if ($lifetime_member === '1') {
+                $flags_badges_html .= '<span class="eau-member-flag-badge eau-flag-lifetime"><i data-lucide="infinity"></i> Lifetime</span>';
+            }
+            if ($full_individual_member === '1') {
+                $flags_badges_html .= '<span class="eau-member-flag-badge eau-flag-full-individual"><i data-lucide="user-check"></i> Full Individual</span>';
+            }
+            $flags_badges_html .= '</div>';
+        }
+
         $member_html = sprintf(
-            '<div class="eau-member-cell"><strong>%s</strong>%s</div>',
+            '<div class="eau-member-cell"><strong>%s</strong>%s%s</div>',
             esc_html($full_name),
+            $flags_badges_html,
             $tags_badges_html
         );
 
@@ -232,6 +256,8 @@ class Eau_Members_Ajax {
             'actions' => $actions_html,
             'member_tags' => implode(',', $member_tags), // Slugs das tags separadas por vírgula
             'email_migration_status' => $email_migration_status, // Raw status for JS
+            'lifetime_member' => $lifetime_member === '1' ? '1' : '0', // Lifetime Member flag (v1.72.3)
+            'full_individual_member' => $full_individual_member === '1' ? '1' : '0', // Full Individual Member flag (v1.72.3)
         );
     }
 
@@ -1451,6 +1477,78 @@ class Eau_Members_Ajax {
             ));
         } else {
             wp_send_json_error(array('message' => 'Failed to reset email migration status.'));
+        }
+    }
+
+    /**
+     * AJAX: Bulk set member flag (Lifetime Member / Full Individual Member)
+     *
+     * @since 1.72.4
+     */
+    public static function bulk_set_member_flag() {
+        check_ajax_referer('eau_members_nonce', 'nonce');
+
+        // Verify permission (superAdmin or Admin only)
+        if (!Eau_User_Institution_Helper::is_super_admin() && !Eau_User_Institution_Helper::is_admin()) {
+            wp_send_json_error(array('message' => 'You do not have permission to update member flags.'));
+        }
+
+        $ids = isset($_POST['ids']) ? array_map('absint', (array) $_POST['ids']) : array();
+        $flag_name = isset($_POST['flag_name']) ? sanitize_text_field($_POST['flag_name']) : '';
+        $flag_value = isset($_POST['flag_value']) ? sanitize_text_field($_POST['flag_value']) : '';
+
+        // Validate flag name
+        $allowed_flags = array('mem_lifetime_member', 'mem_full_individual_member');
+        if (!in_array($flag_name, $allowed_flags)) {
+            wp_send_json_error(array('message' => 'Invalid flag name.'));
+        }
+
+        // Validate flag value
+        if (!in_array($flag_value, array('0', '1'))) {
+            wp_send_json_error(array('message' => 'Invalid flag value.'));
+        }
+
+        if (empty($ids)) {
+            wp_send_json_error(array('message' => 'No members selected.'));
+        }
+
+        $updated = 0;
+        $failed = 0;
+
+        foreach ($ids as $user_id) {
+            // Check if user exists
+            $user = get_userdata($user_id);
+            if (!$user) {
+                $failed++;
+                continue;
+            }
+
+            // Update user meta
+            $result = update_user_meta($user_id, $flag_name, $flag_value);
+
+            // update_user_meta returns false if the value is the same, so we check if the meta now has the right value
+            $current_value = get_user_meta($user_id, $flag_name, true);
+            if ($current_value === $flag_value) {
+                $updated++;
+            } else {
+                $failed++;
+            }
+        }
+
+        $flag_label = $flag_name === 'mem_lifetime_member' ? 'Lifetime Member' : 'Full Individual Member';
+        $value_label = $flag_value === '1' ? 'Yes' : 'No';
+
+        if ($failed === 0) {
+            wp_send_json_success(array(
+                'message' => sprintf('%d member(s) updated: %s set to %s.', $updated, $flag_label, $value_label),
+                'updated' => $updated,
+            ));
+        } else {
+            wp_send_json_success(array(
+                'message' => sprintf('%d member(s) updated, %d failed: %s set to %s.', $updated, $failed, $flag_label, $value_label),
+                'updated' => $updated,
+                'failed' => $failed,
+            ));
         }
     }
 }

@@ -142,6 +142,14 @@
     margin: 0 0 1rem 0;
 }
 
+/* Form hint text */
+.eau-settings-container .eau-form-hint {
+    font-size: 0.75rem !important;
+    color: #9ca3af !important;
+    margin-top: 0.375rem !important;
+    margin-bottom: 0 !important;
+}
+
 /* ==========================================================================
    Radio Group (Custom Styled)
    ========================================================================== */
@@ -1291,4 +1299,323 @@
     background: transparent !important;
     outline: none !important;
     box-shadow: none !important;
+}
+
+/* ==========================================================================
+   Coupons Tab (v1.69.0)
+   ========================================================================== */
+
+.eau-coupons-tab-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Coupon Status Badges */
+.eau-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 9999px;
+}
+
+.eau-status-active {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.eau-status-inactive {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.eau-status-expired {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Coupon Filter */
+.eau-coupon-status-filter {
+    min-width: 130px;
+}
+
+/* Validity text */
+.eau-validity-text {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+/* Coupon Code Copy */
+.eau-coupon-code-copy {
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.eau-coupon-code-copy:hover {
+    background: #e5e7eb;
+    color: #2563eb;
+}
+
+.eau-coupon-code-copy.eau-coupon-copied {
+    background: #10b981;
+    color: white;
+}
+
+/* Form radio inline */
+.eau-radio-inline {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.eau-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.eau-radio-label input[type="radio"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: #2563eb;
+    cursor: pointer;
+}
+
+/* Tags display */
+.eau-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    background: #f3f4f6;
+    color: #4b5563;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    margin: 0.125rem;
+}
+
+/* Muted text */
+.eau-text-muted {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Payment Gateway Tab (v1.70.0)
+   ========================================================================== */
+
+.eau-payment-gateway-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Gateway Status Cards */
+.eau-gateway-status-cards {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.eau-gateway-status-card {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.eau-gateway-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+.eau-gateway-status-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.eau-gateway-status-icon.configured {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+.eau-gateway-status-icon.not-configured {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+
+.eau-gateway-status-icon.mode-sandbox {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.eau-gateway-status-icon.mode-production {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+.eau-gateway-status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.eau-gateway-status-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.eau-gateway-status-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Input with copy button */
+.eau-input-with-copy {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.eau-input-with-copy .eau-form-input {
+    flex: 1;
+    background: #f9fafb;
+}
+
+.eau-input-with-button {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.eau-input-with-button .eau-form-input {
+    flex: 1;
+}
+
+/* Simple table for test cards */
+.eau-simple-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.eau-simple-table thead th {
+    text-align: left;
+    padding: 0.75rem;
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.eau-simple-table tbody td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #4b5563;
+}
+
+.eau-simple-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.eau-simple-table code {
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 0.8125rem;
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    color: #374151;
+}
+
+/* Text color utilities */
+.eau-text-success {
+    color: #10b981 !important;
+}
+
+.eau-text-danger {
+    color: #dc2626 !important;
+}
+
+/* Spinner animation */
+.eau-spin {
+    animation: eau-spin 1s linear infinite;
+}
+
+@keyframes eau-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Badge styles */
+.eau-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+.eau-badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.eau-badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.eau-badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Form row */
+.eau-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .eau-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .eau-gateway-status-cards {
+        flex-direction: column;
+    }
+
+    .eau-gateway-status-card {
+        min-width: 100%;
+    }
 }

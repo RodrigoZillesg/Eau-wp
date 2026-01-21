@@ -258,11 +258,11 @@ class Eau_Filters {
      * - institutionAdmin: vê institutionAdmin e member
      *
      * @return array Array de opções [value => label]
+     * @since 1.72.5 - Usa helpers para suportar múltiplos tipos com priorização
      */
     public static function get_user_type_options() {
         $current_user_id = get_current_user_id();
         $current_user = get_userdata($current_user_id);
-        $current_mem_type = get_user_meta($current_user_id, 'mem_type', true);
 
         // Todas as opções disponíveis
         $all_options = array(
@@ -272,13 +272,14 @@ class Eau_Filters {
             'Member' => 'Member',
         );
 
+        // v1.72.5: Usa helpers para verificar permissões (suporta múltiplos tipos)
         // Super Admin ou WP Administrator: vê TODAS as opções
-        if (in_array('administrator', $current_user->roles) || $current_mem_type === 'superAdmin') {
+        if (in_array('administrator', $current_user->roles) || \EauSystem\Eau_User_Institution_Helper::is_super_admin($current_user_id)) {
             return $all_options;
         }
 
         // Admin: vê Admin, institutionAdmin e member
-        if ($current_mem_type === 'Admin') {
+        if (\EauSystem\Eau_User_Institution_Helper::is_admin($current_user_id)) {
             return array(
                 'Admin' => 'Admin',
                 'institutionAdmin' => 'Institution Admin',
@@ -287,7 +288,7 @@ class Eau_Filters {
         }
 
         // Institution Admin: vê institutionAdmin e member
-        if ($current_mem_type === 'institutionAdmin') {
+        if (\EauSystem\Eau_User_Institution_Helper::is_institution_admin($current_user_id)) {
             return array(
                 'institutionAdmin' => 'Institution Admin',
                 'Member' => 'Member',
@@ -429,6 +430,32 @@ class Eau_Filters {
             'verified' => 'Verified',
             'skipped' => 'Skipped',
             'not_set' => 'Not Set (Needs Migration)',
+        );
+    }
+
+    /**
+     * Get Lifetime Member flag options for filters
+     *
+     * @since 1.72.3
+     * @return array Associative array of value => label
+     */
+    public static function get_lifetime_member_options() {
+        return array(
+            'yes' => 'Yes - Lifetime Member',
+            'no' => 'No - Not Lifetime',
+        );
+    }
+
+    /**
+     * Get Full Individual Member flag options for filters
+     *
+     * @since 1.72.3
+     * @return array Associative array of value => label
+     */
+    public static function get_full_individual_member_options() {
+        return array(
+            'yes' => 'Yes - Full Individual',
+            'no' => 'No - Not Full Individual',
         );
     }
 }

@@ -2,6 +2,7 @@
 namespace EauSystem;
 
 use EauSystem\Components\Eau_Access_Denied;
+use EauSystem\Checkout\Eau_Course_Purchases;
 
 /**
  * Classe para renderizar a página de listagem de cursos OpenLearning
@@ -195,9 +196,26 @@ class Eau_OpenLearning_Courses {
      * @return string HTML do card
      */
     private static function render_course_card($course, $is_featured = false) {
-        $price_label = $course['price'] > 0 ? '$' . number_format($course['price'], 2) : 'Free';
-        $price_class = $course['price'] > 0 ? '' : 'eau-course-free';
+        $price = (float) $course['price'];
+        $price_label = $price > 0 ? '$' . number_format($price, 2) : 'Free';
+        $price_class = $price > 0 ? '' : 'eau-course-free';
         $description = !empty($course['description']) ? wp_trim_words($course['description'], 20, '...') : '';
+
+        // Verificar se usuário já comprou o curso (v1.71.0)
+        $user_id = get_current_user_id();
+        $has_access = false;
+        $is_paid_course = $price > 0;
+
+        if ($is_paid_course && $user_id > 0) {
+            // Verificar acesso na tabela de purchases
+            if (class_exists('\\EauSystem\\Checkout\\Eau_Course_Purchases')) {
+                $has_access = Eau_Course_Purchases::user_has_access($user_id, $course['id']);
+            }
+        }
+
+        // Determinar qual botão mostrar
+        $show_enroll_btn = $is_paid_course && !$has_access;
+        $show_access_btn = !$is_paid_course || $has_access;
 
         ob_start();
         ?>
@@ -208,7 +226,13 @@ class Eau_OpenLearning_Courses {
                 <?php else: ?>
                     <div class="eau-course-image-placeholder"><i data-lucide="book-open"></i></div>
                 <?php endif; ?>
-                <span class="eau-course-price-badge <?php echo $price_class; ?>"><?php echo $price_label; ?></span>
+                <span class="eau-course-price-badge <?php echo $price_class; ?>">
+                    <?php if ($has_access && $is_paid_course): ?>
+                        <i data-lucide="check" style="width: 12px; height: 12px;"></i> Purchased
+                    <?php else: ?>
+                        <?php echo $price_label; ?>
+                    <?php endif; ?>
+                </span>
                 <?php if ($is_featured): ?>
                     <span class="eau-course-featured-badge"><i data-lucide="star"></i></span>
                 <?php endif; ?>
@@ -217,12 +241,25 @@ class Eau_OpenLearning_Courses {
                 <h3 class="eau-course-title"><?php echo esc_html($course['title']); ?></h3>
                 <p class="eau-course-description"><?php echo esc_html($description); ?></p>
                 <div class="eau-course-footer">
+                    <?php if ($show_enroll_btn): ?>
+                    <button type="button"
+                            class="eau-course-enroll-btn eau-btn eau-btn-primary"
+                            data-course-id="<?php echo esc_attr($course['course_id']); ?>"
+                            data-post-id="<?php echo esc_attr($course['id']); ?>"
+                            data-price="<?php echo esc_attr($price); ?>">
+                        <i data-lucide="shopping-cart"></i>
+                        Enroll - <?php echo $price_label; ?>
+                    </button>
+                    <?php endif; ?>
+
+                    <?php if ($show_access_btn): ?>
                     <button type="button"
                             class="eau-course-access-btn"
                             data-course-id="<?php echo esc_attr($course['course_id']); ?>">
                         <i data-lucide="external-link"></i>
                         Access Course
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

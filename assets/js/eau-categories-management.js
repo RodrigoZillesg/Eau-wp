@@ -83,16 +83,51 @@
             $(document).on('change', '.eau-row-checkbox', function() {
                 self.updateSelectedIds();
             });
+
+            // Bulk actions bar - Close button
+            $('#eau-bulk-actions-close').on('click', this.clearSelection.bind(this));
+
+            // Bulk actions bar - Delete Selected
+            $('#eau-bulk-delete-categories').on('click', this.handleBulkDelete.bind(this));
+
+            // Bulk actions bar - Export Selected
+            $('#eau-bulk-export-selected').on('click', this.handleExportSelected.bind(this));
         },
 
         /**
-         * Update selected IDs
+         * Update selected IDs and show/hide bulk actions bar
          */
         updateSelectedIds: function() {
             this.selectedIds = [];
             $('.eau-row-checkbox:checked').each((i, el) => {
                 this.selectedIds.push($(el).val());
             });
+
+            // Update bulk actions bar
+            const count = this.selectedIds.length;
+            $('#eau-bulk-actions-count').text(count);
+            $('#eau-bulk-actions-label').text(count === 1 ? 'category selected' : 'categories selected');
+
+            if (count > 0) {
+                $('#eau-bulk-actions-bar').addClass('eau-visible');
+            } else {
+                $('#eau-bulk-actions-bar').removeClass('eau-visible');
+            }
+
+            // Re-initialize Lucide icons for the bar
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        },
+
+        /**
+         * Clear selection
+         */
+        clearSelection: function() {
+            $('.eau-row-checkbox').prop('checked', false);
+            $('#categories-table-select-all').prop('checked', false);
+            this.selectedIds = [];
+            $('#eau-bulk-actions-bar').removeClass('eau-visible');
         },
 
         /**
@@ -476,6 +511,109 @@
                             EauNotifications.error('Error', 'Failed to delete category');
                         }
                     });
+                }
+            });
+        },
+
+        /**
+         * Handle bulk delete categories (v1.72.5)
+         */
+        handleBulkDelete: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('No Selection', 'Please select categories to delete.');
+                return;
+            }
+
+            const count = this.selectedIds.length;
+            EauNotifications.confirm({
+                title: 'Delete Categories?',
+                message: `Are you sure you want to delete ${count} category(ies)? This action cannot be undone.`,
+                type: 'danger',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: function() {
+                    $.ajax({
+                        url: eauCategoriesData.ajaxUrl,
+                        type: 'POST',
+                        data: {
+                            action: 'eau_bulk_delete_categories',
+                            nonce: eauCategoriesData.nonce,
+                            ids: self.selectedIds
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                EauNotifications.success('Deleted!', response.data.message);
+                                self.clearSelection();
+                                self.loadCategories();
+                                self.loadStats();
+                            } else {
+                                EauNotifications.error('Error', response.data.message || 'Failed to delete categories');
+                            }
+                        },
+                        error: function() {
+                            EauNotifications.error('Network Error', 'Please try again');
+                        }
+                    });
+                }
+            });
+        },
+
+        /**
+         * Handle export selected categories (v1.72.5)
+         */
+        handleExportSelected: function(e) {
+            e.preventDefault();
+            const self = this;
+
+            if (this.selectedIds.length === 0) {
+                EauNotifications.warning('No Selection', 'Please select categories to export.');
+                return;
+            }
+
+            const $btn = $('#eau-bulk-export-selected');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i data-lucide="loader"></i> Exporting...');
+
+            $.ajax({
+                url: eauCategoriesData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'eau_export_categories',
+                    nonce: eauCategoriesData.nonce,
+                    ids: this.selectedIds
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Create downloadable JSON file
+                        const data = response.data;
+                        const jsonStr = JSON.stringify(data, null, 2);
+                        const blob = new Blob([jsonStr], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+
+                        // Create download link
+                        const filename = 'eau-categories-selected-' + self.formatDateForFilename() + '.json';
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        EauNotifications.success('Export Complete', `Exported ${data.total_categories} categories to ${filename}`);
+                    } else {
+                        EauNotifications.error('Export Failed', response.data.message || 'Failed to export categories');
+                    }
+                },
+                error: function() {
+                    EauNotifications.error('Export Failed', 'Network error occurred');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    lucide.createIcons();
                 }
             });
         },

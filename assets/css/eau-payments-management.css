@@ -283,6 +283,42 @@
 }
 
 /* ==========================================================================
+   Action Buttons
+   ========================================================================== */
+
+.eau-payments-management-container .eau-action-copy-link:hover {
+    background: #dbeafe !important;
+    color: #2563eb !important;
+}
+
+.eau-payments-management-container .eau-action-copy-link:hover i,
+.eau-payments-management-container .eau-action-copy-link:hover svg {
+    stroke: #2563eb !important;
+}
+
+/* Copy success state - green checkmark */
+.eau-payments-management-container .eau-action-copy-link.eau-copy-success {
+    background: #dcfce7 !important;
+    color: #16a34a !important;
+    pointer-events: none !important;
+}
+
+.eau-payments-management-container .eau-action-copy-link.eau-copy-success i,
+.eau-payments-management-container .eau-action-copy-link.eau-copy-success svg {
+    stroke: #16a34a !important;
+}
+
+.eau-payments-management-container .eau-action-receipt:hover {
+    background: #dcfce7 !important;
+    color: #16a34a !important;
+}
+
+.eau-payments-management-container .eau-action-receipt:hover i,
+.eau-payments-management-container .eau-action-receipt:hover svg {
+    stroke: #16a34a !important;
+}
+
+/* ==========================================================================
    Payment Modal - Professional UI/UX Design v1.51.4
    ========================================================================== */
 

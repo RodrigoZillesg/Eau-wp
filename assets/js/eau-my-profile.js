@@ -229,6 +229,7 @@
 
         /**
          * Renderiza o header do perfil
+         * @since 1.72.6 - Suporte a múltiplos tipos (mostra todos como badges)
          */
         renderHeader: function(data) {
             // Usa first_name + last_name ao invés de display_name
@@ -240,6 +241,18 @@
                 fullName = data.display_name || 'User';
             }
             const statusClass = (data.mem_status || '').toLowerCase() === 'active' ? 'active' : 'inactive';
+
+            // v1.72.6: Gera badges para todos os tipos do usuário
+            let typeBadges = '';
+            const typeLabels = data.mem_type_labels || [data.mem_type_label || 'Member'];
+            typeLabels.forEach(function(label) {
+                typeBadges += `
+                    <span class="eau-profile-badge">
+                        <i data-lucide="user"></i>
+                        ${EauMyProfile.escapeHtml(label)}
+                    </span>
+                `;
+            });
 
             const html = `
                 <div class="eau-profile-avatar">
@@ -253,10 +266,7 @@
                     <p class="eau-profile-email">${this.escapeHtml(data.user_email)}</p>
                     <p class="eau-profile-since">Member since ${this.escapeHtml(data.user_registered)}</p>
                     <div class="eau-profile-badges">
-                        <span class="eau-profile-badge">
-                            <i data-lucide="user"></i>
-                            ${this.escapeHtml(data.mem_type_label || 'Member')}
-                        </span>
+                        ${typeBadges}
                         <span class="eau-profile-badge eau-profile-badge-status-${statusClass}">
                             <i data-lucide="${statusClass === 'active' ? 'check-circle' : 'x-circle'}"></i>
                             ${this.escapeHtml(this.capitalizeFirst(data.mem_status || 'Unknown'))}
@@ -326,9 +336,18 @@
 
         /**
          * Renderiza informações da conta (readonly)
+         * @since 1.72.6 - Mostra todos os tipos do usuário
          */
         renderAccountInfo: function(data) {
             const statusClass = (data.mem_status || '').toLowerCase() === 'active' ? 'active' : 'inactive';
+            const self = this;
+
+            // v1.72.6: Gera badges para todos os tipos
+            let typeBadgesHtml = '';
+            const typeLabels = data.mem_type_labels || [data.mem_type_label || 'Member'];
+            typeLabels.forEach(function(label) {
+                typeBadgesHtml += `<span class="eau-profile-type-badge">${self.escapeHtml(label)}</span> `;
+            });
 
             const html = `
                 <div class="eau-profile-grid">
@@ -340,10 +359,10 @@
                         <span class="eau-profile-field-label">Member ID</span>
                         <span class="eau-profile-field-value eau-profile-field-readonly">${this.escapeHtml(data.mem_userid)}</span>
                     </div>
-                    <div class="eau-profile-field">
-                        <span class="eau-profile-field-label">User Type</span>
-                        <span class="eau-profile-field-value">
-                            <span class="eau-profile-type-badge">${this.escapeHtml(data.mem_type_label || 'Member')}</span>
+                    <div class="eau-profile-field eau-profile-field-span-2">
+                        <span class="eau-profile-field-label">User Type(s)</span>
+                        <span class="eau-profile-field-value eau-profile-types-container">
+                            ${typeBadgesHtml}
                         </span>
                     </div>
                     <div class="eau-profile-field">
@@ -354,7 +373,7 @@
                             </span>
                         </span>
                     </div>
-                    <div class="eau-profile-field eau-profile-field-span-2">
+                    <div class="eau-profile-field">
                         <span class="eau-profile-field-label">Institution</span>
                         <span class="eau-profile-field-value eau-profile-field-readonly">${this.escapeHtml(data.institution_name)}</span>
                     </div>

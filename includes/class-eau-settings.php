@@ -113,6 +113,14 @@ class Eau_Settings {
                     <i data-lucide="tags"></i>
                     <span>Tags</span>
                 </button>
+                <button class="eau-settings-tab" data-tab="coupons">
+                    <i data-lucide="ticket"></i>
+                    <span>Coupons</span>
+                </button>
+                <button class="eau-settings-tab" data-tab="payment-gateway">
+                    <i data-lucide="credit-card"></i>
+                    <span>Payment Gateway</span>
+                </button>
                 <button class="eau-settings-tab" data-tab="import">
                     <i data-lucide="upload"></i>
                     <span>Data Import</span>
@@ -272,6 +280,16 @@ class Eau_Settings {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Tab: Coupons -->
+                <div class="eau-settings-tab-panel" data-tab-content="coupons">
+                    <?php echo self::render_coupons_tab(); ?>
+                </div>
+
+                <!-- Tab: Payment Gateway -->
+                <div class="eau-settings-tab-panel" data-tab-content="payment-gateway">
+                    <?php echo self::render_payment_gateway_tab(); ?>
                 </div>
 
                 <!-- Tab: Data Import -->
@@ -452,6 +470,9 @@ class Eau_Settings {
 
         // Event Categories Modals
         echo self::render_event_categories_modals();
+
+        // Coupons Modals
+        echo self::render_coupons_modals();
         ?>
         <?php
         return ob_get_clean();
@@ -746,12 +767,13 @@ class Eau_Settings {
             true
         );
 
-        // Localiza script com dados de Settings, CPD Categories e Event Categories
+        // Localiza script com dados de Settings, CPD Categories, Event Categories e Coupons
         wp_localize_script('eau-settings', 'eauSettingsData', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('eau_settings_nonce'),
             'categoriesNonce' => wp_create_nonce('eau_categories_nonce'),
             'eventCategoriesNonce' => wp_create_nonce('eau_event_categories_nonce'),
+            'couponsNonce' => wp_create_nonce('eau_coupons_nonce'),
         ));
     }
 
@@ -1412,5 +1434,592 @@ class Eau_Settings {
         $html .= $add_modal->render();
 
         return $html;
+    }
+
+    // ==========================================================================
+    // COUPONS TAB (v1.69.0)
+    // ==========================================================================
+
+    /**
+     * Renderiza a aba de Coupons
+     *
+     * @since 1.69.0
+     * @return string HTML da aba
+     */
+    private static function render_coupons_tab() {
+        $stats = self::get_coupons_stats();
+
+        ob_start();
+        ?>
+        <div class="eau-coupons-tab-container" id="coupons-container">
+            <!-- Stats Cards -->
+            <?php echo self::render_coupons_stats_cards($stats); ?>
+
+            <!-- Header with Actions -->
+            <div class="eau-categories-header">
+                <div class="eau-search-wrapper">
+                    <i data-lucide="search"></i>
+                    <input
+                        type="text"
+                        class="eau-search-input"
+                        placeholder="Search by code or description..."
+                        id="eau-coupons-search"
+                    >
+                </div>
+                <div class="eau-categories-actions">
+                    <select class="eau-form-select eau-coupon-status-filter" id="eau-coupons-status-filter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                    <button class="eau-btn eau-btn-primary" id="eau-add-coupon">
+                        <i data-lucide="plus"></i>
+                        Add Coupon
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <?php echo self::render_coupons_table(); ?>
+
+            <!-- Pagination -->
+            <div id="eau-coupons-pagination"></div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Pega estatísticas dos cupons
+     *
+     * @since 1.69.0
+     * @return array Estatísticas
+     */
+    private static function get_coupons_stats() {
+        // Usa o model de cupons
+        return \EauSystem\Coupons\Eau_Coupons_Model::get_stats();
+    }
+
+    /**
+     * Renderiza os cards de estatísticas de cupons
+     *
+     * @since 1.69.0
+     * @param array $stats Estatísticas dos cupons
+     * @return string HTML dos cards
+     */
+    private static function render_coupons_stats_cards($stats) {
+        $cards_data = array(
+            array(
+                'title' => 'Total Coupons',
+                'number' => $stats['total'],
+                'icon' => 'ticket',
+                'color' => 'blue',
+            ),
+            array(
+                'title' => 'Active',
+                'number' => $stats['active'],
+                'icon' => 'check-circle',
+                'color' => 'green',
+            ),
+            array(
+                'title' => 'Inactive',
+                'number' => $stats['inactive'],
+                'icon' => 'pause-circle',
+                'color' => 'orange',
+            ),
+            array(
+                'title' => 'Total Discounts',
+                'number' => '$' . number_format($stats['total_discount'], 2),
+                'icon' => 'dollar-sign',
+                'color' => 'purple',
+            ),
+        );
+
+        $stats_cards = new Eau_Stats_Cards($cards_data);
+        return $stats_cards->render();
+    }
+
+    /**
+     * Renderiza a tabela de cupons
+     *
+     * @since 1.69.0
+     * @return string HTML da tabela
+     */
+    private static function render_coupons_table() {
+        $columns = array(
+            array(
+                'key' => 'code',
+                'label' => 'Code',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'formatted_discount',
+                'label' => 'Discount',
+                'sortable' => false,
+            ),
+            array(
+                'key' => 'usage_count',
+                'label' => 'Uses',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'validity_description',
+                'label' => 'Validity',
+                'sortable' => false,
+            ),
+            array(
+                'key' => 'status',
+                'label' => 'Status',
+                'sortable' => true,
+            ),
+            array(
+                'key' => 'created_at',
+                'label' => 'Created',
+                'sortable' => true,
+            ),
+        );
+
+        $table = new Eau_Data_Table(array(
+            'id' => 'coupons-table',
+            'columns' => $columns,
+            'loading_rows' => 10,
+            'selectable' => false,
+        ));
+
+        return $table->render();
+    }
+
+    /**
+     * Renderiza os modais de cupons
+     *
+     * @since 1.69.0
+     * @return string HTML dos modais
+     */
+    private static function render_coupons_modals() {
+        $html = '';
+
+        // Modal View
+        $view_modal = new Eau_Modal(array(
+            'id' => 'eau-coupon-modal-view',
+            'title' => 'Coupon Details',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Close',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+            ),
+        ));
+        $html .= $view_modal->render();
+
+        // Modal Edit
+        $edit_modal = new Eau_Modal(array(
+            'id' => 'eau-coupon-modal-edit',
+            'title' => 'Edit Coupon',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Save Changes',
+                    'class' => 'eau-btn-primary',
+                    'action' => 'save',
+                ),
+            ),
+        ));
+        $html .= $edit_modal->render();
+
+        // Modal Add
+        $add_modal = new Eau_Modal(array(
+            'id' => 'eau-coupon-modal-add',
+            'title' => 'Create Coupon',
+            'size' => 'fullheight',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Create Coupon',
+                    'class' => 'eau-btn-primary',
+                    'action' => 'create',
+                ),
+            ),
+        ));
+        $html .= $add_modal->render();
+
+        // Modal Delete Confirmation
+        $delete_modal = new Eau_Modal(array(
+            'id' => 'eau-coupon-modal-delete',
+            'title' => 'Delete Coupon',
+            'size' => 'sm',
+            'show_footer' => true,
+            'footer_buttons' => array(
+                array(
+                    'label' => 'Cancel',
+                    'class' => 'eau-btn-secondary',
+                    'action' => 'close',
+                ),
+                array(
+                    'label' => 'Delete',
+                    'class' => 'eau-btn-danger',
+                    'action' => 'delete',
+                ),
+            ),
+        ));
+        $html .= $delete_modal->render();
+
+        return $html;
+    }
+
+    // ==========================================================================
+    // PAYMENT GATEWAY TAB (v1.70.0)
+    // ==========================================================================
+
+    /**
+     * Renderiza a aba de Payment Gateway
+     *
+     * @since 1.70.0
+     * @return string HTML da aba
+     */
+    private static function render_payment_gateway_tab() {
+        // Get current settings
+        $settings = \EauSystem\FatZebra\FatZebra_Settings::get_for_display();
+
+        ob_start();
+        ?>
+        <div class="eau-payment-gateway-container" id="payment-gateway-container">
+
+            <!-- Gateway Status -->
+            <div class="eau-settings-section">
+                <div class="eau-settings-section-header">
+                    <div class="eau-settings-section-icon">
+                        <i data-lucide="activity"></i>
+                    </div>
+                    <div class="eau-settings-section-title">
+                        <h3>Gateway Status</h3>
+                        <p>Current Fat Zebra connection status</p>
+                    </div>
+                </div>
+
+                <div class="eau-settings-section-body">
+                    <div class="eau-gateway-status-cards">
+                        <div class="eau-gateway-status-card">
+                            <div class="eau-gateway-status-icon <?php echo $settings['is_configured'] ? 'configured' : 'not-configured'; ?>">
+                                <i data-lucide="<?php echo $settings['is_configured'] ? 'check-circle' : 'alert-circle'; ?>"></i>
+                            </div>
+                            <div class="eau-gateway-status-info">
+                                <span class="eau-gateway-status-label">Configuration</span>
+                                <span class="eau-gateway-status-value"><?php echo $settings['is_configured'] ? 'Configured' : 'Not Configured'; ?></span>
+                            </div>
+                        </div>
+
+                        <div class="eau-gateway-status-card">
+                            <div class="eau-gateway-status-icon mode-<?php echo $settings['sandbox_mode'] ? 'sandbox' : 'production'; ?>">
+                                <i data-lucide="<?php echo $settings['sandbox_mode'] ? 'flask-conical' : 'shield-check'; ?>"></i>
+                            </div>
+                            <div class="eau-gateway-status-info">
+                                <span class="eau-gateway-status-label">Mode</span>
+                                <span class="eau-gateway-status-value"><?php echo $settings['mode_label']; ?></span>
+                            </div>
+                        </div>
+
+                        <div class="eau-gateway-status-card">
+                            <div class="eau-gateway-status-icon">
+                                <i data-lucide="link"></i>
+                            </div>
+                            <div class="eau-gateway-status-info">
+                                <span class="eau-gateway-status-label">Connection</span>
+                                <span class="eau-gateway-status-value" id="gateway-connection-status">Not Tested</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="button" class="eau-btn eau-btn-secondary" id="eau-test-gateway-connection">
+                            <i data-lucide="plug"></i>
+                            Test Connection
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environment Settings -->
+            <div class="eau-settings-section">
+                <div class="eau-settings-section-header">
+                    <div class="eau-settings-section-icon">
+                        <i data-lucide="settings-2"></i>
+                    </div>
+                    <div class="eau-settings-section-title">
+                        <h3>Environment</h3>
+                        <p>Choose between Sandbox (testing) or Production mode</p>
+                    </div>
+                </div>
+
+                <div class="eau-settings-section-body">
+                    <div class="eau-settings-field">
+                        <label class="eau-settings-field-label">Environment Mode</label>
+
+                        <div class="eau-radio-group" id="eau-gateway-mode">
+                            <label class="eau-radio-option <?php echo $settings['sandbox_mode'] ? 'selected' : ''; ?>">
+                                <input
+                                    type="radio"
+                                    name="gateway_mode"
+                                    value="sandbox"
+                                    <?php checked($settings['sandbox_mode'], true); ?>
+                                >
+                                <div class="eau-radio-content">
+                                    <div class="eau-radio-indicator"></div>
+                                    <div class="eau-radio-text">
+                                        <span class="eau-radio-title">
+                                            <i data-lucide="flask-conical" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                                            Sandbox Mode
+                                        </span>
+                                        <span class="eau-radio-description">
+                                            Use test credentials. No real transactions will be processed.
+                                            Use test cards: 4005 5500 0000 0001
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="eau-radio-option <?php echo !$settings['sandbox_mode'] ? 'selected' : ''; ?>">
+                                <input
+                                    type="radio"
+                                    name="gateway_mode"
+                                    value="production"
+                                    <?php checked($settings['sandbox_mode'], false); ?>
+                                >
+                                <div class="eau-radio-content">
+                                    <div class="eau-radio-indicator"></div>
+                                    <div class="eau-radio-text">
+                                        <span class="eau-radio-title">
+                                            <i data-lucide="shield-check" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                                            Production Mode
+                                        </span>
+                                        <span class="eau-radio-description">
+                                            Use real credentials. Transactions will be processed for real.
+                                            Only enable when ready for live payments.
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sandbox Credentials -->
+            <div class="eau-settings-section" id="sandbox-credentials-section">
+                <div class="eau-settings-section-header">
+                    <div class="eau-settings-section-icon">
+                        <i data-lucide="flask-conical"></i>
+                    </div>
+                    <div class="eau-settings-section-title">
+                        <h3>Sandbox Credentials</h3>
+                        <p>Test environment credentials (default: TEST/TEST)</p>
+                    </div>
+                </div>
+
+                <div class="eau-settings-section-body">
+                    <div class="eau-form-row">
+                        <div class="eau-form-group">
+                            <label class="eau-form-label">Username</label>
+                            <input
+                                type="text"
+                                class="eau-form-input"
+                                id="sandbox-username"
+                                name="sandbox_username"
+                                value="<?php echo esc_attr($settings['sandbox_username']); ?>"
+                                placeholder="TEST"
+                            >
+                        </div>
+                        <div class="eau-form-group">
+                            <label class="eau-form-label">Token</label>
+                            <input
+                                type="password"
+                                class="eau-form-input"
+                                id="sandbox-token"
+                                name="sandbox_token"
+                                value="<?php echo esc_attr($settings['sandbox_token']); ?>"
+                                placeholder="Enter token..."
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Credentials -->
+            <div class="eau-settings-section" id="production-credentials-section">
+                <div class="eau-settings-section-header">
+                    <div class="eau-settings-section-icon">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <div class="eau-settings-section-title">
+                        <h3>Production Credentials</h3>
+                        <p>Live environment credentials from Fat Zebra</p>
+                    </div>
+                </div>
+
+                <div class="eau-settings-section-body">
+                    <div class="eau-form-row">
+                        <div class="eau-form-group">
+                            <label class="eau-form-label">Username</label>
+                            <input
+                                type="text"
+                                class="eau-form-input"
+                                id="production-username"
+                                name="production_username"
+                                value="<?php echo esc_attr($settings['production_username']); ?>"
+                                placeholder="Your merchant username..."
+                            >
+                        </div>
+                        <div class="eau-form-group">
+                            <label class="eau-form-label">Token</label>
+                            <input
+                                type="password"
+                                class="eau-form-input"
+                                id="production-token"
+                                name="production_token"
+                                value="<?php echo esc_attr($settings['production_token']); ?>"
+                                placeholder="Enter token..."
+                            >
+                        </div>
+                    </div>
+
+                    <div class="eau-info-box" style="background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 15px;">
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: #856404; flex-shrink: 0;"></i>
+                            <div style="font-size: 13px; color: #856404;">
+                                <strong>Important:</strong> Production credentials should only be used when you're ready to accept real payments.
+                                Test thoroughly in Sandbox mode first.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Webhook Configuration -->
+            <div class="eau-settings-section">
+                <div class="eau-settings-section-header">
+                    <div class="eau-settings-section-icon">
+                        <i data-lucide="webhook"></i>
+                    </div>
+                    <div class="eau-settings-section-title">
+                        <h3>Webhook Configuration</h3>
+                        <p>Configure webhook for payment notifications</p>
+                    </div>
+                </div>
+
+                <div class="eau-settings-section-body">
+                    <div class="eau-form-group">
+                        <label class="eau-form-label">Webhook URL</label>
+                        <div class="eau-input-with-copy">
+                            <input
+                                type="text"
+                                class="eau-form-input"
+                                id="webhook-url"
+                                value="<?php echo esc_url($settings['webhook_url']); ?>"
+                                readonly
+                            >
+                            <button type="button" class="eau-btn eau-btn-ghost" id="copy-webhook-url" title="Copy to clipboard">
+                                <i data-lucide="copy"></i>
+                            </button>
+                        </div>
+                        <p class="eau-form-hint">Add this URL in your Fat Zebra dashboard webhook configuration.</p>
+                    </div>
+
+                    <div class="eau-form-group" style="margin-top: 15px;">
+                        <label class="eau-form-label">Webhook Secret</label>
+                        <div class="eau-input-with-button">
+                            <input
+                                type="password"
+                                class="eau-form-input"
+                                id="webhook-secret"
+                                name="webhook_secret"
+                                value="<?php echo esc_attr($settings['webhook_secret']); ?>"
+                                placeholder="Enter webhook secret..."
+                            >
+                            <button type="button" class="eau-btn eau-btn-ghost" id="generate-webhook-secret" title="Generate new secret">
+                                <i data-lucide="refresh-cw"></i>
+                            </button>
+                        </div>
+                        <p class="eau-form-hint">Used to verify webhook authenticity. Configure the same secret in Fat Zebra.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Cards Reference -->
+            <div class="eau-settings-section">
+                <div class="eau-settings-section-header">
+                    <div class="eau-settings-section-icon">
+                        <i data-lucide="credit-card"></i>
+                    </div>
+                    <div class="eau-settings-section-title">
+                        <h3>Test Cards</h3>
+                        <p>Use these cards in Sandbox mode for testing</p>
+                    </div>
+                </div>
+
+                <div class="eau-settings-section-body">
+                    <table class="eau-simple-table">
+                        <thead>
+                            <tr>
+                                <th>Card Number</th>
+                                <th>Result</th>
+                                <th>CVV</th>
+                                <th>Expiry</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>4005 5500 0000 0001</code></td>
+                                <td><span class="eau-badge eau-badge-success">Success</span></td>
+                                <td>Any 3 digits</td>
+                                <td>Any future date</td>
+                            </tr>
+                            <tr>
+                                <td><code>4557 0123 4567 8902</code></td>
+                                <td><span class="eau-badge eau-badge-success">Success</span></td>
+                                <td>Any 3 digits</td>
+                                <td>Any future date</td>
+                            </tr>
+                            <tr>
+                                <td><code>4000 0000 0000 0002</code></td>
+                                <td><span class="eau-badge eau-badge-danger">Declined</span></td>
+                                <td>Any 3 digits</td>
+                                <td>Any future date</td>
+                            </tr>
+                            <tr>
+                                <td><code>4000 0000 0000 0119</code></td>
+                                <td><span class="eau-badge eau-badge-warning">CVV Error</span></td>
+                                <td>Any 3 digits</td>
+                                <td>Any future date</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="eau-settings-footer" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <button type="button" class="eau-btn eau-btn-primary" id="eau-save-gateway-settings">
+                    <i data-lucide="save"></i>
+                    Save Payment Gateway Settings
+                </button>
+            </div>
+
+        </div>
+        <?php
+        return ob_get_clean();
     }
 }

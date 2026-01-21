@@ -99,6 +99,30 @@ class Eau_Categories_Management {
             <!-- Modals -->
             <?php echo self::render_modals(); ?>
 
+            <!-- Bulk Actions Bar (v1.72.5) - Floating bar that appears when items are selected -->
+            <div class="eau-bulk-actions-bar" id="eau-bulk-actions-bar">
+                <div class="eau-bulk-actions-info">
+                    <span class="eau-bulk-actions-count" id="eau-bulk-actions-count">0</span>
+                    <span class="eau-bulk-actions-label" id="eau-bulk-actions-label">categories selected</span>
+                </div>
+                <div class="eau-bulk-actions-buttons">
+                    <!-- Export Selected -->
+                    <button class="eau-btn eau-btn-sm eau-btn-secondary" id="eau-bulk-export-selected">
+                        <i data-lucide="download"></i>
+                        Export Selected
+                    </button>
+
+                    <!-- Delete Selected -->
+                    <button class="eau-btn eau-btn-sm eau-btn-danger" id="eau-bulk-delete-categories">
+                        <i data-lucide="trash-2"></i>
+                        Delete Selected
+                    </button>
+                </div>
+                <button class="eau-bulk-actions-close" id="eau-bulk-actions-close" title="Clear selection">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
         </div>
         <?php
         return ob_get_clean();

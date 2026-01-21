@@ -40,7 +40,7 @@ class Eau_Event_Categories_Ajax {
     public static function get_categories() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -88,7 +88,7 @@ class Eau_Event_Categories_Ajax {
     public static function get_category() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -113,7 +113,7 @@ class Eau_Event_Categories_Ajax {
     public static function save_category() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -157,7 +157,7 @@ class Eau_Event_Categories_Ajax {
     public static function delete_category() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -182,7 +182,7 @@ class Eau_Event_Categories_Ajax {
     public static function sync_categories() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -202,7 +202,7 @@ class Eau_Event_Categories_Ajax {
     public static function generate_category_serial() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 
@@ -233,7 +233,7 @@ class Eau_Event_Categories_Ajax {
     public static function get_categories_stats() {
         check_ajax_referer('eau_event_categories_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!Eau_Settings::can_access_settings()) {
             wp_send_json_error(array('message' => 'Permissão negada.'), 403);
         }
 

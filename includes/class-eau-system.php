@@ -113,6 +113,7 @@ class Eau_System {
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-service.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-events.php';
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-membership.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email/class-email-payments.php';
 
         // Email Migration System (v1.62.0)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/email-migration/class-eau-email-migration-database.php';
@@ -167,6 +168,20 @@ class Eau_System {
         // Custom Header (v1.57.5)
         require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/class-eau-header.php';
 
+        // Coupons System (v1.69.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/coupons/class-eau-coupons-database.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/coupons/class-eau-coupons-model.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/coupons/class-eau-coupons-validator.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/coupons/class-eau-coupons.php';
+
+        // Fat Zebra Payment Gateway (v1.70.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/fatzebra/class-fatzebra.php';
+
+        // Checkout System (v1.70.0)
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/checkout/class-eau-course-purchases.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'includes/checkout/class-eau-checkout-page.php';
+        require_once EAU_SYSTEM_PLUGIN_DIR . 'ajax/class-eau-checkout-ajax.php';
+
         // Ensure membership tables exist (for updates without reactivation)
         if (!Eau_Membership_Database::tables_exist()) {
             Eau_Membership_Database::create_tables();
@@ -195,6 +210,9 @@ class Eau_System {
 
         // Email events cron
         Email\Email_Events::register();
+
+        // Payment emails (v1.71.0)
+        Email\Email_Payments::register_hooks();
     }
 
     private function define_frontend_hooks() {
@@ -427,6 +445,7 @@ class Eau_System {
         \EauSystem\Ajax\Eau_Membership_Applications_Ajax::register_handlers();
         \EauSystem\Ajax\Eau_Payments_Management_Ajax::init();
         \EauSystem\Ajax\Eau_My_Payments_Ajax::register_handlers();
+        \EauSystem\Ajax\Eau_Checkout_Ajax::register_handlers();
 
         // Registra hooks do Duplicate Scanner (WP Cron)
         Eau_Duplicate_Scanner::register_hooks();
@@ -481,6 +500,20 @@ class Eau_System {
 
         // Initialize custom header for system pages (v1.57.5)
         Eau_Header::init();
+
+        // Initialize Coupons System (v1.69.0)
+        Coupons\Eau_Coupons::init();
+
+        // Initialize Fat Zebra Payment Gateway (v1.70.0)
+        FatZebra\FatZebra::get_instance();
+
+        // Checkout System (v1.70.0)
+        Checkout\Eau_Checkout_Page::register_shortcode();
+
+        // Ensure course purchases table exists (v1.70.0)
+        if (!Checkout\Eau_Course_Purchases::table_exists()) {
+            Checkout\Eau_Course_Purchases::create_table();
+        }
     }
 
     public function get_plugin_name() {

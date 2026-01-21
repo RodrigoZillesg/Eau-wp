@@ -124,6 +124,64 @@ class Eau_Members_Management {
             <!-- Modals -->
             <?php echo self::render_modals(); ?>
 
+            <!-- Bulk Actions Bar (v1.72.4) - Floating bar that appears when items are selected -->
+            <div class="eau-bulk-actions-bar" id="eau-bulk-actions-bar">
+                <div class="eau-bulk-actions-info">
+                    <span class="eau-bulk-actions-count" id="eau-bulk-actions-count">0</span>
+                    <span class="eau-bulk-actions-label" id="eau-bulk-actions-label">members selected</span>
+                </div>
+                <div class="eau-bulk-actions-buttons">
+                    <!-- Lifetime Member Toggle -->
+                    <div class="eau-bulk-action-group">
+                        <label class="eau-bulk-action-label">Lifetime Member:</label>
+                        <div class="eau-bulk-toggle-buttons">
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle" id="eau-bulk-lifetime-yes" data-flag="mem_lifetime_member" data-value="1">
+                                <i data-lucide="check"></i> Set Yes
+                            </button>
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle-off" id="eau-bulk-lifetime-no" data-flag="mem_lifetime_member" data-value="0">
+                                <i data-lucide="x"></i> Set No
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="eau-bulk-action-divider"></div>
+
+                    <!-- Full Individual Member Toggle -->
+                    <div class="eau-bulk-action-group">
+                        <label class="eau-bulk-action-label">Full Individual:</label>
+                        <div class="eau-bulk-toggle-buttons">
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle" id="eau-bulk-fim-yes" data-flag="mem_full_individual_member" data-value="1">
+                                <i data-lucide="check"></i> Set Yes
+                            </button>
+                            <button class="eau-btn eau-btn-sm eau-btn-toggle-off" id="eau-bulk-fim-no" data-flag="mem_full_individual_member" data-value="0">
+                                <i data-lucide="x"></i> Set No
+                            </button>
+                        </div>
+                    </div>
+
+                    <?php if (Eau_User_Institution_Helper::is_super_admin() || Eau_User_Institution_Helper::is_admin()): ?>
+                    <div class="eau-bulk-action-divider"></div>
+                    <!-- Manage Tags -->
+                    <button class="eau-btn eau-btn-sm eau-btn-secondary-dark" id="eau-bulk-manage-tags-bar">
+                        <i data-lucide="tags"></i>
+                        Manage Tags
+                    </button>
+                    <?php endif; ?>
+
+                    <?php if (Eau_User_Institution_Helper::is_super_admin()): ?>
+                    <div class="eau-bulk-action-divider"></div>
+                    <!-- Delete -->
+                    <button class="eau-btn eau-btn-danger eau-btn-sm" id="eau-bulk-delete-bar">
+                        <i data-lucide="trash-2"></i>
+                        Delete
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <button class="eau-bulk-actions-close" id="eau-bulk-actions-close" title="Clear selection">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
         </div>
         <?php
         return ob_get_clean();
@@ -384,6 +442,20 @@ class Eau_Members_Management {
                     'type' => 'select',
                     'options' => Eau_Filters::get_email_migration_status_options(),
                     'placeholder' => 'All Email Status',
+                ),
+                array(
+                    'key' => 'lifetime_member',
+                    'label' => 'Lifetime Member',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_lifetime_member_options(),
+                    'placeholder' => 'All Members',
+                ),
+                array(
+                    'key' => 'full_individual_member',
+                    'label' => 'Full Individual',
+                    'type' => 'select',
+                    'options' => Eau_Filters::get_full_individual_member_options(),
+                    'placeholder' => 'All Members',
                 ),
             ),
         );

@@ -44,6 +44,24 @@
 
             const self = this;
 
+            // Registration state (v1.69.0)
+            let registrationState = {
+                type: 'self', // 'self' or 'others'
+                selectedMembers: [],
+                couponCode: '',
+                couponData: null,
+                eventPrice: 0,
+                totalPrice: 0,
+                discountAmount: 0
+            };
+
+            // Get event price from hidden field
+            const eventPriceEl = document.getElementById('eau-event-price');
+            if (eventPriceEl) {
+                registrationState.eventPrice = parseFloat(eventPriceEl.value) || 0;
+                registrationState.totalPrice = registrationState.eventPrice;
+            }
+
             function openModal() {
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
@@ -73,6 +91,63 @@
                 }
             });
 
+            // Registration type toggle (v1.69.0)
+            const typeOptions = document.querySelectorAll('.eau-reg-type-option');
+            const memberSelectionPanel = document.getElementById('eau-member-selection');
+
+            if (typeOptions.length > 0) {
+                typeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const radio = this.querySelector('input[type="radio"]');
+                        if (radio) {
+                            radio.checked = true;
+                            typeOptions.forEach(opt => opt.classList.remove('selected'));
+                            this.classList.add('selected');
+
+                            registrationState.type = radio.value;
+
+                            if (radio.value === 'others' && memberSelectionPanel) {
+                                memberSelectionPanel.style.display = 'block';
+                                self.loadInstitutionMembers(confirmBtn.dataset.eventId, nonceEl.value);
+                            } else if (memberSelectionPanel) {
+                                memberSelectionPanel.style.display = 'none';
+                                registrationState.selectedMembers = [];
+                                self.updatePriceSummary(registrationState);
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Coupon functionality (v1.69.0)
+            const applyCouponBtn = document.getElementById('eau-apply-coupon');
+            const couponInput = document.getElementById('eau-coupon-code');
+            const couponResult = document.getElementById('eau-coupon-result');
+
+            if (applyCouponBtn && couponInput) {
+                applyCouponBtn.addEventListener('click', function() {
+                    const code = couponInput.value.trim().toUpperCase();
+                    if (!code) {
+                        couponResult.innerHTML = '<span class="error">Please enter a coupon code.</span>';
+                        couponResult.className = 'eau-reg-coupon-result error';
+                        return;
+                    }
+
+                    self.validateCoupon(code, confirmBtn.dataset.eventId, nonceEl.value, registrationState, couponResult);
+                });
+
+                // Apply coupon on Enter key
+                couponInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyCouponBtn.click();
+                    }
+                });
+            }
+
+            // Member selection handling (v1.69.0)
+            self.registrationState = registrationState;
+
             if (confirmBtn && nonceEl) {
                 confirmBtn.addEventListener('click', function() {
                     const eventId = this.dataset.eventId;
@@ -87,6 +162,13 @@
                         return;
                     }
 
+                    // Validate member selection for 'others' type
+                    if (registrationState.type === 'others' && registrationState.selectedMembers.length === 0) {
+                        messageEl.className = 'eau-reg-message eau-reg-message-error';
+                        messageEl.innerHTML = 'Please select at least one member to register.';
+                        return;
+                    }
+
                     this.disabled = true;
                     if (btnText) btnText.style.display = 'none';
                     if (btnLoading) btnLoading.style.display = 'inline';
@@ -95,9 +177,20 @@
                     const dietaryEl = document.getElementById('eau-reg-dietary');
                     const accessibilityEl = document.getElementById('eau-reg-accessibility');
                     const notesEl = document.getElementById('eau-reg-notes');
+                    const couponIdEl = document.getElementById('eau-coupon-id');
 
                     const formData = new FormData();
-                    formData.append('action', 'eau_register_for_event');
+
+                    // Determine which action to use based on registration type
+                    if (registrationState.type === 'others') {
+                        formData.append('action', 'eau_register_multiple_for_event');
+                        registrationState.selectedMembers.forEach(memberId => {
+                            formData.append('member_ids[]', memberId);
+                        });
+                    } else {
+                        formData.append('action', 'eau_register_for_event');
+                    }
+
                     formData.append('event_id', eventId);
                     formData.append('nonce', nonceEl.value);
 
@@ -106,6 +199,11 @@
                     if (accessibilityEl) formData.append('accessibility_requirements', accessibilityEl.value);
                     if (notesEl) formData.append('additional_notes', notesEl.value);
                     formData.append('agree_terms', '1');
+
+                    // Coupon code
+                    if (registrationState.couponCode) {
+                        formData.append('coupon_code', registrationState.couponCode);
+                    }
 
                     fetch(eauEventsFrontendData.ajaxUrl, {
                         method: 'POST',
@@ -120,9 +218,19 @@
                         if (data.success) {
                             messageEl.className = 'eau-reg-message eau-reg-message-success';
                             messageEl.innerHTML = data.data.message;
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1500);
+
+                            // Check if payment is required (v1.71.0)
+                            if (data.data.requires_payment && data.data.checkout_url) {
+                                // Redirect to checkout for payment
+                                setTimeout(function() {
+                                    window.location.href = data.data.checkout_url;
+                                }, 1000);
+                            } else {
+                                // Free event - reload page
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1500);
+                            }
                         } else {
                             messageEl.className = 'eau-reg-message eau-reg-message-error';
                             messageEl.innerHTML = data.data.message;
@@ -137,6 +245,312 @@
                     });
                 });
             }
+        },
+
+        /**
+         * Load institution members for registration (v1.69.0)
+         */
+        loadInstitutionMembers: function(eventId, nonce) {
+            const self = this;
+            const memberList = document.getElementById('eau-member-list');
+            const memberSelectionPanel = document.getElementById('eau-member-selection');
+
+            if (!memberList) return;
+
+            // Show loading
+            memberList.innerHTML = `
+                <div class="eau-reg-member-loading">
+                    <div class="eau-skeleton" style="height: 40px; margin-bottom: 8px;"></div>
+                    <div class="eau-skeleton" style="height: 40px; margin-bottom: 8px;"></div>
+                    <div class="eau-skeleton" style="height: 40px;"></div>
+                </div>
+            `;
+
+            const formData = new FormData();
+            formData.append('action', 'eau_get_institution_members_for_event');
+            formData.append('event_id', eventId);
+            formData.append('nonce', nonce);
+
+            fetch(eauEventsFrontendData.ajaxUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update institution name and logo in the header
+                    const institutionHeader = memberSelectionPanel ? memberSelectionPanel.querySelector('.eau-reg-institution-header') : null;
+                    if (institutionHeader) {
+                        const logoContainer = institutionHeader.querySelector('.eau-reg-institution-logo');
+                        const logoEl = logoContainer ? logoContainer.querySelector('img') : null;
+                        const iconEl = logoContainer ? logoContainer.querySelector('.eau-reg-info-icon') : null;
+                        const nameEl = institutionHeader.querySelector('.eau-reg-institution-name');
+
+                        // Update name
+                        if (nameEl) {
+                            nameEl.textContent = data.data.institution_name || 'Your Institution';
+                        }
+
+                        // Update logo/icon visibility
+                        if (data.data.institution_logo) {
+                            if (logoEl) {
+                                logoEl.src = data.data.institution_logo;
+                                logoEl.style.display = '';
+                            }
+                            if (iconEl) {
+                                iconEl.style.display = 'none';
+                            }
+                        } else {
+                            if (logoEl) {
+                                logoEl.style.display = 'none';
+                            }
+                            if (iconEl) {
+                                iconEl.style.display = '';
+                            }
+                        }
+                    }
+
+                    self.renderMemberList(data.data.members, memberList);
+                } else {
+                    memberList.innerHTML = '<p style="padding: 12px; color: #dc2626;">' + (data.data.message || 'Failed to load members.') + '</p>';
+                }
+            })
+            .catch(error => {
+                memberList.innerHTML = '<p style="padding: 12px; color: #dc2626;">An error occurred loading members.</p>';
+            });
+        },
+
+        /**
+         * Render member list (v1.69.0)
+         */
+        renderMemberList: function(members, container) {
+            const self = this;
+
+            if (members.length === 0) {
+                container.innerHTML = '<p style="padding: 12px; color: #6b7280;">No members found in your institution.</p>';
+                return;
+            }
+
+            let html = '';
+            members.forEach(member => {
+                const disabledClass = member.already_registered ? 'disabled' : '';
+                const currentUserClass = member.is_current_user ? 'current-user' : '';
+                let badge = '';
+
+                if (member.already_registered) {
+                    badge = '<span class="eau-reg-member-badge registered">Already Registered</span>';
+                } else if (member.is_current_user) {
+                    badge = '<span class="eau-reg-member-badge you">(You)</span>';
+                }
+
+                html += `
+                    <label class="eau-reg-member-item ${disabledClass} ${currentUserClass}">
+                        <input type="checkbox" value="${member.user_id}" ${member.already_registered ? 'disabled' : ''}>
+                        <div class="eau-reg-member-info">
+                            <span class="eau-reg-member-name">${member.name}</span>
+                            <span class="eau-reg-member-email">${member.email}</span>
+                        </div>
+                        ${badge}
+                    </label>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Bind checkbox events
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const memberId = parseInt(this.value);
+                    const item = this.closest('.eau-reg-member-item');
+
+                    if (this.checked) {
+                        if (!self.registrationState.selectedMembers.includes(memberId)) {
+                            self.registrationState.selectedMembers.push(memberId);
+                        }
+                        item.classList.add('selected');
+                    } else {
+                        self.registrationState.selectedMembers = self.registrationState.selectedMembers.filter(id => id !== memberId);
+                        item.classList.remove('selected');
+                    }
+
+                    self.updatePriceSummary(self.registrationState);
+                });
+            });
+        },
+
+        /**
+         * Validate coupon code (v1.69.0)
+         */
+        validateCoupon: function(code, eventId, nonce, state, resultEl) {
+            const self = this;
+
+            resultEl.innerHTML = '<span style="color: #6b7280;">Validating...</span>';
+
+            const memberCount = state.type === 'others' ? Math.max(state.selectedMembers.length, 1) : 1;
+            const orderTotal = state.eventPrice * memberCount;
+
+            const formData = new FormData();
+            formData.append('action', 'eau_validate_coupon');
+            formData.append('code', code);
+            formData.append('event_id', eventId);
+            formData.append('nonce', nonce);
+            formData.append('order_total', orderTotal);
+            formData.append('member_count', memberCount);
+
+            fetch(eauEventsFrontendData.ajaxUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    state.couponCode = code;
+                    state.couponData = data.data;
+                    state.discountAmount = parseFloat(data.data.discount_amount);
+
+                    // Show success message with remove button
+                    resultEl.innerHTML = `
+                        <div class="eau-reg-coupon-applied">
+                            <span class="eau-reg-coupon-applied-text">
+                                <span style="color: #10b981;">&#10003;</span>
+                                Coupon applied: ${data.data.formatted_discount} off
+                            </span>
+                            <button type="button" class="eau-reg-coupon-remove" title="Remove coupon">&times;</button>
+                        </div>
+                    `;
+                    resultEl.className = 'eau-reg-coupon-result success';
+
+                    // Hide input and apply button
+                    document.getElementById('eau-coupon-code').style.display = 'none';
+                    document.getElementById('eau-apply-coupon').style.display = 'none';
+
+                    // Bind remove button
+                    const removeBtn = resultEl.querySelector('.eau-reg-coupon-remove');
+                    if (removeBtn) {
+                        removeBtn.addEventListener('click', function() {
+                            self.removeCoupon(state, resultEl);
+                        });
+                    }
+
+                    // Store coupon ID
+                    const couponIdEl = document.getElementById('eau-coupon-id');
+                    if (couponIdEl) {
+                        couponIdEl.value = data.data.coupon_id;
+                    }
+
+                    self.updatePriceSummary(state);
+                } else {
+                    resultEl.innerHTML = '<span class="error">' + (data.data.message || 'Invalid coupon code.') + '</span>';
+                    resultEl.className = 'eau-reg-coupon-result error';
+                    state.couponCode = '';
+                    state.couponData = null;
+                    state.discountAmount = 0;
+                    self.updatePriceSummary(state);
+                }
+            })
+            .catch(error => {
+                resultEl.innerHTML = '<span class="error">An error occurred. Please try again.</span>';
+                resultEl.className = 'eau-reg-coupon-result error';
+            });
+        },
+
+        /**
+         * Remove applied coupon (v1.69.0)
+         */
+        removeCoupon: function(state, resultEl) {
+            state.couponCode = '';
+            state.couponData = null;
+            state.discountAmount = 0;
+
+            resultEl.innerHTML = '';
+            resultEl.className = 'eau-reg-coupon-result';
+
+            // Show input and apply button
+            const couponInput = document.getElementById('eau-coupon-code');
+            const applyBtn = document.getElementById('eau-apply-coupon');
+            if (couponInput) {
+                couponInput.style.display = '';
+                couponInput.value = '';
+            }
+            if (applyBtn) applyBtn.style.display = '';
+
+            // Clear coupon ID
+            const couponIdEl = document.getElementById('eau-coupon-id');
+            if (couponIdEl) couponIdEl.value = '';
+
+            this.updatePriceSummary(state);
+        },
+
+        /**
+         * Update price summary display (v1.69.0)
+         */
+        updatePriceSummary: function(state) {
+            const unitPriceEl = document.getElementById('eau-unit-price');
+            const qtyRow = document.getElementById('eau-qty-row');
+            const qtyValueEl = document.getElementById('eau-qty-value');
+            const subtotalRow = document.getElementById('eau-subtotal-row');
+            const subtotalValueEl = document.getElementById('eau-subtotal-value');
+            const discountRow = document.getElementById('eau-discount-row');
+            const discountValueEl = document.getElementById('eau-discount-value');
+            const totalValueEl = document.getElementById('eau-total-value');
+            const selectedCountEl = document.getElementById('eau-selected-count');
+
+            // Calculate quantity
+            const qty = state.type === 'others' ? state.selectedMembers.length : 1;
+
+            // Update selected count display
+            if (selectedCountEl) {
+                selectedCountEl.textContent = state.type === 'others' ? state.selectedMembers.length : 0;
+            }
+
+            // Calculate subtotal
+            const subtotal = state.eventPrice * qty;
+
+            // Calculate discount
+            let discount = 0;
+            if (state.couponData) {
+                if (state.couponData.discount_type === 'percentage') {
+                    discount = (subtotal * parseFloat(state.couponData.discount_value)) / 100;
+                    // Apply max discount if set
+                    if (state.couponData.max_discount && discount > parseFloat(state.couponData.max_discount)) {
+                        discount = parseFloat(state.couponData.max_discount);
+                    }
+                } else {
+                    discount = parseFloat(state.couponData.discount_value);
+                }
+                // Ensure discount doesn't exceed subtotal
+                if (discount > subtotal) discount = subtotal;
+            }
+
+            // Calculate total
+            const total = Math.max(0, subtotal - discount);
+
+            // Update display
+            if (qty > 1) {
+                if (qtyRow) qtyRow.style.display = '';
+                if (qtyValueEl) qtyValueEl.textContent = qty;
+                if (subtotalRow) subtotalRow.style.display = '';
+                if (subtotalValueEl) subtotalValueEl.textContent = '$' + subtotal.toFixed(2);
+            } else {
+                if (qtyRow) qtyRow.style.display = 'none';
+                if (subtotalRow) subtotalRow.style.display = 'none';
+            }
+
+            if (discount > 0) {
+                if (discountRow) discountRow.style.display = '';
+                if (discountValueEl) discountValueEl.textContent = '-$' + discount.toFixed(2);
+            } else {
+                if (discountRow) discountRow.style.display = 'none';
+            }
+
+            if (totalValueEl) {
+                totalValueEl.textContent = total === 0 ? 'Free' : '$' + total.toFixed(2);
+            }
+
+            // Store calculated values
+            state.totalPrice = total;
+            state.discountAmount = discount;
         },
 
         /**

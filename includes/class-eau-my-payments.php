@@ -117,14 +117,22 @@ class Eau_My_Payments {
             true
         );
 
+        // Get checkout URL (v1.71.0)
+        $checkout_page_id = Eau_Pages::get_page_id('checkout');
+        $checkout_url = $checkout_page_id ? get_permalink($checkout_page_id) : home_url('/checkout/');
+
         // Localize script
         wp_localize_script('eau-my-payments', 'eauMyPayments', array(
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce'   => wp_create_nonce('eau_my_payments_nonce'),
-            'i18n'    => array(
-                'loading'   => __('Loading...', 'eau-system'),
-                'noResults' => __('No payments found', 'eau-system'),
-                'error'     => __('An error occurred', 'eau-system'),
+            'ajaxUrl'     => admin_url('admin-ajax.php'),
+            'nonce'       => wp_create_nonce('eau_my_payments_nonce'),
+            'checkoutUrl' => $checkout_url,
+            'i18n'        => array(
+                'loading'      => __('Loading...', 'eau-system'),
+                'noResults'    => __('No payments found', 'eau-system'),
+                'error'        => __('An error occurred', 'eau-system'),
+                'payNow'       => __('Pay Now', 'eau-system'),
+                'viewDetails'  => __('View Details', 'eau-system'),
+                'retryPayment' => __('Retry Payment', 'eau-system'),
             ),
         ));
     }
@@ -133,17 +141,18 @@ class Eau_My_Payments {
      * Renders stats cards
      *
      * @since  1.53.8
+     * @updated 1.71.0 - Added Pending Payments and Course Payments cards
      * @return string HTML
      */
     private static function render_stats_cards() {
         // Stats will be loaded via AJAX
         $cards = array(
             array(
-                'icon'   => 'receipt',
-                'title'  => __('Total Payments', 'eau-system'),
-                'number' => '0',
-                'color'  => 'blue',
-                'id'     => 'stat-total-payments',
+                'icon'   => 'clock',
+                'title'  => __('Pending Payments', 'eau-system'),
+                'number' => '$0.00',
+                'color'  => 'orange',
+                'id'     => 'stat-pending-payments',
             ),
             array(
                 'icon'   => 'dollar-sign',
@@ -160,11 +169,11 @@ class Eau_My_Payments {
                 'id'     => 'stat-event-payments',
             ),
             array(
-                'icon'   => 'user-check',
-                'title'  => __('Membership Payments', 'eau-system'),
+                'icon'   => 'graduation-cap',
+                'title'  => __('Course Payments', 'eau-system'),
                 'number' => '0',
-                'color'  => 'orange',
-                'id'     => 'stat-membership-payments',
+                'color'  => 'blue',
+                'id'     => 'stat-course-payments',
             ),
         );
 
@@ -223,6 +232,7 @@ class Eau_My_Payments {
      * Renders filters panel
      *
      * @since  1.53.8
+     * @updated 1.71.0 - Added course type and status filter
      * @return string HTML
      */
     private static function render_filters_panel() {
@@ -242,7 +252,19 @@ class Eau_My_Payments {
                     'options' => array(
                         ''           => __('All Types', 'eau-system'),
                         'event'      => __('Event', 'eau-system'),
+                        'course'     => __('Course', 'eau-system'),
                         'membership' => __('Membership', 'eau-system'),
+                    ),
+                ),
+                array(
+                    'key'     => 'status',
+                    'label'   => __('Status', 'eau-system'),
+                    'type'    => 'select',
+                    'options' => array(
+                        ''          => __('All Statuses', 'eau-system'),
+                        'pending'   => __('Pending', 'eau-system'),
+                        'completed' => __('Completed', 'eau-system'),
+                        'failed'    => __('Failed', 'eau-system'),
                     ),
                 ),
                 array(
@@ -262,6 +284,7 @@ class Eau_My_Payments {
      * Renders data table
      *
      * @since  1.53.8
+     * @updated 1.71.0 - Added pay action for pending payments
      * @return string HTML
      */
     private static function render_data_table() {
@@ -287,21 +310,21 @@ class Eau_My_Payments {
                 'sortable' => true,
             ),
             array(
-                'key'      => 'method',
-                'label'    => __('METHOD', 'eau-system'),
-                'sortable' => true,
-            ),
-            array(
                 'key'      => 'status',
                 'label'    => __('STATUS', 'eau-system'),
                 'sortable' => true,
+            ),
+            array(
+                'key'      => 'actions_custom',
+                'label'    => __('ACTIONS', 'eau-system'),
+                'sortable' => false,
             ),
         );
 
         $table = new Eau_Data_Table(array(
             'id'            => 'eau-my-payments-table',
             'columns'       => $columns,
-            'actions'       => array('view'),
+            'actions'       => array(), // Custom actions rendered in column
             'selectable'    => false,
             'empty_message' => __('No payments found', 'eau-system'),
         ));

@@ -199,6 +199,75 @@
     }
 }
 
+/* Mobile small screens - Stack everything vertically */
+@media (max-width: 480px) {
+    .eau-bulk-actions-bar {
+        left: 8px !important;
+        right: 8px !important;
+        padding: 12px !important;
+        gap: 10px !important;
+        bottom: -150px !important;
+    }
+
+    .eau-bulk-actions-bar.eau-visible {
+        bottom: 12px !important;
+    }
+
+    .eau-bulk-actions-info {
+        width: 100% !important;
+        justify-content: center !important;
+        padding-bottom: 10px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .eau-bulk-actions-buttons {
+        width: 100% !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .eau-bulk-action-group {
+        width: 100% !important;
+        min-width: unset !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    .eau-bulk-action-label {
+        text-align: center !important;
+    }
+
+    .eau-bulk-actions-bar .eau-bulk-type-select {
+        width: 100% !important;
+        min-width: unset !important;
+    }
+
+    .eau-bulk-action-divider {
+        display: none !important;
+    }
+
+    /* Action buttons row */
+    .eau-bulk-action-group:last-child {
+        flex-direction: row !important;
+        justify-content: center !important;
+        gap: 8px !important;
+    }
+
+    .eau-bulk-action-group .eau-btn {
+        flex: 1 !important;
+        justify-content: center !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.8125rem !important;
+    }
+
+    .eau-bulk-actions-close {
+        position: absolute !important;
+        top: 8px !important;
+        right: 8px !important;
+        margin-left: 0 !important;
+    }
+}
+
 /* Institution Cell */
 .eau-institution-cell {
     display: flex;
@@ -410,6 +479,32 @@ a.eau-members-count:visited {
 @media (max-width: 768px) {
     .eau-institutions-management-container {
         padding: 1rem;
+    }
+
+    /* Page Header - Stack on mobile */
+    .eau-institutions-management-container .eau-page-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem !important;
+    }
+
+    .eau-institutions-management-container .eau-page-header-actions {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .eau-institutions-management-container .eau-page-header-actions .eau-btn {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+        font-size: 0.8125rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    /* Delete All Filtered button - full width on its own row */
+    .eau-institutions-management-container .eau-page-header-actions .eau-btn-danger {
+        flex: 1 1 100% !important;
+        order: 3 !important;
     }
 
     /* Back to 1 column on small screens */

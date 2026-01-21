@@ -144,9 +144,8 @@ class Eau_Dashboard {
         // Identifica tipo de usuário
         $user_role_info = self::get_user_role_info($current_user->ID);
 
-        // v1.66.9 - Verifica se é non-member
-        $mem_type = get_user_meta($current_user->ID, 'mem_type', true);
-        $is_non_member = ($mem_type === 'non-member');
+        // v1.72.5 - Usa helper para verificar non-member (suporta múltiplos tipos)
+        $is_non_member = Eau_User_Institution_Helper::is_non_member($current_user->ID);
 
         // Verifica se é membro com status pendente (aguardando aprovação)
         // Verifica mem_membership_status = 'pending' OU (mem_membership_status vazio E mem_status = 'pending')
@@ -484,23 +483,7 @@ class Eau_Dashboard {
                     </div>
                 </a>
 
-                <!-- Pending User Approvals (Admin/superAdmin only) -->
-                <?php if (Eau_User_Institution_Helper::has_admin_access()): ?>
-                <a href="/dashboard/members/?status=pending" class="eau-dashboard-card-link">
-                    <div class="eau-dashboard-card eau-card-yellow">
-                        <div class="eau-card-content">
-                            <h3 class="eau-card-title">Pending Approvals</h3>
-                            <div class="eau-card-stats">
-                                <span class="eau-card-number"><?php echo number_format($stats['pending_user_approvals']); ?></span>
-                                <span class="eau-card-pending">Users Awaiting Approval</span>
-                            </div>
-                        </div>
-                        <div class="eau-card-icon">
-                            <i data-lucide="user-check"></i>
-                        </div>
-                    </div>
-                </a>
-                <?php else:
+                <?php if (!Eau_User_Institution_Helper::has_admin_access()):
                 // v1.67.1 - Verifica se usuário está vinculado a uma instituição
                 $user_institution = Eau_User_Institution_Helper::get_user_institution($current_user->ID);
 
@@ -953,9 +936,18 @@ class Eau_Dashboard {
      *
      * CORRETO: Filtra por TODAS as instituições que o admin gerencia
      * Usa act_user_id (não post_author) para relacionamento
+     *
+     * @since 1.72.6 - Prioriza has_admin_access() sobre is_institution_admin()
      */
     private static function get_cpd_activities() {
         global $wpdb;
+
+        // v1.72.6: Admins veem tudo, só filtra para institutionAdmin puro
+        if (Eau_User_Institution_Helper::has_admin_access()) {
+            // Admin/Super Admin: vê tudo
+            $count = wp_count_posts('activitie');
+            return isset($count->publish) ? $count->publish : 0;
+        }
 
         $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
 
@@ -1011,9 +1003,8 @@ class Eau_Dashboard {
             return intval($count);
         }
 
-        // Admin/Super Admin: vê tudo
-        $count = wp_count_posts('activitie');
-        return isset($count->publish) ? $count->publish : 0;
+        // Fallback para outros usuários
+        return 0;
     }
 
     /**
@@ -1021,9 +1012,31 @@ class Eau_Dashboard {
      *
      * CORRETO: Filtra por TODAS as instituições que o admin gerencia
      * Usa act_user_id (não post_author) para relacionamento
+     *
+     * @since 1.72.6 - Prioriza has_admin_access() sobre is_institution_admin()
      */
     private static function get_pending_approval() {
         global $wpdb;
+
+        // v1.72.6: Admins veem tudo, só filtra para institutionAdmin puro
+        if (Eau_User_Institution_Helper::has_admin_access()) {
+            // Admin/Super Admin: vê tudo
+            $count = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(DISTINCT p.ID)
+                    FROM {$wpdb->posts} p
+                    LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
+                    WHERE p.post_type = %s
+                    AND p.post_status = %s
+                    AND (pm.meta_value IS NULL OR pm.meta_value != %s)",
+                    'act_verified',
+                    'activitie',
+                    'publish',
+                    '1'
+                )
+            );
+            return intval($count);
+        }
 
         $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
 
@@ -1081,23 +1094,8 @@ class Eau_Dashboard {
             return intval($count);
         }
 
-        // Admin/Super Admin: vê tudo
-        $count = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(DISTINCT p.ID)
-                FROM {$wpdb->posts} p
-                LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
-                WHERE p.post_type = %s
-                AND p.post_status = %s
-                AND (pm.meta_value IS NULL OR pm.meta_value != %s)",
-                'act_verified',
-                'activitie',
-                'publish',
-                '1'
-            )
-        );
-
-        return intval($count);
+        // Fallback para outros usuários
+        return 0;
     }
 
     /**
@@ -1273,11 +1271,34 @@ class Eau_Dashboard {
      * Soma de pontos (hours) de todas as activities publicadas
      *
      * CORRETO: Filtra por TODAS as instituições que o admin gerencia
+     *
+     * @since 1.72.6 - Prioriza has_admin_access() sobre is_institution_admin()
      */
     private static function get_points_awarded() {
         global $wpdb;
 
         $table_categories = $wpdb->prefix . 'eau_activity_categories';
+
+        // v1.72.6: Admins veem tudo, só filtra para institutionAdmin puro
+        if (Eau_User_Institution_Helper::has_admin_access()) {
+            // Admin/Super Admin: vê tudo - calcula pontos: horas × pontos_per_hour
+            $total = $wpdb->get_var(
+                "SELECT SUM(
+                    CAST(pm_hours.meta_value AS DECIMAL(10,2)) *
+                    COALESCE(cat.points_per_hour, 0)
+                )
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm_hours ON p.ID = pm_hours.post_id
+                    AND pm_hours.meta_key = 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5'
+                LEFT JOIN {$wpdb->postmeta} pm_cat ON p.ID = pm_cat.post_id
+                    AND pm_cat.meta_key = 'act_category_serial'
+                LEFT JOIN {$table_categories} cat ON cat.category_serial = pm_cat.meta_value
+                WHERE p.post_type = 'activitie'
+                AND p.post_status = 'publish'"
+            );
+            return floatval($total);
+        }
+
         $is_institution_admin = Eau_User_Institution_Helper::is_institution_admin();
 
         if ($is_institution_admin) {
@@ -1337,23 +1358,8 @@ class Eau_Dashboard {
             return floatval($total);
         }
 
-        // Admin/Super Admin: vê tudo - calcula pontos: horas × pontos_per_hour
-        $total = $wpdb->get_var(
-            "SELECT SUM(
-                CAST(pm_hours.meta_value AS DECIMAL(10,2)) *
-                COALESCE(cat.points_per_hour, 0)
-            )
-            FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->postmeta} pm_hours ON p.ID = pm_hours.post_id
-                AND pm_hours.meta_key = 'act_hours_of_pd_anything_below_60_minutes_can_be_entered_as_a_decimal_e_g_30_mins_0_5'
-            LEFT JOIN {$wpdb->postmeta} pm_cat ON p.ID = pm_cat.post_id
-                AND pm_cat.meta_key = 'act_category_serial'
-            LEFT JOIN {$table_categories} cat ON cat.category_serial = pm_cat.meta_value
-            WHERE p.post_type = 'activitie'
-            AND p.post_status = 'publish'"
-        );
-
-        return floatval($total);
+        // Fallback para outros usuários
+        return 0.0;
     }
 
     /**
@@ -1458,15 +1464,13 @@ class Eau_Dashboard {
      * Retorna informações sobre a role do usuário para exibição
      *
      * @since 1.67.4 Agora usa mem_type ao invés de WordPress roles
+     * @since 1.72.5 Usa helpers para suportar múltiplos tipos com priorização
      * @param int $user_id ID do usuário
      * @return array Array com 'description' e 'institutions' (array de nomes)
      */
     private static function get_user_role_info($user_id) {
-        // v1.67.4 - Usa mem_type ao invés de WordPress roles
-        $mem_type = get_user_meta($user_id, 'mem_type', true);
-
-        // Verifica se é Super Admin ou Admin pelo mem_type
-        if ($mem_type === 'superAdmin' || $mem_type === 'Admin') {
+        // v1.72.5 - Verifica se é Super Admin ou Admin usando helpers (suporta múltiplos tipos)
+        if (Eau_User_Institution_Helper::has_admin_access($user_id)) {
             return array(
                 'description' => 'System Administrator - Full access to all institutions and data',
                 'institutions' => array(),
@@ -1490,8 +1494,8 @@ class Eau_Dashboard {
             );
         }
 
-        // Verifica se é non-member
-        if ($mem_type === 'non-member' || empty($mem_type)) {
+        // Verifica se é non-member usando helper
+        if (Eau_User_Institution_Helper::is_non_member($user_id)) {
             return array(
                 'description' => 'To access member benefits, request to join an institution using the "My Membership" card below.',
                 'institutions' => array(),

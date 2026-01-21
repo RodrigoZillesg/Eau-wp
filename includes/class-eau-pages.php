@@ -26,8 +26,9 @@ class Eau_Pages {
      * Incrementar quando adicionar novas páginas
      * v1.0.1 - Removed manage-categories (integrated into Settings)
      * v1.0.2 - Added update-email page for Email Migration (v1.62.0)
+     * v1.0.3 - Added checkout page for Payment Gateway (v1.70.0)
      */
-    const PAGES_VERSION = '1.0.2';
+    const PAGES_VERSION = '1.0.3';
 
     /**
      * Definição de todas as páginas do sistema
@@ -87,6 +88,13 @@ class Eau_Pages {
                 'shortcode' => '[eau_email_update]',
                 'parent'    => null,
                 'order'     => 7,
+            ),
+            'checkout' => array(
+                'title'     => 'Checkout',
+                'slug'      => 'checkout',
+                'shortcode' => '[eau_checkout]',
+                'parent'    => null,
+                'order'     => 8,
             ),
 
             // ===================================

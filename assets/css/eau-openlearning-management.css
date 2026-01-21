@@ -421,3 +421,207 @@
         max-height: 200px;
     }
 }
+
+/* ==========================================================================
+   BULK ACTIONS BAR (v1.72.5)
+   ========================================================================== */
+
+.eau-openlearning-management-container .eau-bulk-actions-bar {
+    position: fixed !important;
+    bottom: -120px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: #1e293b !important;
+    border-radius: 12px !important;
+    padding: 1rem 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    z-index: 9999 !important;
+    transition: bottom 0.3s ease !important;
+    max-width: 95vw !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-bar.eau-visible {
+    bottom: 24px !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding-right: 1.5rem !important;
+    border-right: 1px solid #475569 !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-count {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-label {
+    font-size: 0.875rem !important;
+    color: #94a3b8 !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-buttons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-action-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-action-label {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-toggle-buttons {
+    display: flex !important;
+    gap: 0.25rem !important;
+}
+
+/* Toggle buttons styles */
+.eau-openlearning-management-container .eau-btn-toggle,
+.eau-openlearning-management-container .eau-btn-toggle-off {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle:hover {
+    background: #059669 !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle:active,
+.eau-openlearning-management-container .eau-btn-toggle:focus {
+    background: #059669 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle-off {
+    background: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle-off:hover {
+    background: #64748b !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle-off:active,
+.eau-openlearning-management-container .eau-btn-toggle-off:focus {
+    background: #64748b !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.3) !important;
+}
+
+.eau-openlearning-management-container .eau-btn-toggle i,
+.eau-openlearning-management-container .eau-btn-toggle-off i {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Small button styles for bar */
+.eau-openlearning-management-container .eau-bulk-actions-bar .eau-btn-sm {
+    padding: 0.5rem 0.875rem !important;
+    font-size: 0.8125rem !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-bar .eau-btn-sm i {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Close button */
+.eau-openlearning-management-container .eau-bulk-actions-close {
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    margin-left: 0.5rem !important;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-close:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-close:active,
+.eau-openlearning-management-container .eau-bulk-actions-close:focus {
+    background: #334155 !important;
+    outline: none !important;
+}
+
+.eau-openlearning-management-container .eau-bulk-actions-close i {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Bulk actions bar responsive */
+@media (max-width: 992px) {
+    .eau-openlearning-management-container .eau-bulk-actions-bar {
+        flex-direction: column !important;
+        padding: 1rem !important;
+        gap: 1rem !important;
+        width: calc(100% - 2rem) !important;
+        max-width: none !important;
+    }
+
+    .eau-openlearning-management-container .eau-bulk-actions-info {
+        border-right: none !important;
+        border-bottom: 1px solid #475569 !important;
+        padding-right: 0 !important;
+        padding-bottom: 0.75rem !important;
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .eau-openlearning-management-container .eau-bulk-actions-buttons {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 0.75rem !important;
+    }
+
+    .eau-openlearning-management-container .eau-bulk-action-group {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    .eau-openlearning-management-container .eau-bulk-actions-close {
+        position: absolute !important;
+        top: 0.5rem !important;
+        right: 0.5rem !important;
+        margin: 0 !important;
+    }
+}
