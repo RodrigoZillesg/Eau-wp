@@ -1,8 +1,40 @@
 /**
  * EAU System - Componentes Reutilizáveis
- * Versão: 2.0.4
+ * Versão: 2.0.5
  * Componentes compartilhados entre Dashboard e Members Management
  */
+
+/* ==========================================================================
+   GLOBAL PAGE PADDING - FIXED HEADER COMPENSATION
+   Para páginas com o header fixo eau-app-header (68px de altura)
+   ========================================================================== */
+
+/* Todos os containers principais de páginas do sistema */
+body.eau-system-page .eau-dashboard-container,
+body.eau-system-page .eau-profile-container,
+body.eau-system-page .eau-members-management-container,
+body.eau-system-page .eau-institutions-management-container,
+body.eau-system-page .eau-activities-management-container,
+body.eau-system-page .eau-categories-management-container,
+body.eau-system-page .eau-settings-container,
+body.eau-system-page .eau-register-container,
+body.eau-system-page .eau-events-container,
+body.eau-system-page .eau-events-archive-container,
+body.eau-system-page .eau-checkout-container,
+body.eau-system-page .eau-membership-selection-container,
+body.eau-system-page .eau-roadmap-container,
+body.eau-system-page .eau-my-cpds-container,
+body.eau-system-page .eau-my-payments-container,
+body.eau-system-page .eau-my-institution-container,
+body.eau-system-page .eau-courses-container,
+body.eau-system-page .eau-openlearning-courses-container,
+body.eau-system-page .eau-duplicate-manager-container,
+body.eau-system-page .eau-payments-management-container,
+body.eau-system-page .eau-membership-applications-container,
+body.eau-system-page .eau-email-update-container,
+body.eau-system-page .eau-system-presentation-container {
+    padding-top: 90px !important;
+}
 
 /* ==========================================================================
    STATS CARDS COMPONENT

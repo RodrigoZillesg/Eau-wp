@@ -3,7 +3,7 @@
  * Plugin Name: Eau System
  * Plugin URI: https://platty.com.br
  * Description: Sistema para importação de CSV e criação dinâmica de Post Types e Usuários compatível com JetEngine e WooCommerce
- * Version: 1.72.7
+ * Version: 1.72.26
  * Author: Platty / Rodrigo Zillesg
  * Author URI: https://platty.com.br
  * Text Domain: eau-system
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define constantes do plugin
-define('EAU_SYSTEM_VERSION', '1.72.7');
+define('EAU_SYSTEM_VERSION', '1.72.26');
 define('EAU_SYSTEM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EAU_SYSTEM_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('EAU_SYSTEM_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -85,6 +85,9 @@ register_activation_hook(__FILE__, function() {
     // Cria tabela de Event Categories (v1.61.0)
     \EauSystem\Eau_Event_Categories_Database::create_table();
 
+    // Cria tabela de Activity Categories / CPD (v1.72.16)
+    \EauSystem\Eau_Categories_Database::create_table();
+
     // Cria tabela de log de Email Migration (v1.62.0)
     \EauSystem\EmailMigration\Eau_Email_Migration_Database::create_table();
 
@@ -112,10 +115,11 @@ register_activation_hook(__FILE__, function() {
     // Setup cron para verificação de expiração de membership (v1.50.0)
     \EauSystem\Eau_Membership_Cron::setup_cron();
 
-    // Cria páginas do sistema automaticamente (v1.57.0)
-    \EauSystem\Eau_Pages::create_pages();
+    // Agenda recriação de páginas para o próximo 'init' (v1.57.0, v1.72.16)
+    // Não podemos chamar wp_insert_post no activation hook - WordPress não está pronto
+    \EauSystem\Eau_Pages::schedule_recreate_pages();
 
-    // Cria tabelas necessárias se precisar
+    // Flush rewrite rules
     flush_rewrite_rules();
 });
 
